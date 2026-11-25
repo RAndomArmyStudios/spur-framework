@@ -119,6 +119,9 @@ overrides `config.lua` until you reset it.
 
 ## For developers
 
+[dev/mcp/README.md](dev/mcp/README.md) sets up the MCP link: an AI client such as Claude Code can then test the game
+on your PC without taking your mouse or keyboard.
+
 Resources built on spur_core declare `dependency 'spur_core'`, load
 `shared_script '@spur_core/lib/satellite.lua'`, and call it through its exports (`exports.spur_core:AddItem(...)`).
 The API is whip_core's, so [WHIP's documentation](https://github.com/WHIPFX/whip_core) applies to everything except

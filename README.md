@@ -29,21 +29,63 @@ Each resource's README and NOTICE say what changed from the original.
 
 ## Install
 
-**With txAdmin:** use [recipe.yaml](recipe.yaml) as a custom recipe (txAdmin setup → Custom Template → paste the
-recipe's raw URL). It downloads SPUR and oxmysql, writes `server.cfg`, and connects the database.
+SPUR is a whole framework. Don't run it beside another one (VORP, RSG, RedEM:RP, QBR), or beside another inventory
+or target resource.
 
-**By hand:**
+You need a MySQL or MariaDB database (MariaDB 10.2.3+ or MySQL 8.0.16+) and a server licence key from
+[portal.cfx.re](https://portal.cfx.re). Most game hosts give you the database with the server.
 
-1. A recent FXServer started as RedM with OneSync, MariaDB 10.2.3+ or MySQL 8.0.16+, and
-   [oxmysql](https://github.com/overextended/oxmysql).
-2. Copy the `spur_*` folders into `resources/[spur]/`.
-3. Copy [server.cfg.example](server.cfg.example) to `server.cfg` and fill in your licence key, database and admin
-   identifier.
-4. Start the server. There is no SQL to import: the tables are made on the first start. The console prints a setup
-   report, and each line marked **FIX** says what to change.
+### The easy way: txAdmin
 
-Don't run it beside another framework (VORP, RSG, RedEM:RP, QBR), inventory or target resource.
-[spur_core/README.md](spur_core/README.md) has the first-run steps, the admin tools and the keys.
+txAdmin is the web panel that comes with FXServer. It can set SPUR up for you from a recipe.
+
+1. Start a new server in txAdmin (on a host, that is usually "reinstall" or "new server"; at home, run FXServer
+   and open the link it prints).
+2. When txAdmin asks for the deployment type, pick **Remote URL Template** and paste:
+
+   ```
+   https://raw.githubusercontent.com/RAndomArmyStudios/spur-framework/main/recipe.yaml
+   ```
+
+3. Enter your licence key and your database details when it asks.
+4. Let it run. It downloads the base server files, oxmysql and SPUR, writes `server.cfg`, and connects the
+   database. Then save and start the server.
+
+The recipe makes you the admin (the txAdmin master account). It has been dry-run step by step, but not yet run
+through a real txAdmin from start to end: if a step fails, please open an issue with the step's name.
+
+### By hand
+
+1. Install a recent FXServer and [oxmysql](https://github.com/overextended/oxmysql).
+2. Download this repository (the green **Code** button, then **Download ZIP**) and copy the `spur_*` folders into
+   your server's `resources/[spur]/` folder.
+3. Copy [server.cfg.example](server.cfg.example) to `server.cfg`. Fill in three things: your licence key, your
+   database line, and your own identifier on the last line (take the `#` off it).
+4. Don't start `basic-gamemode` (or turn spawnmanager's autospawn off). SPUR spawns players itself.
+5. Start the server. There is no SQL to import: the tables are made on the first start.
+
+### First start
+
+1. Read the server console. It prints a setup report, and each line marked **FIX** says what to change. Type
+   `spursetup` to see it again.
+2. Join and make a character.
+3. Type `/w` in chat and switch developer mode on. `/spur` then opens the admin panel.
+
+[spur_core/README.md](spur_core/README.md) has the rest: the admin tools, the keys and the settings.
+
+### Updating
+
+Replace the `spur_*` folders with the new ones and restart the server. Settings you changed in game are kept in the
+database. If you edited `config.lua` by hand, keep a copy first.
+
+## For developers
+
+- Resources built on SPUR use spur_core's exports. The API is whip_core's, so
+  [WHIP's documentation](https://github.com/WHIPFX/whip_core) applies except for the GTA-only parts.
+- [spur_core/CONVERSION.md](spur_core/CONVERSION.md) lists every change from WHIP, what does nothing on RDR2, and
+  what is still untested.
+- [spur_core/dev/mcp/README.md](spur_core/dev/mcp/README.md) sets up the MCP link, which lets an AI client such as
+  Claude Code test the game on your PC without taking your mouse or keyboard.
 
 ## Licence and credits
 

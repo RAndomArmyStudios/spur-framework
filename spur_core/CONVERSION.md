@@ -440,11 +440,12 @@ mouse.
   (`PW_RENDERFULLCONTENT`), which works with the window behind others. It shows everything in the window, chat
   included. `source: 'page'` is the in-game way (works on FiveM).
 - **The landing** ("Press any button to continue") has no control to press. Use `game_lua` `Landing.Continue()`.
-- **Setup**, once, user scope. Keep the server address out of repo files.
+- **Setup**, once, user scope: [dev/mcp/README.md](dev/mcp/README.md) has the steps. Keep the server address out of
+  repo files.
   `claude mcp add --scope user spur-game --env SPUR_MCP_CONNECT=<ip:port> -- node "<path>\spur_core\dev\mcp\spur_mcp.mjs"`.
   The other settings are `SPUR_MCP_PORT`, `SPUR_REDM_EXE`, `SPUR_REDM_LOGS`, `SPUR_MCP_SHOTS` and
   `SPUR_MCP_ORIGINS` (see the file's header).
-- **The panel console** (RocketNode's websocket) runs a command only when it ends with `\r`. Without it the text is
+- **A host panel's console** (a Pterodactyl websocket) runs a command only when it ends with `\r`. Without it the text is
   only echoed.
 - **Handy while testing** (24 Nov 2026):
   - `game_press` takes a control's `id` or its `label`. `text` together with an `id` types into that field; `text`

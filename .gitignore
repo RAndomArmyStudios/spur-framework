@@ -4,6 +4,8 @@
 !/.gitattributes
 !/README.md
 !/NOTICE.md
+!/COPYING
+!/COPYING.LESSER
 !/recipe.yaml
 !/server.cfg.example
 !/txadmin/
