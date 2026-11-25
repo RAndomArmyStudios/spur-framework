@@ -66,9 +66,9 @@ files {
 
     -- Item pictures: spur_core looks for an item's picture in the resource that registered it, named after its item
     -- key. RedM (spur_gunny, 24 Nov 2026): this copy ships none (whip_gunny's are GTA's guns), and a glob that finds
-    -- nothing is a warning at every start. To add your own, put them in html/img/items/ and uncomment these:
+    -- nothing is a warning at every start. To add your own, put them in html/img/items/ (uncomment the .webp line for those):
     -- 'html/img/items/*.webp',
-    -- 'html/img/items/*.png',
+    'html/img/items/*.png',         -- RedM (spur_gunny, 25 Nov 2026): one photograph per gun model, see html/img/items/SOURCES.md
     -- RedM (spur_gunny, 25 Nov 2026): one picture per class of item (server/items.lua), drawn for this copy.
     'html/img/items/class/*.png',   -- RedM (spur_gunny, 25 Nov 2026): painted pictures, in place of the flat .svg ones
 }

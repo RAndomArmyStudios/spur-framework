@@ -102,6 +102,8 @@ resource's `NOTICE.md` for the parts under other licences.
 - **Whippy** and **WLVF**: WHIP, the original code.
 - **RyuuTheKitsune**: the RedM port and its changes.
 - **femga** (rdr3_discoveries) and **Halen84**: RDR2 data lists and flag names the port uses.
-- **The Metropolitan Museum of Art**, Open Access (CC0): the photographs behind spur_gunny's five gun pictures.
+- **The Metropolitan Museum of Art**, Open Access (CC0), the **Armémuseum** (Swedish Army Museum), the **National
+  Museum of American History**, the **US National Park Service** and **Wikimedia Commons** contributors: the
+  public-domain and CC0 photographs behind spur_gunny's gun pictures (`spur_gunny/html/img/items/SOURCES.md`).
 - Red Dead Redemption 2 and its names and data belong to Rockstar Games and Take-Two Interactive. SPUR is not
   affiliated with or endorsed by them.

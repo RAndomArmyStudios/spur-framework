@@ -23,6 +23,7 @@ for it in range(6):
 lum = a.mean(-1); mlum = model.mean(-1)
 sat = a.max(-1) - a.min(-1)
 shadow = (lum > mlum * 0.52) & (sat < 26) & (lum < mlum + 6)      # the backdrop, only darker: a cast shadow
+if len(sys.argv) > 4: shadow[:] = False      # a black-and-white photo: grey is the gun too
 fg = Image.fromarray((((diff > T) & ~shadow) * 255).astype(np.uint8))
 fg = fg.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.MinFilter(7))       # close small gaps
 # keep the big connected piece(s)
