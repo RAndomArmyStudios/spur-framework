@@ -89,9 +89,13 @@
 <div id="death-overlay"></div>
 <div id="interact-layer"></div>
 
-<!-- The camera item's viewfinder (client/items/camera.lua → js/viewfinder.js, css/viewfinder.css): a camcorder's
-     frame over the game while the player looks through a camera. Shown through the clean screen (css/ui.css). -->
+<!-- The camera item's viewfinder (client/items/camera.lua → js/viewfinder.js, css/viewfinder.css): a frame over the
+     game while the player looks through a camera. Shown through the clean screen (css/ui.css).
+     RedM (spur_core, 25 Nov 2026): whip's was a camcorder's (REC, a battery, a timecode, "30 FPS | 4K"). A plate
+     camera of 1899 has none of that: the corners, the focus box and its cross stay, with the dark edge of a
+     ground-glass screen round them. -->
 <div id="viewfinder" aria-hidden="true">
+    <div class="vf-glass"></div>
     <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
     <div class="vf-corner bl"></div><div class="vf-corner br"></div>
     <div class="vf-focus">
@@ -99,16 +103,6 @@
         <div class="vf-corner bl"></div><div class="vf-corner br"></div>
         <div class="vf-cross"></div>
     </div>
-    <div class="vf-read tl"><span class="vf-dot"></span><span>REC</span></div>
-    <div class="vf-read tr">
-        <svg class="vf-battery" viewBox="0 0 26 10">
-            <rect class="vf-nub" x="0" y="3" width="2" height="4" rx="0.5"/>
-            <rect x="2.75" y="0.75" width="22.5" height="8.5" rx="1.8" stroke-width="1.5"/>
-            <rect class="vf-charge" x="8.5" y="2.6" width="15" height="4.8" rx="0.7"/>
-        </svg>
-    </div>
-    <div class="vf-read bl"><span class="vf-bar"></span><span class="vf-time">00:00:00:00</span></div>
-    <div class="vf-read br"><span>30 FPS</span><span class="vf-rule"></span><span>4K</span></div>
 </div>
 
 <!-- ============================

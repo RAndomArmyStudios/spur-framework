@@ -174,7 +174,7 @@ Config.Items = {
     },
     cash = {
         name     = 'Cash',
-        desc     = 'The American Dream.',
+        desc     = 'Notes and coin.',   -- RedM (spur_core, 25 Nov 2026): whip's said 'The American Dream.'
         weight   = 0.0001,  -- tiny on purpose: 800,000 notes fills an 80kg inventory
         type     = 'currency',
         stack    = true,
@@ -229,7 +229,7 @@ Config.Items = {
     -- Used, it comes up to the eye as a viewfinder (wheel to zoom); used again or Esc puts it away.
     camera = {
         name     = 'Camera',
-        desc     = 'The perfect tool for documenting illegal parking.',
+        desc     = 'A box camera. Use it to look through the glass.',   -- RedM (spur_core, 25 Nov 2026): whip's joked about illegal parking
         weight   = 1.2,
         type     = 'tool',
         stack    = false,
@@ -247,7 +247,7 @@ Config.Items = {
         maxStack = 1,
         usable   = false,
         cooldown = 0,
-        -- A swipe card, so a hacked key does not look like a real one on the ground.
+        -- Another key model, so a copied key does not look like a real one on the ground.
         prop     = 'p_key02x',
         metaFields = {
             { key = 'model',  label = 'Vehicle', format = 'uppercase' },

@@ -141,6 +141,10 @@ Environment variables, set where you registered the server:
 - **World prompts are hidden while Dev Tools (`w`) is open.** Close it before walking up to a shop counter or a door.
 - **A world prompt can't be pressed with `game_press`.** Call it instead: `Interactions.getAll()[id]` gives each
   prompt, and its `callback` or `options[1].callback` does what E does.
+- **The F1 wheel** is aimed by angle, not clicked, so before 25 Nov 2026 nothing on it could be pressed. Its options
+  now answer `game_press` by their words ("Coil up the rope"). Open it with `game_command` `whip_radial`.
+- **A notebook left open is a screen.** While it is up, reload, the wheel and the hotbar do nothing, as for a player.
+  `TriggerEvent('spur_phone:client:close')` in `game_lua` puts it away.
 - **The mouse and held keys can't be faked.** Anything that needs a real mouse wheel, a held key or a second player
   is listed under "Not yet tried in game" in [CONVERSION.md](../../CONVERSION.md).
 

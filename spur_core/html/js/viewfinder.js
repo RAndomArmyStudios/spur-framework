@@ -22,7 +22,7 @@ function tick(now) {
     const f = Math.floor(Math.max(0, now - shownAt) / (1000 / 30));
     const s = Math.floor(f / 30);
     const text = two(Math.floor(s / 3600)) + ':' + two(Math.floor(s / 60) % 60) + ':' + two(s % 60) + ':' + two(f % 30);
-    if (text !== last) { clock.textContent = text; last = text; }
+    if (text !== last) { clock.textContent = text; last = text; }   // only where the page has a timecode (see below)
     raf = requestAnimationFrame(tick);
 }
 
@@ -30,7 +30,8 @@ NuiRouter.register('viewfinder', (d) => {
     const on = !!(d && d.on);
     cancelAnimationFrame(raf);
     el.classList.toggle('on', on);
-    if (!on) return;
+    // RedM (spur_core, 25 Nov 2026): the page has no timecode any more (a plate camera of 1899), so nothing runs.
+    if (!on || !clock) return;
     shownAt = performance.now();
     last = '';
     raf = requestAnimationFrame(tick);

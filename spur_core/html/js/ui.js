@@ -1942,6 +1942,14 @@ import { openPadKeyboard } from './pad-keyboard.js';   // whip's keyboard (and, 
                 else {
                     radIcon(radDiv('rad-icon', face), o.icon, o.label);
                     radDiv('rad-label', face).textContent = o.label;
+                    // RedM (spur_core, 25 Nov 2026): the wheel is aimed by angle, so nothing on it was a control
+                    // a test or the MCP link could press. Each face now answers a press by its words (the probe
+                    // only: a face takes no mouse, the wheel's own click still reads the aim).
+                    face.setAttribute('data-probe-press', '');
+                    face.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window._uiRadialSelect(String(o.id));
+                    });
                 }
             }
             slabs.push(slab);

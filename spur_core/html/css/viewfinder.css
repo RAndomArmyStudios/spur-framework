@@ -1,9 +1,12 @@
 /* ========================================
    VIEWFINDER — css/viewfinder.css
 
-   The camera item's overlay (client/items/camera.lua, js/viewfinder.js): a camcorder's frame over the game
-   while the player looks through a camera. The four corners, REC and its dot top left, the battery top
-   right, the focus box round a cross in the middle, the timecode bottom left and the format bottom right.
+   The camera item's overlay (client/items/camera.lua, js/viewfinder.js): a frame over the game while the
+   player looks through a camera. The four corners, and the focus box round a cross in the middle.
+
+   RedM (spur_core, 25 Nov 2026): whip's was a camcorder's, with REC and its dot, a battery, a timecode and
+   the format. None of that is on a plate camera of 1899, so the readouts are gone from the page (their rules
+   are left below for anyone who wants them back) and .vf-glass darkens the edges like a ground-glass screen.
 
    Sized off the screen, never in pixels: the corners sit at the screen's corners and the type grows with
    its height, so it frames every resolution and shape the same way. White lines with a soft dark edge, so
@@ -35,6 +38,13 @@
     filter: drop-shadow(0 0 0.25vh rgba(0, 0, 0, 0.55));
 }
 #viewfinder.on { display: block; }
+
+/* The ground glass: clear in the middle, dark and a little warm toward the edges. */
+.vf-glass {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(40, 26, 10, 0) 48%, rgba(40, 26, 10, 0.28) 74%, rgba(12, 8, 4, 0.82) 100%);
+}
 
 /* ---- the frame: four corners ---- */
 
