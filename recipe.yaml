@@ -33,7 +33,7 @@ tasks:
 
   # SPUR
   - action: download_github
-    src: https://github.com/RyuuTheKitsune/spur-framework
+    src: https://github.com/RAndomArmyStudios/spur-framework
     ref: main
     dest: ./tmp/spur
   - action: move_path
