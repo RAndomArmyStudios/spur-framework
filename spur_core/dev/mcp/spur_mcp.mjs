@@ -27,6 +27,15 @@
 // SPUR_REDM_EXE (%LOCALAPPDATA%\RedM\RedM.exe), SPUR_REDM_LOGS (%LOCALAPPDATA%\RedM\RedM.app\logs),
 // SPUR_MCP_SHOTS (where screenshots are saved: <temp>\spur_mcp), SPUR_MCP_ORIGINS (more page origins, comma separated).
 //
+// MORE THAN ONE SESSION (25 Nov 2026). Only one process can hold the port the game talks to. A second spur_mcp (a
+// second Claude session) finds the port taken and passes its jobs to the first one instead, at /relay on the same
+// port. /relay is the one way an order comes in over HTTP, so it wants a secret the first one wrote to
+// ~/.spur_mcp/relay-<port>.token (a file only this user can read), and it turns away anything a browser sent (a
+// browser always says Origin on such a request). A page still cannot give the game an order.
+//
+// WITHOUT AN MCP CLIENT: `node spur_mcp.mjs --call <tool> ['<json arguments>']` runs one tool and prints the answer,
+// through a running spur_mcp when there is one.
+//
 // STDOUT IS THE PROTOCOL: everything else goes to stderr.
 
 import http from 'node:http';
@@ -34,9 +43,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
+import crypto from 'node:crypto';
 import { spawn, execFile } from 'node:child_process';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const PORT = Number(process.env.SPUR_MCP_PORT) || 47130;
 const LOCALAPPDATA = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
 const REDM_EXE = process.env.SPUR_REDM_EXE || path.join(LOCALAPPDATA, 'RedM', 'RedM.exe');
@@ -67,7 +77,53 @@ let linkError = null;        // why the HTTP side could not start
 const origins = new Map();   // origin -> times seen (game_status shows them)
 const refused = new Set();   // origins (and "null" from a browser that is not the game's) turned away
 
-const linked = () => Date.now() - lastSeen < LINKED_MS || pending.size > 0;
+// More than one session: the first spur_mcp owns the port and writes a secret; a later one relays through it.
+const RELAY_FILE = path.join(os.homedir(), '.spur_mcp', `relay-${PORT}.token`);
+let relayToken = null;       // ours, when we own the port
+let relayVia = null;         // the owner's, when we relay through it
+let relayHead = { linked: false, lastSeen: 0, origins: {} };   // what the owner last said about its link
+let ready;                   // resolves when the port is ours, or we know whose it is
+const whenReady = new Promise((resolve) => { ready = resolve; });
+
+const linked = () => (relayVia ? relayHead.linked : Date.now() - lastSeen < LINKED_MS || pending.size > 0);
+
+function relayPost(body, ms = 10000) {
+    return new Promise((resolve) => {
+        const data = Buffer.from(JSON.stringify(body));
+        const req = http.request({ host: '127.0.0.1', port: PORT, path: '/relay', method: 'POST', timeout: ms,
+            headers: { 'Content-Type': 'application/json', 'Content-Length': data.length, 'X-Spur-Relay': relayVia } }, (res) => {
+            const parts = [];
+            res.on('data', (c) => parts.push(c));
+            res.on('end', () => {
+                if (res.statusCode !== 200) return resolve({ ok: false, err: `the other spur_mcp answered ${res.statusCode}` });
+                try { resolve(JSON.parse(Buffer.concat(parts).toString('utf8'))); } catch (e) { resolve({ ok: false, err: 'the other spur_mcp answered nonsense' }); }
+            });
+        });
+        req.on('timeout', () => req.destroy(new Error('no answer in time')));
+        req.on('error', (e) => resolve({ ok: false, err: `the other spur_mcp (it owns 127.0.0.1:${PORT}) did not answer: ${e.message}` }));
+        req.end(data);
+    });
+}
+
+/** Relaying: ask the owner how its link is. Call before linked() is read. */
+async function syncHead() {
+    if (!relayVia) return;
+    const r = await relayPost({ op: 'head' });
+    relayHead = r && r.ok ? r.result : { linked: false, lastSeen: 0, origins: {} };
+    linkError = r && r.ok ? null : (r && r.err) || 'the other spur_mcp did not answer';
+}
+
+/** The game was closed or restarted: the link is gone until it polls again. */
+function forget() {
+    lastSeen = 0;
+    relayHead = { ...relayHead, linked: false, lastSeen: 0 };
+    if (relayVia) relayPost({ op: 'forget' });
+}
+
+function sameSecret(a, b) {
+    const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
+    return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
 
 function send(res, code, body, type = 'application/json') {
     if (res.writableEnded || res.destroyed) return false;
@@ -102,6 +158,20 @@ function readBody(req, max) {
 }
 
 const httpServer = http.createServer(async (req, res) => {
+    // Another spur_mcp on this PC, passing its jobs on. Never a browser: one always sends Origin on a request like
+    // this, and it cannot read the secret's file.
+    if (req.url === '/relay') {
+        if (req.method !== 'POST' || req.headers.origin !== undefined || req.headers['sec-fetch-site'] !== undefined
+            || !sameSecret(req.headers['x-spur-relay'], relayToken)) return send(res, 403, null);
+        let b;
+        try { b = JSON.parse((await readBody(req, 1024 * 1024)) || '{}'); } catch (e) { return send(res, 400, null); }
+        if (b.op === 'head') return send(res, 200, { ok: true, result: { linked: linked(), lastSeen, origins: Object.fromEntries(origins) } });
+        if (b.op === 'forget') { lastSeen = 0; return send(res, 200, { ok: true }); }
+        if (b.op === 'call' && typeof b.cmd === 'string') {
+            return send(res, 200, await call(b.cmd, b.args || {}, Math.min(Number(b.ms) || 30000, 700000)));
+        }
+        return send(res, 400, null);
+    }
     const origin = req.headers.origin || '(none)';
     origins.set(origin, (origins.get(origin) || 0) + 1);
     if (origins.get(origin) === 1) log(`first request from origin ${origin} (user agent: ${req.headers['user-agent'] || '-'}; referer: ${req.headers.referer || '-'}; fetch site: ${req.headers['sec-fetch-site'] || '-'})`);
@@ -149,13 +219,40 @@ const httpServer = http.createServer(async (req, res) => {
     return send(res, 404, null);
 });
 
-httpServer.on('error', (e) => {
-    linkError = e.code === 'EADDRINUSE'
-        ? `127.0.0.1:${PORT} is taken (another spur_mcp, from another session?). Close it, or set SPUR_MCP_PORT and /mcplink on <port>.`
-        : `the link could not start: ${e.message}`;
-    log(linkError);
+httpServer.on('error', async (e) => {
+    if (e.code === 'EADDRINUSE') {
+        try { relayVia = fs.readFileSync(RELAY_FILE, 'utf8').trim() || null; } catch (err) { relayVia = null; }
+        if (relayVia) {
+            await syncHead();
+            if (linkError) relayVia = null;
+            else log(`127.0.0.1:${PORT} belongs to another spur_mcp: working through it`);
+        }
+        if (!relayVia) {
+            linkError = `127.0.0.1:${PORT} is taken by something that is not a spur_mcp of version 1.1 or newer (an older one, from a session opened before the update?). Close that session, or set SPUR_MCP_PORT and /mcplink on <port>.`;
+            log(linkError);
+        }
+    } else {
+        linkError = `the link could not start: ${e.message}`;
+        log(linkError);
+    }
+    ready();
 });
-httpServer.listen(PORT, '127.0.0.1', () => log(`link on http://127.0.0.1:${PORT}/link`));
+httpServer.listen(PORT, '127.0.0.1', () => {
+    relayToken = crypto.randomBytes(32).toString('hex');
+    try {
+        fs.mkdirSync(path.dirname(RELAY_FILE), { recursive: true });
+        fs.writeFileSync(RELAY_FILE, relayToken, { mode: 0o600 });
+    } catch (e) {
+        log(`could not write ${RELAY_FILE} (${e.message}): other sessions cannot share this link`);
+    }
+    log(`link on http://127.0.0.1:${PORT}/link`);
+    ready();
+});
+function dropRelayFile() {
+    try { if (relayToken && fs.readFileSync(RELAY_FILE, 'utf8').trim() === relayToken) fs.unlinkSync(RELAY_FILE); } catch (e) { /* gone already */ }
+}
+process.on('exit', dropRelayFile);
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => process.exit(0));
 
 function notLinkedWhy() {
     if (linkError) return linkError;
@@ -168,6 +265,7 @@ function notLinkedWhy() {
 
 /** One thing for the game to do. Resolves { ok, result, err }. */
 function call(cmd, args = {}, ms = 30000) {
+    if (relayVia) return relayPost({ op: 'call', cmd, args, ms }, ms + 8000);
     if (!linked()) return Promise.resolve({ ok: false, err: notLinkedWhy() });
     const id = nextId++;
     return new Promise((resolve) => {
@@ -299,8 +397,10 @@ const TOOLS = [
         description: 'Is the game linked, and where is the player: server id, coords, heading, health, ped model, developer mode, whether a character is loaded, NUI focus. Never names the player.',
         inputSchema: { type: 'object', properties: {} },
         run: async () => {
-            const head = { linked: linked(), lastSeenSecondsAgo: lastSeen ? Math.round((Date.now() - lastSeen) / 1000) : null,
-                port: PORT, origins: Object.fromEntries(origins), linkError };
+            const seen = relayVia ? relayHead.lastSeen : lastSeen;
+            const head = { linked: linked(), lastSeenSecondsAgo: seen ? Math.round((Date.now() - seen) / 1000) : null,
+                port: PORT, origins: relayVia ? relayHead.origins : Object.fromEntries(origins), linkError,
+                ...(relayVia ? { through: 'another spur_mcp on this PC (it owns the port)' } : {}) };
             if (!linked()) return text(json(head) + '\n' + notLinkedWhy());
             const r = await call('status', {}, 15000);
             return text(json({ ...head, game: r.ok ? r.result : { error: r.err } }));
@@ -315,7 +415,7 @@ const TOOLS = [
             if (!addr || !/^[A-Za-z0-9.-]+:\d{2,5}$/.test(addr)) return text('No server address: set SPUR_MCP_CONNECT (ip:port) where this MCP server is registered, or pass `connect`.', true);
             if (!fs.existsSync(REDM_EXE)) return text(`RedM is not at ${REDM_EXE} (set SPUR_REDM_EXE).`, true);
             const closed = await quitGame();
-            lastSeen = 0;
+            forget();
             const how = await startApart(REDM_EXE, `redm://connect/${addr}`);
             return text(`${closed} RedM started${how} and is connecting. Give it about 3 minutes, then game_status or game_wait_for_text.`);
         },
@@ -324,7 +424,7 @@ const TOOLS = [
         name: 'game_quit',
         description: 'Close RedM (all its processes). Do this before restarting the server: a reconnect in game does not work.',
         inputSchema: { type: 'object', properties: {} },
-        run: async () => { lastSeen = 0; return text(await quitGame()); },
+        run: async () => { forget(); return text(await quitGame()); },
     },
     {
         name: 'game_dev_mode',
@@ -495,6 +595,8 @@ async function handle(msg) {
             const tool = BY_NAME.get(params && params.name);
             if (!tool) return fail(id, -32602, `no tool ${params && params.name}`);
             try {
+                await whenReady;
+                await syncHead();
                 return reply(id, await tool.run((params && params.arguments) || {}));
             } catch (e) {
                 return reply(id, text(`${tool.name} failed: ${e && e.message || e}`, true));
@@ -505,11 +607,37 @@ async function handle(msg) {
     }
 }
 
-const rl = readline.createInterface({ input: process.stdin });
-rl.on('line', (line) => {
-    if (!line.trim()) return;
-    let msg;
-    try { msg = JSON.parse(line); } catch (e) { return fail(null, -32700, 'parse error'); }
-    handle(msg).catch((e) => log(`handler failed: ${e && e.stack || e}`));
-});
-rl.on('close', () => process.exit(0));
+// `--call <tool> ['<json>']`: one tool, no MCP client. Through a running spur_mcp when there is one; alone, it waits a
+// few seconds for the game to find it first.
+async function runOnce(name, argText) {
+    const tool = BY_NAME.get(name);
+    if (!tool) { process.stderr.write(`no tool ${name}. Tools: ${TOOLS.map((t) => t.name).join(', ')}\n`); process.exit(2); }
+    let args = {};
+    try { args = argText ? JSON.parse(argText) : {}; } catch (e) { process.stderr.write('the arguments are not JSON\n'); process.exit(2); }
+    await whenReady;
+    if (!relayVia && !linkError && !/^game_(launch|quit|log)$/.test(name)) {
+        for (let i = 0; i < 70 && !linked(); i++) await sleep(100);
+    }
+    await syncHead();
+    let res;
+    try { res = await tool.run(args); } catch (e) { res = text(`${name} failed: ${e && e.message || e}`, true); }
+    for (const c of res.content || []) {
+        if (c.type === 'text') process.stdout.write(c.text + '\n');
+        else process.stdout.write(`(${c.type}${c.mimeType ? ' ' + c.mimeType : ''}, not printed)\n`);
+    }
+    process.exit(res.isError ? 1 : 0);
+}
+
+const callAt = process.argv.indexOf('--call');
+if (callAt >= 0) {
+    runOnce(process.argv[callAt + 1], process.argv[callAt + 2]);
+} else {
+    const rl = readline.createInterface({ input: process.stdin });
+    rl.on('line', (line) => {
+        if (!line.trim()) return;
+        let msg;
+        try { msg = JSON.parse(line); } catch (e) { return fail(null, -32700, 'parse error'); }
+        handle(msg).catch((e) => log(`handler failed: ${e && e.stack || e}`));
+    });
+    rl.on('close', () => process.exit(0));
+}

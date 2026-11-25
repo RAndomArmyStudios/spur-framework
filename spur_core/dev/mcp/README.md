@@ -56,7 +56,9 @@ The game's side does nothing until a developer turns it on. Do this once per PC;
 
 - In the game, press F8 and type `mcplink on`.
 - Or, from the server console: `spur_mcplink <server id> on` (or `all` instead of an id). It only reaches players
-  who hold `whip.devtools`.
+  who hold `whip.devtools`. It answers with how many players it reached. If the server runs under txAdmin, type it
+  in txAdmin's Live Console: a host panel's own console does not reach the game server then (it only echoes the
+  line back).
 
 `mcplink off` turns it off again. `mcplink` on its own says which it is.
 
@@ -65,6 +67,24 @@ The game's side does nothing until a developer turns it on. Do this once per PC;
 Ask the client to call `game_status`. With the game running it answers `linked: true`, with your server id and
 coordinates. Reading and pressing the screen, commands and Lua also need developer mode: the client can switch it on
 with `game_dev_mode`, the same switch as `/w`.
+
+### More than one session
+
+Only one process can hold the port the game talks to. From version 1.1 (25 Nov 2026) that is no longer a problem:
+the first `spur_mcp` to start owns the port, and every later one (a second Claude session, say) works through it.
+`game_status` then says `through: another spur_mcp on this PC`. Nothing needs setting up.
+
+A session that was opened before the update still runs the old server. Until it is closed, later sessions say the
+port is taken by something that is not a spur_mcp of version 1.1 or newer.
+
+### Without an MCP client
+
+One tool, from a terminal, through the running server when there is one:
+
+```
+node spur_mcp.mjs --call game_status
+node spur_mcp.mjs --call game_lua "{\"code\":\"return GetEntityCoords(PlayerPedId())\"}"
+```
 
 ## The tools
 
@@ -100,8 +120,10 @@ Environment variables, set where you registered the server:
 
 - **It is as powerful as F8.** `game_lua` and `game_command` run whatever the AI client sends, as you, on whatever
   server the game is connected to. Use it on your own test server, with a client you trust.
-- **It only listens on this PC.** The HTTP side is `127.0.0.1` only, and orders come only from the MCP client on
-  stdin. Nothing that reaches the HTTP port can give the game an order.
+- **It only listens on this PC.** The HTTP side is `127.0.0.1` only. Orders come from the MCP client on stdin, or
+  from another `spur_mcp` on this PC that knows the first one's secret: a random key in `~/.spur_mcp/`, in a file
+  only your user can read, made anew at every start. A web page cannot read that file, and the server turns away
+  anything a browser sends there, so a page still cannot give the game an order.
 - **It only answers the game.** RedM's pages send `Origin: null`, so the server answers spur_core's origin, or `null`
   from a browser whose user agent says `CitizenFX/`. Another resource's page in the same game could pose as
   spur_core while the server runs; the most it can do is take a job or answer one wrongly.
