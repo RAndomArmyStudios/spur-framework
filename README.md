@@ -47,12 +47,19 @@ txAdmin is the web panel that comes with FXServer. It can set SPUR up for you fr
    https://raw.githubusercontent.com/RAndomArmyStudios/spur-framework/main/recipe.yaml
    ```
 
-3. Enter your licence key and your database details when it asks.
+3. Enter your licence key and your database details when it asks. On a game host the database is rarely on
+   `localhost`: open "Show/Hide Database options" and put in the host, port, user, password and database name
+   from your host's panel. If the database already exists and its user can't create databases (the usual case
+   on a host), untick "delete existing database".
 4. Let it run. It downloads the base server files, oxmysql and SPUR, writes `server.cfg`, and connects the
-   database. Then save and start the server.
+   database.
+5. On the last step txAdmin shows `server.cfg`. If your server's port is not 30120, change the port in the two
+   `endpoint_add` lines to yours. Then save and start the server.
 
-The recipe makes you the admin (the txAdmin master account). It has been dry-run step by step, but not yet run
-through a real txAdmin from start to end: if a step fails, please open an issue with the step's name.
+The recipe makes you the admin (the txAdmin master account). It was run from start to end in txAdmin 8.1.2 on a
+Pterodactyl host on 25 Nov 2026: every step passed, the eight resources started and spur_core made its tables in an
+empty database. Joining that server in the game has not been tried yet. If a step fails for you, please open an
+issue with the step's name.
 
 ### By hand
 
