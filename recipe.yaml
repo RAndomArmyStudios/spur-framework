@@ -13,13 +13,9 @@ tasks:
     subpath: resources
     dest: ./resources
 
-  # spur_core spawns players itself, and spur_chat is the chat
+  # spur_core spawns players itself
   - action: remove_path
     path: ./resources/[gamemodes]
-  - action: remove_path
-    path: ./resources/[gameplay]/chat
-  - action: remove_path
-    path: ./resources/[gameplay]/chat-theme-gtao
   - action: remove_path
     path: ./resources/[managers]/spawnmanager
 
