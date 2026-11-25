@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>interact label atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE LABEL ATLAS — one row per prompt currently showing text.
+
+   Same rules as badge.html: this document IS a texture, rendered offscreen and
+   sampled by DrawTexturedPoly. Transparent background, fixed pixel size, no
+   --ui-scale.
+
+   WHY ROWS RATHER THAN A DUI EACH. A DUI is a whole browser, so the count has to
+   stay fixed no matter how many prompts exist. Labels are the only thing that
+   differs between prompts, so they get the one variable texture in the system,
+   divided into slots that Lua hands out and takes back. Each quad samples only
+   its own row's band of v.
+
+   IT IS SMALLER THAN IT SOUNDS. A prompt is a bare badge until you are within
+   Config.InteractActiveRange, and only then grows a label — so the rows are only
+   ever needed for the handful of prompts you are standing among, not for
+   everything in view.
+
+   TEXT IS LEFT-ALIGNED AND THE REST OF THE ROW IS TRANSPARENT, deliberately.
+   DUI is one-way — SendDuiMessage goes in, nothing comes back — so Lua can never
+   ask how wide a string rendered. A fixed-width row with invisible padding costs
+   nothing and removes the question entirely; the alternative is guessing at text
+   width and stretching the art when the guess is wrong.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    /* A little breathing room at the left edge so a glyph's shadow is not clipped
+       by the texture boundary. */
+    padding: 0 8px;
+    overflow: hidden;
+}
+
+.row span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #fff;
+
+    /* A HARD BLACK OUTLINE, DRAWN AS EIGHT OFFSET COPIES.
+       All the legibility work has to happen IN the texture: there is no panel
+       behind the text any more and no way to know what the world behind it looks
+       like. A soft glow alone dilutes against a bright wall exactly when it is
+       needed most, so the glyphs get a solid ring first and the soft drop second.
+
+       Eight shadows rather than -webkit-text-stroke, which in Chromium paints the
+       stroke OVER the fill and eats into the letterform — at this weight that
+       visibly thins it. Offset copies sit behind instead, so the glyph keeps its
+       shape and simply gains an edge. The four diagonals alone leave gaps on the
+       verticals, hence all eight.
+
+       3px suits the ~54px type these rows are set at; it is a fraction of the
+       glyph, not a fixed pixel look, because this is a texture that gets scaled. */
+    text-shadow:
+        -3px -3px 0 #000,  0 -3px 0 #000,  3px -3px 0 #000,
+        -3px  0   0 #000,                  3px  0   0 #000,
+        -3px  3px 0 #000,  0  3px 0 #000,  3px  3px 0 #000,
+         0 4px 14px rgba(0, 0, 0, 0.9);
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+
+<script>
+(function () {
+    var atlas = document.getElementById('atlas');
+
+    var state = { width: 1024, rowH: 96, rows: 8 };
+    var texts = [];
+    // Each row's type, from the style of the prompt that holds it (labelWeight and the rest), or
+    // nothing for the look in the stylesheet above.
+    var fmts = [];
+
+    /** The outline as eight offset copies (see the stylesheet), `px` wide, and the soft drop. */
+    function shadowFor(px, colour, soft) {
+        var parts = [];
+        if (px > 0) {
+            var o = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+            for (var i = 0; i < o.length; i++) {
+                parts.push((o[i][0] * px) + 'px ' + (o[i][1] * px) + 'px 0 ' + colour);
+            }
+        }
+        if (soft) parts.push('0 4px 14px rgba(0, 0, 0, 0.9)');
+        return parts.length ? parts.join(', ') : 'none';
+    }
+
+    /** Set a row's type: a style's (weight, outline, outlineColour, case, shadow, colour), or the default.
+     *  `colour` is the words' own: a dark prompt's are black, with a white outline (a tint only multiplies,
+     *  so Lua cannot make white words black). */
+    function applyFmt(span, f) {
+        if (!f) {
+            span.style.fontWeight = '';
+            span.style.textShadow = '';
+            span.style.textTransform = '';
+            span.style.letterSpacing = '';
+            span.style.color = '';
+            return;
+        }
+        span.style.color = /^#[0-9a-f]{6}$/i.test(f.colour || '') ? f.colour : '';
+        span.style.fontWeight = f.weight ? String(f.weight) : '';
+        var px = (f.outline !== undefined && f.outline !== null) ? Number(f.outline) : 3;
+        var colour = /^#[0-9a-f]{6}$/i.test(f.outlineColour || '') ? f.outlineColour : '#000';
+        span.style.textShadow = shadowFor(px, colour, f.shadow !== false);
+        span.style.textTransform = f.case === 'upper' ? 'uppercase' : '';
+        span.style.letterSpacing = f.case === 'upper' ? '2px' : '';
+    }
+
+    function build() {
+        document.documentElement.style.width  = state.width + 'px';
+        document.documentElement.style.height = (state.rowH * state.rows) + 'px';
+        document.body.style.width  = state.width + 'px';
+        document.body.style.height = (state.rowH * state.rows) + 'px';
+
+        atlas.style.width = state.width + 'px';
+        atlas.style.height = (state.rowH * state.rows) + 'px';
+
+        var html = '';
+        for (var i = 0; i < state.rows; i++) {
+            html += '<div class="row" id="r' + i + '" style="width:' + state.width
+                 +  'px;height:' + state.rowH + 'px;font-size:' + Math.round(state.rowH * 0.56)
+                 +  'px"><span></span></div>';
+        }
+        atlas.innerHTML = html;
+
+        // Repaint whatever the rows were showing before a resize, or a rebuild
+        // would silently blank live labels.
+        for (var j = 0; j < state.rows; j++) {
+            if (texts[j]) setRow(j, texts[j], fmts[j]);
+        }
+    }
+
+    // A label too long for its row is set smaller rather than cut. "Someone is speaking
+    // with this person." (a Talk point that is busy) runs a few pixels past the row at the
+    // full size and would read "...perso…". Labels that fit are untouched, and the type
+    // never goes below 70%: past that the ellipsis is the honest answer.
+    var MIN_SCALE = 0.7;
+    function fit(el) {
+        var span = el.firstChild;
+        var size = Math.round(state.rowH * 0.56);
+        var floor = Math.round(size * MIN_SCALE);
+        el.style.fontSize = size + 'px';
+        while (size > floor && span.scrollWidth > span.clientWidth) {
+            size -= 2;
+            el.style.fontSize = size + 'px';
+        }
+    }
+
+    function setRow(i, text, fmt) {
+        var el = document.getElementById('r' + i);
+        if (!el) return;
+        texts[i] = text;
+        fmts[i] = fmt || null;
+        // textContent, not innerHTML: label strings come from item names and from
+        // satellite resources, and this is a browser.
+        el.firstChild.textContent = text || '';
+        // The type before the fit: a heavier or upper-case label is wider, and fit() measures it.
+        applyFmt(el.firstChild, fmts[i]);
+        fit(el);
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d) return;
+
+        if (d.setup) {
+            if (d.setup.width) state.width = d.setup.width;
+            if (d.setup.rowH)  state.rowH  = d.setup.rowH;
+            if (d.setup.rows)  state.rows  = d.setup.rows;
+            build();
+            return;
+        }
+
+        if (d.row !== undefined) setRow(d.row, d.text, d.fmt);
+    });
+
+    build();
+
+    // Rows set before the font arrived were measured in the fallback face; measure again once it
+    // has. Asked for outright: the page has no text at load, so fonts.ready settles before the
+    // face is ever fetched and would re-measure too early.
+    function refitAll() {
+        for (var k = 0; k < state.rows; k++) {
+            var el = document.getElementById('r' + k);
+            if (el && texts[k]) fit(el);
+        }
+    }
+    if (document.fonts) {
+        if (document.fonts.load) document.fonts.load('700 54px "Barlow"').then(refitAll, function () {});
+        if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refitAll);
+    }
+})();
+</script>
+</body>
+</html>

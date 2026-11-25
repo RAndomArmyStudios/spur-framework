@@ -1,0 +1,220 @@
+/* ========================================
+   THE SYSTEMS CREATOR — its hub and blueprint editor (js/systems/*.js), in red
+
+   The Director's screen underneath (director.css: the same dr-* canvas, column and popovers), with the
+   Systems Creator's own tokens laid over it on its root (--sy-* in base.css, where a theme reaches
+   them). The search and menus sit on the page's body, outside the root: body.sy-open carries the
+   same tokens to them while this screen is open.
+
+   STATES STAY STATES (DESIGN.md): red here is the screen's identity, never "wrong". So on this
+   screen errors are the orange and warnings the yellow (--sy-error, --sy-warning), each with its
+   glyph, and a picked card, wire or box is the white selection pill.
+
+   Value pins and wires wear their type's colour (.v-<family>, js/systems/pins.js): number, text,
+   yes/no, place, person, thing, any. CEF 103: no :has, nesting, color-mix or container queries.
+   ======================================== */
+
+.sy-root,
+body.sy-open .dr-float {
+    --ui-accent:        var(--sy-accent);
+    --ui-accent-glow:   var(--sy-accent-glow);
+    --ui-accent-subtle: var(--sy-accent-subtle);
+    --ui-accent-light:  var(--sy-accent-light);
+    --ui-accent-medium: var(--sy-accent-medium);
+    --ui-error:         var(--sy-error);
+    --ui-error-subtle:  var(--sy-error-subtle);
+    --ui-error-light:   var(--sy-error-light);
+    --ui-warning:       var(--sy-warning);
+    --ui-warning-light: var(--sy-warning-light);
+    --dr-canvas:        var(--sy-canvas);
+    --dr-grid-minor:    var(--sy-grid-minor);
+    --dr-grid-major:    var(--sy-grid-major);
+    --dr-card:          var(--sy-card);
+}
+
+/* ---- the Systems Creator's kinds of card (its palette groups; flow is the Director's) ---- */
+
+.kind-when      { --kind: var(--sy-kind-when);      --kind-tint: var(--sy-kind-when-tint); }
+.kind-maths     { --kind: var(--sy-kind-maths);     --kind-tint: var(--sy-kind-maths-tint); }
+.kind-text      { --kind: var(--sy-kind-text);      --kind-tint: var(--sy-kind-text-tint); }
+.kind-variables,
+.kind-lists,
+.kind-values    { --kind: var(--sy-kind-variables); --kind-tint: var(--sy-kind-variables-tint); }
+.kind-players   { --kind: var(--sy-kind-players);   --kind-tint: var(--sy-kind-players-tint); }
+.kind-cars      { --kind: var(--sy-kind-cars);      --kind-tint: var(--sy-kind-cars-tint); }
+.kind-items     { --kind: var(--sy-kind-items);     --kind-tint: var(--sy-kind-items-tint); }
+.kind-money     { --kind: var(--sy-kind-money);     --kind-tint: var(--sy-kind-money-tint); }
+.kind-jobs      { --kind: var(--sy-kind-jobs);      --kind-tint: var(--sy-kind-jobs-tint); }
+/* World is a Director kind too (director.css, its orange): this screen's own only. */
+.sy-root .kind-world,
+body.sy-open .dr-float .kind-world { --kind: var(--sy-kind-world); --kind-tint: var(--sy-kind-world-tint); }
+.kind-missions  { --kind: var(--sy-kind-missions);  --kind-tint: var(--sy-kind-missions-tint); }
+.kind-npcs      { --kind: var(--sy-kind-npcs);      --kind-tint: var(--sy-kind-npcs-tint); }
+
+/* ---- picked: the white pill, never the red ---- */
+
+.sy-root .dr-card.selected { box-shadow: 0 0 0 2px var(--ui-pill), var(--ui-shadow); }
+.sy-root .dr-card.selected.has-warn,
+.sy-root .dr-card.selected.has-error { box-shadow: 0 0 0 2px var(--ui-pill), 0 0 0 4px var(--ui-error-light), var(--ui-shadow); }
+.sy-root .dr-note.selected { box-shadow: 0 0 0 2px var(--ui-pill); }
+.sy-root .dr-wire.selected { stroke: var(--ui-pill); }
+.sy-root .dr-marquee { border-color: var(--ui-pill); background: rgba(255, 255, 255, 0.05); }
+/* A broken card's edge is dashed as well as orange: read without the colour. */
+.sy-root .dr-card.has-error { outline: 1.5px dashed var(--ui-error); outline-offset: 3px; }
+
+/* ---- value pins: their type's colour ---- */
+
+.v-number { --fam: var(--sy-t-number); }
+.v-text   { --fam: var(--sy-t-text); }
+.v-bool   { --fam: var(--sy-t-bool); }
+.v-place  { --fam: var(--sy-t-place); }
+.v-person { --fam: var(--sy-t-person); }
+.v-thing  { --fam: var(--sy-t-thing); }
+.v-any    { --fam: var(--sy-t-any); }
+
+/* A value pin is a rounded square (an exec pin a circle), in its colour. */
+.dr-pin.val i { border-radius: 3px; border-color: var(--fam); }
+.dr-pin.val.wired i { background: var(--fam); }
+.dr-pin.val span { color: var(--ui-text-mid); }
+.dr-pin.val.tone-bad i { border-color: var(--ui-error); border-style: dashed; }
+.dr-pin.val.tone-bad span { color: var(--ui-error); }
+
+/* An unwired input's typed-in value, beside its name. */
+.dr-const {
+    flex: none;
+    max-width: 78px;
+    margin: 0 8px 0 -4px;
+    padding: 0 5px;
+    border-radius: var(--ui-radius-xs);
+    background: var(--ui-surface-light);
+    color: var(--ui-text);
+    font-style: normal;
+    font-size: 10.5px;
+    line-height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dr-far .dr-const { visibility: hidden; }
+
+.dr-wire.val { stroke: var(--fam); stroke-width: 2.4px; opacity: 0.9; }
+.dr-wire.val.temp { stroke: var(--fam); opacity: 0.7; }
+.sy-root .dr-wire.val.selected { stroke: var(--ui-pill); stroke-width: 3px; opacity: 1; }
+.dr-wire.val.ran { stroke: var(--ui-success); opacity: 1; }
+.dr-wire.val.pulse { stroke: var(--ui-success); opacity: 1; }
+
+/* While a wire is dragged (canvas.js markTargets): where it can go (the white "this one" ring: never
+   the red, which reads as wrong here), and where it cannot (dimmed). */
+.dr-wiring .dr-pin.cannot { opacity: 0.28; }
+.dr-wiring .dr-pin.can i { box-shadow: 0 0 0 2px var(--ui-pill); }
+
+/* ---- the column ---- */
+
+.sy-col .dr-title { color: var(--ui-pill); }
+.sy-testing { color: var(--ui-success); font-weight: var(--ui-fw-semibold); }
+.sy-mono { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.sy-place-btns { margin: 6px 0 4px; }
+.sy-place-btns .dr-btn { padding: 6px 12px; font-size: 12px; }
+.dr-label.link, .dr-where.link { cursor: pointer; }
+.dr-label.link:hover { color: var(--ui-text); }
+.dr-where.link:hover { border-color: var(--ui-border-hover); }
+
+/* A card that may move money or items: its word in the palette. */
+.sy-power {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-surface-medium);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-style: normal;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+.sy-power-hint { color: var(--ui-text); }
+
+/* A value, a name: the card's Gives and its last values. */
+.sy-val {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ui-sp-4);
+    padding: 5px 0;
+    border-top: 1px solid var(--ui-border);
+    font-size: 12.5px;
+}
+.dr-title2 + .sy-val { border-top: 0; }
+.sy-val span { color: var(--ui-text-mid); display: flex; align-items: center; gap: 6px; }
+.sy-val b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); text-align: right; word-break: break-word; }
+.sy-fam { width: 9px; height: 9px; border-radius: 3px; background: var(--fam); display: inline-block; }
+
+/* ---- states keep a glyph, not only a colour: ✕ an error, ! a warning ---- */
+
+.sy-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--ui-error);
+    color: var(--ui-pill-ink);
+    font-style: normal;
+    font-size: 9px;
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    vertical-align: -2px;
+}
+.sy-glyph::before { content: '\2715'; }
+.dr-prob.warn .sy-glyph,
+.dr-sum.warn .sy-glyph { background: var(--ui-warning); }
+.dr-prob.warn .sy-glyph::before,
+.dr-sum.warn .sy-glyph::before { content: '!'; font-size: 10px; }
+/* A problem row's disc is director.css's .dr-prob::before; a .sy-glyph inside one would be a second. */
+.dr-prob > .sy-glyph { display: none; }
+.sy-root .dr-badge { color: var(--ui-pill-ink); }
+
+/* ---- the test's log ---- */
+
+.sy-logbar { display: flex; gap: var(--ui-sp-3); margin: 6px 0; }
+.sy-logbar .sy-log-level { flex: 0 0 120px; }
+.sy-log { max-height: 360px; overflow-y: auto; margin: 4px 0; }
+.sy-log-line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-sp-3);
+    padding: 4px 6px;
+    border-radius: var(--ui-radius-xs);
+    font-size: var(--ui-fs-sm);
+    line-height: 1.45;
+    color: var(--ui-text-mid);
+}
+.sy-log-line b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
+.sy-log-line.link { cursor: pointer; }
+.sy-log-line.link:hover { background: var(--ui-surface-hover); }
+.sy-log-line.error { color: var(--ui-error); background: var(--ui-error-subtle); }
+.sy-log-line.warn { color: var(--ui-warning); }
+.sy-log-at { flex: none; width: 34px; color: var(--ui-text-label); font-variant-numeric: tabular-nums; }
+
+/* ---- a pin's last value, on hover (a test) ---- */
+
+.sy-tip {
+    position: fixed;
+    z-index: 9565;
+    display: none;
+    max-width: 320px;
+    padding: 5px 9px;
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+    color: var(--ui-text);
+    font-size: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

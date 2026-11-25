@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spur_phone</title>
+<!-- In-game NUI page: transparent, no page chrome. The pocket notebook starts put away; client/main.lua opens it.
+     RedM (spur_phone, 24 Nov 2026): flat HTML and CSS (core/notebook.js), no three.js, no web fonts: it works offline. -->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  #os-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+</style>
+<!-- spur_core's page tools: tools and tests read and press this page by its words, and its errors are kept for them
+     (spur_core's js/page-tools.js; lib/satellite.lua passes the asks in). -->
+<script src="https://cfx-nui-spur_core/html/js/page-tools.js"></script>
+</head>
+<body>
+<div id="os-layer"></div>
+<script type="module">
+import { boot } from './core/main.js';
+window.whipPhone = boot();
+</script>
+</body>
+</html>

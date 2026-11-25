@@ -1,0 +1,32 @@
+# SPUR: example server.cfg for RedM. Don't put a semicolon in a comment: FXServer ends the command there.
+
+endpoint_add_tcp "0.0.0.0:30120"
+endpoint_add_udp "0.0.0.0:30120"
+
+set gamename rdr3
+sv_maxclients 32
+sv_hostname "My SPUR server"
+sets sv_projectName "My SPUR server"
+sets sv_projectDesc "RedM on SPUR"
+sets tags "spur, roleplay"
+sets locale "en-US"
+
+# Your key from portal.cfx.re
+sv_licenseKey "changeme"
+
+# Your database. For a password with @ : / ? # in it use the key=value form (spur_core/README.md).
+set mysql_connection_string "mysql://user:password@localhost/spur?charset=utf8mb4"
+
+ensure oxmysql
+ensure spur_core
+ensure spur_chat
+ensure spur_loadingscreen
+ensure spur_gunny
+ensure spur_rope
+ensure spur_voice
+ensure spur_phone
+# ensure spur_test
+
+add_ace group.admin whip.devtools allow
+add_ace group.admin command allow
+# add_principal identifier.license:YOUR_LICENSE group.admin

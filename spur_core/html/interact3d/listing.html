@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>sign listings</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   FOR-SALE SIGN LISTINGS — printed on a sign post's board
+
+   A DUI texture (client/property_listing.lua), one listing per cell. Lua draws each cell flat on its
+   board's blank panel (Config.PropertySignPosts), so this page paints what looks printed there: the
+   sign's own ink on the panel the board already has (transparent here), a line each, top left down.
+   The bottom is left clear: the sign's prompt stands there at the left, "Purchase?" and then how to pay
+   (client/properties.lua), inside this padding (SAFE_X, client/property_listing.lua).
+
+   A cell is CELL_W wide; a listing fills the top CELL_W / aspect of it, its panel's own shape, so
+   nothing is stretched. Lua samples exactly that much. CEF 103: no :has, no color-mix.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+#atlas { position: relative; }
+
+.cell {
+    position: absolute;
+    overflow: hidden;
+}
+
+/* The panel itself: the board's blank box, as tall as its shape says. Its safe zone is the padding. */
+.listing {
+    --ink: #11461f;
+    --accent: #e9b33a;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 46px 56px 0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.listing[hidden] { display: none; }
+
+/* One line: its icon, then its words, on one line whatever their length. */
+.line {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-width: 0;
+    font-size: 50px;
+    font-weight: 650;
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+}
+
+.icon {
+    flex: none;
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+}
+
+.icon svg { width: 100%; height: 100%; display: block; }
+
+.words {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Its name leads, a step up; its price closes, in the ink with the accent under it. */
+.line.name { font-family: 'Bricolage Grotesque', 'Barlow', sans-serif; font-size: 60px; font-weight: 800; letter-spacing: -0.015em; }
+
+.line.price .words {
+    font-weight: 800;
+    padding-bottom: 4px;
+    border-bottom: 7px solid var(--accent);
+}
+
+.line.muted { font-size: 42px; font-weight: 600; opacity: 0.62; }
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script src="../js/glyphs.js"></script>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var CELL_W = Number(q.get('w')) || 1024;
+    var CELL_H = Number(q.get('h')) || 576;
+    var COLS = Number(q.get('cols')) || 2;
+    var CELLS = Number(q.get('cells')) || 4;
+    var GLYPHS = (window.WhipGlyphs && window.WhipGlyphs.glyphs) || {};
+
+    var atlas = document.getElementById('atlas');
+    atlas.style.width = (CELL_W * COLS) + 'px';
+    atlas.style.height = (CELL_H * Math.ceil(CELLS / COLS)) + 'px';
+
+    var cells = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.left = ((i % COLS) * CELL_W) + 'px';
+        cell.style.top = (Math.floor(i / COLS) * CELL_H) + 'px';
+        cell.style.width = CELL_W + 'px';
+        cell.style.height = CELL_H + 'px';
+        var listing = document.createElement('div');
+        listing.className = 'listing';
+        listing.hidden = true;
+        cell.appendChild(listing);
+        atlas.appendChild(cell);
+        cells.push(listing);
+    }
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;   // text, never markup: a property's name is an admin's own
+        return e;
+    }
+
+    function line(cls, glyph, text) {
+        var row = el('div', 'line' + (cls ? ' ' + cls : ''));
+        var icon = el('div', 'icon');
+        if (glyph && GLYPHS[glyph]) icon.innerHTML = GLYPHS[glyph];   // whip's own glyphs, not the listing's
+        row.appendChild(icon);
+        row.appendChild(el('div', 'words', text));
+        return row;
+    }
+
+    function money(n) {
+        n = Math.floor(Number(n) || 0);
+        return '$' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    var HEX = /^#[0-9a-fA-F]{6}$/;
+
+    /* { name, bays, rooms, price, closed, ink, accent, aspect } */
+    function paint(box, d) {
+        box.textContent = '';
+        var aspect = Number(d.aspect) || 1.8;
+        box.style.height = Math.min(CELL_H, Math.round(CELL_W / aspect)) + 'px';
+        box.style.setProperty('--ink', HEX.test(d.ink || '') ? d.ink : '#11461f');
+        box.style.setProperty('--accent', HEX.test(d.accent || '') ? d.accent : '#e9b33a');
+
+        var price = Math.floor(Number(d.price) || 0);
+        // The listing, top left down: its name, garage bays, rooms (when known), and its price last.
+        box.appendChild(line('name', 'house', String(d.name || 'Property')));
+        var bays = Math.floor(Number(d.bays) || 0);
+        box.appendChild(line('', 'garage', bays > 0 ? bays + ' garage bay' + (bays === 1 ? '' : 's') : 'No garage'));
+        var rooms = Math.floor(Number(d.rooms) || 0);
+        if (rooms > 0) box.appendChild(line('', 'house_door', rooms + ' room' + (rooms === 1 ? '' : 's')));
+        // No price given at all (the wizard's preview, before its price is set): no price line.
+        if (d.closed) box.appendChild(line('muted', 'lock', 'Closed'));
+        else if (d.price == null) { /* nothing yet */ }
+        else if (price > 0) box.appendChild(line('price', 'dollar', money(price)));
+        else box.appendChild(line('muted', 'dollar', 'Not for sale'));
+        box.hidden = false;
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.cell !== 'number') return;
+        var box = cells[d.cell];
+        if (!box) return;
+        if (d.clear) { box.hidden = true; box.textContent = ''; return; }
+        if (d.listing) paint(box, d.listing);
+    });
+})();
+</script>
+</body>
+</html>

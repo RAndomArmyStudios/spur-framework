@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>spur_core</title>
+<link rel="stylesheet" href="css/fonts.css"> <!-- the typefaces (Barlow, Bricolage Grotesque); DUI pages load it too -->
+<link rel="stylesheet" href="css/base.css"> <!-- tokens + element base; THE theme contract — before every feature sheet -->
+<link rel="stylesheet" href="css/whip-panel.css"> <!-- /whip shell + the shared wp-* admin vocabulary -->
+<link rel="stylesheet" href="css/characters.css">
+<link rel="stylesheet" href="css/curtain.css">
+<link rel="stylesheet" href="css/viewfinder.css"> <!-- the camera item's overlay (js/viewfinder.js) -->
+<link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="css/creator.css">
+<!-- css/bank.css is gone with the bank panel it styled — see the note further down. -->
+<link rel="stylesheet" href="css/inventory.css">
+<link rel="stylesheet" href="css/item-notices.css"> <!-- the box when an item comes or goes (js/item-notices.js) -->
+<link rel="stylesheet" href="css/interact.css">
+<link rel="stylesheet" href="css/aim-dot.css"> <!-- the aim dot, whip's crosshair (js/aim-dot.js) -->
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/death.css">
+<link rel="stylesheet" href="css/event-monitor.css">
+<link rel="stylesheet" href="css/phone-records.css"> <!-- /whip Players → Phones: a number's records -->
+<link rel="stylesheet" href="css/shops.css">
+<link rel="stylesheet" href="css/status-hud.css">
+<link rel="stylesheet" href="css/composer.css"> <!-- AFTER status-hud.css: it fills in the capsule's composer state and relies on .sh-capsule already being set -->
+<link rel="stylesheet" href="css/hud-skin.css"> <!-- AFTER both: Config.HudSkin 'black', scoped to #status-hud.skin-black -->
+<link rel="stylesheet" href="css/vehicle-dial.css">
+<link rel="stylesheet" href="css/vehicle-controls.css">
+<link rel="stylesheet" href="css/pad-debug.css">
+<link rel="stylesheet" href="css/radar-debug.css">
+<link rel="stylesheet" href="css/debug-panel.css">
+<link rel="stylesheet" href="css/dev-menu.css">
+<link rel="stylesheet" href="css/coords.css">
+<link rel="stylesheet" href="css/cam-editor.css"> <!-- the Camera Creator's timeline (tools/camera.lua) -->
+<link rel="stylesheet" href="css/zones.css">
+<link rel="stylesheet" href="css/doors.css">
+<link rel="stylesheet" href="css/editor-hud.css"> <!-- AFTER doors.css: the generic editor HUD wears the door editor's .de-* look -->
+<!-- The object viewer draws in the game now, from a DUI (html/interact3d/objview.html, tools/objectviewer.lua). -->
+<link rel="stylesheet" href="css/furnisher.css"> <!-- the property furniture editor -->
+<link rel="stylesheet" href="css/property-themes.css"> <!-- a home's Theme, from its sign (js/property-themes.js) -->
+<link rel="stylesheet" href="css/emotes.css"> <!-- the emote menu -->
+<link rel="stylesheet" href="css/director.css"> <!-- the Director's hub and blueprint editor -->
+<link rel="stylesheet" href="css/systems.css"> <!-- the Systems Creator's: the Director's, in red (after it) -->
+<link rel="stylesheet" href="css/ov-panel.css"> <!-- the object viewer's options and Move's bar (js/ov-panel.js); after director.css, whose classes it wears -->
+<link rel="stylesheet" href="css/hand-edit.css"> <!-- the hand position editor's item list (js/hand-edit.js); after director.css, whose classes it wears -->
+<link rel="stylesheet" href="css/pause.css"> <!-- whip's pause menu and its map (js/pause.js) -->
+<link rel="stylesheet" href="css/minimap.css"> <!-- whip's minimap, the 3D map in GTA's radar's place (js/minimap.js) -->
+<link rel="stylesheet" href="css/pad-layout.css"> <!-- its Controller screen (js/pad-layout.js) -->
+<link rel="stylesheet" href="css/settings-page.css"> <!-- its Settings page: GTA's settings and the server's (js/settings-page.js) -->
+<link rel="stylesheet" href="css/pad-keyboard.css"> <!-- typing on a controller (js/pad-keyboard.js) -->
+<link rel="stylesheet" href="css/pad-cursor.css"> <!-- a mouse on a controller: the Director, /whip (js/pad-cursor.js) -->
+<!-- What this browser can do (window.WhipCaps, and caps-* classes on <html>): FiveM's Chromium 103 or
+     144. A classic script in <head>, so the classes are there before the first paint. See js/caps.js. -->
+<script src="js/caps.js"></script>
+</head>
+<body>
+
+<!-- The dim behind the inventory. At the very back of the page, in front of the game. See #inv-wash
+     in css/inventory.css. -->
+<div id="inv-wash"></div>
+
+<!-- The script-owned blackout. Lua covers it, waits to be told it is genuinely black, moves
+     the world about behind it, and lifts it again. See css/curtain.css and js/curtain.js. -->
+<div id="curtain"></div>
+<!-- ...and whip's logo over it, bottom right, while the black is a load (js/curtain.js builds it). -->
+<div id="loadLogo" aria-hidden="true"></div>
+
+<!-- The death screen (client/death.lua → js/death.js, css/death.css): the red band at the bottom
+     with the countdown, then "Hold E to respawn" (E: the Interact key, which death.js sets), and the key that hides it, bottom right. Under
+     the blackout (#death-overlay), which covers it until the player wakes. Both keys are drawn for
+     both devices; html[data-input] picks which shows. -->
+<div id="death-screen" aria-hidden="true">
+    <div class="ds-band">
+        <div class="ds-title">You are dead</div>
+        <div class="ds-row ds-count">You can respawn in <b class="ds-left">10</b> <span class="ds-unit">seconds</span></div>
+        <div class="ds-row ds-hold">
+            <span class="ds-key ds-kbm">E</span><img class="ds-key ds-pad" src="img/pad/a.svg" alt="A">
+            <span class="ds-hold-label">Hold to respawn</span>
+        </div>
+        <div class="ds-row ds-held"></div>
+        <div class="ds-track"><div class="ds-fill"></div></div>
+    </div>
+    <div class="ds-toggle">
+        <span class="ds-key ds-kbm">H</span><img class="ds-key ds-pad" src="img/pad/y.svg" alt="Y">
+        <span class="ds-toggle-label">Hide</span>
+    </div>
+</div>
+<div id="death-overlay"></div>
+<div id="interact-layer"></div>
+
+<!-- The camera item's viewfinder (client/items/camera.lua → js/viewfinder.js, css/viewfinder.css): a camcorder's
+     frame over the game while the player looks through a camera. Shown through the clean screen (css/ui.css). -->
+<div id="viewfinder" aria-hidden="true">
+    <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+    <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+    <div class="vf-focus">
+        <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+        <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+        <div class="vf-cross"></div>
+    </div>
+    <div class="vf-read tl"><span class="vf-dot"></span><span>REC</span></div>
+    <div class="vf-read tr">
+        <svg class="vf-battery" viewBox="0 0 26 10">
+            <rect class="vf-nub" x="0" y="3" width="2" height="4" rx="0.5"/>
+            <rect x="2.75" y="0.75" width="22.5" height="8.5" rx="1.8" stroke-width="1.5"/>
+            <rect class="vf-charge" x="8.5" y="2.6" width="15" height="4.8" rx="0.7"/>
+        </svg>
+    </div>
+    <div class="vf-read bl"><span class="vf-bar"></span><span class="vf-time">00:00:00:00</span></div>
+    <div class="vf-read br"><span>30 FPS</span><span class="vf-rule"></span><span>4K</span></div>
+</div>
+
+<!-- ============================
+     LANDING PAGE
+     ============================ -->
+<!-- Between the loading screen and the character screen, on joining (client/landing.lua): the
+     whip logo over one camera shot, and "Press any button to continue". css/landing.css,
+     js/landing.js.
+
+     THE LOGO IS THE LOADING SCREEN'S (spur_loadingscreen/html/index.html), same shapes, same
+     white-on-black look, the same light running down the I. Copied rather than shared because
+     the loading screen is up before spur_core has downloaded. The ids are ld-prefixed: this
+     page has plenty of other SVG. -->
+<div id="landing" aria-hidden="true">
+    <!-- RedM (spur_core, 23 Nov 2026): the SPUR wordmark, built by js/landing.js (logoMarkup). -->
+    <div class="ld-logo" role="img" aria-label="spur"></div>
+    <div class="ld-prompt">Press any button to continue</div>
+</div>
+
+<!-- ============================
+     CHARACTER SELECT SCREEN
+     ============================ -->
+<!-- The character screen is the WORLD. This layer is transparent: every character has their
+     own hero shot somewhere in the map, and the only thing drawn over it is the NAME STRIP along
+     the bottom left. Clicking a name travels to that character's shot.
+
+     Built by js/characters.js: the names, then the Play button with Delete under it and, beside
+     it, when that character was last played. The names are buttons; the actions are a separate
+     row, so no button ever sits inside another. -->
+<div id="app">
+    <div class="cs-scrim"></div>
+    <div id="cs-bottom" class="cs-bottom">
+        <div id="cs-names" class="cs-names" role="group" aria-label="Characters"></div>
+        <div class="cs-foot">
+            <div id="cs-actions" class="cs-actions"></div>
+            <div id="cs-meta" class="cs-meta"></div>
+        </div>
+    </div>
+
+    <div id="cs-modal" class="cs-modal">
+        <!-- The LAST of three steps to delete a character: Delete, then "Yes,
+             delete" under the names, then this — type the name, and hold the button for ten
+             seconds. js/characters.js. -->
+        <div id="delete-form" class="create-form delete-form" role="dialog" aria-labelledby="del-title">
+            <div class="form-title" id="del-title">Delete Character</div>
+            <p class="del-text">Type <strong id="del-name"></strong> below, then hold the button for 10 seconds. This cannot be undone.</p>
+            <div class="form-group">
+                <label for="inp-del-name">Character name</label>
+                <input type="text" id="inp-del-name" maxlength="61" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="form-actions">
+                <button type="button" id="del-hold" class="del-hold" disabled>
+                    <span class="del-hold-fill"></span>
+                    <span class="del-hold-label" id="del-hold-label">Hold to delete</span>
+                </button>
+                <button type="button" class="btn-cancel" data-action="closeDeleteForm">Keep</button>
+            </div>
+        </div>
+
+        <div id="create-form" class="create-form">
+            <div class="form-title">New Character</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="inp-first" placeholder="John" maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="inp-last" placeholder="Doe" maxlength="30">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="inp-dob" min="1800-01-01" max="2008-01-01"> <!-- RedM (spur_core, 23 Nov 2026): min, for 1800s births (the server takes 1800-2100) -->
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="inp-gender">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-submit" data-action="submitCreate">Create Character</button>
+                <button class="btn-cancel" data-action="toggleCreateForm">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================
+     CHARACTER CREATOR
+     ============================ -->
+<!-- The creator is the WORLD, like the character screen above it: the ped stands in the
+     game scene and this layer floats controls around it.
+     Left: ONE wide panel, the main menu's: the title, then the groups (Face / Apparel /
+     Accessories / Tattoos / Outfits) as menu words, the group's categories as the Director's tabs, then the
+     band (#cr-options: the picked item's picture and everything it can be set to), then the
+     card grid. Right: an invisible capture layer — dragging it orbits the camera — and the
+     character standing in it (the camera is told where it is: creator.js reportStage). All
+     repeated DOM (groups, tabs, band, cards) is built by creator.js.
+
+     .cr-scale is the ONE scaled box, and it is scaled with a transform rather than `zoom`.
+     See creator.css — zoom scales what is painted but not what is clicked, which left only
+     the top-left corner of this screen usable. -->
+<div id="creator">
+    <div class="cr-scale">
+        <div class="cr-left">
+            <div class="cr-head">
+                <div class="cr-title">
+                    <div class="cr-title-name">Character Creator</div>
+                    <div class="cr-title-sub">Appearance</div>
+                </div>
+                <div id="cr-groups"></div>
+            </div>
+            <div id="cr-rail"></div>
+            <div id="cr-subtabs"></div>
+            <div id="cr-options"></div>
+            <div id="cr-grid"></div>
+
+            <!-- The panel's foot: the view controls on one line, so the world on
+                 the right shows only the character and Cancel / Save. -->
+            <div class="cr-left-foot">
+                <!-- Control legend. The mouse is authored SVG so its buttons can light
+                     up as they are used: creator.js toggles .on for whichever input is
+                     live. Shapes are split into fills (the highlights) and lines (the
+                     outline) so the highlight sits under the linework. -->
+                <div class="cr-hints cr-mouse-hints">
+                    <svg class="cr-mouse" viewBox="0 0 26 38" aria-hidden="true">
+                        <path class="cr-m-fill cr-m-lmb" d="M13 2.8 H10 A7.2 7.2 0 0 0 2.8 10 V16.4 H13 Z"/>
+                        <path class="cr-m-fill cr-m-rmb" d="M13 2.8 H16 A7.2 7.2 0 0 1 23.2 10 V16.4 H13 Z"/>
+                        <rect class="cr-m-fill cr-m-wheel" x="11" y="6.6" width="4" height="8" rx="2"/>
+                        <rect class="cr-m-line" x="2.8" y="2.8" width="20.4" height="32.4" rx="10.2"/>
+                        <path class="cr-m-line" d="M13 2.8 V6.6 M13 14.6 V16.4 M2.8 16.4 H23.2"/>
+                        <rect class="cr-m-line" x="11" y="6.6" width="4" height="8" rx="2"/>
+                    </svg>
+                    <span class="cr-hint"><b>Drag</b> Height</span>
+                    <span class="cr-hint"><b>Right-drag</b> Orbit</span>
+                    <span class="cr-hint"><b>Hold + scroll</b> Zoom</span>
+                    <span class="cr-hint"><span class="cr-key">Esc</span> <span id="cr-esc-hint">Cancel</span></span>
+                </div>
+                <!-- The same line on a controller: the buttons, built by creator.js
+                     (buildPadLegend). The CSS shows one legend or the other by html[data-input]. -->
+                <div class="cr-hints cr-pad-hints" id="cr-pad-hints"></div>
+
+                <!-- Undress, at the end of the line: one button, all the clothes off or all back on, to
+                     see the body under them. Preview only: Save keeps the clothes. Built by creator.js
+                     (buildUndress); empty for a body it has no underwear for. -->
+                <div id="cr-undress" class="cr-undress"></div>
+            </div>
+        </div>
+
+        <div id="cr-stage"></div>
+
+        <div class="cr-footer">
+            <!-- A store's checkout (creator.js, EditAppearance's methods): the total, and how to pay -->
+            <div id="cr-pay" class="cr-pay" hidden>
+                <div class="cr-pay-total"><span>Total</span><b id="cr-pay-total">$0</b></div>
+                <div class="cr-pay-tiles">
+                    <button class="cr-btn cr-pay-tile" data-action="pay" data-method="cash"><b>Cash</b><span id="cr-pay-cash">From your pockets</span></button>
+                    <button class="cr-btn cr-pay-tile" data-action="pay" data-method="bank"><b>Bank</b><span id="cr-pay-bank">Your default account</span></button>
+                </div>
+            </div>
+            <div class="cr-btns">
+                <button id="cr-cancel" class="cr-btn" data-action="cancel">Cancel</button>
+                <button id="cr-save" class="cr-btn cr-btn-primary" data-action="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================
+     BANK UI PANEL — REMOVED
+     ============================
+     The full-screen bank panel lived here. Banking is now an ATM you walk up to
+     (client/atm.lua) plus the phone's bank app, and nothing ever sent openBank
+     again — so the markup, css/bank.css and js/bank.js all went together.
+
+     WORTH KNOWING IF THIS EVER COMES BACK: the ONLY thing hiding this block was
+     `display: none` in bank.css. Deleting that stylesheet on its own left the
+     whole panel rendered, unstyled, full screen, over the game — a silent 404
+     with no error anywhere. A hidden block and its stylesheet are one thing.
+     ============================ -->
+
+<!-- ============================
+     INVENTORY UI
+     ============================ -->
+<div id="inv-overlay">
+
+    <div class="inv-container">
+
+    <div class="inv-wrapper">
+
+        <!-- ACCESSORY RAIL — 1x5 vertical slots, the first of the three columns; it inherits the
+             container's zoom like everything else. -->
+        <div class="inv-accessory-panel" id="inv-accessory-panel">
+            <div class="inv-accessory-grid" id="inv-accessory-grid">
+                <!-- 5 slots rendered by inventory.js -->
+            </div>
+        </div>
+
+        <!-- The ped's reserved column. Zero-width now; see .inv-col-left. -->
+        <div class="inv-col-left"></div>
+
+        <!-- Hidden elements for JS compatibility -->
+        <div style="display:none">
+            <div id="inv-name"></div>
+            <div id="inv-charid"></div>
+            <div id="inv-account"></div>
+        </div>
+
+        <!-- CENTER COLUMN (Player) -->
+        <div class="inv-col-center">
+
+            <div class="inv-panel" id="inv-player-panel">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div><span id="inv-player-title">Player</span></div>
+                    </div>
+                    <!-- NOTICES WHILE THE INVENTORY IS OPEN, between the name and the weight: the player
+                         capsule (their home) is hidden behind the inventory. The shop screen's talk row
+                         (css/shops.css), its disc a notice's coloured mark. js/inv-notice.js runs it. -->
+                    <div class="inv-notice">
+                        <div class="inv-talk-row inv-notice-row" id="inv-notice-row" role="status" aria-live="polite">
+                            <span class="inv-talk-face"><span class="inv-talk-pic inv-notice-mark"></span></span>
+                            <span class="inv-talk-text"></span>
+                        </div>
+                        <span class="inv-talk-measure" id="inv-notice-measure" aria-hidden="true"></span>
+                    </div>
+                    <!-- The weight gauge: the figure over a bar; renderWeights fills both. -->
+                    <div class="inv-weight" id="inv-player-weight-box">
+                        <div class="inv-panel-subtitle" id="inv-player-weight">0 / 80 kg</div>
+                        <div class="inv-weight-bar"><div class="inv-weight-fill" id="inv-player-weight-fill"></div></div>
+                    </div>
+                </div>
+                <div class="inv-slots-grid" id="inv-player-grid">
+                    <!-- Slots rendered dynamically by inventory.js -->
+                </div>
+            </div>
+
+            <!-- THE SHOPFRONT: while a shop is open its goods take the pockets'
+                 place, one tile per item, and the basket takes the right-hand column. The pockets are
+                 still there behind the scenes — a purchase lands in them. The tabs are the shop's
+                 categories; shops.js draws all of it. -->
+            <div class="inv-panel inv-shopfront" id="inv-shopfront" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>
+                            <span id="inv-shop-name">Shop</span>
+                            <div class="inv-panel-subtitle" id="inv-shop-sub"></div>
+                        </div>
+                    </div>
+                    <!-- SHOP TALK: the /me lines of this visit, one row each for the
+                         shopper (top) and the keeper (under it), each a capsule like the player HUD's: the
+                         face always there, and that one's line unfolding beside it as a notice does from
+                         its disc. The two talk independently. js/shop-talk.js runs it; the server sends
+                         the lines (server/shop_talk.lua). -->
+                    <div class="inv-shop-talk" id="inv-shop-talk" hidden>
+                        <div class="inv-talk-stack">
+                            <div class="inv-talk-row" id="inv-talk-me">
+                                <!-- inv-talk-mark: a notice's disc over the face, for its time (shop-talk.js) -->
+                                <span class="inv-talk-face"><span class="inv-talk-pic"></span><span class="inv-talk-pic inv-talk-mark" aria-hidden="true"></span></span>
+                                <span class="inv-talk-text" aria-live="polite"></span>
+                            </div>
+                            <div class="inv-talk-row" id="inv-talk-keeper">
+                                <span class="inv-talk-face"><span class="inv-talk-pic"></span></span>
+                                <span class="inv-talk-text" aria-live="polite"></span>
+                            </div>
+                        </div>
+                        <span class="inv-talk-measure" id="inv-talk-measure" aria-hidden="true"></span>
+                    </div>
+                    <div class="inv-shop-head-right">
+                        <!-- For the shop's managers and whip's admins only (the server says who). -->
+                        <button type="button" class="inv-shop-edit-btn inv-pad-btn" id="inv-shop-edit-btn" style="display:none;">Edit Shelf</button>
+                        <label class="inv-shop-search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                            <input type="text" id="inv-shop-search" placeholder="Search the shop" aria-label="Search the shop" autocomplete="off" spellcheck="false">
+                        </label>
+                    </div>
+                </div>
+                <!-- The shop's categories as chips (each with how many it holds), and the sort. -->
+                <div class="inv-shop-bar">
+                    <div class="inv-shop-tabs" id="inv-shop-tabs"></div>
+                    <div class="inv-shop-sort">
+                        <span class="inv-shop-sort-label">Sort</span>
+                        <div class="inv-shop-sort-opts" id="inv-shop-sort">
+                            <button type="button" class="inv-sort-opt inv-pad-btn on" id="inv-sort-shelf" data-sort="shelf">Shelf order</button>
+                            <button type="button" class="inv-sort-opt inv-pad-btn" id="inv-sort-price" data-sort="price">Price</button>
+                            <button type="button" class="inv-sort-opt inv-pad-btn" id="inv-sort-az" data-sort="az">A–Z</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-slots-grid" id="inv-shop-grid"></div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN — the panel STACK. Nearby, plus whatever else the player has open.
+
+             #inv-panel-stack IS A WRAPPER RATHER THAN THE COLUMN ITSELF: it is absolutely
+             positioned (see inventory.css), so it adds nothing to the layout's height. The column
+             stretches to the carried grid's height and the stack scrolls inside exactly that.
+             The children are not re-indented into it. Panels are found by id (PANEL_IDS,
+             js/inventory.js); CSS must use descendant, not child, selectors here. -->
+        <div class="inv-col-right">
+        <div id="inv-panel-stack">
+            <div class="inv-panel inv-ground-panel" id="inv-ground-panel">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <!-- #inv-ground-info stays in the DOM but hidden: renderGroundGrid still
+                             writes the count into it, and deleting the element would throw. -->
+                        <div>Nearby<div class="inv-panel-subtitle" id="inv-ground-info" style="display:none;">0 items</div></div>
+                    </div>
+                </div>
+                <div class="inv-ground-scroll">
+                    <div class="inv-slots-grid" id="inv-ground-grid">
+                        <!-- Slots rendered dynamically by inventory.js -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTAINER PANEL (hidden by default, replaces ground when container open) -->
+            <div class="inv-panel inv-container-panel" id="inv-container-panel" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>
+                            <span id="inv-container-name">Stash</span>
+                            <div class="inv-panel-subtitle" id="inv-container-subname"></div>
+                            <div class="inv-panel-subtitle" id="inv-container-info">0 / 100 kg</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-container-scroll">
+                    <div class="inv-slots-grid" id="inv-container-grid">
+                        <!-- Slots rendered dynamically by inventory.js -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- IGNITION PANEL (hidden by default, shows when driver opens inventory) -->
+            <div class="inv-panel inv-ignition-panel" id="inv-ignition-panel" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>Ignition</div>
+                    </div>
+                </div>
+                <div class="inv-ignition-slot-wrapper">
+                    <div class="inv-slots-grid" id="inv-ignition-grid"></div>
+                </div>
+            </div>
+
+            <!-- PANELS FROM OTHER RESOURCES (wallets, duffle bags, benches) ARE CLONED FROM A
+                 TEMPLATE, one per open panel, and appended here by renderPanelStack().
+
+                 THERE WAS ONE STATIC #inv-external-panel HERE and that was the ceiling: one
+                 element means one panel, so a second wallet had nowhere to draw and the server
+                 closed the first to make room. A <template> has no such limit.
+
+                 NOTHING INSIDE CARRIES AN id. Ids are what made the old markup unclonable —
+                 twenty copies of #inv-external-grid is invalid and getElementById would return
+                 whichever came first, silently drawing every wallet into one grid. The clone's
+                 parts are found by CLASS within the panel element instead, and the panel itself
+                 is keyed by data-panel-key. -->
+            <template id="inv-panel-template">
+                <div class="inv-panel inv-external-panel">
+                    <div class="inv-panel-header">
+                        <div class="inv-panel-title">
+                            <div class="inv-external-label">Panel</div>
+                            <!-- Shown by CSS when the panel root has .inv-external-readonly. -->
+                            <span class="inv-readonly-badge">Read only</span>
+                        </div>
+                    </div>
+                    <div class="inv-external-slot-wrapper">
+                        <div class="inv-slots-grid"></div>
+                    </div>
+                    <div class="inv-panel-subtitle inv-external-weight-info" style="display:none;"></div>
+                </div>
+            </template>
+
+            <!-- PLAYER INVENTORY PANEL (hidden by default, replaces ground when inspecting another player) -->
+            <div class="inv-panel inv-player-inv-panel" id="inv-player-inv-panel" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>
+                            <span id="inv-player-inv-name">Player</span>
+                            <div class="inv-panel-subtitle" id="inv-player-inv-info">0 / 80 kg</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-player-inv-scroll">
+                    <div class="inv-slots-grid" id="inv-player-inv-grid"></div>
+                </div>
+            </div>
+
+            <!-- THE BASKET: the whole right-hand column while a shop is open. A list of
+                 lines — each with its price, minus / plus and a remove — over the till: whether it
+                 will all fit in the pockets (they are hidden while shopping), the total, how to pay,
+                 and Buy. shops.js draws the lines; the server decides every one of them. -->
+            <div class="inv-panel inv-basket-panel" id="inv-basket-panel" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>
+                            <span>Basket</span>
+                            <div class="inv-panel-subtitle" id="inv-basket-count">Empty</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-basket-lines" id="inv-basket-lines"></div>
+                <div class="inv-basket-footer" id="inv-basket-footer">
+                    <div class="inv-basket-carry" id="inv-basket-carry">
+                        <div class="inv-basket-row">
+                            <span class="inv-basket-label">Carrying after you buy</span>
+                            <span class="inv-basket-carry-figure" id="inv-basket-carry-figure">0 / 0 kg</span>
+                        </div>
+                        <div class="inv-weight-bar"><div class="inv-weight-fill" id="inv-basket-carry-fill"></div></div>
+                        <div class="inv-basket-warn" id="inv-basket-warn"></div>
+                    </div>
+                    <div class="inv-basket-row inv-basket-total-row">
+                        <span class="inv-basket-label">Total</span>
+                        <span class="inv-basket-total" id="inv-basket-total">$0</span>
+                    </div>
+                    <div class="inv-basket-pay" id="inv-basket-pay">
+                        <button type="button" class="inv-pay-opt inv-pad-btn" id="inv-pay-cash" data-method="cash">Cash</button>
+                        <button type="button" class="inv-pay-opt inv-pad-btn" id="inv-pay-bank" data-method="bank">Bank</button>
+                    </div>
+                    <select id="inv-basket-account" style="display:none;"></select>
+                    <div class="inv-basket-pays-in" id="inv-basket-pays-in" style="display:none;"></div>
+                    <button type="button" class="inv-basket-buy-btn inv-pad-btn" id="inv-basket-buy-btn" disabled>Buy</button>
+                </div>
+            </div>
+
+            <!-- EDIT SHELF: the shop's tabs and the order of its goods, arranged by its
+                 managers or an admin. Takes the basket's place while it is open; the shelf beside it
+                 shows the new order as it is made, and nothing changes for customers until Save. -->
+            <div class="inv-panel inv-shelf-edit-panel" id="inv-shelf-edit-panel" style="display:none;">
+                <div class="inv-panel-header">
+                    <div class="inv-panel-title">
+                        <div>
+                            <span>Edit Shelf</span>
+                            <div class="inv-panel-subtitle">The tabs, and the order customers see</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="inv-edit-body">
+                    <div class="inv-edit-label">Tabs</div>
+                    <div class="inv-edit-cats" id="inv-edit-cats"></div>
+                    <div class="inv-edit-newcat">
+                        <input type="text" id="inv-edit-newcat" maxlength="24" placeholder="New tab name" autocomplete="off" spellcheck="false">
+                        <button type="button" class="inv-edit-add inv-pad-btn" id="inv-edit-addcat">Add Tab</button>
+                    </div>
+                    <div class="inv-edit-label">Goods</div>
+                    <div class="inv-edit-goods" id="inv-edit-goods"></div>
+                </div>
+                <div class="inv-edit-footer">
+                    <button type="button" class="inv-edit-cancel inv-pad-btn" id="inv-edit-cancel">Cancel</button>
+                    <button type="button" class="inv-edit-save inv-pad-btn" id="inv-edit-save">Save Shelf</button>
+                </div>
+            </div>
+        </div><!-- /#inv-panel-stack -->
+        <!-- The shortcuts: the mouse's, and on a pad every button the inventory reads.
+             The pad's A / X / B words change while carrying (padLegendDraw in inventory.js). -->
+        <div class="inv-legend" id="inv-legend">
+            <span class="inv-legend-item inv-legend-kbm inv-legend-no-shop"><span class="inv-key">Shift + Click</span>Quick move</span>
+            <span class="inv-legend-item inv-legend-kbm inv-legend-no-shop"><span class="inv-key">Right-click</span>Actions</span>
+            <span class="inv-legend-item inv-legend-kbm inv-legend-shop"><span class="inv-key">Click</span>Add one</span>
+            <span class="inv-legend-item inv-legend-kbm inv-legend-shop"><span class="inv-key">Hold</span>Add faster</span>
+            <span class="inv-legend-item inv-legend-kbm"><span class="inv-key">Esc</span>Close</span>
+            <div class="inv-legend-pad">
+                <span class="inv-legend-item"><img class="inv-legend-glyph" src="img/pad/ls.svg" alt="LS" draggable="false">Move</span>
+                <span class="inv-legend-item"><img class="inv-legend-glyph" src="img/pad/dpad.svg" alt="D-pad" draggable="false">Next slot</span>
+                <span class="inv-legend-item"><img class="inv-legend-glyph" src="img/pad/rs.svg" alt="RS" draggable="false">Scroll</span>
+                <span class="inv-legend-item"><img class="inv-legend-glyph" src="img/pad/b.svg" alt="B" draggable="false"><span data-word="b">Close</span></span>
+                <span class="inv-legend-item"><img class="inv-legend-glyph" src="img/pad/a.svg" alt="A" draggable="false"><span data-word="a">Select</span></span>
+                <span class="inv-legend-item" data-when="free"><img class="inv-legend-glyph" src="img/pad/rb.svg" alt="RB" draggable="false"><img class="inv-legend-glyph" src="img/pad/a.svg" alt="A" draggable="false">Quick move</span>
+                <span class="inv-legend-item" data-when="noshop"><img class="inv-legend-glyph" src="img/pad/x.svg" alt="X" draggable="false"><span data-word="x">Actions</span></span>
+                <!-- In a shop: A held on a tile (or a basket line's + or −) keeps adding, faster (shops.js). -->
+                <span class="inv-legend-item off" data-when="shop">Hold <img class="inv-legend-glyph" src="img/pad/a.svg" alt="A" draggable="false">Add faster</span>
+            </div>
+        </div>
+        </div><!-- /.inv-col-right -->
+
+    </div>
+
+    </div>
+</div>
+
+<!-- The debug panel (html/js/debug-panel.js) builds its own pane: Player Stats, Vehicle Stats and Ground
+     Items Debug are its sections. -->
+
+<!-- ============================
+     STATUS HUD — Arc Ring Gauges
+     ============================ -->
+<div id="status-hud">
+    <div id="statusHudWrapper">
+
+        <!-- ============================
+             SUGGESTIONS — a SIBLING of the capsule, floated above it.
+
+             A CAPSULE IS ONE ROW. That shape is the component, the way the interaction
+             indicator's circle is, so a list cannot go inside it without destroying the thing
+             it is a list for. It is absolutely positioned against #statusHudWrapper — which is
+             itself absolute, so it is already a containing block — and therefore takes no part
+             in the capsule's flex row at all.
+
+             It sits ON the capsule, out of its top edge like a scroll out of its rod: the outer
+             box is the frame (css/composer.css), the inner one scrolls the rows.
+             ============================ -->
+        <div id="capsuleSuggestions"><div id="capsuleSuggestionsList"></div></div>
+
+        <!-- ============================
+             THE CAPSULE — one element, three states.
+
+             .mode-stats (default) · .mode-composer (typing) · .mode-notify (a message)
+
+             The mode decides ONLY which children show and how wide the capsule is. Its surface,
+             border, radius and shadow never change between states — that is what makes this read
+             as one element transforming rather than three elements taking turns in a corner.
+             ============================ -->
+        <div id="statusHudContainer" class="sh-capsule mode-stats">
+
+            <!-- THE STATS GET THEIR OWN BOX, and that is not tidiness. registerHudStats()
+                 clears its container with innerHTML = '' on every rebuild, so anything sharing
+                 a parent with the gauges is deleted the first time a stat registers. Giving the
+                 gauges a wrapper of their own is what lets the composer and the notify row be
+                 plain static markup instead of something that has to survive being wiped. -->
+            <div id="statusHudStats"><!-- Player stats generated dynamically by status-hud.js --></div>
+
+            <!-- ============================
+                 THE BUBBLE — the same object as a stat gauge, wearing a different colour.
+
+                 IT CARRIES class="sh-stat" ON PURPOSE: it is the gauge markup, so it inherits the
+                 disc, the ring, the outline and the glyph centring. Only its fill differs: at 100%
+                 and tinted green, red or blue.
+
+                 IT IS ABSOLUTELY POSITIONED OVER THE FIRST GAUGE'S SLOT (the microphone), so the
+                 300ms change is a CROSS-FADE in place with neither element moving.
+
+                 Structure is static; composer.js and ui.js only set the glyph and the colour.
+                 Rebuilding its innerHTML on every notification would restart the fill's own
+                 transition and defeat the point.
+                 ============================ -->
+            <div id="capsuleBubble" class="sh-stat">
+                <div class="sh-disc"><div class="sh-fill"></div></div>
+                <div class="sh-icon"></div>
+            </div>
+
+            <input id="capsuleInput"
+                   type="text"
+                   maxlength="256"
+                   autocomplete="off"
+                   autocorrect="off"
+                   autocapitalize="off"
+                   spellcheck="false">
+            <div id="capsuleCount"></div>
+
+            <div id="capsuleNotifyText"></div>
+        </div>
+    </div>
+
+    <!-- The vehicle HUD is the 3D rev dial: a canvas js/vehicle-dial.js adds at body level the
+         first time a vehicle is entered, following this layer's fade. See css/vehicle-dial.css for why outside. -->
+</div>
+
+<!-- ============================
+     HOTBAR — pocket slots 1-5, a capsule on the player capsule's row (inventory.css HOTBAR, js/hotbar.js).
+     #hotbar-seg moves into the hint capsule while one is up at the bottom, so the two are one capsule.
+     ============================ -->
+<div id="hotbar">
+    <div class="sh-capsule hb-cap" id="hotbar-cap">
+        <div class="hb-seg" id="hotbar-seg">
+            <span class="hb-div"></span>
+            <div class="hb-slot empty" data-slot="1"><div class="hb-core"></div><span class="hb-key">1</span></div>
+            <div class="hb-slot empty" data-slot="2"><div class="hb-core"></div><span class="hb-key">2</span></div>
+            <div class="hb-slot empty" data-slot="3"><div class="hb-core"></div><span class="hb-key">3</span></div>
+            <div class="hb-slot empty" data-slot="4"><div class="hb-core"></div><span class="hb-key">4</span></div>
+            <div class="hb-slot empty" data-slot="5"><div class="hb-core"></div><span class="hb-key">5</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Context Menu.
+     The outer box only POSITIONS (left/top from the cursor); .inv-pop inside carries the surface
+     and the inventory's scale — see the popover note in inventory.css. -->
+<div class="inv-context-menu" id="inv-context-menu">
+  <div class="inv-pop">
+    <!-- Normal options. No glyph column — the words carry the menu.
+         The title names the item the menu is about. The item's own verbs come first (Use, then its
+         contextOptions in their order); a hairline; the verbs every item has (Give, Place, Split);
+         and Destroy set apart by the last hairline. -->
+    <div id="inv-ctx-options">
+        <div class="inv-ctx-title" id="inv-ctx-title"></div>
+        <div class="inv-context-option" data-action="use">Use</div>
+        <div id="inv-ctx-custom"></div>
+        <div class="inv-ctx-divider" id="inv-ctx-divider-own"></div>
+        <div class="inv-context-option" data-action="give">Give</div>
+        <div class="inv-context-option" data-action="place">Place</div>
+        <div class="inv-context-option" data-action="split">Split</div>
+        <div class="inv-ctx-divider" id="inv-ctx-divider"></div>
+        <div class="inv-context-option destroy" data-action="destroy">Destroy</div>
+    </div>
+    <!-- Give split panel (hidden by default) -->
+    <div id="inv-split-panel" style="display:none;">
+        <div class="inv-split-header">Give Amount</div>
+        <div class="inv-split-input-row">
+            <input type="number" id="inv-split-value" min="1" max="1" value="1">
+            <span class="inv-split-max" id="inv-split-max">/ 1</span>
+        </div>
+        <input type="range" id="inv-split-slider" min="1" max="1" value="1">
+        <div class="inv-split-actions">
+            <button class="inv-split-btn give" id="inv-split-give">Give</button>
+            <button class="inv-split-btn cancel" id="inv-split-cancel">Cancel</button>
+        </div>
+    </div>
+    <!-- Destroy confirm (hidden by default) — replaces the options in place, like Split. -->
+    <div id="inv-confirm-panel" style="display:none;">
+        <div class="inv-split-header" id="inv-confirm-text">Destroy this?</div>
+        <div class="inv-split-actions">
+            <button class="inv-split-btn danger" id="inv-confirm-yes">Destroy</button>
+            <button class="inv-split-btn cancel" id="inv-confirm-no">Cancel</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inventory Tooltip (same two-box shape as the context menu) -->
+<div class="inv-tooltip" id="inv-tooltip">
+  <div class="inv-pop">
+    <div class="inv-tooltip-name" id="inv-tooltip-name"></div>
+    <div class="inv-tooltip-desc" id="inv-tooltip-desc"></div>
+    <div class="inv-tooltip-rows">
+      <div id="inv-tooltip-meta" class="inv-tooltip-meta"></div>
+      <div class="inv-tooltip-stat"><span>Weight</span><span id="inv-tooltip-weight"></span></div>
+      <div class="inv-tooltip-stat" id="inv-tooltip-stack-row"><span>Stack</span><span id="inv-tooltip-stack"></span></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- ============================
+     UI LIBRARY LAYER
+     ============================ -->
+<div id="ui-layer">
+    <div id="ui-notifications"></div>
+    <div id="ui-input-overlay"></div>
+    <div id="ui-skillcheck"></div>
+    <div id="ui-alert-overlay"></div>
+    <!-- The progress bar draws into this too — one band, one element. -->
+    <div id="ui-drawtext"></div>
+    <div id="ui-radial"></div>
+</div>
+
+
+
+<!-- ============================
+     EVENT MONITOR (Dev Tool)
+     ============================ -->
+<div id="dev-menu-overlay" style="display:none"></div>
+<div id="coords-overlay" style="display:none"></div>
+<div id="cam-editor"></div> <!-- the Camera Creator: built by js/cam-editor.js -->
+
+<!-- Zone Editor HUD (top-right floating, like camera creator) -->
+<div id="zone-editor-hud" style="display:none;">
+    <div class="ze-panel">
+        <div class="ze-title">ZONE EDITOR</div>
+        <div class="ze-info" id="ze-info">
+            <div class="ze-row"><span class="ze-label">Mode</span><span class="ze-value" id="ze-mode">None</span></div>
+            <div class="ze-row"><span class="ze-label">Pos</span><span class="ze-value" id="ze-pos">—</span></div>
+            <div class="ze-row" id="ze-size-row" style="display:none;"><span class="ze-label">Size</span><span class="ze-value" id="ze-size">—</span></div>
+            <div class="ze-row" id="ze-radius-row" style="display:none;"><span class="ze-label">Radius</span><span class="ze-value" id="ze-radius">—</span></div>
+            <div class="ze-row" id="ze-poly-row" style="display:none;"><span class="ze-label">Points</span><span class="ze-value" id="ze-poly">—</span></div>
+            <div class="ze-row" id="ze-scan-row" style="display:none;"><span class="ze-label">Scan</span><span class="ze-value" id="ze-scan">—</span></div>
+            <div class="ze-row"><span class="ze-label">Selected</span><span class="ze-value" id="ze-selected">None</span></div>
+            <div class="ze-row"><span class="ze-label">Zones</span><span class="ze-value" id="ze-count">0</span></div>
+            <div class="ze-row"><span class="ze-label">Speed</span><span class="ze-value" id="ze-speed">1.0</span></div>
+        </div>
+        <div class="ze-hints">
+            <span>[1] Box</span><span>[2] Sphere</span><span>[3] Poly</span><span>[4] Edit Vertices</span><span>[5] Edit Height</span>
+            <span>[G] Place/Confirm</span><span>[F] Close Poly</span>
+            <span>[E] Select</span><span>[R] Delete</span>
+            <span>[H] Scan Room / Copy Code</span><span>[L] Labels</span>
+            <span>[Scroll] Width/Radius</span>
+            <span>[E+Scroll] Length</span>
+            <span>[Ctrl+Scroll] Height</span>
+            <span>[Shift+Scroll] Speed</span>
+            <span>[Esc] Cancel/Exit</span>
+        </div>
+        <div class="ze-status" id="ze-status"></div>
+    </div>
+</div>
+
+<!-- Door Editor HUD -->
+<div id="door-editor-hud" style="display:none;">
+    <div class="de-panel">
+        <div class="de-title">DOOR EDITOR</div>
+        <div class="de-info">
+            <div class="de-row"><span class="de-label">Target</span><span class="de-value" id="de-target">None</span></div>
+            <div class="de-row"><span class="de-label">Hash</span><span class="de-value" id="de-target-hash">—</span></div>
+            <div class="de-row"><span class="de-label">Position</span><span class="de-value" id="de-target-pos">—</span></div>
+            <div class="de-row"><span class="de-label">Saved</span><span class="de-value" id="de-target-saved">No</span></div>
+            <div class="de-row"><span class="de-label">Linking</span><span class="de-value" id="de-linking">—</span></div>
+            <div class="de-row"><span class="de-label">Doors</span><span class="de-value" id="de-count">0</span></div>
+        </div>
+        <div class="de-hints">
+            <span>[G] Save Door</span>
+            <span>[E] Link (press twice)</span>
+            <span>[R] Delete Door</span>
+            <span>[Esc] Cancel/Exit</span>
+        </div>
+        <div class="de-status" id="de-status" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- Editor HUD — the generic in-world editor overlay (html/js/editor-hud.js, tools/editor_hud.lua).
+     Empty: built from whatever the mode sends. -->
+<div id="editor-hud" style="display:none;"></div>
+
+<!-- The /whip master admin panel. Empty root, everything JS-built (whip-panel.js). -->
+<div id="whip-panel-overlay"></div>
+
+<!-- THE FURNISHER — the property furniture editor. Player-facing, so deliberately NOT a
+     /whip section: that shell is ACE-gated and shaped for tables of records.
+
+     ONE BAR ALONG THE TOP, AND THE ROOM UNDER IT. The bar holds the session (its name, the count,
+     Unsaved), the switches (the catalog, Move / Rotate, the snap step) and the way out (Exit, Save).
+     The catalog is a panel under the bar's left end, shown only while its switch is on. What is
+     selected says so in a bubble beside the thing itself (#fz-sel), and one line bottom left says
+     what the mouse does right now. Each key rides on the button it presses (R, G, X, Backspace), so
+     that line is left with only the mouse and the camera.
+
+     THE MARKERS: the selected object wears X / Y / Z arrows, or rings, drawn on
+     #fz-gizmo — an SVG over the whole screen, UNDER the shell — by js/furnisher-gizmo.js. The shell
+     takes clicks only on its own controls, so a click anywhere else reaches the markers or selects
+     what is in the room.
+
+     .fz-scale is the ONE scaled box, and it is scaled with a TRANSFORM rather than `zoom` — see the
+     same note on the creator above: zoom scales what is painted but not what is clicked.
+
+     MARKUP RATHER THAN JS-BUILT, unlike the /whip panel: the frame never changes. The rail, the
+     catalog and the numbers are written at runtime; everything here is fixed.
+
+     THE CURSOR IS ALWAYS HERE. NUI focus is held for the whole session and the room turns only
+     while the right mouse button is down — Lua adds .fz-looking for that, which puts this page
+     inert so a pointer on its way to swinging the camera cannot edit anything. -->
+<div id="furnisher">
+    <!-- The markers. Real screen pixels (outside .fz-scale), because they are drawn where the game
+         puts the object, and the game knows nothing of the shell's scale. -->
+    <svg id="fz-gizmo" aria-hidden="true"></svg>
+    <div class="fz-scale">
+        <!-- THE BAR: always on screen, along the top. The property's own name first (an editor that
+             says which house you are in is one you cannot furnish the wrong one from), the count and
+             Unsaved under it; then the switches; then the way out, at the far end. -->
+        <div class="fz-bar">
+            <div class="fz-bar-titles">
+                <div class="fz-title-name" id="fz-house">Furnish</div>
+                <div class="fz-card-sub"><span id="fz-count" class="fz-card-count">0</span> objects<span id="fz-dirty" class="fz-dirty" style="display:none">Unsaved</span></div>
+            </div>
+            <span class="fz-bar-rule" aria-hidden="true"></span>
+            <button id="fz-catalog-btn" class="fz-btn fz-btn-sm" type="button" data-fz="catalog">Furniture</button>
+            <div class="fz-seg" role="group" aria-label="What the markers do">
+                <button class="fz-seg-btn" type="button" data-fz="mode" data-mode="move">Move</button>
+                <button class="fz-seg-btn" type="button" data-fz="mode" data-mode="rotate">Rotate</button>
+                <span class="fz-key" aria-hidden="true">R</span>
+            </div>
+            <!-- The snap step, only while snap is on (G; #furnisher.fz-snap-on), and always on a pad,
+                 which nudges by it. Pressed, it goes round as G does. -->
+            <button id="fz-stepchip" class="fz-chip" type="button" data-fz="step"
+                    title="The snap step (G)"><span id="fz-steptext">Snap 0.05 m · 15°</span></button>
+            <!-- Grid lock (L): the arrows along the world, moves on its grid at the snap step (js/furnisher.js renderCard). -->
+            <button id="fz-grid-btn" class="fz-btn fz-btn-sm fz-btn-keyed" type="button" data-fz="grid"
+                    title="Lock moves to the world grid at the snap step (L)"><span class="fz-btn-label">Grid</span><span class="fz-key" aria-hidden="true">L</span></button>
+            <!-- The Director's world builder only (#furnisher.fz-director): its blueprint, in a window
+                 over the room (#fz-bp). -->
+            <button id="fz-bp-btn" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="blueprint"
+                    title="The scenario's cards, in a window you can move and size">Blueprint</button>
+            <!-- ...and its things on the map, in a window of the same kind (#fz-map). -->
+            <button id="fz-map-btn" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="map"
+                    title="The scenario's things on the map, in a window you can move and size">Map</button>
+            <!-- ...and Test, as the editor's (director/app.js builder.test): the world as it is here, played. -->
+            <button id="fz-test-btn" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="test"
+                    title="Play it now, alone, with what is placed here (F9 comes back to the editor)">Test</button>
+            <span class="fz-bar-rule" aria-hidden="true"></span>
+            <!-- The session's own buttons (a hero shot's "Use this view"): js/furnisher.js show(). -->
+            <span id="fz-extra" class="fz-extra"></span>
+            <button id="fz-exit" class="fz-btn" type="button" data-fz="exit"><span class="fz-btn-label">Exit</span></button>
+            <button id="fz-save" class="fz-btn fz-btn-primary" type="button" data-fz="save">Save</button>
+        </div>
+
+        <!-- THE CATALOG, under the bar's left end: shown by the bar's Furniture switch
+             (#furnisher.fz-catalog-open). One column, top to bottom: the tabs (Catalog | Placed, or the
+             world builder's own), the search, the groups in one row and their categories as chips
+             (#fz-rail), then the grid. The Placed tab hides the rail (.fz-list), because a list of
+             what is in the room wants rows rather than a filtered grid. -->
+        <div class="fz-columns">
+            <div id="fz-subtabs"></div>
+            <!-- CHANGE MODEL (the Director's world builder, the bubble's): a tile pressed is the selection's new model,
+                 not a new thing, while this says so (js/furnisher.js startRemodel). -->
+            <div id="fz-remodel" class="fz-remodel">
+                <span id="fz-remodel-text" class="fz-remodel-text"></span>
+                <button class="fz-btn fz-btn-sm" type="button" data-fz="remodel-cancel">Cancel</button>
+            </div>
+            <input id="fz-search" class="fz-search" type="text" placeholder="Search props…"
+                   autocomplete="off" spellcheck="false">
+            <!-- THE WORLD BUILDER ONLY (the Director's World tab): any model by its name, for that one
+                 thing, never added to the catalog. The search's own text, offered when it reads as a
+                 model's name on a tab that places one (#furnisher.fz-builder .fz-byname.show); Enter
+                 in the search presses it. -->
+            <div class="fz-byname">
+                <div id="fz-byname-none" class="fz-byname-none"></div>
+                <button class="fz-byname-btn" type="button" data-fz="byname"><span class="fz-byname-text">Place <span id="fz-byname-model" class="fz-byname-model"></span> by its name</span><span class="fz-key" aria-hidden="true">Enter</span></button>
+            </div>
+            <div id="fz-rail"></div>
+            <div id="fz-grid"></div>
+        </div>
+
+        <!-- THE DIRECTOR'S PAGE, on the right (the Director's world builder only): what the selection is
+             and how it behaves, from the bubble's Configure, or a card's settings, picked in the
+             Blueprint window. The Director draws it (director/app.js builder.page): the same fields as
+             its own column, written into the scenario as they are changed. -->
+        <div id="fz-cfg" class="fz-cfg">
+            <div class="fz-cfg-head">
+                <span id="fz-cfg-title" class="fz-cfg-title">Configure</span>
+                <button class="fz-cfg-x" type="button" data-fz="cfg-close" aria-label="Close" title="Close">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div id="fz-cfg-body" class="fz-cfg-body"></div>
+        </div>
+
+        <!-- INPUT PED NAME (the NPCs' first tile, the Director's world builder): a ped by its exact name. Spawn puts it
+             in hand; one the game has not got, or one that would not load, keeps the window up saying which
+             (js/furnisher.js showPedName, client/furnish_builder.lua furnishPedName). -->
+        <div id="fz-pedname" class="fz-pedname" role="dialog" aria-labelledby="fz-pedname-title">
+            <div class="fz-pedname-head">
+                <span id="fz-pedname-title" class="fz-pedname-title">Input ped name</span>
+                <button class="fz-cfg-x" type="button" data-fz="pedname-close" aria-label="Close" title="Close (Esc)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <input id="fz-pedname-input" class="fz-search fz-pedname-input" type="text" maxlength="64" spellcheck="false"
+                   autocomplete="off" aria-label="The ped's name" placeholder="Exact name, like a_m_m_valtownfolk_01"><!-- RedM (spur_core, 24 Nov 2026): an RDR2 ped -->
+            <div id="fz-pedname-why" class="fz-pedname-why" role="alert"></div>
+            <div class="fz-pedname-btns">
+                <button class="fz-btn fz-btn-sm" type="button" data-fz="pedname-close">Cancel</button>
+                <button class="fz-btn fz-btn-sm fz-btn-primary fz-btn-keyed" type="button" data-fz="pedname-go"><span class="fz-btn-label">Spawn</span><span class="fz-key" aria-hidden="true">Enter</span></button>
+            </div>
+        </div>
+
+        <!-- THE HINT LINE, bottom left: what the mouse and the camera do right now. One row each for
+             the room, looking round (the right button held) and picking a door; the root's classes
+             say which shows (furnisher.css). -->
+        <div class="fz-footer">
+            <!-- THE MOUSE AS A KEY: a keycap like G's with the mouse drawn on it, the button to press
+                 filled in (left, right, right and moving). Drawn once here and used by each hint. -->
+            <svg class="fz-defs" aria-hidden="true">
+                <symbol id="fz-mouse-l" viewBox="0 0 12 16">
+                    <path class="fz-mi-on" d="M6 1.6 H5.8 A4.2 4.2 0 0 0 1.6 5.8 V6.6 H6 Z"/>
+                    <rect class="fz-mi-line" x="1" y="1" width="10" height="14" rx="5"/>
+                    <path class="fz-mi-line" d="M6 1 V6.6 M1 6.6 H11"/>
+                </symbol>
+                <symbol id="fz-mouse-r" viewBox="0 0 12 16">
+                    <path class="fz-mi-on" d="M6 1.6 H6.2 A4.2 4.2 0 0 1 10.4 5.8 V6.6 H6 Z"/>
+                    <rect class="fz-mi-line" x="1" y="1" width="10" height="14" rx="5"/>
+                    <path class="fz-mi-line" d="M6 1 V6.6 M1 6.6 H11"/>
+                </symbol>
+                <symbol id="fz-mouse-r-drag" viewBox="0 0 24 16">
+                    <path class="fz-mi-on" d="M12 1.6 H12.2 A4.2 4.2 0 0 1 16.4 5.8 V6.6 H12 Z"/>
+                    <rect class="fz-mi-line" x="7" y="1" width="10" height="14" rx="5"/>
+                    <path class="fz-mi-line" d="M12 1 V6.6 M7 6.6 H17 M3.6 5.4 L1.4 8 L3.6 10.6 M20.4 5.4 L22.6 8 L20.4 10.6"/>
+                </symbol>
+            </svg>
+            <div class="fz-hints fz-mouse-hints">
+                <span class="fz-hint-row fz-hints-room">
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse" title="Left click"><svg viewBox="0 0 12 16"><use href="#fz-mouse-l"/></svg></span> Select</span>
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse wide" title="Hold right and move the mouse"><svg viewBox="0 0 24 16"><use href="#fz-mouse-r-drag"/></svg></span> Look</span>
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse" title="Hold right"><svg viewBox="0 0 12 16"><use href="#fz-mouse-r"/></svg></span><span class="fz-plus">+</span><span class="fz-key">W</span><span class="fz-key">A</span><span class="fz-key">S</span><span class="fz-key">D</span> Fly</span>
+                    <!-- The Director's world builder only (it has no bar): what R switches the markers to, and the
+                         snap step in G's words while snap is on (js/furnisher.js renderCard). -->
+                    <span class="fz-hint fz-dir-hint"><span class="fz-key">R</span> <span id="fz-mode-hint">Rotate</span></span>
+                    <span class="fz-hint"><span class="fz-key">G</span> <span id="fz-snap-hint">Snap</span></span>
+                    <span class="fz-hint"><span class="fz-key">L</span> Grid</span>
+                    <span class="fz-hint fz-multi-hint"><span class="fz-key">Ctrl</span><span class="fz-plus">+</span><span class="fz-key fz-key-mouse" title="Left click"><svg viewBox="0 0 12 16"><use href="#fz-mouse-l"/></svg></span> Add</span>
+                </span>
+                <span class="fz-hint-row fz-hints-look">
+                    <span class="fz-hint"><span class="fz-key">W</span><span class="fz-key">A</span><span class="fz-key">S</span><span class="fz-key">D</span> Fly</span>
+                    <span class="fz-hint"><span class="fz-key">Space</span> Up</span>
+                    <span class="fz-hint"><span class="fz-key">Ctrl</span> Down</span>
+                    <span class="fz-hint"><span class="fz-key">Shift</span> Faster</span>
+                    <!-- The wheel as noclip has it, while flying (client/freecam.lua). -->
+                    <span class="fz-hint"><span class="fz-key">Shift</span><span class="fz-plus">+</span><span class="fz-key">Wheel</span> Speed</span>
+                    <span class="fz-hint"><span class="fz-key">Wheel</span> Zoom</span>
+                </span>
+                <span class="fz-hint-row fz-hints-door">
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse" title="Left click"><svg viewBox="0 0 12 16"><use href="#fz-mouse-l"/></svg></span> Pick a door</span>
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse wide" title="Hold right and move the mouse"><svg viewBox="0 0 24 16"><use href="#fz-mouse-r-drag"/></svg></span> Look</span>
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse" title="Hold right"><svg viewBox="0 0 12 16"><use href="#fz-mouse-r"/></svg></span><span class="fz-plus">+</span><span class="fz-key">W</span><span class="fz-key">A</span><span class="fz-key">S</span><span class="fz-key">D</span> Fly</span>
+                </span>
+                <!-- Something in hand, riding the mouse (a pick just made, the Director's Place marker): how to put it
+                     down; Esc only for a pick, which it takes back out (js/furnisher.js dropHeld). -->
+                <span class="fz-hint-row fz-hints-carry">
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse" title="Left click"><svg viewBox="0 0 12 16"><use href="#fz-mouse-l"/></svg></span> Put down</span>
+                    <span class="fz-hint"><span class="fz-key fz-key-mouse wide" title="Hold right and move the mouse"><svg viewBox="0 0 24 16"><use href="#fz-mouse-r-drag"/></svg></span> Look</span>
+                    <span class="fz-hint fz-hint-esc"><span class="fz-key">Esc</span> Cancel</span>
+                </span>
+            </div>
+            <!-- On a controller, the pad's buttons in the same place, for what is going on (the room,
+                 something selected or carried, the menu): drawn by js/furnisher.js padLegend. -->
+            <div class="fz-hints fz-pad-hints" id="fz-pad-hints"></div>
+        </div>
+    </div>
+
+    <!-- THE SELECTION, beside the thing itself: what it is, and Remove. Go to only while the thing is off
+         the screen (picked from the Placed list), the one time there is somewhere to go. Outside
+         .fz-scale, because it is placed in real screen pixels from where the markers are drawn
+         (js/furnisher.js placeSel); scaled on its own by the same factor. Shown only while something is
+         selected. -->
+    <div id="fz-sel" class="fz-sel">
+        <div class="fz-sel-head">
+            <span id="fz-sel-art" class="fz-sel-pic" aria-hidden="true"></span>
+            <div class="fz-sel-info">
+                <span id="fz-sel-name" class="fz-sel-name"></span>
+                <!-- Several selected (Ctrl+click): what they are ("3 NPCs, 1 prop"). -->
+                <span id="fz-sel-sub" class="fz-sel-sub"></span>
+            </div>
+            <button class="fz-btn fz-btn-sm fz-sel-cfg fz-dir-only" type="button" data-fz="configure"
+                    title="What it is and how it behaves, without going back to the Director">Configure</button>
+            <!-- An NPC's: its Configure on the Tasks tab, + Task's list up (js/furnisher.js openAddTask). -->
+            <button id="fz-sel-task" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="addtask" hidden
+                    title="Its Tasks, with the list of what it can do to pick from">Add task</button>
+            <button id="fz-sel-dup" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="duplicate"
+                    title="A copy of it, everything it has included, in hand to put down">Duplicate</button>
+            <!-- Several NPCs and props selected: all of them into one group at once (js/furnisher.js showGroup). -->
+            <button id="fz-sel-group" class="fz-btn fz-btn-sm fz-dir-only" type="button" data-fz="group" hidden
+                    title="Put all of them in the same group">Add to group</button>
+            <!-- Other resources' buttons for this kind of thing (Whiplash on a car), on this line beside Configure (the
+                 Director's world builder only, and only when it has some: js/furnisher.js renderSel). -->
+            <div id="fz-sel-tools" class="fz-sel-tools"></div>
+            <!-- Dungeon Mode's: its Object Viewer options (client/director_live.lua). -->
+            <button class="fz-btn fz-btn-sm fz-live-only" type="button" data-fz="options"
+                    title="Everything that can be done to it, as a click on it in the world opens">Options</button>
+            <button class="fz-btn fz-btn-sm fz-sel-goto" type="button" data-fz="goto">Go to</button>
+            <button class="fz-btn fz-btn-sm fz-btn-danger fz-btn-keyed" type="button" data-fz="delete"><span class="fz-btn-label">Remove</span><span class="fz-key" aria-hidden="true">X</span></button>
+        </div>
+        <!-- THE WORLD BUILDER'S WARNING: a thing a card uses is removed only after Remove here; Keep
+             leaves it. Shown by client/furnish_builder.lua's ask. -->
+        <div id="fz-confirm" class="fz-confirm">
+            <span id="fz-confirm-text" class="fz-confirm-text"></span>
+            <button class="fz-btn fz-btn-sm fz-btn-danger" type="button" data-fz="confirm-remove">Remove</button>
+            <button class="fz-btn fz-btn-sm" type="button" data-fz="confirm-keep">Keep</button>
+        </div>
+        <!-- ADD TO GROUP, with several selected: a group's name typed or one of the scenario's picked, then Add. -->
+        <div id="fz-group" class="fz-group">
+            <input id="fz-group-input" class="fz-group-input" type="text" maxlength="40" placeholder="Group name" spellcheck="false">
+            <button class="fz-btn fz-btn-sm" type="button" data-fz="group-add">Add</button>
+            <button class="fz-btn fz-btn-sm" type="button" data-fz="group-cancel">Cancel</button>
+            <div id="fz-group-chips" class="fz-group-chips"></div>
+        </div>
+        <span class="fz-sel-tail" aria-hidden="true"></span>
+    </div>
+
+    <!-- THE BLUEPRINT WINDOW (the Director's world builder only): the scenario's own grid of cards,
+         moved in from the Director while it is open (director/app.js builder.canvas), working as it
+         does there. Its head drags it, its edges and corner size it, X closes it. A card picked or under
+         the pointer lights what it names in the world, green. In real pixels, as the grid's mouse
+         maths are. -->
+    <div id="fz-bp" class="fz-bp">
+        <div class="fz-bp-head" data-grip="move">
+            <span class="fz-bp-title">Blueprint</span>
+            <!-- The card list, down this window's left side (#fz-bp-pal): one clicked goes in the middle of this
+                 grid, one dragged where it is dropped on it. -->
+            <button id="fz-bp-cards" class="fz-bp-cards" type="button" data-fz="bp-cards" title="Add a card: the card list, in this window">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Cards</button>
+            <!-- The full editor (director/app.js builder.fullscreen): its Back to the world comes back here. -->
+            <button id="fz-bp-full" class="fz-bp-cards" type="button" data-fz="bp-full" title="The full editor">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Fullscreen</button>
+            <button class="fz-bp-x" type="button" data-fz="bp-close" aria-label="Close the blueprint" title="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div id="fz-bp-pal" class="fz-bp-pal"><div id="fz-bp-pal-body" class="fz-bp-pal-body"></div></div>
+        <div id="fz-bp-body" class="fz-bp-body"></div>
+        <span class="fz-bp-grip fz-bp-grip-l" data-grip="l"></span>
+        <span class="fz-bp-grip fz-bp-grip-r" data-grip="r"></span>
+        <span class="fz-bp-grip fz-bp-grip-b" data-grip="b"></span>
+        <span class="fz-bp-grip fz-bp-grip-lb" data-grip="lb"></span>
+        <span class="fz-bp-grip fz-bp-grip-rb" data-grip="rb"></span>
+    </div>
+
+    <!-- THE MAP WINDOW (the Director's world builder only): the scenario's things on whip's GTA map, each its own
+         picture, where the builder has it now (director/map.js); the camera is the arrow. A mark clicked: its card
+         (Go to, Configure). The Blueprint window's kind: its head drags it, its edges size it, X closes it. -->
+    <div id="fz-map" class="fz-bp fz-map">
+        <div class="fz-bp-head" data-grip="move">
+            <span class="fz-bp-title">Map</span>
+            <button class="fz-bp-x" type="button" data-fz="map-close" aria-label="Close the map" title="Close">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div id="fz-map-body" class="fz-bp-body fz-map-body"></div>
+        <span class="fz-bp-grip fz-bp-grip-l" data-grip="l"></span>
+        <span class="fz-bp-grip fz-bp-grip-r" data-grip="r"></span>
+        <span class="fz-bp-grip fz-bp-grip-b" data-grip="b"></span>
+        <span class="fz-bp-grip fz-bp-grip-lb" data-grip="lb"></span>
+        <span class="fz-bp-grip fz-bp-grip-rb" data-grip="rb"></span>
+    </div>
+
+    <!-- NOTICES WHILE IT IS OPEN, at the top in the middle: a save, an autosave, and every other notice (the player
+         capsule, their home, is hidden behind it). The inventory header's row (css/shops.css), run by
+         js/inv-notice.js as the inventory's and /whip's are. -->
+    <div class="inv-notice fz-notice">
+        <div class="inv-talk-row inv-notice-row" id="fz-notice-row" role="status" aria-live="polite">
+            <span class="inv-talk-face"><span class="inv-talk-pic inv-notice-mark"></span></span>
+            <span class="inv-talk-text"></span>
+        </div>
+        <span class="inv-talk-measure" id="fz-notice-measure" aria-hidden="true"></span>
+    </div>
+    <!-- On a controller, in the room: the dot A selects with and a carried thing rides. Real pixels,
+         the screen's middle, where client/property_furnish.lua aims (0.5, 0.5). -->
+    <div id="fz-dot" class="fz-dot" aria-hidden="true"></div>
+</div>
+
+<!-- THE EMOTE MENU (/emotes, /e, the F1 wheel). A column of video cards down the right-hand
+     side, so the player's own ped stays in view — trying emotes means watching yourself do them.
+     js/emotes.js fills it; client/emotes.lua opens it with full NUI focus, so typing in the search
+     never walks the player anywhere. -->
+<div id="emotes">
+    <div class="em-scale">
+        <div class="em-panel">
+            <div class="em-head">
+                <div>
+                    <div class="em-title">Emotes</div>
+                    <div class="em-sub">Play one here, or type <code>/e</code> and its name</div>
+                    <!-- Posing a hero shot's character instead (Emotes.pickFor): css/emotes.css swaps the two. -->
+                    <div class="em-sub em-sub-pick">Pose the hero shot's character: each one plays on them as you click it</div>
+                </div>
+                <button class="em-x" type="button" data-em="close" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+            </div>
+            <div class="em-tabs">
+                <button class="em-tab" type="button" data-em="tab" data-tab="emotes">Emotes</button>
+                <button class="em-tab" type="button" data-em="tab" data-tab="walks">Walks</button>
+                <button class="em-tab" type="button" data-em="tab" data-tab="moods">Expressions</button>
+            </div>
+            <div class="em-now" id="em-now"></div>
+            <input id="em-search" class="em-search" type="text" autocomplete="off" spellcheck="false">
+            <div class="em-chips" id="em-chips"></div>
+            <div class="em-list" id="em-list"></div>
+            <div class="em-foot" id="em-foot"></div>
+        </div>
+    </div>
+</div>
+
+<!-- The custom inventory renderer's mount point (renderer-loader.js hands it to the
+     factory as `mount`). Bare and empty on purpose: a custom UI owns everything inside it,
+     whip never writes here. Positioned last so a custom UI naturally paints above the
+     dormant default markup without needing a z-index war. -->
+<div id="inv-custom-root"></div>
+
+<!-- PAD OVERLAY (/paddebug). Shows every controller input whip watches, which button each one
+     is, what whip has claimed it for, and a live log of the actions that actually fired.
+
+     A READ-ONLY HUD, NOT A PANEL. It never takes NUI focus and never posts a callback, because
+     the whole point is watching input while you still have full control of the game — an
+     overlay that captured the input would change the thing it exists to show. Its CSS has
+     pointer-events off for the same reason. js/pad-debug.js fills it. -->
+<div id="pad-debug" class="pd-hidden">
+    <div class="pd-head">
+        <span class="pd-title">CONTROLLER</span>
+        <span id="pd-device" class="pd-chip">kbm</span>
+    </div>
+    <!-- ORDERED BY WHAT IS WATCHED, NOT BY WHAT IS LOGICAL. The panel clips rather than
+         scrolls (it cannot scroll — it takes no pointer events), so the live half goes first:
+         status and the action log are what the eye is on, the control tables are reference you
+         read once. A short window loses the tables and never the log. -->
+    <div id="pd-status" class="pd-status"></div>
+    <div class="pd-log-head">ACTIONS FIRED</div>
+    <div id="pd-log" class="pd-log"></div>
+    <div id="pd-groups"></div>
+</div>
+
+<!-- RADAR TUNER (/radardebug). A dev tool, built because eighteen coupled minimap values
+     could not be tuned from chat commands — see client/radar_debug.lua for what each
+     component turned out to actually control. Empty until opened; js/radar-debug.js fills it. -->
+<div id="radar-debug" class="rd-hidden">
+    <div class="rd-panel">
+        <div class="rd-head">
+            <div>
+                <div class="rd-title">Radar Tuner</div>
+                <div class="rd-sub">SetMinimapComponentPosition · live</div>
+            </div>
+            <button class="rd-x" id="rd-close" type="button">close</button>
+        </div>
+        <div class="rd-opts" id="rd-opts"></div>
+        <div class="rd-body" id="rd-body"></div>
+        <div class="rd-foot">
+            <button class="rd-btn rd-btn-p" id="rd-print" type="button">Print table to F8</button>
+            <!-- Back to whip's own values (radarRects in client/hud.lua), NOT to GTA vanilla —
+                 "reset" during a tuning session means the point you left from. Vanilla is the
+                 smaller button beside it, kept because it is a diagnostic in its own right. -->
+            <button class="rd-btn" id="rd-reset" type="button">Reset to config</button>
+            <button class="rd-btn rd-btn-s" id="rd-vanilla" type="button">GTA stock</button>
+        </div>
+    </div>
+</div>
+
+<!-- The Director's screen: built by js/director/app.js the first time /director opens it. -->
+<div id="director"></div>
+<!-- The Systems Creator's screen: built by js/systems/app.js the first time /systems opens it. -->
+<div id="systems"></div>
+
+<!-- whip's interaction icons (window.WhipGlyphs), shared with the 3D badge atlas — a classic
+     script, loaded before the modules that read it. See js/glyphs.js. -->
+<script src="js/glyphs.js"></script>
+
+<!-- Reading and pressing the page by its words, for tools (window.WhipProbe; js/screen-probe.js) — a classic script so
+     other resources' pages load the same file. See js/page-tools.js. -->
+<script src="js/page-tools.js"></script>
+
+<!-- "three" for the vehicle dial (js/vehicle_hud/hud3d.js imports it by that name), imported the first time a
+     vehicle is entered. An import map has to come before the first module script, so it sits here. -->
+<script type="importmap">
+{ "imports": { "three": "./js/vehicle_hud/vendor/three.module.min.js" } }
+</script>
+
+<!-- ONE module entry. The 37-tag load order lives on as main.js's import list; the module
+     graph resolves shared layers (utils, router, core/, inv-shared) in dependency order. -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

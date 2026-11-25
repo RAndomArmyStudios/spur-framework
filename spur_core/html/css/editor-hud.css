@@ -1,0 +1,341 @@
+/* ========================================
+   EDITOR HUD (floating top-right) — html/js/editor-hud.js
+
+   The generic in-world editor overlay. Its panel, title, rows, hints and status line are the
+   Door Editor's own classes (.de-* in doors.css), so every in-world editor is one family; only
+   what that HUD never needed is here: the line under the title, the progress bar, row tones and
+   dimmed hints.
+   ======================================== */
+
+#editor-hud {
+    position: fixed;
+    /* Under the goal cards while there are any (ui.js sets --obj-n; css/ui.css §10): a card and its gap are
+       93px at the cards' zoom (--ui-scale × 1.25), so the Director's test strip never covers a goal. And under
+       the debug panel while it is up (--dbg-h, screen pixels). */
+    top: calc(20px + var(--obj-n, 0) * 93px * var(--ui-scale, 1) * 1.25 + var(--dbg-h, 0px));
+    transition: top 0.3s var(--ui-ease);
+    right: 20px;
+    z-index: 9700;
+    pointer-events: none;
+    font-family: var(--ui-font);
+}
+
+.eh-panel { max-width: 340px; }
+
+.eh-sub {
+    margin-top: -4px;
+    font-size: 11px;
+    color: var(--ui-text-dim);
+}
+
+.eh-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ui-border);
+    overflow: hidden;
+}
+
+.eh-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--ui-accent);
+    transition: width 0.25s ease;
+}
+
+.de-value.eh-val-ok   { color: var(--ui-success); }
+.de-value.eh-val-warn { color: var(--ui-warning); }
+.de-value.eh-val-err  { color: var(--ui-error); }
+
+.de-hints span.eh-hint-off { opacity: 0.4; }
+
+/* The status line is the door editor's (success green) unless told otherwise. */
+.eh-status { zoom: var(--ui-scale); }
+.eh-status-err  { color: var(--ui-error);   border-color: rgba(248, 113, 113, 0.25); }
+.eh-status-warn { color: var(--ui-warning); border-color: rgba(251, 191, 36, 0.25); }
+
+/* ========================================
+   THE HOUSE LOOK — a mode that sends `house = true` (the Door Editor first). The /w dev menu's card
+   (css/dev-menu.css), sized for a corner: solid night glass with the corner glow, the large lift, the
+   display-face title, no white stroke. Under it:
+
+       ( door )  Door Editor                    the disc: what the mode works on (a 3D-prompt glyph)
+                 Aiming at door #12  [SAVED #12]   what is happening, and the target as a state chip
+       MODEL        123456                         readings, the label role and steady figures
+       POSITION     -360.9, 51.4, 54.4
+       [G] / (A)  Save door                        what you can do: a keycap on a keyboard, the button's
+       [E] / (X)  Link two doors                   picture on a pad (html[data-input], controller.js);
+       ...                                         dimmed while it does nothing, so nothing jumps
+       CAMERA  WASD Move · Mouse Look …            the fly controls, small, in a group of their own
+       ( ✓ ) Door saved                             the status strip, its kind's colour and drawn mark
+
+   ONE ZOOM, on the card (DESIGN.md, the One-Zoom Rule): the root only places it. No pointer: the mode's
+   game-side loop owns the keys, as before.
+   ======================================== */
+
+@keyframes ehRise {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.eh-house {
+    position: relative;
+    width: 296px;
+    box-sizing: border-box;
+    padding: 18px 16px 14px;
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    color: var(--ui-text);
+    line-height: 1.35;
+    zoom: calc(var(--ui-scale) * 1.2);
+    animation: ehRise 0.35s var(--ui-ease) both;
+}
+
+/* ---- the head: disc, title, what is happening ---- */
+
+.eh-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* The house disc in small: a white ring with the black outline every disc wears, the glyph inside. */
+.eh-disc {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2.5px solid var(--sh-disc-ring, rgba(255, 255, 255, 0.55));
+    box-shadow: var(--sh-disc-outline, 0 0 0 3px rgba(0, 0, 0, 0.9));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text);
+}
+
+.eh-disc svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+.eh-head-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.eh-title {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+.eh-now {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 7px;
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--ui-text-mid, rgba(255, 255, 255, 0.5));
+}
+
+/* A state, as the design's badges are: micro, uppercase, tinted only by its state. */
+.eh-chip {
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: var(--ui-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--ui-text-mid, rgba(255, 255, 255, 0.5));
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.eh-chip.ok   { color: var(--ui-success); background: var(--ui-success-light); }
+.eh-chip.warn { color: var(--ui-warning); background: var(--ui-warning-light); }
+.eh-chip.err  { color: var(--ui-error);   background: var(--ui-error-light); }
+
+/* ---- readings ---- */
+
+.eh-readings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.eh-r-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+    align-self: center;
+}
+
+.eh-r-value {
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A long value (Verify's last problem) runs onto more lines instead of being cut. */
+.eh-r-value.wrap { white-space: normal; text-overflow: clip; }
+
+/* The tour's bar (Verify), under the head: the old box's bar, spaced as the readings are. */
+.eh-house .eh-progress { margin-top: 14px; }
+
+.eh-r-value.ok   { color: var(--ui-success); }
+.eh-r-value.warn { color: var(--ui-warning); }
+.eh-r-value.err  { color: var(--ui-error); }
+
+/* ---- what you can do ---- */
+
+.eh-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.eh-act {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    transition: opacity 0.15s ease;
+}
+
+.eh-act.off { opacity: 0.32; }
+
+/* The control's column: a keycap (or caps) on a keyboard, its button's picture on a pad. Fixed width, so
+   the words line up whichever is showing: wide enough for two caps ('Q / E', '↑ / ↓', the D-pad's two
+   pictures) as well as the widest single one ('Enter'). It was 46 px, room for one, and a card with a
+   two-key row (the garage bays) set its words out in three columns. */
+.eh-keys {
+    flex: 0 0 auto;
+    min-width: 46px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.eh-actions .eh-keys { min-width: 60px; }
+
+.eh-key {
+    min-width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: var(--ui-fs-sm);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.eh-pad {
+    height: 24px;
+    width: auto;
+    display: block;
+}
+
+.eh-join {
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-label);
+}
+
+/* Which set shows: the input the player is on (controller.js sets data-input; keyboard by default). A hint
+   that is a keyboard's alone (`pad = false`: F5, Shift + Scroll) is not there at all on a pad. */
+.eh-k-pad { display: none; }
+html[data-input="pad"] .eh-k-pad { display: flex; }
+html[data-input="pad"] .eh-k-kbm { display: none; }
+html[data-input="pad"] .eh-act.eh-kbm-only { display: none; }
+
+/* WIDE (`wide = true`): a mode with many actions (the Camera Creator) lays them in two columns on a wider
+   card, so the card stays short — it is a camera tool, and a tall card in the corner covers the shot. */
+.eh-house.eh-wide { width: 372px; }
+.eh-house.eh-wide .eh-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 14px;
+}
+.eh-house.eh-wide .eh-act { white-space: nowrap; }
+
+/* The camera's controls: a group of their own, smaller — you learn them once. */
+.eh-fly {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.eh-fly-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+    margin-bottom: 6px;
+}
+
+/* Flowing, not a grid: the controls are as wide as their caps ('Space / Ctrl' is two), and a fixed
+   column broke "Up / down" over two lines. */
+.eh-fly-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+}
+
+.eh-fly .eh-act {
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--ui-text-mid, rgba(255, 255, 255, 0.5));
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.eh-fly .eh-keys { min-width: 0; }
+.eh-fly .eh-key { height: 19px; min-width: 19px; padding: 0 5px; font-size: var(--ui-fs-xs); }
+.eh-fly .eh-pad { height: 20px; }
+
+/* ---- the status strip: what just happened, in its kind's colour, with its drawn mark ---- */
+
+.eh-says {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: var(--ui-radius-row);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--ui-success);
+    background: var(--ui-success-light);
+    animation: ehRise 0.25s var(--ui-ease) both;
+}
+
+.eh-says svg { width: 16px; height: 16px; flex: 0 0 auto; display: block; }
+.eh-says.warn { color: var(--ui-warning); background: var(--ui-warning-light); }
+.eh-says.err  { color: var(--ui-error);   background: var(--ui-error-light); }
+.eh-says.info { color: var(--ui-accent);  background: var(--ui-accent-light); }
+.eh-says.gone { opacity: 0; transition: opacity 0.4s ease; }

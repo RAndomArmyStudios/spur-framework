@@ -1,0 +1,164 @@
+/* ========================================
+   THE MINIMAP — css/minimap.css (js/minimap.js; client/minimap.lua feeds it)
+
+   whip's 3D map in GTA's radar's place, in the HUD's map box at the bottom left (the black skin's frame box,
+   client/hud_skin.lua: minimap.js places it in px). At body level, not in #status-hud: that layer is zoomed, and the
+   box is in the screen's own px. It follows #status-hud's fade (minimap.js), on the same 0.5s.
+
+   .mm IS ANY MINIMAP: the HUD's (#minimap3d) and the Settings page's preview (.mm-preview-map), which is the
+   same thing bigger. --mm-k is how much bigger (1 on the HUD): the marks and the border grow with it. --mm-mk is the
+   player's Marker size (minimap.js sets it): the marks only.
+
+   THE MAP IS CLIPPED TO THE BOX'S SHAPE (.mm-clip); THE MARKS ARE NOT. A far blip pinned to the edge sits on the
+   border, standing a little past it, rather than being cut in half by it.
+
+   THE LOOK: the mask's shape (Config.MinimapMask) as the box's corners, and with the black HUD the border the player
+   chose (Settings → Server → Minimap → Map border; client/minimap.lua sends it, set as data-border):
+     full     the white frame: black, white, black from the map's edge out — the bands hud_skin.lua drew in the game,
+              1.2, 3.4 and 1.8 thousandths of the screen's height
+     outline  an EMPTY GAUGE'S rim (css/hud-skin.css): the track's faint grey, then the black edge. The track is
+              --hb-track (white at 16%) over the gauge's black disc, so here it is that colour, solid: over the world
+              behind the map it would read lighter than it does on a gauge
+     none     nothing
+
+   2022-safe CSS only (CEF is Chromium 103).
+   ======================================== */
+
+.mm {
+    --mm-k: 1;
+    --mm-mk: 1;
+    --mm-s: calc(var(--mm-k) * var(--mm-mk));   /* a mark's scale */
+    --pmap-blip: calc(16px * var(--mm-s));       /* a blip's icon (pause-map.js blipImage, css/pause.css .pmap-blip) */
+    background: rgb(8, 14, 23);   /* the deep sea, and the box before the map has drawn */
+    pointer-events: none;
+    /* GTA's 'rounded' mask: 46 px corners on a 512 x 396 mask stretched over the box (hud_skin.lua MASK_CORNERS). */
+    border-radius: 8.984% / 11.616%;
+}
+
+.mm[data-shape="circle"] { border-radius: 50%; }
+.mm[data-shape="square"] { border-radius: 0; }
+
+.mm[data-border="full"] {
+    box-shadow:
+        0 0 0 calc(0.12vh * var(--mm-k)) #000,
+        0 0 0 calc(0.46vh * var(--mm-k)) #fff,
+        0 0 0 calc(0.64vh * var(--mm-k)) #000;
+}
+
+/* The gauge's rim is 4 px and its edge 2.5 px in the HUD's own px; the HUD's zoom is the screen's height / 1440 x 1.25
+   (status-hud.css, utils.js), so on screen they are 0.35vh and 0.22vh at every resolution. */
+.mm[data-border="outline"] {
+    box-shadow:
+        0 0 0 calc(0.35vh * var(--mm-k)) rgb(47, 48, 50),
+        0 0 0 calc(0.57vh * var(--mm-k)) #000;
+}
+
+/* The HUD's: placed by minimap.js, faded with the HUD. */
+#minimap3d {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 330px;
+    height: 179px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    /* Under the HUD's own layer (7500): the gauges sit under the box, the vehicle dial to the right. */
+    z-index: 7400;
+}
+
+#minimap3d.on { opacity: 1; }
+
+.mm-clip {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.mm-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Over north: a blip or the waypoint due north, pinned to the edge where N is, shows over it (as on GTA's radar). */
+.mm-marks {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+/* The blips: the pause map's icons, never clickable here (the HUD takes no input). One the game made flash, flashes. */
+.mm .pmap-blip { pointer-events: none; }
+.mm .pmap-blip.pmap-dot {
+    width: calc(8px * var(--mm-s));
+    height: calc(8px * var(--mm-s));
+    left: calc(-4px * var(--mm-s));
+    top: calc(-4px * var(--mm-s));
+}
+.mm .pmap-numbered > .pmap-blip-icon.pmap-dot {
+    width: calc(8px * var(--mm-s));
+    height: calc(8px * var(--mm-s));
+    margin: calc(-4px * var(--mm-s)) 0 0 calc(-4px * var(--mm-s));
+}
+.mm .mm-waypoint { z-index: 2; }
+.mm .pmap-blip.mm-flash { animation: mm-flash 0.9s steps(1, end) infinite; }
+
+@keyframes mm-flash {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.15; }
+}
+
+/* The player's arrow, over everything. No glow (Josh, 29 Oct; the pause map's keeps its own). */
+.mm-player {
+    position: absolute;
+    left: calc(-11px * var(--mm-s));
+    top: calc(-11px * var(--mm-s));
+    width: calc(22px * var(--mm-s));
+    height: calc(22px * var(--mm-s));
+    z-index: 3;
+    transform-origin: 50% 50%;
+}
+
+.mm-player svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.mm-player path {
+    fill: #f2f4f7;
+    stroke: rgba(8, 10, 14, 0.9);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+}
+
+/* North, pinned to the edge the way north lies (GTA's radar's N). */
+.mm-north {
+    position: absolute;
+    left: calc(-8px * var(--mm-s));
+    top: calc(-8px * var(--mm-s));
+    width: calc(16px * var(--mm-s));
+    height: calc(16px * var(--mm-s));
+    z-index: 1;
+    border-radius: 50%;
+    background: rgba(8, 10, 14, 0.85);
+    box-shadow: 0 0 0 calc(1.5px * var(--mm-s)) #f2f4f7;
+    color: #f2f4f7;
+    font-family: var(--ui-font);
+    font-weight: 700;
+    font-size: calc(10px * var(--mm-s));
+    line-height: calc(16px * var(--mm-s));
+    text-align: center;
+}
+
+/* ---- the preview (Settings → Server → Minimap; settings-page.js lays it over its place in the inspector, and says
+   beside it what it shows) ---- */
+
+.mm-preview-map {
+    position: relative;
+    width: 100%;
+}

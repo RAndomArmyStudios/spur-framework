@@ -1,0 +1,71 @@
+$engine: 3
+$onesync: on
+name: SPUR
+version: 0.1.0-beta
+author: RyuuTheKitsune
+description: SPUR, a non-commercial RedM port of the WHIP framework (original code by Whippy and WLVF). Beta.
+
+tasks:
+  # The base server data (the system resources)
+  - action: download_github
+    src: https://github.com/citizenfx/cfx-server-data
+    ref: master
+    subpath: resources
+    dest: ./resources
+
+  # spur_core spawns players itself, and spur_chat is the chat
+  - action: remove_path
+    path: ./resources/[gamemodes]
+  - action: remove_path
+    path: ./resources/[gameplay]/chat
+  - action: remove_path
+    path: ./resources/[gameplay]/chat-theme-gtao
+  - action: remove_path
+    path: ./resources/[managers]/spawnmanager
+
+  # oxmysql
+  - action: download_file
+    url: https://github.com/overextended/oxmysql/releases/latest/download/oxmysql.zip
+    path: ./tmp/oxmysql.zip
+  - action: unzip
+    src: ./tmp/oxmysql.zip
+    dest: ./resources/[standalone]
+
+  # SPUR
+  - action: download_github
+    src: https://github.com/RyuuTheKitsune/spur-framework
+    ref: main
+    dest: ./tmp/spur
+  - action: move_path
+    src: ./tmp/spur/spur_core
+    dest: ./resources/[spur]/spur_core
+  - action: move_path
+    src: ./tmp/spur/spur_chat
+    dest: ./resources/[spur]/spur_chat
+  - action: move_path
+    src: ./tmp/spur/spur_loadingscreen
+    dest: ./resources/[spur]/spur_loadingscreen
+  - action: move_path
+    src: ./tmp/spur/spur_gunny
+    dest: ./resources/[spur]/spur_gunny
+  - action: move_path
+    src: ./tmp/spur/spur_rope
+    dest: ./resources/[spur]/spur_rope
+  - action: move_path
+    src: ./tmp/spur/spur_voice
+    dest: ./resources/[spur]/spur_voice
+  - action: move_path
+    src: ./tmp/spur/spur_phone
+    dest: ./resources/[spur]/spur_phone
+  - action: move_path
+    src: ./tmp/spur/spur_test
+    dest: ./resources/[spur]/spur_test
+  - action: move_path
+    src: ./tmp/spur/txadmin/server.cfg
+    dest: ./server.cfg
+
+  # The database: spur_core makes its own tables on its first start, so there is no SQL to run.
+  - action: connect_database
+
+  - action: remove_path
+    path: ./tmp

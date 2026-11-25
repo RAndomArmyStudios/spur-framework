@@ -1,0 +1,126 @@
+/* ========================================
+   VIEWFINDER — css/viewfinder.css
+
+   The camera item's overlay (client/items/camera.lua, js/viewfinder.js): a camcorder's frame over the game
+   while the player looks through a camera. The four corners, REC and its dot top left, the battery top
+   right, the focus box round a cross in the middle, the timecode bottom left and the format bottom right.
+
+   Sized off the screen, never in pixels: the corners sit at the screen's corners and the type grows with
+   its height, so it frames every resolution and shape the same way. White lines with a soft dark edge, so
+   it reads over a bright sky as well as a night street.
+
+   2022-safe CSS only (CEF is Chromium 103).
+   ======================================== */
+
+#viewfinder {
+    --vf-line: max(3px, 0.5vh);
+    --vf-ink: #fff;
+    --vf-rec: #e8232f;
+    --vf-type: 4.4vh;
+
+    position: fixed;
+    inset: 0;
+    display: none;
+    /* Never takes clicks: there is no cursor while the camera is up, and nothing on it is pressed. */
+    pointer-events: none;
+    /* Over the HUD (hidden by the clean screen anyway), under the curtain (9500) and the death screen. */
+    z-index: 900;
+    color: var(--vf-ink);
+    font-family: var(--ui-font);
+    font-weight: 500;
+    font-size: var(--vf-type);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    filter: drop-shadow(0 0 0.25vh rgba(0, 0, 0, 0.55));
+}
+#viewfinder.on { display: block; }
+
+/* ---- the frame: four corners ---- */
+
+.vf-corner {
+    position: absolute;
+    width: 20.8vw;
+    height: 22.2vh;
+    border: 0 solid var(--vf-ink);
+}
+.vf-corner.tl { left: 3.75vw;  top: 6.7vh;    border-top-width: var(--vf-line);    border-left-width: var(--vf-line);  border-top-left-radius: 2vh; }
+.vf-corner.tr { right: 3.75vw; top: 6.7vh;    border-top-width: var(--vf-line);    border-right-width: var(--vf-line); border-top-right-radius: 2vh; }
+.vf-corner.bl { left: 3.75vw;  bottom: 6.7vh; border-bottom-width: var(--vf-line); border-left-width: var(--vf-line);  border-bottom-left-radius: 2vh; }
+.vf-corner.br { right: 3.75vw; bottom: 6.7vh; border-bottom-width: var(--vf-line); border-right-width: var(--vf-line); border-bottom-right-radius: 2vh; }
+
+/* ---- the focus box and its cross, in the middle ---- */
+
+.vf-focus {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 30vw;
+    height: 34vh;
+    transform: translate(-50%, -50%);
+}
+.vf-focus .vf-corner { width: 6.25vw; height: 11vh; }
+.vf-focus .vf-corner.tl { left: 0;  top: 0;    border-top-left-radius: 1.6vh; }
+.vf-focus .vf-corner.tr { right: 0; top: 0;    border-top-right-radius: 1.6vh; }
+.vf-focus .vf-corner.bl { left: 0;  bottom: 0; border-bottom-left-radius: 1.6vh; }
+.vf-focus .vf-corner.br { right: 0; bottom: 0; border-bottom-right-radius: 1.6vh; }
+
+.vf-cross {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4.2vh;
+    height: 4.2vh;
+    transform: translate(-50%, -50%);
+}
+.vf-cross::before,
+.vf-cross::after {
+    content: '';
+    position: absolute;
+    background: var(--vf-ink);
+}
+.vf-cross::before { left: 0; right: 0; top: 50%; height: max(2px, 0.28vh); transform: translateY(-50%); }
+.vf-cross::after  { top: 0; bottom: 0; left: 50%; width: max(2px, 0.28vh); transform: translateX(-50%); }
+
+/* ---- the readouts: in from the corners' arms ---- */
+
+.vf-read {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 1.3vh;
+    white-space: nowrap;
+}
+.vf-read.tl { left: 6.4vw; top: 13.7vh; transform: translateY(-50%); }
+.vf-read.tr { right: 6.9vw; top: 13.7vh; transform: translateY(-50%); }
+.vf-read.bl { left: 7.2vw; bottom: 13.7vh; transform: translateY(50%); }
+.vf-read.br { right: 6.9vw; bottom: 13.7vh; transform: translateY(50%); gap: 2vh; }
+
+.vf-dot {
+    width: 2.9vh;
+    height: 2.9vh;
+    border-radius: 50%;
+    background: var(--vf-rec);
+    animation: vf-blink 1s steps(1, end) infinite;
+}
+@keyframes vf-blink { 50% { opacity: 0; } }
+
+/* The battery: its nub on the left, three quarters full from the right. */
+.vf-battery { width: 9.4vh; height: 3.8vh; display: block; }
+.vf-battery * { fill: none; stroke: var(--vf-ink); }
+.vf-battery .vf-charge { fill: var(--vf-ink); stroke: none; }
+.vf-battery .vf-nub { fill: var(--vf-ink); stroke: none; }
+
+/* The record bar before the timecode. */
+.vf-bar {
+    width: 1.1vh;
+    height: 4.6vh;
+    background: var(--vf-ink);
+    margin-right: 1vh;
+}
+
+.vf-rule {
+    width: max(2px, 0.22vh);
+    height: 4.6vh;
+    background: var(--vf-ink);
+}

@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>player tags</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   SHOW PLAYERS' TAGS — the name over each player's head
+
+   A DUI texture (tools/show_players.lua), one tag per cell, like the /me bubbles' atlas — and in the
+   /me bubble's look: the HUD capsule's glass, its 38px radius, the thin line down to the head. Lua
+   draws each cell as a screen sprite whose bottom centre (the end of the line) sits over the head,
+   so it always faces you and nothing in the world hides it. Grid size comes from Lua in the URL.
+
+   The capsule says who: the character's name, and under it the account's name with the charId beside
+   it (no dot). CEF 103: no :has, no color-mix.
+   ============================================================================ */
+
+:root {
+    /* whip's tokens (html/css/base.css), copied: a DUI page cannot load that file's cascade. */
+    --ui-surface: rgba(10, 12, 18, 0.75);
+    --ui-border:  rgba(255, 255, 255, 0.08);
+    --ui-text:    rgba(255, 255, 255, 0.93);
+    --ui-text-mid: rgba(255, 255, 255, 0.5);
+    --ui-shadow-text: 0 1px 6px rgba(0, 0, 0, 0.8);
+    --gap: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+#atlas { position: relative; }
+
+/* A cell: the tag stands on its bottom centre, where Lua puts the head. */
+.cell {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 24px;          /* a long name ends in an ellipsis inside the cell, its rounded ends whole */
+    overflow: hidden;
+}
+
+.tag { display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+.tag[hidden] { display: none; }
+
+/* ---- the capsule: the /me bubble's (html/bubble3d/bubble.html) ---- */
+
+.cap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 12px 34px;
+    background: var(--ui-surface);
+    border-radius: 38px;
+    border: 2px solid var(--ui-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Top-edge glass highlight, as on the HUD. */
+.cap::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16%;
+    right: 16%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* Centred, as the /me bubble's text is: the name, and under it the account with the charId beside it. */
+.who {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 40px;
+    color: var(--ui-text);
+    text-shadow: var(--ui-shadow-text);
+}
+
+.sub {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 22px;
+    line-height: 30px;
+    color: var(--ui-text-mid);
+}
+
+.account {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+/* The charId never gives way to a long account name. */
+.id {
+    flex: none;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- the line down to the head ---- */
+
+.stalk {
+    flex: none;
+    width: 4px;
+    height: 44px;
+    margin-top: var(--gap);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55), 0 0 6px rgba(0, 0, 0, 0.6);
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var CELL_W = Number(q.get('w')) || 768;
+    var CELL_H = Number(q.get('h')) || 256;
+    var COLS = Number(q.get('cols')) || 2;
+    var CELLS = Number(q.get('cells')) || 16;
+
+    var atlas = document.getElementById('atlas');
+    atlas.style.width = (CELL_W * COLS) + 'px';
+    atlas.style.height = (CELL_H * Math.ceil(CELLS / COLS)) + 'px';
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;   // text, never markup: players pick their names
+        return e;
+    }
+
+    var tags = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = el('div', 'cell');
+        cell.style.left = ((i % COLS) * CELL_W) + 'px';
+        cell.style.top = (Math.floor(i / COLS) * CELL_H) + 'px';
+        cell.style.width = CELL_W + 'px';
+        cell.style.height = CELL_H + 'px';
+        var tag = el('div', 'tag');
+        tag.hidden = true;
+        var cap = el('div', 'cap');
+        var who = el('div', 'who');
+        var name = el('div', 'name');
+        var sub = el('div', 'sub');
+        var account = el('span', 'account');
+        var id = el('span', 'id');
+        sub.append(account, id);
+        who.append(name, sub);
+        cap.appendChild(who);
+        tag.append(cap, el('div', 'stalk'));
+        cell.appendChild(tag);
+        atlas.appendChild(cell);
+        tags.push({ tag: tag, name: name, id: id, account: account });
+    }
+
+    /* { name, id, account } */
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.cell !== 'number') return;
+        var t = tags[d.cell];
+        if (!t) return;
+        if (d.clear) { t.tag.hidden = true; return; }
+        if (!d.tag) return;
+        t.name.textContent = String(d.tag.name || '?');
+        t.id.textContent = d.tag.id !== undefined && d.tag.id !== null ? '#' + d.tag.id : '';
+        t.account.textContent = String(d.tag.account || '');
+        t.tag.hidden = false;
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+/* ============================
+   CHARACTER SELECT — HERO SHOTS + THE NAME STRIP
+   ============================
+
+   The screen behind this layer is the game: each character has their own shot somewhere in the
+   world, with their own camera, weather and pose. What is drawn over it is the NAME STRIP along
+   the bottom left:
+
+       Tony Marino    Kayla Reyes    + New        the names; the chosen one white, the rest dimmed
+       ═══════════                                the logo's rounded stroke under the chosen one,
+                                                  with a lit dot at its start (the W's circle)
+       LAST PLAYED 23 MINUTES AGO  [ ▶ PLAY ]  DELETE    when, then what you can do
+
+   Picking a name travels to that shot. The white pill is whip's "this one" (the same white the
+   focused 3D badge and the selected tile use), so Play is the only filled thing on screen.
+
+   2022-safe CSS only (CEF is Chromium 103). */
+
+#app {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    /* No background at all. A tint here would sit over the world and defeat the point. */
+    pointer-events: none;
+}
+
+/* The dark under the strip, so white type reads over any shot. It fades to nothing below the
+   character's head. Full width and unscaled: it is scenery, not part of the strip. Tall, and
+   nearly solid at the very bottom. */
+.cs-scrim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56%;
+    background: linear-gradient(to top,
+        rgba(10, 12, 18, 0.95) 0%,
+        rgba(10, 12, 18, 0.78) 28%,
+        rgba(10, 12, 18, 0.42) 60%,
+        rgba(10, 12, 18, 0.12) 84%,
+        rgba(10, 12, 18, 0) 100%);
+    pointer-events: none;
+}
+
+/* ---- the strip ----
+
+   TRANSFORM, NOT `zoom`, AND THAT IS A BUG FIX RATHER THAN A PREFERENCE. On CEF (Chromium 103)
+   `zoom` scales what is PAINTED without scaling what is HIT TESTED, so a zoomed container
+   answers the mouse in the wrong place — the character creator lost whole columns of cards to
+   exactly this, and the note in css/creator.css tells that story at length. --ui-scale is
+   window height over 1440, so it is 0.75 on a 1080p screen.
+
+   A transform has neither problem: Chromium maps pointer events back through the matrix. The
+   width is stated as 100%/scale and then scaled back down, so the strip still spans the viewport
+   exactly, and the origin is the bottom-left corner so it stays pinned there while growing
+   upward. Everything inside is therefore authored at 1440p, one coordinate space. */
+.cs-bottom {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: calc(100% / var(--ui-scale));
+    transform: scale(var(--ui-scale));
+    transform-origin: bottom left;
+    box-sizing: border-box;
+    padding: 0 170px 122px;
+    z-index: 5;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    pointer-events: auto;
+}
+
+/* While the spawn picker is up (js/spawn-pick.js): the strip and its dark go as the camera looks up, and come
+   back once the map has rolled up again. */
+#app .cs-scrim,
+#app .cs-bottom { transition: opacity 300ms ease-out; }
+#app.cs-away .cs-scrim,
+#app.cs-away .cs-bottom {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ---- the names ----
+
+   --cs-name-size is stepped down by js/characters.js (fitNames) until every name fits on one
+   line, so four long names never run off the screen. Everything about a name (its gap, the room
+   under it) is in em, so it all shrinks together. The chosen one is only white: no stroke or dot
+   under it (Josh, 1 Nov). */
+
+.cs-names {
+    --cs-name-size: 61px;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 1.22em;
+    font-size: var(--cs-name-size);
+}
+
+/* More names than fit at the smallest size (a server allowing many characters): the row scrolls
+   sideways, with no bar, the chosen name kept in view (keepChosenInView), and its far end fading out
+   so it reads as more to come rather than cut off. */
+.cs-names.cs-names-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent);
+    mask-image: linear-gradient(to right, #000 88%, transparent);
+}
+
+.cs-names.cs-names-scroll::-webkit-scrollbar { height: 0; }
+
+.cs-name {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.22em;
+    /* Room under the letters (where the stroke was), kept so the strip sits where it did. */
+    padding: 0 0 0.48em;
+    border: none;
+    background: none;
+
+    font-family: var(--ui-font-display);
+    font-size: 1em;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.36);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.cs-name:hover { color: rgba(255, 255, 255, 0.62); }
+.cs-name:focus-visible { outline: 3px solid var(--ui-accent); outline-offset: 0.12em; border-radius: 8px; }
+.cs-name.selected { color: #fff; }
+.cs-name svg { width: 0.72em; height: 0.72em; flex: 0 0 auto; }
+
+/* ---- under the names: the Play pill with Delete under it, and beside it when they last played ---- */
+
+.cs-foot {
+    margin-top: 40px;
+    min-height: 75px;
+    display: flex;
+    align-items: flex-start;
+    gap: 37px;
+}
+
+/* The pill's height, with the words in its middle: level with the pill, whatever sits under it. */
+.cs-meta {
+    height: 75px;
+    display: flex;
+    align-items: center;
+    font-family: var(--ui-font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.86);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95);
+}
+.cs-meta.warn { color: var(--ui-error); }
+
+/* A column: the pill, then the quieter action (Delete, or Keep) centred under it. */
+.cs-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* The white pill: Play, or Create on the empty slot. Red while it is asking about a delete. */
+.cs-play {
+    height: 75px;
+    padding: 0 45px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    font-family: var(--ui-font-display);
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55), 0 10px 32px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), transform 0.16s var(--ui-ease);
+}
+.cs-play:hover { background: #fff; transform: translateY(-2px); }
+.cs-play:focus-visible { outline: 3px solid var(--ui-accent); outline-offset: 4px; }
+.cs-play svg { width: 19px; height: 19px; flex: 0 0 auto; }
+.cs-play.danger { background: var(--ui-error); }
+.cs-play.danger:hover { background: #fca5a5; }
+
+/* Delete and Keep: words, not buttons-shaped things, so the pill stays the one loud control. */
+.cs-textbtn {
+    padding: 0;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-family: var(--ui-font);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.66);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95);
+    cursor: pointer;
+    transition: color 0.16s var(--ui-ease);
+}
+.cs-textbtn:hover { color: #fff; }
+.cs-textbtn.danger:hover { color: var(--ui-error); }
+.cs-textbtn:focus-visible { outline: 3px solid var(--ui-accent); outline-offset: 6px; border-radius: 6px; }
+.cs-textbtn svg { width: 24px; height: 24px; flex: 0 0 auto; }
+
+/* ---- create panel ----
+   A real dialog, because a name has to be typed and there is nothing in the world to type on. */
+
+.cs-modal {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    background: rgba(0,0,0,0.72);
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+.cs-modal.visible { display: flex; }
+
+/* Scaled by transform for the same reason the strip is — `zoom` here would have put this form's
+   inputs somewhere other than where they are drawn. The scale has to be repeated inside the
+   keyframes: an animation that set `transform` alone would drop it for the duration. */
+.create-form {
+    display: none;
+    width: 100%;
+    max-width: 460px;
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    padding: 26px;
+    /* ×1.5 on top of screen height, as the creator draws: its 10px labels read at ~11px on 1080p. */
+    --cs-form-scale: calc(var(--ui-scale) * 1.5);
+    transform: scale(var(--cs-form-scale));
+    animation: formReveal 0.3s var(--ui-ease);
+}
+.create-form.visible { display: block; }
+@keyframes formReveal {
+    from { opacity: 0; transform: scale(var(--cs-form-scale)) translateY(-10px); }
+    to   { opacity: 1; transform: scale(var(--cs-form-scale)); }
+}
+
+.form-title {
+    font-family: var(--ui-font);
+    font-size: 10px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.form-group { flex: 1; display: flex; flex-direction: column; }
+.form-group label {
+    font-family: var(--ui-font);
+    font-size: 10px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+}
+.form-group input, .form-group select {
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* The shorthand above clears base.css's chevron: whip's, again, at the right. */
+.form-group select {
+    padding-right: 36px;
+    background-image: var(--ui-chevron);
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+    cursor: pointer;
+}
+.form-group select option { background: var(--ui-select-option-bg); color: var(--ui-select-option-fg); }
+.form-group input:focus, .form-group select:focus {
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+}
+.form-group input::placeholder { color: var(--ui-text-mid); }
+.form-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+
+.form-actions { display: flex; gap: 8px; margin-top: 18px; }
+.btn-submit {
+    flex: 1;
+    padding: 11px;
+    background: rgba(255, 255, 255, 0.93);
+    color: rgb(10, 12, 18);
+    border: none;
+    border-radius: 999px;
+    font-family: var(--ui-font);
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease);
+    letter-spacing: 0.2px;
+}
+.btn-submit:hover { background: #fff; }
+.btn-cancel {
+    padding: 11px 22px;
+    background: rgba(255, 255, 255, 0.10);
+    color: var(--ui-text);
+    border: none;
+    border-radius: 999px;
+    font-family: var(--ui-font);
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease);
+    letter-spacing: 0.2px;
+}
+.btn-cancel:hover { background: rgba(255, 255, 255, 0.17); }
+
+/* On a controller (js/characters.js formRing): the white ring on what A presses. Only under a pad,
+   so a mouse never sees it. */
+html[data-input="pad"] #create-form .pad-focus {
+    outline: 2px solid var(--ui-pill);
+    outline-offset: 2px;
+}
+
+/* ---- delete panel ----
+   The last of the three steps to delete a character: the create panel's frame,
+   the name to type, and a button that has to be HELD for ten seconds (js/characters.js). */
+
+.delete-form .form-title { color: var(--ui-error); }
+
+.del-text {
+    margin: 0 0 16px;
+    font-family: var(--ui-font);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ui-text-mid);
+}
+.del-text strong { color: var(--ui-text); font-weight: var(--ui-fw-bold); }
+
+/* The hold button. Dim and dead until the name is typed right; then red, and holding it fills it
+   from the left. The fill is transformed rather than resized, so it costs no layout. */
+.del-hold {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    padding: 11px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ui-error-light);
+    color: var(--ui-error);
+    font-family: var(--ui-font);
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+    transition: background 0.16s var(--ui-ease), opacity 0.16s var(--ui-ease);
+}
+.del-hold:disabled { opacity: 0.4; cursor: not-allowed; }
+.del-hold:not(:disabled):hover { background: rgba(248, 113, 113, 0.2); }
+.del-hold:focus-visible { outline: 2px solid var(--ui-error); outline-offset: 2px; }
+
+.del-hold-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--ui-error);
+    transform: scaleX(0);
+    transform-origin: left center;
+    /* Let go early: it drains back quickly. While held, the script sets it every frame and the
+       transition is off, so the fill tracks the clock exactly. */
+    transition: transform 0.25s var(--ui-ease);
+    pointer-events: none;
+}
+.del-hold.holding .del-hold-fill { transition: none; }
+
+.del-hold-label { position: relative; }
+.del-hold.holding .del-hold-label { color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45); }

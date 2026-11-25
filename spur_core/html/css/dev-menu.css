@@ -1,0 +1,419 @@
+/* ========================================
+   DEV MENU — /w quick-tool selector
+
+   THE HOUSE LOOK, the inventory's and the admin panel's (DESIGN.md, "The house look"):
+     - night glass with the corner glow, the display-face title, no white stroke
+     - THE CHOSEN CARD for the picked tool: a blue tint inside a white ring, the
+       inventory's picked slot (the white pill is kept for the one primary action).
+     - a row ends in what the tool is: a SWITCH for one that stays on (lit = running),
+       a run mark for a one-off, a chevron for one that opens a screen (Admin Panel) or a
+       resource's page.
+     - A PAGE (RegisterDevPage) swaps in for the list inside the same panel: the trail over its
+       title, the way back as its first row (the chevron turned round), notes to read, and
+       its rows sliding in from the side you went (dev-menu.js _dmSwap).
+     - a header over every group, the first included ("Tools", drawn by dev-menu.js)
+     - under the list, the picked tool's name and a line on what it does (`desc` in
+       tools/core.lua)
+
+   NO CLICK TARGETS, AND THAT IS A CONSTRAINT RATHER THAN AN OMISSION. This overlay
+   never takes NUI focus — tools/core.lua owns the arrows, Enter and Esc, and renders
+   through devMenuUpdate. So the creator's clickable icon-tab row could not be carried
+   across: tabs you cannot click are worse than headings you can read. Hover states are
+   absent for the same reason; nothing here is reachable by a pointer.
+   ======================================== */
+
+@keyframes dmRise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes dmItemIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Going INTO a page (or a level of one): its rows come from the right, the way the chevron points.
+   Coming back they come from the left, which is dmItemIn. */
+@keyframes dmItemInFwd {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dmFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+#dev-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9800;
+    font-family: var(--ui-font);
+}
+
+.dm-panel {
+    position: fixed;
+    top: 28px;
+    left: 28px;
+    width: 320px;
+    box-sizing: border-box;
+    padding: 24px 12px 16px;
+    line-height: 1.35;
+
+    /* OPAQUE BOTTOM LAYER — the game world must not bleed through a panel you are
+       reading tool names off. The corner glow over it is the house's (--ui-panel-glow);
+       it is what stops a flat black rectangle reading as a missing texture. */
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    /* --ui-radius-panel, not -pop: the concept's corners are generous, and at 320px
+       wide this reads as a panel rather than a popover. */
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    overflow: hidden;
+    animation: dmRise 0.4s var(--ui-ease) both;
+
+    /* NEVER PAST THE BOTTOM OF THE SCREEN. The panel is a column as tall as the screen allows (the same
+       28px gap under it as over it), and the list is the part that gives: it takes what the title and
+       the description leave, and scrolls. The title and description are as tall as they are, at any
+       size and in any language. (This replaced a cap on the list alone that guessed them at 200px:
+       at 1440p they take about 260, and the panel ran off the bottom.)
+       DIVIDED BY THE TWO SCALES: `zoom` multiplies what this resolves to, while vh stays the
+       screen's. */
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh / (var(--ui-scale) * var(--dm-zoom)) - 56px);
+
+    /* THE SIZE OF THE WHOLE PANEL, AS ONE NUMBER RATHER THAN FORTY.
+       Every size in this file — type, padding, radii, the panel width — is in the
+       creator's own units, which is what keeps the two panels recognisably one
+       product. Scaling here rather than editing each value keeps that relationship
+       intact and leaves one knob to turn.
+       Settled at 1.2: 1.5 was tried first and came back 20% too large.
+       The list's height cap divides by this; see .dm-list. */
+    --dm-zoom: 1.2;
+
+    /* Resolution scaling, the same contract every other panel honours: the UI is
+       designed at 1440p and scales with the window. See html/js/utils.js. */
+    zoom: calc(var(--ui-scale) * var(--dm-zoom));
+}
+
+/* ---- Title block ---- */
+
+/* THE NAME ALONE. The creator pairs its title with a subtitle naming the section you
+   are in; this menu has no equivalent, and a caption that only ever restates the panel
+   is decoration. The list already says what is running. */
+/* Room under the name. */
+.dm-title {
+    flex: none;
+    padding: 0 16px 10px;
+}
+
+.dm-title-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-display);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--ui-text);
+}
+
+/* On a page, where it sits: "Dev Tools" (or "Dev Tools › Scenes" a level down), in the group
+   headers' label style so it reads as a place, not a title. Hidden on the tool list. */
+.dm-crumb {
+    margin-bottom: 6px;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* A new view's title fades in with its rows (dev-menu.js _dmSwap). */
+.dm-title.dm-in-fwd,
+.dm-title.dm-in-back {
+    animation: dmFadeIn 0.2s var(--ui-ease) both;
+}
+
+/* ---- The list ---- */
+
+/* THE PART THAT SCROLLS: as tall as its rows, or what the panel has left (.dm-panel), and scrolled
+   to keep the picked row in view (dev-menu.js). min-height 0 lets it shrink below its rows.
+   2px of padding all round: the picked row's ring is drawn just outside it, and a scrolling box
+   clips anything past its edge. */
+.dm-list {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+    overflow-y: auto;
+    /* The picked row is scrolled to clear of the fades below, never under one. */
+    scroll-padding: 36px 0;
+}
+
+/* More above or below: that edge fades out (dev-menu.js _dmEdges), so a list cut by the screen
+   reads as one that goes on, not one that ends there. */
+.dm-list.dm-more-below {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+}
+.dm-list.dm-more-above {
+    -webkit-mask-image: linear-gradient(to top, #000 calc(100% - 36px), transparent);
+}
+.dm-list.dm-more-above.dm-more-below {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+}
+
+.dm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px 0 14px;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid transparent;
+    background: transparent;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+    animation: dmItemIn 0.2s var(--ui-ease) both;
+    /* --dm-i is set per item by dev-menu.js — one rule instead of the forty
+       hand-written nth-child delays this replaced. */
+    animation-delay: calc(var(--dm-i, 0) * 0.03s);
+}
+
+.dm-name {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    transition: color 0.16s var(--ui-ease);
+    /* A long tool name must not push the switch off the row. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* THE CHOSEN CARD, the inventory's picked slot: a blue tint inside a white ring, drawn twice
+   (the border and a 1px shadow outside it) so it reads as 2px without moving the row. */
+.dm-selected {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 1px var(--ui-ring);
+}
+
+/* ---- What a row ends in ---- */
+
+/* THE SWITCH: a tool that stays on. Lit (the white pill with a dark knob) = running. */
+.dm-switch {
+    position: relative;
+    flex: none;
+    width: 42px;
+    height: 24px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    border: 1px solid var(--ui-border-hover);
+    background: var(--ui-slot-bg-filled);
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+
+.dm-switch::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ui-text-mid);
+    transition: left 0.16s var(--ui-ease), background 0.16s var(--ui-ease);
+}
+
+.dm-switch.on {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+}
+
+.dm-switch.on::after {
+    left: 19px;
+    background: var(--ui-pill-ink);
+}
+
+/* A run mark (a one-off) or a chevron (opens a screen), centred where a switch's knob sits. */
+.dm-mark {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    color: var(--ui-text-mid);
+}
+
+.dm-selected .dm-mark { color: var(--ui-text); }
+
+/* ---- Developer mode's switch ----
+
+   The first row, and with developer mode off the only one. It leads with the HUD mark's
+   terminal glyph and, lit, wears the mark's amber (--ui-warning) rather than the white pill:
+   it is the one switch here that puts something on the HUD for everyone watching. */
+.dm-devmark {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--ui-text-label);
+    transition: color 0.16s var(--ui-ease);
+}
+
+/* .dm-dev-on is set by dev-menu.js, not :has(.dm-switch.on): CEF 103 has no :has(). */
+.dm-dev-on .dm-devmark { color: var(--ui-warning); }
+
+.dm-devrow .dm-switch.on {
+    background: var(--ui-warning);
+    border-color: var(--ui-warning);
+}
+
+/* ---- Everything under developer mode's switch ----
+
+   One box, so turning developer mode on slides the tools open under the switch and turning it
+   off slides them shut: the same menu, never a new one (dev-menu.js _dmSlide sets the height).
+   Clipped only while it slides: at rest the picked row's ring reaches past its edge. */
+.dm-more {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dm-more.dm-sliding {
+    overflow: hidden;
+    transition: height 0.32s var(--ui-ease);
+}
+
+/* ---- A page: the way back, notes, and the swap ---- */
+
+/* THE WAY BACK, a page's first row: the open chevron turned round leads it, and its name is dimmer
+   than the page's own rows until it is picked. */
+.dm-lead {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-left: -2px;
+    color: var(--ui-text-mid);
+}
+
+.dm-back .dm-name { color: var(--ui-text-mid); }
+.dm-back.dm-selected .dm-name,
+.dm-back.dm-selected .dm-lead { color: var(--ui-text); }
+
+/* A ROW'S GLYPH (a page row's `icon`, js/glyphs.js): before the name, dimmer until the row is picked,
+   as the way back's chevron is. */
+.dm-glyph {
+    flex: none;
+    display: flex;
+    width: 20px;
+    height: 20px;
+    color: var(--ui-text-mid);
+    transition: color 0.16s var(--ui-ease);
+}
+
+.dm-glyph svg {
+    width: 100%;
+    height: 100%;
+}
+
+.dm-selected .dm-glyph { color: var(--ui-text); }
+.dm-note .dm-glyph { width: 16px; height: 16px; margin-right: 10px; }
+
+/* A NOTE: something to read (what is loaded, what state it is in), never picked. Smaller and dimmer
+   than a row, with no end mark, so it cannot be mistaken for one. */
+.dm-note {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 30px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    animation: dmItemIn 0.2s var(--ui-ease) both;
+    animation-delay: calc(var(--dm-i, 0) * 0.03s);
+}
+
+.dm-note .dm-name {
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+    color: var(--ui-text-mid);
+}
+
+/* The swap's direction. Headers come in with the rows on a swap (on the first build they stand). */
+.dm-list.dm-in-fwd .dm-item,
+.dm-list.dm-in-fwd .dm-note,
+.dm-list.dm-in-fwd .dm-sep {
+    animation: dmItemInFwd 0.2s var(--ui-ease) both;
+    animation-delay: calc(var(--dm-i, 0) * 0.03s);
+}
+
+.dm-list.dm-in-back .dm-sep {
+    animation: dmItemIn 0.2s var(--ui-ease) both;
+    animation-delay: calc(var(--dm-i, 0) * 0.03s);
+}
+
+/* The same view with rows come or gone: drawn again in place, without an entrance. */
+.dm-list.dm-still .dm-item,
+.dm-list.dm-still .dm-note {
+    animation: none;
+}
+
+/* ---- Group headers ("Tools" / "Debug" / "Panels") ---- */
+
+/* Labels, not entries — the selection never lands on one (tools/core.lua skips them), so
+   nothing about them may look selectable. */
+.dm-sep {
+    flex-shrink: 0;
+    padding: 14px 14px 6px;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* A header with no name ({ sep = '' }): only a gap, between rows that belong apart within a group
+   (Debug, under the player's tools). */
+.dm-sep:empty {
+    padding: 0;
+    height: 10px;
+}
+
+/* ---- What the picked tool does ---- */
+
+.dm-desc {
+    flex: none;
+    margin: 12px 14px 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.dm-desc-name {
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+
+/* Two lines kept, so a longer one does not move the panel's edge as you go down the list. */
+.dm-desc-text {
+    margin-top: 3px;
+    min-height: calc(2 * 1.45em);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.45;
+    color: var(--ui-text-mid);
+}
+
+/* ---- No keyboard hint ---- */
+
+/* No "Arrows / Enter / Esc" footer, on purpose: this overlay takes no NUI focus and has no
+   cursor or hover states, so nothing names its controls — a fine trade for a menu only its
+   own developers open. */

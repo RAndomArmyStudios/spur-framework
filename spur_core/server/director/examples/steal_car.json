@@ -1,0 +1,105 @@
+{
+  "format": 2,
+  "id": "steal_car",
+  "rev": 1,
+  "name": "Steal the Car",
+  "description": "Example A: the fixer wants a car from a guarded yard. Kill the guards, take the key one of them drops, drive the car to the buyer and get paid. Half an hour. Before testing it, place the fixer, the three guards, the car, the drop-off and the buyer in the World tab.",
+  "settings": {
+    "start": { "mode": "interaction", "world": "fixer", "label": "Talk" },
+    "maxConcurrentRuns": 1,
+    "teamSize": 2,
+    "maxRunSec": 2100
+  },
+  "vars": [],
+  "world": [
+    { "id": "fixer", "kind": "npc", "layer": "standing", "label": "The fixer",
+      "def": { "model": "a_m_m_valcriminals_01", "coords": "spot", "behaviour": "stand",
+               "conditions": { "invincible": true, "canMove": false } } },
+    { "id": "guard", "kind": "npc", "layer": "run", "label": "Yard guard (has the key)",
+      "def": { "model": "g_m_m_uniduster_01", "coords": "spot", "behaviour": "guard", "weapon": "WEAPON_REVOLVER_CATTLEMAN",
+               "armour": 25, "fightBack": true } },
+    { "id": "guard2", "kind": "npc", "layer": "run", "label": "Yard guard 2",
+      "def": { "model": "g_m_m_uniduster_02", "coords": "spot", "behaviour": "guard", "weapon": "WEAPON_SHOTGUN_SAWEDOFF",
+               "armour": 25, "fightBack": true } },
+    { "id": "guard3", "kind": "npc", "layer": "run", "label": "Yard guard 3",
+      "def": { "model": "g_m_m_uniduster_03", "coords": "spot", "behaviour": "guard", "weapon": "WEAPON_REPEATER_CARBINE",
+               "armour": 25, "fightBack": true } },
+    { "id": "car", "kind": "vehicle", "layer": "run", "label": "The car",
+      "def": { "model": "coach2", "coords": "spot", "locked": true, "secure": true,
+               "key": { "exists": true, "where": "card" } } },
+    { "id": "dropoff", "kind": "spot", "layer": "run", "label": "Drop-off",
+      "def": { "coords": "spot" } },
+    { "id": "buyer", "kind": "npc", "layer": "run", "label": "The buyer",
+      "def": { "model": "s_m_m_liveryworker_01", "coords": "spot", "behaviour": "stand",
+               "conditions": { "invincible": true, "canMove": false } } }
+  ],
+  "nodes": [
+    { "id": "start", "type": "scenario.started", "v": 1, "x": -336, "y": 0, "props": {} },
+    { "id": "d1", "type": "dialog.line", "v": 1, "x": 0, "y": 0, "props": {
+        "npc": "fixer", "speaker": "The fixer",
+        "line": "I need a car taken out of a yard. It's guarded, and one of them has the key.",
+        "opt1": "I'm in.", "opt2": "Not today." } },
+    { "id": "team", "type": "dialog.team", "v": 1, "x": 336, "y": 0, "props": {
+        "npc": "fixer", "speaker": "The fixer", "line": "Who's riding with you?" } },
+    { "id": "begin", "type": "scenario.begin", "v": 1, "x": 672, "y": 0, "props": {} },
+    { "id": "no", "type": "scenario.calloff", "v": 1, "x": 672, "y": 240, "props": { "reason": "Not interested" } },
+    { "id": "go", "type": "flow.sequence", "v": 1, "x": 1008, "y": 0, "props": {} },
+    { "id": "spawnCar", "type": "vehicle.spawn", "v": 1, "x": 1344, "y": -128, "props": { "cars": ["car"] } },
+    { "id": "guards", "type": "npc.spawn", "v": 1, "x": 1680, "y": -128, "props": {
+        "npcs": ["guard", "guard2", "guard3"], "together": true, "hostile": true, "range": 30 } },
+    { "id": "noSetup", "type": "scenario.fail", "v": 1, "x": 2352, "y": 128, "props": { "reason": "The job could not be set up" } },
+    { "id": "clock", "type": "flow.wait", "v": 1, "x": 1344, "y": 128, "props": { "seconds": 1800 } },
+    { "id": "late", "type": "scenario.fail", "v": 1, "x": 1680, "y": 128, "props": { "reason": "Too slow" } },
+    { "id": "steal", "type": "goal.stealCar", "v": 1, "x": 2016, "y": -192, "props": {
+        "text": "Take the car from the yard. One of the guards has its key.", "car": "car", "driver": true } },
+    { "id": "buyerSpawn", "type": "npc.spawn", "v": 1, "x": 2352, "y": -128, "props": { "npcs": ["buyer"] } },
+    { "id": "deliver", "type": "goal.deliverCar", "v": 1, "x": 2688, "y": -192, "props": {
+        "text": "Drive the car to the buyer", "car": "car", "at": "dropoff", "radius": 10, "driven": true } },
+    { "id": "lost", "type": "scenario.fail", "v": 1, "x": 2688, "y": 128, "props": { "reason": "The car was lost" } },
+    { "id": "d2", "type": "dialog.line", "v": 1, "x": 3024, "y": -192, "props": {
+        "npc": "buyer", "speaker": "The buyer", "line": "That's the one. Not a scratch. Here's your cut.",
+        "opt1": "Pleasure doing business." } },
+    { "id": "pay", "type": "player.pay", "v": 1, "x": 3360, "y": -192, "props": { "amount": 1500, "method": "auto", "reason": "Car job" } },
+    { "id": "payFail", "type": "player.message", "v": 1, "x": 3360, "y": 96, "props": {
+        "text": "The payment didn't go through. Tell an admin.", "kind": "error", "who": "this player" } },
+    { "id": "done", "type": "scenario.succeed", "v": 1, "x": 3696, "y": -192, "props": { "reason": "Delivered" } },
+
+    { "id": "killed", "type": "npc.killed", "v": 1, "x": 1344, "y": 448, "props": { "npc": "guard" } },
+    { "id": "dropKey", "type": "vehicle.dropKey", "v": 1, "x": 1680, "y": 448, "props": { "car": "car", "at": "guard" } },
+    { "id": "keyMsg", "type": "player.message", "v": 1, "x": 2016, "y": 448, "props": {
+        "text": "He dropped a car key. Grab it.", "kind": "info", "who": "everyone in the run" } },
+    { "id": "noKey", "type": "scenario.fail", "v": 1, "x": 2016, "y": 672, "props": { "reason": "The key could not be dropped" } }
+  ],
+  "links": [
+    { "id": "l1", "from": { "node": "start", "pin": "out" }, "to": { "node": "d1", "pin": "in" } },
+    { "id": "l2", "from": { "node": "d1", "pin": "opt1" }, "to": { "node": "team", "pin": "in" } },
+    { "id": "lt1", "from": { "node": "team", "pin": "ready" }, "to": { "node": "begin", "pin": "in" } },
+    { "id": "lb1", "from": { "node": "begin", "pin": "started" }, "to": { "node": "go", "pin": "in" } },
+    { "id": "lt2", "from": { "node": "team", "pin": "left" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "lt3", "from": { "node": "team", "pin": "timeout" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "l3", "from": { "node": "d1", "pin": "opt2" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "l6", "from": { "node": "go", "pin": "then1" }, "to": { "node": "spawnCar", "pin": "in" } },
+    { "id": "l7", "from": { "node": "go", "pin": "then2" }, "to": { "node": "clock", "pin": "in" } },
+    { "id": "l8", "from": { "node": "spawnCar", "pin": "out" }, "to": { "node": "guards", "pin": "in" } },
+    { "id": "l9", "from": { "node": "spawnCar", "pin": "failed" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l10", "from": { "node": "spawnCar", "pin": "timeout" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l11", "from": { "node": "guards", "pin": "out" }, "to": { "node": "steal", "pin": "in" } },
+    { "id": "l12", "from": { "node": "guards", "pin": "failed" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l14", "from": { "node": "clock", "pin": "done" }, "to": { "node": "late", "pin": "in" } },
+    { "id": "l15", "from": { "node": "killed", "pin": "out" }, "to": { "node": "dropKey", "pin": "in" } },
+    { "id": "l16", "from": { "node": "dropKey", "pin": "placed" }, "to": { "node": "keyMsg", "pin": "in" } },
+    { "id": "l17", "from": { "node": "dropKey", "pin": "failed" }, "to": { "node": "noKey", "pin": "in" } },
+    { "id": "l18", "from": { "node": "dropKey", "pin": "timeout" }, "to": { "node": "noKey", "pin": "in" } },
+    { "id": "l19", "from": { "node": "steal", "pin": "done" }, "to": { "node": "buyerSpawn", "pin": "in" } },
+    { "id": "l23", "from": { "node": "buyerSpawn", "pin": "out" }, "to": { "node": "deliver", "pin": "in" } },
+    { "id": "l24", "from": { "node": "buyerSpawn", "pin": "failed" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l20", "from": { "node": "steal", "pin": "lost" }, "to": { "node": "lost", "pin": "in" } },
+    { "id": "l25", "from": { "node": "deliver", "pin": "done" }, "to": { "node": "d2", "pin": "in" } },
+    { "id": "l26", "from": { "node": "deliver", "pin": "lost" }, "to": { "node": "lost", "pin": "in" } },
+    { "id": "l28", "from": { "node": "d2", "pin": "opt1" }, "to": { "node": "pay", "pin": "in" } },
+    { "id": "l31", "from": { "node": "pay", "pin": "paid" }, "to": { "node": "done", "pin": "in" } },
+    { "id": "l32", "from": { "node": "pay", "pin": "failed" }, "to": { "node": "payFail", "pin": "in" } },
+    { "id": "l33", "from": { "node": "pay", "pin": "timeout" }, "to": { "node": "payFail", "pin": "in" } },
+    { "id": "l34", "from": { "node": "payFail", "pin": "out" }, "to": { "node": "done", "pin": "in" } }
+  ]
+}

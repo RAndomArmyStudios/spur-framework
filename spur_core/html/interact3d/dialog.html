@@ -1,0 +1,386 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>dialog capsule</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE DIALOG CAPSULE — what an NPC says and what you can answer (client/conversations.lua).
+
+   A DUI texture, like the rest of html/interact3d: rendered offscreen and drawn as one quad
+   that orbits the NPC. The texture is 1024 x 2048, FOUR cells of 1024 x 512, and cell k is
+   the same capsule with option k selected — so moving the selection is a UV switch in Lua,
+   with no repaint and no lag. The text is clear at 1 m wide; the grid is the default,
+   the stack a choice.
+
+   While a choice waits for the server (`waiting`), every cell shows the options dimmed and
+   none selected. `hint` is a small line under the answers (how to type an amount, while one is
+   being typed). Text only, never markup. CEF 103: no :has, no color-mix, no nesting.
+   ============================================================================ */
+
+:root {
+    /* whip's tokens (html/css/base.css), copied: a DUI page cannot load that file's cascade. */
+    --ui-surface: rgba(10, 12, 18, 0.82);
+    --ui-border:  rgba(255, 255, 255, 0.10);
+    --ui-text:    rgba(255, 255, 255, 0.93);
+    --ui-label:   rgba(255, 255, 255, 0.50);
+    --pill:       rgba(255, 255, 255, 0.93);
+    --ink:        #0a0c12;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: transparent; overflow: hidden; font-family: 'Barlow', 'Segoe UI', sans-serif; }
+
+.cell {
+    width: 1024px; height: 512px;
+    display: flex; align-items: center; justify-content: center;
+}
+.panel {
+    width: 940px;
+    padding: 24px 30px 28px;
+    border-radius: 38px;
+    background: var(--ui-surface);
+    border: 2px solid var(--ui-border);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.speaker {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ui-label);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.line {
+    font-size: 34px; font-weight: 600; line-height: 1.25; color: var(--ui-text);
+    margin: 6px 0 18px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.opts { display: flex; flex-direction: column; gap: 10px; }
+.grid .opts { display: grid; grid-template-columns: 1fr 1fr; }
+/* An answer is a pill as long as it fits on one line; a longer one wraps (an answer holds up to 60 letters) and
+   grows a line at a time, never cut off. */
+.opt {
+    min-height: 62px; border-radius: 31px; padding: 9px 22px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 28px; font-weight: 600; line-height: 1.15; color: rgba(255, 255, 255, 0.86);
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+.opt .n {
+    flex: none; width: 34px; height: 34px; border-radius: 17px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800;
+    background: rgba(255, 255, 255, 0.10);
+}
+.opt .t { min-width: 0; overflow-wrap: break-word; }
+.opt.sel { background: var(--pill); color: var(--ink); border-color: var(--pill); }
+.opt.sel .n { background: var(--ink); color: #fff; }
+.waiting .opt { opacity: 0.45; }
+.hint {
+    margin-top: 14px; font-size: 20px; font-weight: 600; color: var(--ui-label);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Room for the hint inside the 512 px cell, with four stacked answers too: the line gives a row. */
+.hinted .line { -webkit-line-clamp: 2; }
+/* A long line (a Dialog Line holds up to 440 letters): every word of it, smaller until the capsule fits its cell
+   (fitLines below). */
+.line.fit { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 28px; }
+
+/* ---- THE TEAM PAGE (the Director's Pick Team: "Who are you doing this with?") ----
+   A slot for each place in the team, then the list four rows at a time (`top`, the first shown): the
+   cells are those four rows each selected, so the selection still moves by UV alone. Slot states in
+   whip's semantic colours: in (success), asked (warning). */
+.team .line { -webkit-line-clamp: 1; font-size: 30px; margin: 4px 0 12px; }
+.slots { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.slot {
+    flex: 0 1 auto; min-width: 0; max-width: 200px; height: 44px; border-radius: 22px; padding: 0 16px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 20px; font-weight: 700; color: rgba(255, 255, 255, 0.86);
+    background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.10);
+    white-space: nowrap; overflow: hidden;
+}
+.slot .t { overflow: hidden; text-overflow: ellipsis; }
+.slot .dot { flex: none; width: 10px; height: 10px; border-radius: 5px; }
+.slot.you { background: var(--pill); color: var(--ink); border-color: var(--pill); }
+.slot.in { border-color: rgba(74, 222, 128, 0.55); }
+.slot.in .dot { background: #4ade80; }
+.slot.waiting { border-color: rgba(251, 191, 36, 0.55); }
+.slot.waiting .dot { background: #fbbf24; }
+.slot.free { border-style: dashed; color: var(--ui-label); justify-content: center; min-width: 56px; }
+.slots .count { margin-left: auto; flex: none; font-size: 20px; font-weight: 700; color: var(--ui-label); }
+.team .opts { gap: 8px; }
+/* (A team page's rows are names and character IDs, four to a page at a fixed height: one line each.) */
+.team .opt { height: 52px; min-height: 0; border-radius: 26px; font-size: 24px; padding: 0 20px; white-space: nowrap; }
+.team .opt .t { overflow: hidden; text-overflow: ellipsis; }
+.team .opt .n { width: 30px; height: 30px; border-radius: 15px; font-size: 16px; }
+.more { height: 18px; font-size: 16px; font-weight: 700; color: var(--ui-label); text-align: center; line-height: 18px; }
+/* A character ID being typed: the hint takes the room of the "more" lines, and the rows close up a
+   little, so the page still fits its 512 px cell. */
+.team.hinted .more { display: none; }
+.team.hinted .opt { height: 46px; }
+
+/* ---- A HAGGLE (the Director's Haggle: hot and cold) ----
+   A ruler between the line and the answers: each price asked so far a pin, coloured by how close a yes came
+   (cold blue to hot orange), red for a no, dark red for an insult; the stretch where their limit can still be,
+   hatched; the price being asked now, a white handle under it. Asks left and patience on the speaker's row. The
+   answers in one row of three. */
+.haggle .head { display: flex; align-items: center; gap: 18px; }
+.haggle .head .speaker { flex: 1 1 auto; min-width: 0; }
+.dots { flex: none; display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 700; color: var(--ui-label); }
+.dots i { width: 14px; height: 14px; border-radius: 7px; background: rgba(255, 255, 255, 0.18); }
+.dots i.on { background: var(--ui-text); }
+.dots i.pat { background: #f6a04d; }
+.haggle .line { -webkit-line-clamp: 2; font-size: 30px; margin: 4px 0 6px; }
+.ruler { position: relative; height: 128px; margin: 0 26px; }
+.ruler .track { position: absolute; left: 0; right: 0; top: 62px; height: 10px; border-radius: 5px; }
+.ruler .band { position: absolute; top: 54px; height: 26px; border-radius: 6px; border: 2px dashed rgba(255, 255, 255, 0.45);
+    background: repeating-linear-gradient(135deg, rgba(251, 146, 60, 0.30) 0 8px, rgba(248, 113, 113, 0.18) 8px 16px); }
+.ruler .pin { position: absolute; top: 0; width: 0; display: flex; flex-direction: column; align-items: center; }
+.ruler .pin .w { white-space: nowrap; font-size: 17px; font-weight: 800; padding: 1px 9px; border-radius: 10px; }
+.ruler .pin .p { white-space: nowrap; font-size: 20px; font-weight: 700; color: var(--ui-text); margin-top: 2px; }
+.ruler .pin .d { width: 18px; height: 18px; border-radius: 9px; border: 3px solid #0a0c12; margin-top: 6px; }
+.ruler .pin.no .p, .ruler .pin.insult .p { text-decoration: line-through; color: var(--ui-label); }
+.ruler .now { position: absolute; top: 48px; width: 6px; height: 38px; margin-left: -3px; border-radius: 3px; background: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2); }
+.ruler .nowv { position: absolute; top: 90px; transform: translateX(-50%); padding: 2px 12px; border-radius: 10px;
+    background: #fff; color: #0a0c12; font-size: 22px; font-weight: 800; white-space: nowrap; }
+.ruler .ends { position: absolute; left: 0; right: 0; top: 104px; display: flex; justify-content: space-between;
+    font-size: 17px; font-weight: 700; color: var(--ui-label); }
+.haggle .opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.haggle .opt { min-height: 56px; border-radius: 28px; font-size: 26px; padding: 7px 18px; white-space: nowrap; }
+.haggle .opt .t { overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script>
+(function () {
+    var state = { layout: 'grid', speaker: '', line: '', options: [], waiting: false, hint: '', team: null, top: 0 };
+    var atlas = document.getElementById('atlas');
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text != null) e.textContent = text;   // text only, never markup
+        return e;
+    }
+
+    // The team page: the slots, then rows top..top+3 of the list, cell k with row top+k selected.
+    function renderTeam() {
+        atlas.innerHTML = '';
+        var t = state.team, n = state.options.length;
+        var top = Math.max(0, Math.min(state.top || 0, Math.max(0, n - 4)));
+        var shown = Math.min(4, n - top);
+        for (var k = 0; k < 4; k++) {
+            var cell = el('div', 'cell team' + (state.waiting ? ' waiting' : '') + (state.hint ? ' hinted' : ''));
+            var panel = el('div', 'panel');
+            if (state.speaker) panel.appendChild(el('div', 'speaker', state.speaker));
+            panel.appendChild(el('div', 'line', state.line));
+            var slots = el('div', 'slots');
+            var filled = 0;
+            for (var s = 0; s < t.slots.length; s++) {
+                var sl = t.slots[s];
+                var chip = el('div', 'slot ' + sl.state);
+                if (sl.state !== 'you') chip.appendChild(el('span', 'dot'));
+                chip.appendChild(el('span', 't', sl.name));
+                slots.appendChild(chip);
+                if (sl.state !== 'waiting') filled++;
+            }
+            // Free places: one chip each, or one "+N" when a big team's would not fit the row.
+            var free = t.max - t.slots.length;
+            if (t.slots.length + free > 8) { if (free > 0) slots.appendChild(el('div', 'slot free', '+' + free)); }
+            else for (var f = 0; f < free; f++) slots.appendChild(el('div', 'slot free', '+'));
+            slots.appendChild(el('div', 'count', filled + ' of ' + t.max));
+            panel.appendChild(slots);
+            panel.appendChild(el('div', 'more', top > 0 ? '▲ ' + top + ' more' : ''));
+            var opts = el('div', 'opts');
+            for (var i = 0; i < shown; i++) {
+                var selected = !state.waiting && i === Math.min(k, shown - 1);
+                var o = el('div', 'opt' + (selected ? ' sel' : ''));
+                o.appendChild(el('div', 'n', String(top + i + 1)));
+                o.appendChild(el('span', 't', state.options[top + i]));
+                opts.appendChild(o);
+            }
+            panel.appendChild(opts);
+            var below = n - top - shown;
+            panel.appendChild(el('div', 'more', below > 0 ? '▼ ' + below + ' more' : ''));
+            if (state.hint) panel.appendChild(el('div', 'hint', state.hint));
+            cell.appendChild(panel);
+            atlas.appendChild(cell);
+        }
+    }
+
+    // A haggle: the price as money ($1,250) or a count (×3).
+    function amount(h, v) {
+        var n = Math.round(Number(v) || 0);
+        return h.unit === 'count' ? '×' + n : '$' + n.toLocaleString('en-US');
+    }
+    // How close a yes came: cold blue far from their limit, through amber, to hot orange near it.
+    function heat(x) {
+        var t = Math.max(0, Math.min(1, x));
+        var from = t < 0.5 ? [96, 165, 250] : [251, 191, 36], to = t < 0.5 ? [251, 191, 36] : [249, 115, 22];
+        var k = t < 0.5 ? t * 2 : (t - 0.5) * 2;
+        return 'rgb(' + from.map(function (c, i) { return Math.round(c + (to[i] - c) * k); }).join(',') + ')';
+    }
+    function yesWord(h) { return h >= 0.85 ? 'Yes, just' : h >= 0.5 ? 'Yes' : 'Easy yes'; }
+
+    // One ruler (the same in every cell).
+    function ruler(h) {
+        var box = el('div', 'ruler');
+        var span = h.hi - h.lo;
+        var x = function (v) { return Math.max(0, Math.min(100, ((v - h.lo) / span) * 100)) + '%'; };
+        var track = el('div', 'track');
+        // Hotter towards their limit: up the ruler when they pay, down it when they sell.
+        track.style.background = h.buys ? 'linear-gradient(90deg, #1e3a5f, #3b82f6 30%, #f59e0b 65%, #ef4444)'
+            : 'linear-gradient(270deg, #1e3a5f, #3b82f6 30%, #f59e0b 65%, #ef4444)';
+        box.appendChild(track);
+        if (typeof h.a === 'number' && typeof h.b === 'number' && h.b > h.a) {
+            var band = el('div', 'band');
+            band.style.left = x(h.a);
+            band.style.width = (((Math.min(h.b, h.hi) - Math.max(h.a, h.lo)) / span) * 100) + '%';
+            box.appendChild(band);
+        }
+        for (var i = 0; i < h.asks.length; i++) {
+            var a = h.asks[i];
+            var pin = el('div', 'pin ' + a.r);
+            pin.style.left = x(a.p);
+            var color = a.r === 'yes' ? heat(a.h) : a.r === 'no' ? '#f87171' : '#b91c1c';
+            var w = el('span', 'w', a.r === 'yes' ? yesWord(a.h) : a.r === 'no' ? 'No' : 'Insulted');
+            w.style.background = color;
+            w.style.color = '#0a0c12';
+            pin.appendChild(w);
+            pin.appendChild(el('span', 'p', amount(h, a.p)));
+            var d = el('span', 'd');
+            d.style.background = color;
+            pin.appendChild(d);
+            box.appendChild(pin);
+        }
+        if (typeof state.asking === 'number') {
+            var now = el('div', 'now');
+            now.style.left = x(state.asking);
+            box.appendChild(now);
+            var nv = el('div', 'nowv', amount(h, state.asking));
+            nv.style.left = x(state.asking);
+            box.appendChild(nv);
+        }
+        var ends = el('div', 'ends');
+        ends.appendChild(el('span', '', amount(h, h.lo)));
+        ends.appendChild(el('span', '', amount(h, h.hi)));
+        box.appendChild(ends);
+        return box;
+    }
+
+    function renderHaggle() {
+        atlas.innerHTML = '';
+        var h = state.haggle, n = Math.min(4, state.options.length);
+        for (var k = 0; k < 4; k++) {
+            var cell = el('div', 'cell haggle' + (state.waiting ? ' waiting' : '') + (state.hint ? ' hinted' : ''));
+            var panel = el('div', 'panel');
+            var head = el('div', 'head');
+            head.appendChild(el('div', 'speaker', state.speaker || ''));
+            // Asks left, then patience (orange while it lasts).
+            var dots = el('div', 'dots', 'Asks');
+            for (var i = 0; i < h.left; i++) dots.appendChild(el('i', 'on'));
+            if (h.patMax > 0) {
+                dots.appendChild(el('span', '', '  Patience'));
+                for (var p = 0; p < h.patMax; p++) dots.appendChild(el('i', p < h.pat ? 'pat' : ''));
+            }
+            head.appendChild(dots);
+            panel.appendChild(head);
+            panel.appendChild(el('div', 'line', state.line));
+            panel.appendChild(ruler(h));
+            var opts = el('div', 'opts');
+            for (var j = 0; j < n; j++) {
+                var o = el('div', 'opt' + (!state.waiting && j === Math.min(k, n - 1) ? ' sel' : ''));
+                o.appendChild(el('div', 'n', String(j + 1)));
+                o.appendChild(el('span', 't', state.options[j]));
+                opts.appendChild(o);
+            }
+            panel.appendChild(opts);
+            if (state.hint) panel.appendChild(el('div', 'hint', state.hint));
+            cell.appendChild(panel);
+            atlas.appendChild(cell);
+        }
+    }
+
+    function render() {
+        if (state.layout === 'team' && state.team) { renderTeam(); return; }
+        if (state.layout === 'haggle' && state.haggle) { renderHaggle(); return; }
+        atlas.innerHTML = '';
+        var n = Math.min(4, state.options.length);
+        for (var k = 0; k < 4; k++) {
+            var cls = 'cell' + (state.layout === 'stack' ? '' : ' grid') + (state.waiting ? ' waiting' : '') + (state.hint ? ' hinted' : '');
+            var cell = el('div', cls);
+            var panel = el('div', 'panel');
+            if (state.speaker) panel.appendChild(el('div', 'speaker', state.speaker));
+            panel.appendChild(el('div', 'line' + (state.line.length > 110 ? ' fit' : ''), state.line));
+            var opts = el('div', 'opts');
+            for (var i = 0; i < n; i++) {
+                var selected = !state.waiting && i === Math.min(k, n - 1);
+                var o = el('div', 'opt' + (selected ? ' sel' : ''));
+                o.appendChild(el('div', 'n', String(i + 1)));
+                o.appendChild(el('span', 't', state.options[i]));
+                opts.appendChild(o);
+            }
+            panel.appendChild(opts);
+            if (state.hint) panel.appendChild(el('div', 'hint', state.hint));
+            cell.appendChild(panel);
+            atlas.appendChild(cell);
+        }
+        fitLines();
+    }
+
+    // The capsule made to fit its 512 px cell: a long line two pixels smaller at a time (18 px at least), then
+    // answers that wrap (20 px at least). Every cell says the same words, so the first is measured and all four
+    // take its sizes.
+    function fitLines() {
+        var panel = atlas.querySelector('.panel');
+        if (!panel || panel.offsetHeight <= 500) return;
+        function shrink(list, from, least) {
+            var px = from;
+            while (list.length && px > least && panel.offsetHeight > 500) {
+                px -= 2;
+                for (var i = 0; i < list.length; i++) list[i].style.fontSize = px + 'px';
+            }
+        }
+        shrink(atlas.querySelectorAll('.line.fit'), 28, 18);
+        shrink(atlas.querySelectorAll('.opt'), 28, 20);
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d !== 'object') return;
+        if (d.layout === 'grid' || d.layout === 'stack' || d.layout === 'team' || d.layout === 'haggle') state.layout = d.layout;
+        if (typeof d.speaker === 'string') state.speaker = d.speaker;
+        if (typeof d.line === 'string') state.line = d.line;
+        if (Array.isArray(d.options)) state.options = d.options.map(function (s) { return String(s); });
+        state.waiting = d.waiting === true;
+        state.hint = typeof d.hint === 'string' ? d.hint : '';
+        // A team page's slots (client/conversations.lua checks them): { max, slots: [{ name, state }] }.
+        var t = d.team;
+        state.team = (t && typeof t === 'object' && Array.isArray(t.slots) && typeof t.max === 'number')
+            ? { max: Math.max(1, Math.min(16, Math.floor(t.max))), slots: t.slots.filter(function (s) {
+                  return s && typeof s.name === 'string' && (s.state === 'you' || s.state === 'in' || s.state === 'waiting');
+              }) }
+            : null;
+        state.top = typeof d.top === 'number' ? Math.max(0, Math.floor(d.top)) : 0;
+        // A haggle's ruler (client/conversations.lua checks it), and the price being asked on it now.
+        var h = d.haggle;
+        state.haggle = (h && typeof h === 'object' && typeof h.lo === 'number' && typeof h.hi === 'number' && h.hi > h.lo)
+            ? { buys: h.buys === true, lo: h.lo, hi: h.hi, unit: h.unit === 'count' ? 'count' : 'money',
+                asks: Array.isArray(h.asks) ? h.asks.filter(function (a) { return a && typeof a.p === 'number' && /^(yes|no|insult)$/.test(a.r); }) : [],
+                a: typeof h.a === 'number' ? h.a : null, b: typeof h.b === 'number' ? h.b : null,
+                left: Math.max(0, Math.min(8, Math.floor(Number(h.left) || 0))), pat: Math.max(0, Math.min(8, Math.floor(Number(h.pat) || 0))),
+                patMax: Math.max(0, Math.min(8, Math.floor(Number(h.patMax) || 0))) }
+            : null;
+        state.asking = typeof d.asking === 'number' && isFinite(d.asking) ? d.asking : null;
+        render();
+    });
+
+    render();
+})();
+</script>
+</body>
+</html>

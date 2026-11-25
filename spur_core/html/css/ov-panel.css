@@ -1,0 +1,260 @@
+/* ========================================
+   THE OBJECT VIEWER'S OPTIONS (js/ov-panel.js, tools/ov_panel.lua) and Move's bar (tools/ov_move.lua)
+
+   The Director's column (director.css .dr-col) on the right-hand side: the same panel, sizes and lists, its classes
+   reused as they are (.dr-head, .dr-pal-*, .dr-cat, .dr-chip, .dr-btn, .dr-field, .dr-switch). Only what is new is
+   here: where it sits, the kind's disc, a row's switch or page arrow, the pages' rows and tiles, Move's bar.
+
+   Under the /whip panel (9500) and the Director (9550): a dev tool over the game.
+   ======================================== */
+
+#ov-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 9400;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    user-select: none;
+}
+
+/* ---- the column ---- */
+
+.ov-col {
+    /* The sizes director.css's classes read from .dr-col. */
+    --dr-pad: 28px;
+    --dr-display: var(--ui-font-display);
+    --dr-menu-off: rgba(255, 255, 255, 0.34);
+    --dr-row-off: rgba(255, 255, 255, 0.62);
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 384px;
+    zoom: calc(var(--ui-scale) * 1.35);
+    display: none;
+    flex-direction: column;
+    background:
+        radial-gradient(120% 60% at 100% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-left: 1px solid var(--ui-border);
+    box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    pointer-events: auto;
+    animation: ov-in 0.24s var(--ui-ease);
+}
+#ov-panel.open .ov-col { display: flex; }
+@keyframes ov-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ov-col { animation: none; } }
+
+.ov-col .dr-icon svg { width: 16px; height: 16px; }
+
+/* The kind: the object viewer's own disc and colour (html/interact3d/objview.html): object blue, ped green, car red. */
+.ov-disc {
+    --k: #60a5fa;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--k);
+    color: var(--k);
+}
+.ov-disc.k-npc, .ov-disc.k-player, .ov-art.k-npc { --k: #4ade80; }
+.ov-disc.k-vehicle, .ov-art.k-vehicle { --k: #f87171; }
+.ov-disc svg { width: 22px; height: 22px; }
+
+/* The thing's picture in the disc's place (the object viewer's card has the same): the Director's world list
+   thumbnail, fitted by utils.js fitPicture, edged in the kind's colour. Its glyph if the picture will not load. */
+.ov-art {
+    --k: #60a5fa;
+    flex: none;
+    position: relative;
+    width: 56px;
+    height: 40px;
+    border-radius: 10px;
+    border: 2px solid var(--k);
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--k);
+}
+.ov-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.ov-art-glyph { display: none; }
+.ov-art-glyph svg { width: 22px; height: 22px; display: block; }
+.ov-art.ov-noimg img { display: none; }
+.ov-art.ov-noimg .ov-art-glyph { display: block; }
+
+/* ---- the list ---- */
+
+.ov-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-sp-4);
+    width: calc(100% + 16px);
+    border: 0;
+    background: transparent;
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+}
+.ov-row b { min-width: 0; transition: color 0.18s var(--ui-ease), transform 0.22s var(--ui-ease); }
+.ov-row:hover b { color: var(--ui-pill); transform: translateX(4px); }
+.ov-row.danger b, .ov-row.danger:hover b { color: var(--ui-error); }
+.ov-row .dr-switch { transform: scale(0.85); }
+/* A full admin's only (a Dungeon Master's view): greyed, never pressed, said so on the right. */
+.ov-row.locked { cursor: default; }
+.ov-row.locked b, .ov-row.locked:hover b, .ov-row.locked.danger b { color: var(--ui-text-dim); transform: none; }
+.ov-lock {
+    flex: none;
+    font-size: 0.72em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+.ov-chev { flex: none; display: flex; color: var(--ui-text-label); }
+.ov-chev svg { width: 14px; height: 14px; }
+
+/* The strip under the list: the column's own child here, not the body's, so none of the body's pull to its edges. */
+.ov-strip { margin: 0; }
+/* How a press went, in the strip. */
+.ov-strip.ok b { color: var(--ui-success); }
+.ov-strip.error b, .ov-strip.error p { color: var(--ui-error); }
+.ov-strip.warn b { color: var(--ui-warning); }
+
+/* ---- the pages ---- */
+
+.ov-page-title { margin-top: 10px; }
+.ov-page-body { padding-bottom: 8px; }
+.ov-btns { display: flex; gap: var(--ui-sp-3); margin-top: 14px; }
+.ov-wide { width: 100%; margin-top: 10px; }
+
+/* A stat: its name and range, its number, Set. */
+.ov-stat {
+    display: grid;
+    grid-template-columns: 1fr 84px auto;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: 7px 0;
+    border-top: 1px solid var(--ui-border);
+}
+.ov-stat:first-child { border-top: 0; }
+.ov-stat-name { min-width: 0; }
+.ov-stat-name b { display: block; font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-stat-name small { font-size: var(--ui-fs-caption); color: var(--ui-text-mid); font-variant-numeric: tabular-nums; }
+.ov-num { padding: 6px 8px; font-variant-numeric: tabular-nums; }
+
+/* A person, a walk: the legend's row, the whole line pressed. */
+.ov-person {
+    display: block;
+    width: calc(100% + 16px);
+    margin: 0 -8px;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: var(--ui-radius-slot);
+    background: transparent;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.ov-person:hover { background: var(--ui-surface-hover); }
+.ov-person b { display: block; font-size: var(--ui-fs-body-lg); font-weight: var(--ui-fw-semibold); }
+.ov-person small { font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+/* The one picked (a Dungeon car's key holder, a ground item's item now): its line says so too. */
+.ov-person.on { background: var(--ui-surface-hover); }
+
+/* A page's switches (the Director's .dr-sw rows), under its choices. */
+.ov-sws { margin-top: 12px; border-top: 1px solid var(--ui-border); }
+
+/* Change model: the Director's peds as pictures, three across. */
+.ov-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.ov-tile {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px 7px;
+    border: 1px solid var(--ui-slot-line-filled, var(--ui-border));
+    border-radius: var(--ui-radius-slot);
+    background: var(--ui-slot-bg-filled, rgba(255, 255, 255, 0.04));
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.ov-tile:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+.ov-tile.on { border-color: var(--ui-pill); }
+.ov-tile img { width: 100%; height: 96px; object-fit: contain; object-position: 50% 100%; }
+.ov-tile span { width: 100%; font-size: 10.5px; line-height: 1.25; text-align: center; color: var(--ui-text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A prop's name is long and its end tells two apart (work05, work06a): two lines, broken anywhere. */
+.ov-tile-prop span { white-space: normal; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Move's markers put away while Move stays on (OvMove.update markers = false: the hand editor's walk) */
+#furnisher.fz-nomarkers #fz-gizmo { display: none; }
+
+/* ---- Move's bar: top middle, over the markers (#furnisher's SVG, z 40) ---- */
+
+.ov-move {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    zoom: calc(var(--ui-scale) * 1.35);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+.ov-move.open { display: flex; }
+.ov-move-main {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-6);
+    padding: 10px 12px 10px 18px;
+    border: 1px solid var(--ui-border);
+    border-radius: 999px;
+    background: var(--ui-surface-solid);
+    box-shadow: var(--ui-shadow);
+}
+.ov-move-name small { display: block; font-size: var(--ui-fs-xs); font-weight: var(--ui-fw-bold); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ui-text-label); }
+.ov-move-name b { font-family: var(--ui-font-display); font-size: var(--ui-fs-lg); font-weight: 800; color: var(--ui-pill); }
+.ov-move-modes { margin: 0; }
+.ov-move-keys {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 16px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(10, 12, 18, 0.9);
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+.ov-move-keys span { display: inline-flex; align-items: center; gap: 6px; }
+/* A key: the Director's white keycap (director.css .dr-rec-keys kbd). */
+.ov-move-keys kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+    color: #0b0d12;
+    font-family: var(--ui-font);
+    font-size: 10.5px;
+    font-weight: var(--ui-fw-bold);
+}
+.ov-move-keys .ov-pad { display: block; height: 18px; width: auto; }

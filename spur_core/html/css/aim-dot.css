@@ -1,0 +1,28 @@
+/* The aim dot (js/aim-dot.js, client/aim_dot.lua): whip's crosshair while the player aims. */
+
+#aim-dot {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    /* A dark rim, so it shows against a bright wall */
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+    opacity: 0;
+    transition: opacity 200ms ease, left 50ms ease-out, top 50ms ease-out;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+#aim-dot.on {
+    opacity: 1;
+}
+
+/* The muzzle is against something the camera sees past */
+#aim-dot.blocked {
+    background: var(--ui-error);
+    box-shadow: 0 0 6px rgba(248, 113, 113, 0.5), 0 0 3px rgba(0, 0, 0, 0.9);
+}

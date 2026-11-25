@@ -1,0 +1,1325 @@
+/* ========================================
+   THE SHOP SCREEN — the shopfront and the basket
+
+   While a shop is open its goods take the pockets' place in the middle column and the basket takes
+   the whole right-hand column. The goods are CARDS: six across, with category chips, a sort and a search above them. The house look throughout (DESIGN.md): the panels are the
+   inventory's own, the chosen chip and Buy are the white pill, the rest is hairline-and-wash.
+
+   On base.css's tokens, like inventory.css; nothing here is smaller than the scale's xs step.
+   ======================================== */
+
+/* ---- The shop's mode: the pockets' rail goes with the pockets ---- */
+#inv-overlay.shop-mode .inv-accessory-panel {
+    display: none;
+}
+
+/* ---- The header's right: Edit Shelf (managers) and the search ---- */
+.inv-shop-head-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ui-sp-5);
+}
+
+/* ---- Shop talk: the visit's /me lines, between the name and the search ----
+   js/shop-talk.js. Two rows, the shopper's over the keeper's, each the player HUD's capsule
+   (css/status-hud.css): its face always showing, and that one's line unfolding beside it. EVERY SIZE
+   FOLLOWS ONE, --talk-h (a row's height), which js/shop-talk.js sets to fill the room the header leaves
+   (the whole height from the panel's top to the goods). The face, its ring, the
+   padding, the gap and the words are its fractions, so the capsule keeps the HUD's and the in-world
+   bubble's proportions at any size (html/bubble3d: 30px text in a 67px capsule, 0.448 of it). */
+
+/* The rows give way when a long line meets the search, never the name or the search; and a gap keeps
+   them off both. */
+.inv-shopfront .inv-panel-header {
+    column-gap: var(--ui-sp-8);
+}
+
+.inv-shopfront .inv-panel-title,
+.inv-shop-head-right {
+    flex-shrink: 0;
+}
+
+/* The room between the name and the search, the height of the name. */
+.inv-shop-talk {
+    --talk-h: 37px;                                              /* a row; js/shop-talk.js fits it */
+    --talk-face: calc((var(--talk-h) - 2px) / 1.12);             /* the row less its hairline and padding */
+    --talk-pad: calc(var(--talk-face) * 0.06);                   /* the HUD capsule's 4px round a 67px disc */
+    --talk-ring: calc(var(--talk-face) * 0.065);                 /* the HUD disc's white ring */
+    --talk-gap: calc(var(--talk-h) * 0.14);                      /* between the rows: the bubbles' stack gap */
+    position: relative;
+    flex: 1 1 auto;
+    align-self: stretch;
+    min-width: 0;
+}
+
+.inv-shop-talk[hidden] {
+    display: none;
+}
+
+/* THE ROWS FILL THE HEADER'S WHOLE HEIGHT AND MORE (from the top of the panel to the goods).
+   js/shop-talk.js measures it — from just under the panel's top edge to just above the category
+   chips, or the goods themselves when a shop has no chips — and places the stack there: out of the
+   header's flow, so nothing under it moves. Until it has, it stands on the header's margin. Two rows'
+   height always, so a shop with no keeper has its one row in the middle. */
+.inv-talk-stack {
+    position: absolute;
+    left: 0;
+    bottom: calc(8px - var(--ui-sp-6));
+    height: calc(2 * var(--talk-h) + var(--talk-gap));
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--talk-gap);
+}
+
+/* A row: a capsule round a face, opening to the right for a line. */
+.inv-talk-row {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    padding: var(--talk-pad);
+    background: var(--ui-surface-medium);
+    border: 1px solid var(--ui-border);
+    border-radius: calc(var(--talk-h) / 2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition:
+        padding 0.4s var(--ui-ease),
+        border-color 0.3s ease,
+        background 0.3s ease;
+}
+
+.inv-talk-row[hidden] {
+    display: none;
+}
+
+.inv-talk-row.talking {
+    padding-right: calc(var(--talk-h) * 0.4);
+}
+
+/* A SALE AND A REFUSAL, COLOURED (a purchase looks like one): the success green edge and wash while a sale's line is up, the error red while the keeper tells
+   them they cannot pay. The colours' own meanings (DESIGN.md), and only for that line's time. The red's
+   edge is written out: there is no --ui-error-medium, and Chromium 103 has no color-mix(). */
+.inv-talk-row.sale {
+    border-color: var(--ui-success-medium);
+    background: var(--ui-success-light);
+}
+
+.inv-talk-row.refused {
+    border-color: rgba(248, 113, 113, 0.5);
+    background: var(--ui-error-light);
+}
+
+/* ...and the speaker's ring in the same colour, so it reads at a glance as Buy does. */
+.inv-talk-row.sale .inv-talk-face::after {
+    border-color: var(--ui-success);
+}
+
+.inv-talk-row.refused .inv-talk-face::after {
+    border-color: var(--ui-error);
+}
+
+.inv-talk-face::after {
+    transition: border-color 0.3s ease;
+}
+
+/* A face: the HUD's disc, a picture in it instead of a gauge. */
+.inv-talk-face {
+    position: relative;
+    flex: 0 0 auto;
+    width: var(--talk-face);
+    height: var(--talk-face);
+}
+
+/* The white ring and the badge's black outline, drawn over the picture. */
+.inv-talk-face::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: var(--talk-ring) solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 0 0 calc(var(--talk-ring) * 0.75) rgba(0, 0, 0, 0.9),
+        0 0 calc(var(--talk-ring) * 1.5) rgba(0, 0, 0, 0.85);
+    pointer-events: none;
+}
+
+/* The picture: 1px under the ring, so its soft edge is hidden by it (the HUD disc's own fix). */
+.inv-talk-pic {
+    position: absolute;
+    inset: calc(var(--talk-ring) - 1px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: rgba(12, 14, 20, 0.96);
+    color: var(--ui-text-mid);
+}
+
+.inv-talk-pic svg {
+    width: 55%;
+    height: 55%;
+}
+
+/* The shopper: GTA's headshot, already a face on nothing. */
+.inv-talk-pic img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* The keeper: the admin panel's full-length picture of the NPC, cropped to the head. Every one is shot
+   the same way (whip_media_previews/img/peds, 512 x 768, the head about 49% across and 12% down), so one crop
+   fits them all: 160 of its pixels across the disc, the head in the middle. */
+#inv-talk-keeper .inv-talk-pic img {
+    inset: auto;
+    left: -106%;
+    top: -9.4%;
+    width: 320%;
+    height: auto;
+}
+
+/* The words: a width js/shop-talk.js measures, opening from nothing as a HUD notice does. */
+.inv-talk-text,
+.inv-talk-measure {
+    font-family: var(--ui-font);
+    font-size: calc(var(--talk-h) * 0.448);
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.inv-talk-text {
+    flex: 0 1 auto;
+    min-width: 0;
+    width: 0;
+    margin-left: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ui-text);
+    opacity: 0;
+    transition:
+        width 0.4s var(--ui-ease),
+        margin 0.4s var(--ui-ease),
+        opacity 0.15s ease;
+}
+
+.inv-talk-row.talking .inv-talk-text {
+    margin-left: calc(var(--talk-h) * 0.25);
+    opacity: 1;
+    /* The words after the capsule has started to open, as the bubble's do. */
+    transition:
+        width 0.4s var(--ui-ease),
+        margin 0.4s var(--ui-ease),
+        opacity 0.2s ease 0.2s;
+}
+
+.inv-talk-row.talking.swapping .inv-talk-text {
+    opacity: 0;
+    transition:
+        width 0.4s var(--ui-ease),
+        margin 0.4s var(--ui-ease),
+        opacity 0.15s ease;
+}
+
+.inv-talk-measure {
+    position: absolute;
+    left: -10000px;
+    top: 0;
+    visibility: hidden;
+}
+
+/* ---- Notices while the inventory is open: a talk row in the pockets' header ----
+   js/inv-notice.js. The player capsule, a notice's home, is hidden behind the inventory, so a notice
+   shows between the name and the weight: centred in that room and out of the header's flow, so nothing
+   moves. The capsule fades in round the notice's disc (its type's colour and mark, as the player
+   capsule's notification bubble draws it), the words open beside it, then fold back, and it fades. */
+.inv-notice {
+    --talk-h: 46px;
+    --talk-face: calc((var(--talk-h) - 2px) / 1.12);
+    --talk-pad: calc(var(--talk-face) * 0.06);
+    --talk-ring: calc(var(--talk-face) * 0.065);
+    position: relative;
+    flex: 1 1 auto;
+    align-self: stretch;
+    min-width: 0;
+    margin: 0 var(--ui-sp-8);
+}
+
+.inv-notice-row {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition:
+        padding 0.4s var(--ui-ease),
+        border-color 0.3s ease,
+        background 0.3s ease,
+        opacity 0.25s var(--ui-ease),
+        transform 0.3s var(--ui-ease);
+}
+
+.inv-notice-row.shown {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+/* The disc: flat in the notice's colour, its mark in dark ink (the player capsule's bubble: a tinted disc
+   wants ink, not a differenced glyph). */
+.inv-talk-pic.inv-notice-mark {
+    background: var(--notice-color, var(--ui-info));
+    color: var(--ui-pill-ink);
+}
+
+/* The mark at the bubble's proportion: 55% of the disc, the ring included. */
+.inv-notice-mark svg {
+    width: 62%;
+    height: 62%;
+}
+
+/* The /whip panel's: the same row at the header's right, beside the close (whip-panel.js puts it in the
+   header's spacer), opening leftwards from there. */
+.wp-notice {
+    --talk-h: 40px;
+    --talk-face: calc((var(--talk-h) - 2px) / 1.12);
+    --talk-pad: calc(var(--talk-face) * 0.06);
+    --talk-ring: calc(var(--talk-face) * 0.065);
+    position: relative;
+    align-self: stretch;
+    min-width: 0;
+}
+
+.wp-notice .inv-notice-row {
+    left: auto;
+    right: 0;
+    transform: translateY(-50%) scale(0.9);
+    transform-origin: right center;
+}
+
+.wp-notice .inv-notice-row.shown {
+    transform: translateY(-50%);
+}
+
+/* ---- A notice in a shop: the shopper's talk row (js/shop-talk.js) ----
+   The goods take the pockets' place, header and all, so a notice joins the shopper's own row: their face
+   gives way to the notice's disc for its time, the words beside it as a /me's, then the face comes back. */
+.inv-talk-pic.inv-talk-mark {
+    background: var(--notice-color, var(--ui-info));
+    color: var(--ui-pill-ink);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.inv-talk-row.noticing .inv-talk-mark {
+    opacity: 1;
+}
+
+.inv-talk-mark svg {
+    width: 62%;
+    height: 62%;
+}
+
+/* Edit Shelf, for the shop's managers: a quiet dashed button, never mistaken for a chip. */
+.inv-shop-edit-btn {
+    flex-shrink: 0;
+    padding: var(--ui-sp-3) var(--ui-sp-6);
+    background: none;
+    border: 1px dashed var(--ui-border-hover);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+
+.inv-shop-edit-btn:hover {
+    background: var(--ui-surface-hover);
+    color: var(--ui-text);
+}
+
+/* The search: the admin panel's field, with a magnifier. Typing narrows the cards at once. */
+.inv-shop-search {
+    width: 300px;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    color: var(--ui-text-mid);
+    transition: border-color 0.1s var(--ui-ease), background 0.1s var(--ui-ease);
+}
+
+.inv-shop-search:focus-within {
+    border-color: var(--ui-accent-medium);
+    background: var(--ui-surface-hover);
+}
+
+.inv-shop-search svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.inv-shop-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+}
+
+.inv-shop-search input::placeholder {
+    color: var(--ui-text-mid);
+}
+
+/* ---- The bar: the category chips, and the sort ---- */
+.inv-shop-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-sp-6);
+    margin-bottom: var(--ui-sp-6);
+}
+
+.inv-shop-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+}
+
+.inv-shop-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+
+.inv-shop-tab:hover {
+    background: var(--ui-surface-hover);
+    border-color: var(--ui-border-hover);
+    color: var(--ui-text);
+}
+
+/* The chip on show: the selection pill, as a segmented choice's chosen option is everywhere in whip. */
+.inv-shop-tab.on {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+
+/* How many it holds: a reading beside the name. */
+.inv-shop-tab-n {
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+    opacity: 0.65;
+}
+
+/* The sort: a small segmented choice in a track (the basket's Cash / Bank, smaller). */
+.inv-shop-sort {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.inv-shop-sort-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+}
+
+.inv-shop-sort-opts {
+    display: flex;
+    gap: var(--ui-sp-1);
+    padding: 3px;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+}
+
+.inv-sort-opt {
+    padding: var(--ui-sp-2) var(--ui-sp-5);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: color 0.1s var(--ui-ease), background 0.1s var(--ui-ease);
+}
+
+.inv-sort-opt:hover {
+    color: var(--ui-text);
+}
+
+.inv-sort-opt.on {
+    background: var(--ui-surface-medium);
+    border-color: var(--ui-border-hover);
+    color: var(--ui-text);
+    box-shadow: var(--ui-slot-lift);
+}
+
+/* ---- The cards ---- */
+
+/* Six across, rows as tall as a card, scrolling inside a box a little shorter than the pockets'
+   (inventory.css: a 5:4 box, held to 960px). Both are cut by the chip bar's height (about 50px), so
+   the shop is the inventory's own size and the whole screen still fits; on a big screen it is the
+   960px cap that holds, not the shape. */
+#inv-shop-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: min-content;
+    align-content: start;
+    aspect-ratio: 5 / 3.8;
+    max-height: 905px;
+}
+
+/* A card is a slot to inventory.js (so a click adds one and a right-click asks how many), drawn as a
+   card: the picture on its own wash, then the name, what is left and what one weighs, and the price
+   with a +. A hairline edge on every card, not the carried grid's heavier one. */
+#inv-shop-grid .inv-slot.inv-shop-card {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-4);
+    border-width: 1px;
+    border-radius: var(--ui-radius-pop);
+    cursor: pointer;
+}
+
+/* In the basket: the Signal Blue wash and edge — this one is yours already. */
+#inv-shop-grid .inv-shop-card.in-bag {
+    background: var(--ui-accent-subtle);
+    border-color: var(--ui-accent-medium);
+}
+
+.inv-shop-card-art {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--ui-surface-medium);
+}
+
+#inv-shop-grid .inv-shop-card .inv-item {
+    width: 76%;
+    height: 82%;
+    margin: 0;
+}
+
+.inv-shop-card-flag {
+    position: absolute;
+    top: var(--ui-sp-3);
+    right: var(--ui-sp-3);
+    padding: 1px var(--ui-sp-3);
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Few left: amber, a warning. Sold out: red, a state. */
+.inv-shop-card-flag.low {
+    color: var(--ui-warning);
+    border-color: var(--ui-warning-light);
+    background: var(--ui-warning-light);
+}
+
+.inv-shop-card-flag.out {
+    color: var(--ui-error);
+    border-color: var(--ui-error-light);
+    background: var(--ui-error-subtle);
+}
+
+.inv-shop-card-name {
+    padding: 0 var(--ui-sp-1);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inv-shop-card-meta {
+    margin-top: calc(var(--ui-sp-3) * -1);
+    padding: 0 var(--ui-sp-1);
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inv-shop-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-sp-3);
+    min-height: 30px;
+    padding: 0 var(--ui-sp-1);
+}
+
+.inv-shop-card-price {
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The +: the pill, round. Not a button of its own — the whole card is the click. */
+.inv-shop-card-plus {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-size: 17px;
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* In the basket: its count, with a minus and a plus of their own. */
+.inv-shop-card-ctl {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--ui-accent-medium);
+    border-radius: 15px;
+    background: var(--ui-accent-subtle);
+}
+
+.inv-shop-card-ctl span {
+    min-width: 20px;
+    text-align: center;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+/* THE COUNT IS A FIELD, a card's and a basket line's. It
+   reads as the number until it is pointed at — a hairline says it can be typed in — and takes the
+   field's focus edge when clicked: type the number, Enter (Escape puts it back). */
+.inv-qty-input {
+    box-sizing: content-box;
+    width: 3.2ch;
+    min-width: 0;
+    padding: 2px 3px;
+    margin: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-xs);
+    outline: none;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    cursor: text;
+    transition: border-color 0.1s var(--ui-ease), background 0.1s var(--ui-ease);
+}
+
+.inv-qty-input:hover {
+    border-color: var(--ui-border-hover);
+    background: var(--ui-surface-subtle);
+}
+
+.inv-qty-input:focus {
+    border-color: var(--ui-accent-medium);
+    background: var(--ui-surface-hover);
+}
+
+.inv-shop-card-ctl .inv-qty-input {
+    font-size: var(--ui-fs-sm);
+}
+
+/* A line the screen has taken to nothing, waiting for the server to take it away. */
+.inv-basket-line.emptied {
+    opacity: 0.45;
+}
+
+.inv-shop-card-ctl button {
+    width: 26px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    background: none;
+    border: none;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 15px;
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+}
+
+.inv-shop-card-ctl button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* SOLD OUT: the picture and the words fade and the flag says so. The card takes no clicks
+   (inventory.js shelfAdd refuses it too, for the pad's A). */
+#inv-shop-grid .inv-slot.out-of-stock {
+    pointer-events: none;
+}
+
+#inv-shop-grid .out-of-stock .inv-item {
+    opacity: 0.3;
+}
+
+#inv-shop-grid .out-of-stock .inv-shop-card-price,
+#inv-shop-grid .out-of-stock .inv-shop-card-name {
+    opacity: 0.45;
+}
+
+/* Nothing on this chip, or nothing matching the search. */
+.inv-shop-none {
+    grid-column: 1 / -1;
+    padding: var(--ui-sp-8) 0;
+    text-align: center;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-label);
+}
+
+/* ---- The basket: the whole right-hand column ---- */
+
+/* It fills the column, so Buy sits at its foot whatever the basket holds; the lines scroll between. */
+#inv-overlay.shop-mode #inv-basket-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.inv-basket-lines {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+    /* The bar beside the lines, not on them — the panel stack's trick (inventory.css). */
+    padding-right: var(--ui-sp-4);
+    margin-right: calc(var(--ui-sp-4) * -1);
+}
+
+.inv-basket-empty {
+    padding: var(--ui-sp-8) var(--ui-sp-6);
+    text-align: center;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-label);
+}
+
+/* A line: picture, name and price, minus / count / plus, the line's total, remove. A filled slot's
+   wash and edge — it is something held, if not yet paid for. */
+.inv-basket-line {
+    display: grid;
+    /* The total sizes to what it says: "$30" and "900 Gold Bar" both fit, and the name gives way. */
+    grid-template-columns: 52px minmax(0, 1fr) auto minmax(64px, auto) 30px;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    padding: var(--ui-sp-3) var(--ui-sp-4) var(--ui-sp-3) var(--ui-sp-3);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    flex-shrink: 0;
+}
+
+.inv-basket-art {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-slot-bg);
+}
+
+.inv-basket-art img {
+    width: 84%;
+    height: 84%;
+    object-fit: contain;
+    filter: var(--ui-item-shadow);
+}
+
+.inv-basket-info {
+    min-width: 0;
+}
+
+.inv-basket-name {
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inv-basket-each {
+    margin-top: var(--ui-sp-1);
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+}
+
+/* No longer for sale: the shop took it off while it sat here. The till refuses it, and says why. */
+.inv-basket-line.unpriced .inv-basket-each {
+    color: var(--ui-warning);
+}
+
+.inv-basket-qty {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-2);
+}
+
+.inv-basket-n {
+    min-width: 30px;
+    text-align: center;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+/* Four digits wide; the field's padding and hairline sit outside that (content-box). */
+.inv-basket-qty .inv-qty-input {
+    min-width: 0;
+    width: 4ch;
+}
+
+.inv-qty-btn,
+.inv-line-remove {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+
+.inv-qty-btn:hover,
+.inv-line-remove:hover {
+    background: var(--ui-surface-hover);
+    border-color: var(--ui-border-hover);
+}
+
+/* Remove is a ghost until it is meant: the same answer every whip "take it away" gives. */
+.inv-line-remove {
+    background: none;
+    border-color: transparent;
+    color: var(--ui-text-mid);
+}
+
+.inv-line-remove:hover {
+    color: var(--ui-error);
+    background: var(--ui-error-subtle);
+    border-color: var(--ui-error-light);
+}
+
+.inv-qty-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.inv-basket-line-total {
+    text-align: right;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+    white-space: nowrap;
+}
+
+/* ---- The till ---- */
+.inv-basket-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-5);
+    margin-top: var(--ui-sp-6);
+    padding-top: var(--ui-sp-6);
+    border-top: 1px solid var(--ui-border);
+    flex-shrink: 0;
+}
+
+.inv-basket-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ui-sp-5);
+}
+
+.inv-basket-label {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    color: var(--ui-text-label);
+}
+
+/* WILL IT FIT — the pockets' weight gauge, carried over: the pockets are hidden while shopping, and
+   this is the one thing about them that decides a purchase. Blue, amber from 85%, red when it will
+   not go (the server's own answer, or past the limit). */
+.inv-basket-carry {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-3);
+}
+
+.inv-basket-carry-figure {
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+.inv-basket-carry .inv-weight-bar {
+    width: 100%;
+}
+
+.inv-basket-carry.near .inv-weight-fill { background: var(--ui-warning); }
+.inv-basket-carry.near .inv-basket-carry-figure { color: var(--ui-warning); }
+.inv-basket-carry.full .inv-weight-fill { background: var(--ui-error); }
+.inv-basket-carry.full .inv-basket-carry-figure { color: var(--ui-error); }
+
+.inv-basket-warn {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1.45;
+    color: var(--ui-error);
+}
+
+/* The total: a reading, and the biggest one on the till. */
+.inv-basket-total-row {
+    align-items: center;
+}
+
+.inv-basket-total {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+/* How to pay: a segmented choice in a track, the chosen option a quiet raised chip — NOT the white
+   pill. Two pills stacked over each other (the chosen option, then Buy) read as two buttons, and Buy
+   is the one action here. */
+.inv-basket-pay {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ui-sp-2);
+    padding: var(--ui-sp-2);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+}
+
+.inv-pay-opt {
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+
+.inv-pay-opt:hover:not(:disabled) {
+    color: var(--ui-text);
+}
+
+.inv-pay-opt.on {
+    background: var(--ui-surface-medium);
+    border-color: var(--ui-border-hover);
+    color: var(--ui-text);
+    box-shadow: var(--ui-slot-lift);
+}
+
+.inv-pay-opt:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* The account picker: the admin panel's field. Its <option> rows come from base.css's
+   --ui-select-option-*. Form controls do not inherit the page font. */
+#inv-basket-account {
+    width: 100%;
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    background-color: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    outline: none;
+    cursor: pointer;
+}
+
+#inv-basket-account:focus {
+    border-color: var(--ui-accent-medium);
+    background-color: var(--ui-surface-hover);
+}
+
+.inv-basket-pays-in {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+
+/* BUY: the house's one white pill, the width of the till. */
+.inv-basket-buy-btn {
+    width: 100%;
+    padding: var(--ui-sp-5) var(--ui-sp-7);
+    background: var(--ui-pill);
+    border: 1px solid var(--ui-pill);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-pill-ink);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: opacity 0.1s var(--ui-ease), transform 0.1s var(--ui-ease),
+        background 0.2s ease, border-color 0.2s ease;
+}
+
+.inv-basket-buy-btn:hover {
+    opacity: 0.9;
+}
+
+.inv-basket-buy-btn:active {
+    transform: scale(0.98);
+}
+
+.inv-basket-buy-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+}
+
+/* WHAT THE TILL SAID, ON THE BUTTON, for a moment (js/shops.js BUY_FLASH_MS): green
+   "Purchase Successful!", red when it was refused ("Not enough cash!", or the reason), amber "You can't
+   carry all of this!". The semantic colours, in their own meanings; the pill's dark ink on all three.
+   Shown at full strength even over a disabled button (an emptied basket, or one that still will not fit),
+   since the words are the point. */
+.inv-basket-buy-btn.buy-ok,
+.inv-basket-buy-btn.buy-err,
+.inv-basket-buy-btn.buy-warn {
+    opacity: 1;
+    color: var(--ui-pill-ink);
+}
+
+.inv-basket-buy-btn.buy-ok {
+    background: var(--ui-success);
+    border-color: var(--ui-success);
+}
+
+.inv-basket-buy-btn.buy-err {
+    background: var(--ui-error);
+    border-color: var(--ui-error);
+}
+
+.inv-basket-buy-btn.buy-warn {
+    background: var(--ui-warning);
+    border-color: var(--ui-warning);
+}
+
+/* ---- Edit Shelf: the right-hand column while a manager arranges the shop ---- */
+#inv-overlay.shop-mode #inv-shelf-edit-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.inv-edit-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+    padding-right: var(--ui-sp-4);
+    margin-right: calc(var(--ui-sp-4) * -1);
+}
+
+.inv-edit-label {
+    margin-top: var(--ui-sp-3);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+
+.inv-edit-label:first-child {
+    margin-top: 0;
+}
+
+.inv-edit-cats,
+.inv-edit-goods {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-3);
+}
+
+.inv-edit-none {
+    padding: var(--ui-sp-4) 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+}
+
+/* A row: the basket line's wash and edge, so a thing you arrange reads like a thing you hold. */
+.inv-edit-row {
+    display: grid;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    flex-shrink: 0;
+}
+
+.inv-edit-cat {
+    grid-template-columns: minmax(0, 1fr) auto 28px 28px 30px;
+}
+
+.inv-edit-good {
+    grid-template-columns: 40px minmax(0, 1fr) 132px 28px 28px;
+    padding-left: var(--ui-sp-3);
+}
+
+.inv-edit-art {
+    width: 40px;
+    height: 40px;
+}
+
+.inv-edit-name {
+    min-width: 0;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inv-edit-count {
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+}
+
+/* Fields: the admin panel's (as the account picker). Form controls do not inherit the page font. */
+.inv-edit-pick,
+#inv-edit-newcat {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    outline: none;
+}
+
+.inv-edit-pick { cursor: pointer; }
+
+.inv-edit-pick:focus,
+#inv-edit-newcat:focus {
+    border-color: var(--ui-accent-medium);
+    background: var(--ui-surface-hover);
+}
+
+#inv-edit-newcat::placeholder {
+    color: var(--ui-text-mid);
+}
+
+/* A name the shop already has, or too long: the box says no. */
+#inv-edit-newcat.bad {
+    border-color: var(--ui-error);
+    background: var(--ui-error-subtle);
+}
+
+.inv-edit-newcat {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--ui-sp-3);
+}
+
+.inv-edit-add,
+.inv-edit-cancel {
+    padding: var(--ui-sp-3) var(--ui-sp-6);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease);
+}
+
+.inv-edit-add:hover:not(:disabled),
+.inv-edit-cancel:hover {
+    background: var(--ui-surface-hover);
+    border-color: var(--ui-border-hover);
+}
+
+.inv-edit-add:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* Cancel beside Save — the house's dark bordered button beside its one white pill. */
+.inv-edit-footer {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--ui-sp-4);
+    margin-top: var(--ui-sp-6);
+    padding-top: var(--ui-sp-6);
+    border-top: 1px solid var(--ui-border);
+    flex-shrink: 0;
+}
+
+.inv-edit-save {
+    padding: var(--ui-sp-5) var(--ui-sp-7);
+    background: var(--ui-pill);
+    border: 1px solid var(--ui-pill);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-pill-ink);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    transition: opacity 0.1s var(--ui-ease);
+}
+
+.inv-edit-save:hover {
+    opacity: 0.9;
+}
+
+/* ---- The controller's highlight on the shop's buttons and pickers: the slots' white ring ---- */
+html[data-input="pad"] #inv-overlay .inv-pad-btn.pad-focus,
+html[data-input="pad"] #inv-overlay .inv-edit-pick.pad-focus,
+html[data-input="pad"] #inv-overlay #inv-basket-account.pad-focus {
+    box-shadow: 0 0 0 2px var(--ui-pill);
+}
+
+/* ---- The legend says what the shop's clicks do ---- */
+.inv-legend-shop {
+    display: none;
+}
+
+html:not([data-input="pad"]) #inv-overlay.shop-mode .inv-legend-shop {
+    display: flex;
+}
+
+#inv-overlay.shop-mode .inv-legend-no-shop {
+    display: none;
+}
+
+/* On a pad, X (nothing in a shop) and "Hold A: add faster" (only in a shop) take turns in one place:
+   gone when off, not just hidden, so the legend has no hole (inventory.js padLegendDraw). */
+#inv-legend .inv-legend-item.off[data-when="noshop"],
+#inv-legend .inv-legend-item.off[data-when="shop"] {
+    display: none;
+}
+
+/* ---- Stock management (the employee's view of the stock container) ---- */
+
+/* For sale: a green edge, the success colour's "yes". */
+.inv-slot.stock-for-sale {
+    border-color: var(--ui-success-medium);
+}
+
+/* The stock view's price on a slot (the item's price, shown on every slot holding it), where the
+   slot's count would sit: money, so the rim of any text over item art. */
+.inv-slot-price {
+    position: absolute;
+    right: var(--ui-sp-3);
+    bottom: var(--ui-sp-2);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+    text-shadow: var(--ui-rim);
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;   /* over the item (.inv-item is 2) */
+}
+
+/* "NOT LISTED" badge on container slots — was 7px, below any readable size. */
+.inv-slot-stock-badge {
+    position: absolute;
+    bottom: var(--ui-sp-2);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+}

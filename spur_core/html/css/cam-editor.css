@@ -1,0 +1,927 @@
+/* ========================================
+   THE CAMERA CREATOR — a timeline of camera shots (html/js/cam-editor.js, tools/camera.lua)
+
+   The world is the picture, so the editor stays out of its middle: a card top left (the sequence), the
+   picked key's settings on the right, and the timeline along the bottom.
+
+   THE HOUSE LOOK (DESIGN.md), as the /w menu and the editor cards wear it:
+     panels    solid night glass with the blue corner glow, the panel corner, the large lift
+     heads     a house disc (the white ring, the black outline) and the title in the display face
+     buttons   one white pill per panel for the main thing; dark bordered, ghost and danger beside it
+     choices   pill tabs, the chosen one the white pill; on / off is the /w menu's switch
+     picks     the chosen card: a blue wash inside a white ring (the picked key on the timeline)
+     controls  keycaps on a keyboard, the buttons' pictures on a pad (the inventory's legend)
+     status    the editor card's strip: its kind's colour and its drawn mark
+   The one colour family of its own is the KINDS of shot, so a glance along the timeline says which keys
+   orbit and which are fixed (literals: they are this screen, like the furnisher's axes), kept off Signal
+   Blue and the state colours, which mean other things everywhere else.
+
+   ONE MODAL STATE, the furnisher's: .ce-looking while the right mouse button flies the camera — the
+   cursor is gone and the page goes inert, so a pointer passing over a key cannot drag it. The controls
+   stay lit then: they are what the player is reading.
+
+   2022-SAFE: FiveM's CEF is Chromium 103. No :has(), no nesting, no color-mix(), no container queries.
+   The scale is a transform on one box (.ce-scale), never `zoom`: on CEF zoom scales the paint and not
+   the clicks (css/creator.css has the post-mortem).
+   ======================================== */
+
+#cam-editor {
+    position: fixed;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    line-height: 1.35;
+    z-index: 40;
+    --ce-zoom: calc(var(--ui-scale, 1) * 1.2);
+    --ce-kind-fixed: #cbd5e1;
+    --ce-kind-orbit: #c084fc;
+    --ce-kind-chase: #fb923c;
+    --ce-kind-mounted: #2dd4bf;
+    --ce-kind-track: #f472b6;
+    --ce-gap: 14px;
+}
+#cam-editor.ce-open { display: block; }
+
+.ce-scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--ce-zoom));
+    height: calc(100% / var(--ce-zoom));
+    transform: scale(var(--ce-zoom));
+    transform-origin: top left;
+    pointer-events: none;
+}
+
+@keyframes ceRise {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes ceRiseUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.ce-panel {
+    position: absolute;
+    pointer-events: auto;
+    box-sizing: border-box;
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    transition: opacity 0.16s var(--ui-ease);
+}
+.ce-hidden { display: none !important; }
+
+/* Flying: the page goes inert and steps back; the dock's controls stay lit. */
+#cam-editor.ce-looking .ce-panel { pointer-events: none; }
+#cam-editor.ce-looking .ce-card,
+#cam-editor.ce-looking .ce-insp,
+#cam-editor.ce-looking .ce-transport,
+#cam-editor.ce-looking .ce-timeline { opacity: 0.55; }
+
+/* ---- the card (the sequence) and the inspector (the picked key) ---- */
+
+.ce-card,
+.ce-insp {
+    top: var(--ce-gap);
+    padding: 18px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    animation: ceRise 0.35s var(--ui-ease) both;
+}
+.ce-card { left: var(--ce-gap); width: 312px; }
+.ce-card-body { display: flex; flex-direction: column; }
+.ce-insp {
+    right: var(--ce-gap);
+    width: 324px;
+    max-height: calc(100% - 236px);
+    overflow-y: auto;
+}
+
+/* The head: a disc, the title, and what it is now. */
+.ce-head { display: flex; align-items: center; gap: 12px; }
+.ce-head-text { flex: 1 1 auto; min-width: 0; }
+
+/* The house disc in small: a white ring with the black outline every disc wears, a glyph or a number in
+   it. The picked key's disc is ringed in its kind's colour, as its gizmo in the world is numbered. */
+.ce-disc {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2.5px solid var(--sh-disc-ring, rgba(255, 255, 255, 0.55));
+    box-shadow: var(--sh-disc-outline, 0 0 0 3px rgba(0, 0, 0, 0.9));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text);
+}
+.ce-disc svg { width: 22px; height: 22px; display: block; }
+.ce-disc-num {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-xl);
+    font-variant-numeric: tabular-nums;
+    border-color: var(--ce-kind-fixed);
+}
+.ce-disc-num.ce-kind-orbit   { border-color: var(--ce-kind-orbit); }
+.ce-disc-num.ce-kind-chase   { border-color: var(--ce-kind-chase); }
+.ce-disc-num.ce-kind-mounted { border-color: var(--ce-kind-mounted); }
+.ce-disc-num.ce-kind-track   { border-color: var(--ce-kind-track); }
+
+.ce-title {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-xl);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ce-now {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 7px;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+
+/* A state, as the design's badges are: micro, uppercase, tinted only by its state. */
+.ce-chip-static {
+    padding: 2px 7px;
+    border-radius: var(--ui-radius-sm);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ui-text-mid);
+    background: var(--ui-surface-hover);
+    font-variant-numeric: tabular-nums;
+}
+.ce-chip-static.ok   { color: var(--ui-success); background: var(--ui-success-light); }
+.ce-chip-static.warn { color: var(--ui-warning); background: var(--ui-warning-light); }
+
+/* A section: a hairline over it and its name in the label role. */
+.ce-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-border);
+}
+.ce-section-first { border-top: none; padding-top: 0; }
+.ce-sec {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+}
+.ce-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ce-spacer { flex: 1; }
+.ce-note {
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-medium);
+    color: var(--ui-text-mid);
+}
+
+/* ---- fields ---- */
+
+.ce-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+}
+.ce-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ce-field-wide { grid-column: 1 / -1; }
+.ce-field-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ce-field-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    transition: border-color 0.15s var(--ui-ease);
+}
+.ce-field-box:hover { border-color: var(--ui-border-hover); }
+.ce-field-box:focus-within { border-color: var(--ui-accent-medium); }
+.ce-input {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    font-variant-numeric: tabular-nums;
+}
+.ce-input::placeholder { color: var(--ui-text-dim); }
+/* The spinner's arrows are CEF's own grey: the wheel and the arrow keys step a number already. */
+.ce-input::-webkit-inner-spin-button,
+.ce-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ce-input-text {
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+}
+.ce-input-text:focus { border-color: var(--ui-accent-medium); }
+.ce-input-text.bad { border-color: var(--ui-error); }
+.ce-unit {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+    white-space: nowrap;
+}
+
+/* A dropdown's box (a button: the list is the page's own, cam-editor.js): the admin panel's select look,
+   its arrow, the field's box. */
+.ce-select {
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 26px 0 10px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: var(--ui-surface-subtle);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888da0'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s var(--ui-ease);
+}
+.ce-select:hover { border-color: var(--ui-border-hover); }
+.ce-select:focus-visible,
+.ce-select.open { border-color: var(--ui-accent-medium); }
+.ce-row .ce-select { width: auto; flex: 1 1 auto; }
+
+/* Its list: over everything in the editor, under the box (above it without room). */
+.ce-dd-list {
+    position: absolute;
+    z-index: 60;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 4px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border-hover);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: var(--ui-shadow-lg);
+    animation: ceRise 0.14s var(--ui-ease) both;
+}
+.ce-dd-opt {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border: none;
+    border-radius: var(--ui-radius-sm);
+    background: none;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.ce-dd-opt:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.ce-dd-opt.on { color: var(--ui-text); background: var(--ui-slot-bg-chosen); box-shadow: inset 0 0 0 1px var(--ui-ring); }
+
+/* ---- the camera's readings ---- */
+
+.ce-readings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+}
+.ce-r-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+    align-self: center;
+}
+.ce-r-value {
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- the status strip: what just happened, in its kind's colour, with its drawn mark ---- */
+
+.ce-says {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: var(--ui-radius-row);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-accent);
+    background: var(--ui-accent-light);
+    animation: ceRise 0.25s var(--ui-ease) both;
+}
+.ce-says svg { width: 16px; height: 16px; flex: 0 0 auto; display: block; }
+.ce-says.ok   { color: var(--ui-success); background: var(--ui-success-light); }
+.ce-says.warn { color: var(--ui-warning); background: var(--ui-warning-light); }
+.ce-says.err  { color: var(--ui-error);   background: var(--ui-error-light); }
+.ce-says.gone { opacity: 0; transition: opacity 0.4s ease; }
+
+/* ---- buttons (the admin panel's) ---- */
+
+.ce-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-medium);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+.ce-btn:not(:disabled):hover { background: var(--ui-surface-hover-strong); border-color: var(--ui-border-hover); }
+.ce-btn svg { width: 14px; height: 14px; display: block; flex: 0 0 auto; }
+/* THE white pill: one per panel, the thing that panel is for. */
+.ce-btn.primary { background: var(--ui-pill); border-color: var(--ui-pill); color: var(--ui-pill-ink); }
+.ce-btn.primary:not(:disabled):hover { background: var(--ui-pill-hover); border-color: var(--ui-pill-hover); }
+.ce-btn.ghost { background: none; border-color: transparent; color: var(--ui-text-mid); }
+.ce-btn.ghost:not(:disabled):hover { color: var(--ui-text); background: var(--ui-surface-hover); border-color: transparent; }
+.ce-btn.danger { background: var(--ui-error-light); border-color: var(--ui-error); color: var(--ui-error); }
+.ce-btn.danger:not(:disabled):hover { background: var(--ui-error-subtle); border-color: var(--ui-error); }
+.ce-btn.small { height: 26px; padding: 0 10px; font-size: var(--ui-fs-xs); }
+.ce-btn.icon { width: 32px; padding: 0; }
+.ce-btn.small.icon { width: 26px; }
+.ce-btn:disabled { opacity: 0.4; cursor: default; }
+.ce-btn:focus-visible,
+.ce-tab:focus-visible,
+.ce-switch-row:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+
+/* A row of buttons that share it evenly. */
+.ce-btns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.ce-btns-2 { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---- choices: pill tabs, the chosen one the white pill ---- */
+
+.ce-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.ce-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ui-surface-hover);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.ce-tab:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.ce-tab.on,
+.ce-tab.on:hover { background: var(--ui-pill); color: var(--ui-pill-ink); font-weight: var(--ui-fw-bold); }
+/* The five kinds in an even three and two, not four and one left over. */
+.ce-tabs-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ce-tabs-kinds .ce-tab { justify-content: center; padding: 0 8px; }
+/* Two ways of one thing (fly, or look through): a track the chosen pill sits in, so it reads as one
+   switch and not as a second white button beside "Key here". */
+.ce-tabs.ce-seg {
+    flex-wrap: nowrap;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--ui-surface-hover);
+    border: 1px solid var(--ui-border);
+}
+.ce-seg .ce-tab { height: 26px; background: none; }
+.ce-seg .ce-tab:hover { background: var(--ui-surface-hover-strong); }
+.ce-seg .ce-tab.on,
+.ce-seg .ce-tab.on:hover { background: var(--ui-pill); }
+/* A kind's own colour beside its name, the colour its keys wear on the timeline. */
+.ce-kdot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    background: var(--ce-kind-fixed);
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55);
+}
+.ce-kdot.ce-kind-orbit   { background: var(--ce-kind-orbit); }
+.ce-kdot.ce-kind-chase   { background: var(--ce-kind-chase); }
+.ce-kdot.ce-kind-mounted { background: var(--ce-kind-mounted); }
+.ce-kdot.ce-kind-track   { background: var(--ce-kind-track); }
+
+/* ---- on / off: the /w menu's switch, lit = the white pill with a dark knob ---- */
+
+.ce-switch-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 2px 2px 0;
+    border: none;
+    background: none;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: color 0.16s var(--ui-ease);
+}
+.ce-switch-row:hover,
+.ce-switch-row.on { color: var(--ui-text); }
+.ce-switch {
+    position: relative;
+    flex: none;
+    width: 36px;
+    height: 20px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid var(--ui-border-hover);
+    background: var(--ui-slot-bg-filled);
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.ce-switch::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--ui-text-mid);
+    transition: left 0.16s var(--ui-ease), background 0.16s var(--ui-ease);
+}
+.ce-switch-row.on .ce-switch { background: var(--ui-pill); border-color: var(--ui-pill); }
+.ce-switch-row.on .ce-switch::after { left: 18px; background: var(--ui-pill-ink); }
+
+/* ---- the dock: transport, timeline, controls ---- */
+
+.ce-dock {
+    left: var(--ce-gap);
+    right: var(--ce-gap);
+    bottom: var(--ce-gap);
+    padding: 12px 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: ceRiseUp 0.35s var(--ui-ease) both;
+}
+.ce-transport,
+.ce-timeline { transition: opacity 0.16s var(--ui-ease); }
+.ce-transport { display: flex; align-items: center; gap: 8px; }
+.ce-sep { width: 1px; height: 22px; background: var(--ui-border); margin: 0 4px; }
+
+/* Play: the house disc, the transport's centre. */
+.ce-btn.ce-play {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2.5px solid var(--sh-disc-ring, rgba(255, 255, 255, 0.55));
+    box-shadow: var(--sh-disc-outline, 0 0 0 3px rgba(0, 0, 0, 0.9));
+    background: var(--ui-surface-solid);
+    color: var(--ui-text);
+}
+.ce-btn.ce-play:not(:disabled):hover { background: var(--ui-surface-solid); border-color: var(--ui-text); }
+.ce-btn.ce-play svg { width: 16px; height: 16px; }
+.ce-btn.ce-play.on { border-color: var(--ui-text); }
+
+.ce-time {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 156px;
+    padding: 0 6px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.ce-time-now {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-xl);
+    letter-spacing: -0.01em;
+}
+.ce-time-len { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); color: var(--ui-text-label); }
+
+.ce-timeline {
+    position: relative;
+    height: 76px;
+    padding: 0 16px;
+    overflow: hidden;
+    cursor: text;
+    user-select: none;
+    touch-action: none;
+    background: var(--ui-slot-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+}
+/* What the times are measured on: inset from the timeline's edges, so a key at either end shows whole. */
+.ce-track { position: relative; height: 100%; }
+.ce-ruler {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 20px;
+    border-bottom: 1px solid var(--ui-border);
+}
+.ce-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--ui-border-hover); }
+.ce-tick-label {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.ce-lane {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 26px;
+    height: 46px;
+}
+.ce-end { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--ui-text-dim); }
+
+/* A move between two keys: a band, its kind said in a word when there is room. A glide is the plain
+   band; a spring a fainter one edged; an orbit swings round, so it wears the orbit's colour. */
+.ce-move {
+    position: absolute;
+    top: 15px;
+    height: 16px;
+    box-sizing: border-box;
+    border-radius: var(--ui-radius-hair);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ce-move-word {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ui-text);
+    white-space: nowrap;
+    padding: 0 18px;
+    text-shadow: var(--ui-rim);
+}
+.ce-move-glide  { background: rgba(255, 255, 255, 0.14); }
+.ce-move-spring { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.22); }
+.ce-move-orbit  { background: rgba(192, 132, 252, 0.3); }
+.ce-move-cut    { background: none; border-top: 1px dashed var(--ui-text-dim); height: 1px; top: 23px; }
+.ce-move-cut .ce-move-word { display: none; }
+
+/* A key: a tile standing on its moment, edged in its kind's colour. Picked: the chosen card. */
+.ce-key {
+    position: absolute;
+    top: 8px;
+    height: 30px;
+    min-width: 28px;
+    padding: 0 7px;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-radius: var(--ui-radius-slot);
+    background: var(--ui-surface-solid);
+    border: 2px solid var(--ce-kind-fixed);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    cursor: grab;
+    z-index: 2;
+    transition: box-shadow 0.1s var(--ui-ease);
+}
+.ce-key:hover { box-shadow: 0 0 0 2px var(--ui-border-hover); }
+.ce-key.dragging { cursor: grabbing; opacity: 0.8; }
+.ce-key.on {
+    background: var(--ui-surface-solid);
+    box-shadow: inset 0 0 0 40px var(--ui-slot-bg-chosen), 0 0 0 2px var(--ui-ring);
+    z-index: 3;
+}
+.ce-kind-orbit   { border-color: var(--ce-kind-orbit); }
+.ce-kind-chase   { border-color: var(--ce-kind-chase); }
+.ce-kind-mounted { border-color: var(--ce-kind-mounted); }
+.ce-kind-track   { border-color: var(--ce-kind-track); }
+.ce-key-marks { font-size: var(--ui-fs-xs); color: var(--ui-text-mid); }
+
+/* Now: the white line and its grip. */
+.ce-playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 2px solid var(--ui-pill);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    z-index: 4;
+}
+.ce-playhead-grip {
+    position: absolute;
+    left: -7px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background: var(--ui-pill);
+    border-radius: 2px 2px 6px 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- the controls: keycaps on a keyboard, the buttons' pictures on a pad ---- */
+
+.ce-hints {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+.ce-hint-group {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+.ce-hint-sep { width: 1px; height: 18px; background: var(--ui-border); }
+.ce-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: opacity 0.15s ease;
+}
+.ce-hint.off { opacity: 0.32; }
+.ce-caps { display: inline-flex; align-items: center; gap: 3px; }
+/* The keycap the inventory's slots wear. */
+.ce-cap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    border: 1px solid var(--ui-slot-line-hover);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-medium);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+.ce-cap svg { width: 11px; height: 15px; display: block; }
+.ce-join { font-size: var(--ui-fs-xs); color: var(--ui-text-label); }
+.ce-padg { height: 22px; width: auto; display: block; }
+
+/* One set at a time: the device the editor is answering (Lua's, .ce-pad). */
+.ce-k-pad { display: none; }
+#cam-editor.ce-pad .ce-k-pad { display: inline-flex; }
+#cam-editor.ce-pad .ce-k-kbm { display: none; }
+#cam-editor.ce-pad .ce-hint.kbm-only,
+#cam-editor:not(.ce-pad) .ce-hint.pad-only { display: none; }
+
+/* ---- HUD hidden (Hide HUD, H): nothing of the editor's on screen; a capsule says, for a moment, how
+   to bring it back ---- */
+
+#cam-editor.ce-nohud .ce-panel,
+#cam-editor.ce-nohud .ce-modal { display: none; }
+
+@keyframes ceTip {
+    0%   { opacity: 0; transform: translate(-50%, 8px); }
+    10%  { opacity: 1; transform: translate(-50%, 0); }
+    80%  { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 0); }
+}
+.ce-hudtip {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    display: none;
+    align-items: center;
+    padding: 10px 18px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-capsule);
+    box-shadow: var(--ui-shadow-lg);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+}
+#cam-editor.ce-nohud .ce-hudtip { display: flex; animation: ceTip 3.2s var(--ui-ease) both; }
+
+/* ---- who has the controls (Tab): the camera, or your character ---- */
+
+.ce-ctl { display: inline-flex; align-items: center; gap: 8px; }
+
+/* Your character has them: a capsule at the top says so for as long as it is so (the playbar's look). */
+.ce-drivetip {
+    position: absolute;
+    left: 50%;
+    top: var(--ce-gap);
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 22px 10px 10px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-capsule);
+    box-shadow: var(--ui-shadow-lg);
+    white-space: nowrap;
+    pointer-events: none;
+    animation: ceDriveTip 0.3s var(--ui-ease) both;
+}
+@keyframes ceDriveTip {
+    from { opacity: 0; transform: translate(-50%, -8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+#cam-editor.ce-open.ce-drive:not(.ce-nohud) .ce-drivetip { display: flex; }
+
+/* ---- playing in game (Play in game, F9): the editor away, a capsule at the top that fades by itself ----
+   The page stays up for the capsule alone (.ce-game); while a shot rolls (.ce-live) not even that. */
+
+#cam-editor.ce-game { display: block; }
+#cam-editor.ce-game:not(.ce-open) .ce-panel,
+#cam-editor.ce-game:not(.ce-open) .ce-modal,
+#cam-editor.ce-game:not(.ce-open) .ce-hudtip { display: none; }
+
+@keyframes cePlaybar {
+    0%   { opacity: 0; transform: translate(-50%, -8px); }
+    5%   { opacity: 1; transform: translate(-50%, 0); }
+    85%  { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 0); }
+}
+.ce-playbar {
+    position: absolute;
+    left: 50%;
+    top: var(--ce-gap);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 22px 10px 10px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-capsule);
+    box-shadow: var(--ui-shadow-lg);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+}
+#cam-editor.ce-game:not(.ce-open):not(.ce-live) .ce-playbar.show { display: flex; animation: cePlaybar 7s var(--ui-ease) both; }
+.ce-pb-body { display: flex; flex-direction: column; gap: 3px; }
+.ce-pb-title {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-xl);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+.ce-pb-title.warn { color: var(--ui-warning); }
+.ce-pb-sub { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); color: var(--ui-text-label); }
+.ce-pb-keys {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+/* The capsule's keys are a keyboard's (the play keys are GTA key bindings): shown on a pad too. */
+#cam-editor.ce-pad .ce-pb-keys .ce-hint.kbm-only { display: inline-flex; }
+#cam-editor.ce-pad .ce-pb-keys .ce-k-kbm { display: inline-flex; }
+
+/* ---- the modal: open, save ---- */
+
+.ce-modal {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ce-modal-box {
+    position: relative;
+    width: 400px;
+    max-height: 70%;
+    box-sizing: border-box;
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-modal);
+    animation: ceRise 0.3s var(--ui-ease) both;
+}
+.ce-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; }
+.ce-list-row { display: flex; align-items: center; gap: 6px; }
+.ce-list-open {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 9px 12px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid var(--ui-slot-line-filled);
+    background: var(--ui-slot-bg-filled);
+    box-shadow: var(--ui-slot-lift);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.1s var(--ui-ease), background 0.1s var(--ui-ease);
+}
+.ce-list-open:hover { border-color: var(--ui-ring); background: var(--ui-slot-bg-chosen); }
+.ce-list-name { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); }
+.ce-list-sub { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); color: var(--ui-text-label); font-variant-numeric: tabular-nums; }

@@ -1,0 +1,965 @@
+/* ========================================
+   CHARACTER CREATOR — css/creator.css
+
+   One wide panel down the left, the
+   main menu's (pause.css .pm-side) and the Director's (director.css .dr-col) —
+   flush to the edge, night glass, one faint blue light in its top corner, a hard
+   edge and a deep shadow onto the world. The groups are the main menu's words, the
+   categories the Director's tabs, the picked item a big picture beside what it can
+   be set to (the band), and the cards under
+   them are large enough to show the clothing pictures. The right half of the
+   screen is all character: the camera is told where it is and stands the ped in it.
+
+   Type follows the framework: --ui-font for text, --ui-font-display for the menu's words.
+   --ui-mono (the same font, even-width figures) only in the Esc keycap.
+
+   2022-safe CSS only (CEF is Chromium 103): no :has(), no nesting, no
+   color-mix().
+
+   Structure (index.html):
+     #creator              fixed full-screen, .open to show
+       .cr-scale           the ONE scaled box (a transform: see below)
+         .cr-left          the panel: head (title + #cr-groups), #cr-rail (tabs),
+                           #cr-subtabs, #cr-options (the band), #cr-grid, and its foot
+                           (.cr-left-foot: the Undress buttons and the control hints)
+         #cr-stage         the open world on the right — drag = camera
+         .cr-footer        Cancel/Save (bottom right), the world's only controls
+   ======================================== */
+
+#creator {
+    position: fixed;
+    inset: 0;
+    display: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    z-index: 100;
+
+    /* One knob for the whole screen's size. --ui-scale normalises for
+       resolution; the multiplier is the deliberate "make it bigger" factor.
+       At 1080p it is 1.125: every px below is that many screen pixels. */
+    --cr-zoom: calc(var(--ui-scale, 1) * 1.5);
+
+    /* THE PANEL'S WIDTH IS STATED, NOT MEASURED. Both of this screen's old
+       interaction bugs were the cost of measuring it: a column sized by its
+       card list either ended short of the cards painted inside it (the stage,
+       the next flex item, then lay over the right-hand cards and they ignored
+       the mouse) or claimed the width of every card on one line (and left the
+       stage nothing to drag in). Stated, it is exactly what it says, and the
+       stage keeps the rest. 836px = 940 screen pixels at 1080p. */
+    --cr-left-w:  836px;
+    --cr-pad-x:   39px;
+    --cr-display: var(--ui-font-display);
+    --cr-word-off: rgba(255, 255, 255, 0.34);   /* the main menu's unpicked word */
+    --cr-word-hover: rgba(255, 255, 255, 0.62);
+    --cr-tab-off: rgba(255, 255, 255, 0.5);     /* smaller words: lighter, to stay legible */
+}
+#creator.open { display: block; }
+
+/* TRANSFORM, NOT `zoom`, AND THAT IS THE WHOLE BUG FIX.
+
+   The rest of whip scales with `zoom`, so this screen did too — and on CEF
+   (Chromium 103) `zoom` scaled what was PAINTED without scaling what was
+   CLICKED. Two symptoms, one cause: only the top-left 1/zoom of the screen
+   answered the mouse (with three columns of cards, that was column one — cards
+   0, 3, 6, 9 — and the grid would not even scroll anywhere else), and the
+   feature pad slammed to its corner on every click, because
+   getBoundingClientRect reported the UNZOOMED box while the pointer event
+   carried real viewport pixels, so the ratio between them always overshot.
+
+   A transform has neither problem: Chromium maps pointer events back through
+   the transform matrix, and getBoundingClientRect returns the VISUAL rect, so
+   the pad's own maths lines up without a correction factor. The wrapper is
+   sized at 1/scale and then scaled up, so it covers the viewport exactly, and
+   everything inside it lives in ONE coordinate space — no box derives its size
+   across a scale boundary, which is the other thing that went wrong here. */
+.cr-scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--cr-zoom));
+    height: calc(100% / var(--cr-zoom));
+    transform: scale(var(--cr-zoom));
+    transform-origin: top left;
+    display: flex;
+    align-items: stretch;
+    z-index: 1;
+}
+
+.cr-left, .cr-footer, #cr-stage { position: relative; }
+
+/* ---- the panel ---- */
+
+.cr-left {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 var(--cr-left-w);
+    box-sizing: border-box;
+    height: 100%;
+    padding: 36px var(--cr-pad-x) 22px;
+    min-height: 0;
+    min-width: 0;
+    background:
+        radial-gradient(120% 60% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-right: 1px solid var(--ui-border);
+    box-shadow: 18px 0 48px rgba(0, 0, 0, 0.45);
+    animation: cr-rise 0.4s var(--ui-ease);
+}
+
+@keyframes cr-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* The title, then the groups on their own line: five words beside the title ran past the panel's edge
+   (Outfits made five), and a look's title (EditLook: a lore character's name) can be long. The sub
+   sits beside the title, so the line costs the cards as little as it can. */
+.cr-head {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+.cr-title { display: flex; align-items: baseline; gap: 12px; }
+.cr-title-name {
+    font-family: var(--cr-display);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--ui-text);
+    white-space: nowrap;
+}
+.cr-title-sub {
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.4;
+    color: var(--ui-text-mid);
+}
+
+/* ---- the groups: the main menu's words ---- */
+
+#cr-groups { display: flex; gap: 23px; margin-top: 3px; }
+
+.cr-group,
+.cr-tab {
+    position: relative;
+    margin: 0;
+    border: 0;
+    background: none;
+    font-family: var(--cr-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.cr-group { padding: 0 0 8px; font-size: 26.5px; color: var(--cr-word-off); }
+.cr-group:hover { color: var(--cr-word-hover); }
+.cr-group.active { color: var(--ui-pill); }
+
+/* The chosen word is underlined by the logo's rounded stroke, drawing itself. */
+.cr-group::after,
+.cr-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: var(--ui-pill);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.cr-group::after { bottom: 0; height: 4.5px; border-radius: 3px; }
+.cr-group.active::after,
+.cr-tab.active::after { transform: scaleX(1); }
+
+/* ---- the categories: the Director's tabs ---- */
+
+/* 17px: 19 screen pixels at 1080p, a little over the Director's tabs (21px under
+   its own zoom, 16 at 1080p), and the most the Face group's nine words take on
+   one line — wrapped, they pushed the band and grid down a row. */
+#cr-rail {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 5px;
+    margin-top: 23px;
+    border-bottom: 1px solid var(--ui-border);
+}
+.cr-tab { padding: 0 0 10.5px; font-size: 17px; color: var(--cr-tab-off); }
+.cr-tab:hover { color: rgba(255, 255, 255, 0.75); }
+.cr-tab.active { color: var(--ui-pill); }
+.cr-tab::after { bottom: -1px; height: 3.5px; border-radius: 2px; }
+
+.cr-group:focus-visible,
+.cr-tab:focus-visible,
+.cr-subtab:focus-visible,
+.cr-dress:focus-visible,
+.cr-btn:focus-visible,
+.cr-card:focus-visible,
+.cr-tex:focus-visible,
+.cr-swatch:focus-visible,
+.cr-obtn:focus-visible,
+.cr-range:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+
+/* ---- sub-tabs (heritage: Mother / Father / Grandparent; a face category's parts) ---- */
+
+#cr-subtabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    margin-top: 16px;
+}
+
+.cr-subtab {
+    flex: 0 0 auto;
+    font-family: var(--ui-font);
+    font-size: 12px;
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0.2px;
+    color: var(--ui-text-mid);
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.cr-subtab:hover { color: var(--ui-text); background: rgba(255, 255, 255, 0.09); }
+.cr-subtab.active {
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+
+/* ---- the band: the picked item, and what it can be set to ----
+
+   It was a panel on the right of the screen; it is now at the top of the panel,
+   so the right half is all character. Shown only when the selection has
+   something to show (creator.js setOptions); the grid below takes its room
+   otherwise. Its controls scroll inside it rather than push the grid off the
+   screen. */
+
+#cr-options {
+    display: none;
+    flex: 0 0 auto;
+    flex-direction: column;
+    margin-top: 21px;
+    min-height: 0;
+}
+#cr-options.open { display: flex; animation: cr-fade 0.28s var(--ui-ease); }
+.cr-band-top { display: flex; gap: 25px; min-height: 0; }
+
+@keyframes cr-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* The picked item's picture: whip's slot tile (--ui-slot-*), large. */
+.cr-hero {
+    position: relative;
+    flex: 0 0 247px;
+    height: 247px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-slot-line-filled);
+    background: var(--ui-slot-bg);
+    box-shadow: var(--ui-slot-lift);
+}
+.cr-hero .cr-icon { inset: 14px; width: calc(100% - 28px); height: calc(100% - 28px); }
+.cr-hero-art { width: 56px; height: 56px; color: rgba(255, 255, 255, 0.34); }
+.cr-hero-art svg { width: 100%; height: 100%; }
+.cr-hero.has-icon .cr-hero-art { visibility: hidden; }
+
+/* The heading, then what scrolls. The HEADING STAYS: only the controls under it
+   scroll (an item's 26 colours shown in full), so "Top 5" is never carried off.
+   Beside a picture the column is the picture's height at least, with the count
+   and the colours sitting on its bottom edge (mockup B). Capped at 440 so the
+   grid keeps a row or two; with controls across the band below the picture
+   (hair's colour grids) the column stops at the picture's height. */
+.cr-band-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 440px;
+}
+.cr-hero + .cr-band-main { min-height: 247px; }
+.cr-band-top:not(:last-child) .cr-band-main { max-height: 247px; }
+.cr-band-title {
+    flex: 0 0 auto;
+    font-family: var(--cr-display);
+    font-size: 39px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--ui-text);
+}
+.cr-band-title.small { font-size: 24px; }
+.cr-band-sub {
+    flex: 0 0 auto;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1.43;
+    color: var(--ui-text-mid);
+}
+.cr-band-meta {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1.35;
+    color: var(--ui-text-label);
+}
+/* Room inside the scroller for the rings: a picked tile's and a focused one's.
+   Positioned for the same reason as #cr-grid (the picked colour is scrolled to). */
+.cr-band-body {
+    position: relative;
+    flex: 0 1 auto;
+    min-height: 0;
+    margin: 2px 0 0 -4px;
+    padding: 4px 6px 4px 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+/* It scrolls (set by creator.js when it does): the cut row fades, so it reads as
+   "more below", not as a drawing fault. */
+.cr-band-body.cr-scrolls {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+.cr-band-cols { display: flex; gap: 24px; }
+.cr-band-col { flex: 1 1 0; min-width: 0; }
+
+/* ---- the band with controls beside the picture (hair: creator.js setOptions `side`) ----
+   The heading on a line of its own, the collection after it and the item's own choices at its end
+   (hair's textures, as small pictures: seven at most). Under it the picture, a little
+   smaller than the other bands' so the band stays short, and beside it the two colour grids, Colour
+   over Highlight, three rows each, filling the picture's height. The grid of hairstyles below keeps
+   two rows and more. */
+.cr-band-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    min-height: 32px;
+    margin-bottom: 14px;
+}
+.cr-band-head .cr-band-title { font-size: 32px; }
+.cr-band-head .cr-band-sub { margin-top: 0; }
+.cr-band-head .cr-band-body {
+    flex: 0 1 auto;
+    align-self: center;
+    margin: 0 0 0 auto;
+    padding: 2px;
+    overflow: visible;
+}
+.cr-band-head .cr-texrow { flex-wrap: nowrap; gap: 6px; }
+.cr-band-head .cr-tex-pic { width: 44px; height: 44px; }
+.cr-band-head .cr-tex-pic .cr-icon { inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); }
+.cr-band-sided .cr-hero { flex-basis: 206px; height: 206px; }
+.cr-band-side {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.cr-band-side .cr-opt-label { margin: 0 0 6px; }
+.cr-band-side .cr-swatches { grid-template-columns: repeat(auto-fill, minmax(20px, 1fr)); gap: 4px; }
+
+.cr-opt-row { margin-bottom: 6px; }
+.cr-opt-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0.2px;
+    line-height: 1.35;
+    color: var(--ui-text-label);
+    margin: 12px 0 6px;
+}
+.cr-opt-val { color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.cr-opt-hint {
+    font-size: 11px;
+    color: var(--ui-text-mid);
+    line-height: 1.5;
+    margin-top: 8px;
+}
+.cr-opt-hint.cr-opt-warn { color: var(--ui-warning); }
+
+/* ---- the card grid ----
+
+   THE SQUASHING BUG LIVED HERE. The grid is a flex item in a column flex parent,
+   and without a basis its height was its content height and flex-shrink
+   compressed it to fit: the more cards a category had, the harder it was
+   squeezed. `flex: 1 1 0` pins it to the space actually there (so it scrolls
+   instead of shrinking), and every card states its own height.
+
+   FLEX-WRAP, NOT CSS GRID, and that is deliberate. With `display: grid` only
+   the leftmost column of cards answered the mouse while the others behaved as
+   though they were not there at all, hover included — track resolution inside
+   a scaled, scrolling grid container, the one thing those dead cards had that
+   nothing else on the screen did. So the layout states its own card size and
+   leaves `1fr` out of it. Five across, each about 140px: 160 screen pixels. */
+
+/* Positioned so it is its cards' offsetParent: creator.js scrolls the picked
+   card into view from its offsetTop. */
+#cr-grid {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 12.5px;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 19px;
+    /* Room for the rings on the outer cards: the scroller would clip them. */
+    padding: 4px;
+}
+
+/* A card is whip's slot tile (--ui-slot-*: a theme that retunes the inventory's
+   tiles retunes these) and a real button, so the keyboard reaches it. */
+.cr-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Five across: the content box less the four gaps, divided by five. */
+    flex: 0 0 calc((100% - 50px) / 5);
+    height: 142px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.cr-card:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+
+.cr-card-art {
+    width: 38px;
+    height: 38px;
+    color: rgba(255, 255, 255, 0.34);
+    transition: color 0.16s var(--ui-ease);
+}
+.cr-card-art svg { width: 100%; height: 100%; }
+.cr-card:hover .cr-card-art { color: rgba(255, 255, 255, 0.55); }
+.cr-card.selected .cr-card-art { color: var(--ui-text); }
+
+/* Eye-colour cards fill with the colour itself instead of a glyph — down to the
+   name strip, so the name sits on the card's glass and stays readable on a pale
+   colour. */
+.cr-card-swatch { position: absolute; inset: 0 0 30px 0; }
+
+/* Clothing pictures (img/clothing in whip_media_clothing_male and _female): the item itself, over the
+   card, above its number. Hidden until it has loaded — the glyph holds the
+   card until then, and for good when there is no picture (creator.js). */
+.cr-icon {
+    position: absolute;
+    inset: 8px 8px 22px;
+    width: calc(100% - 16px);
+    height: calc(100% - 30px);
+    object-fit: contain;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s var(--ui-ease);
+}
+.has-icon > .cr-icon { opacity: 1; }
+.cr-card.has-icon .cr-card-art { visibility: hidden; }
+
+.cr-card-num {
+    position: absolute;
+    left: 11px;
+    right: 11px;
+    bottom: 9px;
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.62);
+    text-shadow: var(--ui-rim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cr-card.selected .cr-card-num { color: var(--ui-text); }
+
+/* A name instead of the number (a tattoo's "B'Donk Now Crank It Later"): up to two lines, cut with an
+   ellipsis past that, and the picture gives it the room. */
+.cr-card-name {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-variant-numeric: normal;
+}
+.cr-card.named .cr-icon { inset: 7px 9px 34px; width: calc(100% - 18px); height: calc(100% - 41px); }
+
+/* Selection is a soft ring, not a hard bar. */
+.cr-card.selected,
+.cr-card.selected:hover {
+    background: var(--ui-accent-light);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), var(--ui-slot-lift);
+}
+
+/* ---- the stage: the open world on the right, drag to move the camera ---- */
+
+/* Takes whatever the panel leaves. It is the drag surface for the camera, so
+   it having real width is a feature, not a detail. */
+#cr-stage { flex: 1 1 auto; min-width: 0; cursor: grab; }
+#cr-stage.dragging { cursor: grabbing; }
+
+/* ---- sliders: a soft line with a tick, nothing else ---- */
+
+.cr-range {
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+}
+.cr-range::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.34);
+}
+.cr-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 4px;
+    height: 22px;
+    margin-top: -9.5px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- the feature pad: a tic-tac-toe grid drawn in light ----
+
+   No box, no fill, no border — just four soft lines with round caps that
+   overshoot their crossings, and a dot you drag. The lines are SVG so the
+   caps are genuinely round and the overshoot is exact. */
+
+.cr-pad {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    cursor: crosshair;
+    touch-action: none;
+    margin: 4px 0 2px;
+}
+
+.cr-pad-grid {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+.cr-pad-grid line {
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+}
+
+.cr-pad-dot {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.cr-pad-axis {
+    position: absolute;
+    font-size: 10.5px;
+    font-weight: var(--ui-fw-medium);
+    letter-spacing: 0.2px;
+    color: var(--ui-text-mid);
+    text-shadow: var(--ui-rim);
+    pointer-events: none;
+    white-space: nowrap;
+}
+.cr-pad-n { top: -16px; left: 50%; transform: translateX(-50%); }
+.cr-pad-s { bottom: -16px; left: 50%; transform: translateX(-50%); }
+.cr-pad-w { left: -6px; top: 50%; transform: translate(-100%, -50%); }
+.cr-pad-e { right: -6px; top: 50%; transform: translate(100%, -50%); }
+
+/* Room for the axis labels, which hang outside the pad on all four sides.
+   The side reserve has to clear the longest label ("Lowered", "Squint"); the
+   pad itself is kept to a size that leaves the sliders beside it room. */
+.cr-pad-wrap { padding: 20px 54px 22px; max-width: 280px; }
+
+/* ---- colour chips ---- */
+
+.cr-texrow { display: flex; flex-wrap: wrap; gap: 7px; }
+.cr-tex {
+    min-width: 34px;
+    padding: 7px 9px;
+    font-family: var(--ui-font);
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.cr-tex:hover { color: var(--ui-text); background: rgba(255, 255, 255, 0.11); }
+.cr-tex.selected {
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+
+/* A chip with a picture: a slot tile like the cards, the same size loaded or
+   not, so the band never changes height when the pictures arrive. Its number
+   shows until the picture does; selected is the cards' soft ring, not the white
+   fill. */
+.cr-tex-pic {
+    position: relative;
+    width: 67px;
+    height: 67px;
+    min-width: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: var(--ui-radius-row);
+    border-color: var(--ui-slot-line-filled);
+    background: var(--ui-slot-bg-filled);
+    box-shadow: var(--ui-slot-lift);
+    overflow: hidden;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.cr-tex-pic:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.cr-tex-pic .cr-icon { inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); }
+.cr-tex-pic.has-icon .cr-tex-num { visibility: hidden; }
+.cr-tex-pic.selected,
+.cr-tex-pic.selected:hover {
+    background: var(--ui-accent-light);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), var(--ui-slot-lift);
+    color: var(--ui-text);
+}
+/* "+18 more" / "Fewer": the rest of an item's colours, in the band, on a press. */
+.cr-tex-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 67px;
+    padding: 0 16px 0 18px;
+    border-radius: var(--ui-radius-row);
+    border-color: var(--ui-border);
+    background: var(--ui-slot-bg);
+    color: var(--ui-text);
+    font-weight: var(--ui-fw-bold);
+}
+.cr-tex-more:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.cr-tex-more svg { width: 12px; height: 12px; transition: transform 0.2s var(--ui-ease); }
+.cr-tex-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+/* ---- colour swatches ---- */
+
+/* As many to a row as the column takes: eight in a narrow one beside a picture,
+   a dozen across the band without one, so 64 colours never stand eight rows tall. */
+.cr-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+    gap: 5px;
+}
+.cr-swatch {
+    aspect-ratio: 1 / 1;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.16s var(--ui-ease);
+}
+.cr-swatch:hover { transform: scale(1.12); }
+.cr-swatch.selected {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px rgba(10, 12, 18, 0.8);
+}
+
+/* ---- the Outfits tab: a name, and the band's buttons ----
+   The box is a slot tile's glass, as tall as the pills beside it; the buttons are the colour chips'
+   pills: Save outfit the white one, Delete quiet until it is armed (red, as Cancel's Discard?). */
+
+.cr-outfit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cr-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 13px;
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    background: var(--ui-slot-bg);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    outline: none;
+    transition: border-color 0.16s var(--ui-ease), background 0.16s var(--ui-ease);
+}
+.cr-input::placeholder { color: var(--ui-text-label); }
+.cr-input:hover { border-color: var(--ui-slot-line-hover); }
+.cr-input:focus { border-color: rgba(255, 255, 255, 0.65); background: var(--ui-slot-bg-hover); }
+.cr-input:disabled { opacity: 0.5; }
+
+.cr-obtn {
+    flex: 0 0 auto;
+    height: 36px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-family: var(--ui-font);
+    font-size: 12px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.cr-obtn:hover { background: rgba(255, 255, 255, 0.14); }
+.cr-obtn-primary { background: var(--ui-pill); color: var(--ui-pill-ink); }
+.cr-obtn-primary:hover { background: #fff; }
+.cr-obtn-quiet { background: rgba(255, 255, 255, 0.05); color: var(--ui-text-mid); }
+.cr-obtn-quiet:hover { color: var(--ui-text); }
+.cr-obtn.armed,
+.cr-obtn.armed:hover { background: var(--ui-error); color: rgb(10, 12, 18); }
+.cr-obtn:disabled { opacity: 0.45; cursor: default; }
+.cr-obtn:disabled:hover { background: rgba(255, 255, 255, 0.08); }
+.cr-obtn-primary:disabled:hover { background: var(--ui-pill); }
+
+/* ---- the panel's foot: the control hints, and Undress at the end of the line ----
+   Under the cards, so the world on the right shows only the
+   character and Cancel / Save; ONE LINE, so the cards keep their height. A hairline
+   above it, as under the tabs; on the panel's own glass, so no pane of its own. */
+
+.cr-left-foot {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-border);
+}
+
+/* Undress: a sub-tab pill, lit while the clothes are off. */
+.cr-undress { flex: 0 0 auto; display: flex; }
+.cr-undress:empty { display: none; }
+.cr-dress {
+    flex: 0 0 auto;
+    padding: 6px 16px;   /* a little under the sub-tabs' 8: the line is no taller than the legend's mouse needs */
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    font-family: var(--ui-font);
+    font-size: 12px;
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.cr-dress:hover { color: var(--ui-text); background: rgba(255, 255, 255, 0.09); }
+.cr-dress.on,
+.cr-dress.on:hover { background: var(--ui-pill); color: var(--ui-pill-ink); }
+
+.cr-hints {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-medium);
+    letter-spacing: 0.2px;
+    color: var(--ui-text-mid);
+}
+
+/* ---- Cancel / Save: bottom right, the world's only controls ---- */
+
+.cr-footer {
+    position: absolute;
+    left: var(--cr-left-w);
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 0 35px 28px 28px;
+    pointer-events: none;
+}
+.cr-footer .cr-btns { pointer-events: auto; }
+
+/* A store's checkout (EditAppearance's methods): above Cancel/Save, the total and a tile per way to pay, as
+   whip_autos' basket. Cancel reads Back while it is up. */
+.cr-footer.paying { flex-direction: column; gap: 10px; }
+.cr-pay[hidden] { display: none; }
+.cr-pay {
+    pointer-events: auto;
+    width: 340px;
+    box-sizing: border-box;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(8, 10, 16, 0.82);
+    box-shadow: var(--ui-shadow);
+}
+.cr-pay-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 0 2px 12px;
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+.cr-pay-total b { font-size: 26px; letter-spacing: 0; color: var(--ui-text); }
+.cr-pay-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.cr-pay-tile {
+    height: auto;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    white-space: normal;
+    text-align: left;
+}
+.cr-pay-tile b { font-size: 15px; }
+.cr-pay-tile span { font-size: 11px; font-weight: 500; opacity: 0.8; }
+.cr-pay-tile:disabled { opacity: 0.4; cursor: default; }
+
+.cr-hint { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cr-hint b {
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+
+.cr-key {
+    padding: 3px 7px;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--ui-border-hover);
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text);
+}
+
+/* ---- on a controller ----
+   One legend or the other: the mouse's on a keyboard, the pad's buttons on a pad (creator.js,
+   buildPadLegend). The pad's mouse is the shared circle (css/pad-cursor.css): it rings what it is
+   over white, only on a pad, so a mouse never sees it. */
+.cr-pad-hints { display: none; }
+html[data-input="pad"] #creator .cr-mouse-hints { display: none; }
+html[data-input="pad"] #creator .cr-pad-hints { display: flex; }
+.cr-pad-hints .cr-hint { gap: 5px; }
+.cr-pad-hints .cr-hint[hidden] { display: none; }
+.cr-pad-glyph { display: block; flex: none; width: auto; height: 17px; }
+
+/* ---- the mouse ----
+   Fills are the highlights and sit under the linework; .on lights one up while
+   that input is actually being used. */
+.cr-mouse {
+    width: 16px;
+    height: 23px;
+    flex: 0 0 auto;
+    color: var(--ui-text-mid);
+}
+.cr-m-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.cr-m-fill {
+    fill: currentColor;
+    opacity: 0;
+    transition: opacity 0.12s var(--ui-ease);
+}
+.cr-m-fill.on { opacity: 0.85; }
+
+.cr-btns { display: flex; flex: 0 0 auto; gap: 9px; }
+
+/* The pause menu's buttons: the first choice white, the other dark glass. Larger
+   than whip's standard button: they are this screen's way out. */
+.cr-btn {
+    height: 39px;
+    box-sizing: border-box;
+    padding: 0 20px;
+    font-family: var(--ui-font);
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text);
+    text-shadow: var(--ui-rim);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+/* The hover lightens the same raised glass, so it stays as solid over the world. */
+.cr-btn:hover {
+    background: linear-gradient(var(--ui-surface-hover), var(--ui-surface-hover)), var(--ui-surface-raised);
+    border-color: var(--ui-border-hover);
+}
+
+.cr-btn-primary {
+    background: var(--ui-pill);
+    border-color: transparent;
+    color: var(--ui-pill-ink);
+    text-shadow: none;
+    box-shadow: var(--ui-shadow);
+}
+.cr-btn-primary:hover { background: #fff; border-color: transparent; }
+
+/* (The 16:10 rule that stood the hints above the buttons went with the hints, into the panel.) */
+
+/* Armed cancel — the two-step discard confirmation. */
+.cr-btn.armed,
+.cr-btn.armed:hover,
+.cr-btn.refused,
+.cr-btn.refused:hover {
+    background: var(--ui-error);
+    border-color: transparent;
+    color: rgb(10, 12, 18);
+    text-shadow: none;
+}

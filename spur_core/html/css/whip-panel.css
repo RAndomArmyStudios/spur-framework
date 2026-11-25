@@ -1,0 +1,3509 @@
+/* ========================================
+   WHIP ADMIN PANEL — /whip shell + the shared admin component vocabulary
+   Every wp-* class here is THE way to build admin UI; sections carry no stylesheets
+   of their own (the Event Monitor's trimmed internals are the one documented
+   exception). Tokens from base.css only. CEF is Chromium 103: no :has(), no nesting,
+   no color-mix(). The global scrollbar rule applies — never restate it.
+
+   THE ONE ZOOM. The old panels carried six different zoom values, and four of them
+   accidentally squared (--ui-scale on the overlay times a zoom on the panel). The
+   shell zooms once, here; sections and components never do.
+
+   ---------------------------------------------------------------------------
+   THE HOUSE LOOK, the inventory's (DESIGN.md, "The house look"),
+   with the creator's navigation. What that means here:
+
+     THE GROUND     night glass with the corner glow (--ui-panel-glow), solid.
+     NAVIGATION     the six groups are big display words in the header; the open
+                    group's sections are display tabs under them, the open one white
+                    with a bar under it. There is no rail.
+     CHOSEN         a picked row is the chosen card: a blue tint inside a white ring
+                    (--ui-slot-bg-chosen, --ui-ring), the inventory's picked slot.
+     THE WHITE PILL is the primary action, and only that (and a segmented choice,
+                    .wp-tab), never "selected".
+     TITLES         the display face (--ui-font-display, 800): the panel's name, the
+                    group words and tabs, a pane's title, the group heads.
+     LINE HEIGHT    set once on the panel. Left at `normal`, this font gives about 2.3
+                    lines of air per line, and every list row was half empty.
+
+   SEMANTIC COLOUR IS UNTOUCHED. success / error / warning keep their meanings on
+   status pills, dots, danger buttons, validation and the badges; --ui-accent keeps the
+   focus ring. A theme pass that recoloured those would be changing what the panel
+   SAYS, not how it looks.
+   ---------------------------------------------------------------------------
+   ======================================== */
+
+@keyframes dtPanelIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* ^ Moved here from containers.css, which retired with the standalone panels.
+   Name kept — other surfaces (player-facing) still reference it. */
+
+#whip-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9500;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    transition: opacity 0.18s ease;
+}
+
+/* Peek: the cursor at the very top of the screen fades the panel to see the game behind it (whip-panel.js). */
+#whip-panel-overlay.wp-peek {
+    opacity: 0.3;
+}
+
+/* Suspended: an editor, demo, confirm or inventory borrowed the screen. Hidden but
+   alive — section DOM state survives, and the key scope reads this to yield keys. */
+#whip-panel-overlay.wp-suspended {
+    visibility: hidden;
+}
+
+.wp-panel {
+    display: grid;
+    grid-template-areas:
+        "header"
+        "tabs"
+        "content";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    line-height: 1.35;
+    /* ONE CONSTANT SIZE. Fixed px on purpose — vh/vw units here would be multiplied
+       by the zoom below.
+
+       1250×690 at 1.8 zoom = 2250×1242 visual at 1440p (near 16:9). The extra width goes
+       to .wp-detail (flex: 1), the READ surface, while .wp-list-col keeps its density.
+
+       STILL FITS SMALLER SCREENS, because --ui-scale divides this back down —
+       it is innerHeight/1440, so the multiplier is only ever 1.8 at 1440p:
+         1080p  scale 0.75 → effective 1.35 → 1688×932  in 1920×1080
+         1440p  scale 1.00 → effective 1.80 → 2250×1242 in 2560×1440  (the target)
+         4K     scale 1.50 → effective 2.70 → 3375×1863 in 3840×2160 */
+    width: 1250px;
+    height: 690px;
+    /* FULLY OPAQUE, like the /w dev menu: moving scenery behind text you are trying to read
+       is a lot at this size. --ui-surface-solid is base.css's token for "panels that must not
+       let the world bleed through".
+       The overlay's own rgba(0,0,0,0.45) scrim is untouched — that is the modal dim
+       AROUND the panel, not transparency IN it. */
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    /* --ui-radius-panel (20px), up from -pop (12px). The creator and the dev menu both
+       round generously; at 1250px wide this reads as a panel, not a popover. */
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-modal);
+    /* clip, not just hidden: the result strip waits below the bottom edge, and a hidden box
+       still scrolls to it — a scrollIntoView anywhere inside slid the whole panel up. */
+    overflow: hidden;
+    overflow: clip;
+    zoom: calc(var(--ui-scale) * 1.8);
+    animation: dtPanelIn 0.3s var(--ui-ease) both;
+}
+
+/* The browser's own sheet gives buttons and fields `font: -webkit-small-control`, which sets
+   their line height back to `normal` (about 2.3 lines here). This hands them the panel's.
+   :where() keeps it at no weight, so any class that sets its own line height still wins. */
+:where(.wp-panel) :where(button, input, select, textarea) { line-height: inherit; }
+
+/* ---- Header ---- */
+
+/* The panel's name and the six group words share one bottom line; a group's bar sits on it.
+   The 20px gutter (--ui-sp-7) is every section toolbar's and pane's, so the title, the
+   first tab and a section's first control all start on one edge. */
+.wp-header {
+    grid-area: header;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--ui-sp-8);
+    padding: var(--ui-sp-7) var(--ui-sp-7) var(--ui-sp-5);
+}
+
+.wp-title {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-display);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    padding-bottom: var(--ui-sp-4);
+    white-space: nowrap;
+}
+
+/* The name as whip's logo, in white: as tall as the old title's capitals, sat on the group words' line. */
+.wp-title-logo { display: flex; align-items: flex-end; }
+.wp-title-logo > svg { display: block; height: calc(var(--ui-fs-display) * 0.74); width: auto; fill: #fff; }
+
+.wp-groups {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--ui-sp-7);
+    min-width: 0;
+}
+
+/* A group: a big word, dim until it is the open one. */
+.wp-group-word {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    background: none;
+    border: none;
+    padding: 0 0 var(--ui-sp-4);
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-xl);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: rgba(255, 255, 255, 0.34);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.16s var(--ui-ease);
+}
+
+.wp-group-word:hover { color: rgba(255, 255, 255, 0.62); }
+
+.wp-group-word.active { color: var(--ui-text); }
+
+/* The open group's bar: the house underline (a fifth of the word's size, round ends). */
+.wp-group-word.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ui-pill);
+}
+
+/* A group's badge adds up its sections'. The open group's tabs show each one, so its word
+   does not repeat them. */
+.wp-group-word.active .wp-nav-badge { display: none; }
+
+.wp-header-spacer { flex: 1; }
+
+.wp-close {
+    align-self: center;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+
+.wp-close svg { width: 11px; height: 11px; }
+
+.wp-close:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+
+/* ---- The tab row: the open group's sections ----
+   One row of tabs per group (.wp-tabset), the open group's shown. A long one (a server with
+   many satellite settings pages) scrolls sideways, which is why the hairline is the row's own
+   background and not a border: the open tab's bar has to sit ON the line, and a scrolling box
+   clips anything drawn outside its padding. */
+
+.wp-tabbar {
+    grid-area: tabs;
+    margin: 0 var(--ui-sp-7);
+    min-width: 0;
+}
+
+.wp-tabset {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--ui-sp-7);
+    padding-top: var(--ui-sp-3);
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: linear-gradient(var(--ui-border), var(--ui-border)) left bottom / 100% 1px no-repeat;
+}
+
+.wp-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0 0 var(--ui-sp-5);
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    font-size: var(--ui-fs-lg);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.16s var(--ui-ease);
+}
+
+.wp-nav-item:hover { color: rgba(255, 255, 255, 0.75); }
+
+.wp-nav-item.active { color: var(--ui-text); }
+
+.wp-nav-item.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--ui-pill);
+}
+
+/* The badges in a word or a tab sit on the text's middle, in the body face. */
+.wp-group-word .wp-nav-badge,
+.wp-nav-item .wp-nav-badge {
+    font-family: var(--ui-font);
+    letter-spacing: 0.5px;
+    line-height: 1.35;
+}
+
+.wp-tabset[hidden] { display: none; }
+
+.wp-nav-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Authored keyboard focus ----
+   Every button and every [data-action] in the panel: one visible language for "the keyboard is
+   here", the ring white (--ui-ring), offset so it never fuses with hairline borders. (A Signal Blue at
+   30% was about 1.7:1 against the panel: hard to find.) :focus-visible only,
+   so mouse clicks stay quiet. Written once for the whole panel (no list of classes), so a new
+   page's buttons get it too; :where() keeps it the weakest rule, so a piece with its own focus
+   look (the picker's rows) still wins. */
+:where(#whip-panel-overlay button, #whip-panel-overlay [data-action]):focus-visible {
+    outline: 2px solid var(--ui-ring);
+    outline-offset: 2px;
+}
+
+/* ---- Content + sections ---- */
+
+.wp-content {
+    grid-area: content;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+}
+
+.wp-section {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.wp-section-active { display: flex; }
+
+/* One view of a section with tabs (WP.tabs across its top): fills the section below the tabs the
+   way a section's own toolbar + split would. Hidden views set display: none inline. */
+.wp-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* ---- Toolbar (per-section action row) ---- */
+
+.wp-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+    /* Horizontal padding matches the detail pane's gutter so the toolbar's first
+       control and the pane content share a left edge. */
+    padding: var(--ui-sp-4) var(--ui-sp-7);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.wp-toolbar-spacer { flex: 1; }
+
+/* ---- Split (list | detail) + solo layouts ---- */
+
+.wp-split {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* 300px: the column carries its section's search and filters at the top (below), and a search box
+   with a magnifier wants the room. */
+.wp-list-col {
+    width: 300px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--ui-border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ---- A section's toolbar, at the top of its list ----
+   Moved here by the shell (dockToolbars in whip-panel.js), so the detail pane runs the panel's
+   full height. Stacked: the search on a line of its own, then the section's buttons, filters and
+   boxes in the order it gave them, wrapping. */
+.wp-list-col > .wp-toolbar {
+    flex-shrink: 0;
+    padding: var(--ui-sp-5) var(--ui-sp-5) var(--ui-sp-4);
+    gap: var(--ui-sp-3);
+}
+
+.wp-list-col > .wp-toolbar > .wp-toolbar-spacer { display: none; }
+
+.wp-list-col > .wp-toolbar > .wp-search {
+    order: -1;
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+/* Boxes and lists share a line instead of each holding out for a toolbar's width. */
+.wp-list-col > .wp-toolbar > .wp-input,
+.wp-list-col > .wp-toolbar > .wp-select,
+.wp-list-col > .wp-toolbar > .wp-field {
+    flex: 1 1 110px;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.wp-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--ui-sp-2);
+}
+
+.wp-list-count {
+    padding: var(--ui-sp-3) var(--ui-sp-5) var(--ui-sp-2);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ui-text-label);
+}
+
+/* A list, or its count, inside something that pads it already (a picker, a wizard step): no padding
+   of its own. */
+.wp-list.wp-flush,
+.wp-list-count.wp-flush { padding: 0; }
+
+/* A list in folders (the Door Manager's): the count with "Close all / Open all" beside it, then a
+   heading per folder that opens and closes it — the shell's group caret at list size. */
+.wp-list-folder-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: var(--ui-sp-3);
+}
+.wp-list-folder {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    width: 100%;
+    margin-top: var(--ui-sp-2);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: var(--ui-radius-slot);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.15s var(--ui-ease), color 0.15s var(--ui-ease);
+}
+.wp-list-folder:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.wp-list-folder.open { color: var(--ui-text); }
+.wp-list-folder .wp-group-caret { width: 12px; height: 12px; }
+.wp-list-folder.open .wp-group-caret { transform: rotate(90deg); }
+.wp-list-folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-list-folder-count {
+    flex-shrink: 0;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-medium);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+    white-space: pre;
+}
+
+.wp-detail {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    /* Generous gutters — the pane is the READ surface; the list beside it stays compact
+       for scanning. The contrast between the two densities is deliberate. */
+    padding: var(--ui-sp-6) var(--ui-sp-7);
+}
+
+/* Full-width pane under the split (the garages third pane). */
+.wp-footer-pane {
+    border-top: 1px solid var(--ui-border);
+    max-height: 34%;
+    overflow-y: auto;
+    padding: var(--ui-sp-4) var(--ui-sp-6);
+}
+
+/* Single-pane section (Time & Weather): no list column, centered column of groups. */
+.wp-section-solo {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--ui-sp-6) var(--ui-sp-7);
+    /* 720 → 860, tracking the panel's own 1040 → 1250 so this pane keeps the share of
+       the shell it always had (~69%). Left at 720 it would have held still while the
+       panel grew around it, and a solo section is the one layout with no second pane
+       to take up the slack — it would simply have gained 530px of empty right-hand
+       side. Still capped rather than stretched: this is a column of grouped fields,
+       and a form run across the full 1250 is harder to read, not easier. */
+    max-width: 860px;
+}
+
+/* A solo column in the middle of the section rather than against its left edge (Time & Weather). */
+.wp-section-solo.wp-section-center {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+/* ---- List rows (the plm two-line anatomy, shared at last) ---- */
+
+.wp-list-item {
+    /* Button resets: rows are real <button>s now (WP.listItem), so every list→detail
+       flow is focusable and keyboard-operable. The delegated click handler never
+       noticed the change. */
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font-family: var(--ui-font);
+    color: inherit;
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-radius: var(--ui-radius-row);
+    /* Clear until the row is picked, and there all the while, so picking one moves nothing. */
+    border: var(--ui-slot-line-w) solid transparent;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+    margin-bottom: var(--ui-sp-1);
+}
+
+.wp-list-item:hover { background: var(--ui-surface-hover); }
+
+/* A row with a picture: the picture beside both lines, so the second starts under the name. The page
+   puts the <img> first in the row. */
+.wp-list-item.wp-has-icon {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: var(--ui-sp-4);
+    align-items: center;
+}
+.wp-list-item.wp-has-icon > img { grid-row: 1 / span 2; width: 32px; height: 32px; object-fit: contain; }
+.wp-list-item.wp-has-icon > .wp-item-top,
+.wp-list-item.wp-has-icon > .wp-item-sub { grid-column: 2; }
+
+/* THE CHOSEN CARD: the inventory's picked slot. A blue tint inside a white ring, drawn twice
+   (the border and a 1px shadow outside it) so it reads as 2px without moving the row. */
+.wp-list-item.active,
+.wp-list-item.active:hover {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 var(--ui-slot-line-w) var(--ui-ring);
+}
+
+.wp-item-top {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    min-width: 0;
+}
+
+.wp-item-title {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wp-item-sub {
+    margin-top: 2px;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wp-list-item.active .wp-item-title { font-weight: var(--ui-fw-bold); }
+
+/* ---- Collapsible groups ----
+   DE-BOXED: a detail pane stacks up to eight of them, so each is a flat run in the pane's own
+   ground — a slim uppercase head, a hairline BETWEEN groups only, breathing room instead of walls.
+   The caret and the shell's remembered open-state still work. */
+
+.wp-group {
+    padding-bottom: var(--ui-sp-4);
+}
+
+.wp-group + .wp-group {
+    border-top: 1px solid var(--ui-border);
+}
+
+.wp-group-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    /* The generous interval lives ABOVE the head: content sits tight under its own
+       heading, and the air belongs between one group and the next. This asymmetry is
+       the pane's cadence. */
+    padding: var(--ui-sp-6) 0 var(--ui-sp-4);
+    /* A heading in the display face, the house's: an open group full white, a shut one
+       dimmer, so the eye finds what is showing. */
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: rgba(255, 255, 255, 0.62);
+    cursor: pointer;
+}
+
+.wp-group.open .wp-group-head,
+.wp-group-head:hover { color: var(--ui-text); }
+
+.wp-group-caret {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    color: var(--ui-text-mid);
+    transition: transform 0.15s var(--ui-ease);
+}
+
+.wp-group-caret svg { width: 100%; height: 100%; }
+
+.wp-group.open .wp-group-caret { transform: rotate(90deg); }
+
+.wp-group-body {
+    display: none;
+    padding: var(--ui-sp-2) 0 var(--ui-sp-3);
+}
+
+.wp-group.open .wp-group-body { display: block; }
+
+/* ---- Detail action row ----
+   The pane's verbs, flat under the header — NOT a collapsible group. The most-used row
+   in the panel should never cost a click of chrome or wear a label that restates the
+   obvious. The spacer splits constructive verbs (left) from destructive ones (right),
+   so Kick is never a slip away from Teleport. */
+
+.wp-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-4) 0 var(--ui-sp-5);
+}
+
+.wp-actions-split { flex: 1; }
+
+/* A field in a row of verbs (the Item Log's Item box beside Load) sits on the row's line, and so does
+   one in a feed row (a garage's car and where to move it): the field's own margin is for a column. */
+.wp-actions-row > .wp-field {
+    flex: 0 1 360px;
+    margin-bottom: 0;
+}
+.wp-feed-row > .wp-field { margin-bottom: 0; }
+/* ...unless it holds a short number (Items' Amount): then the capsule is as wide as its label and box. */
+.wp-actions-row > .wp-field.wp-field-fit { flex: 0 0 auto; }
+
+/* A view's head: its title on the left and its buttons on the right, flush with the top of the view
+   (every wizard's, the Item Log's Economy). The row's top padding and the title's margin are for
+   rows and titles under other content. */
+.wp-actions-row.wp-head-row { padding-top: 0; }
+.wp-head-row > .wp-pane-title { margin: 0; }
+
+/* ---- Fields & forms ---- */
+
+.wp-field {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    /* min-width 0 pairs with the grids' minmax(0,1fr): the capsule may shrink below
+       its label's width rather than shove the row off the pane's right edge. */
+    min-width: 0;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    /* FORM CONTROLS ROUND LESS THAN ROWS DO. Rows and tabs are 11px because they are
+       objects you pick; a field is a place you type, and at 11px a single-line input
+       starts reading as a button. --ui-radius-slot (8px) is the family's middle step
+       and keeps the two legible as different kinds of thing. */
+    border-radius: var(--ui-radius-slot);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    margin-bottom: var(--ui-sp-3);
+    transition: border-color 0.15s ease;
+}
+
+.wp-field:focus-within { border-color: var(--ui-ring); }
+
+.wp-field-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    /* --ui-text-label, not -dim: these words say WHAT a value is — functional, not
+       tertiary. Same change on info labels, table headers and the nav group labels. */
+    color: var(--ui-text-label);
+    white-space: nowrap;
+}
+
+/* What the number in a field reads as, after it (a vehicle stat with a `display`: "reads 14 psi"). */
+.wp-field-hint {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.wp-field .wp-input,
+.wp-field .wp-select {
+    background: none;
+    border: none;
+    flex: 1;
+    min-width: 0;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    outline: none;
+}
+
+/* The field capsule is the chrome: the select is bare text in it, with whip's chevron at its right (base.css
+   select) rather than the browser's arrow. Its list is whip's (ui-controls.js). */
+.wp-field .wp-select {
+    padding: 0 22px 0 0;
+    background-image: var(--ui-chevron);
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 12px 12px;
+    cursor: pointer;
+}
+
+.wp-input::placeholder { color: var(--ui-text-mid); }
+
+/* A field whose value is forever a couple of digits (hour, minute, time scale) —
+   the input stops flexing and the capsule sizes to its content instead of
+   stretching a two-character box across a grid column. */
+.wp-field .wp-input.wp-input-short {
+    flex: 0 0 56px;
+    width: 56px;
+    text-align: center;
+}
+/* A count up to about ten digits (Items' Amount). */
+.wp-field .wp-input.wp-input-digits { flex: 0 0 auto; width: 11ch; }
+
+/* Standalone (toolbar) inputs get their own capsule. */
+.wp-toolbar > .wp-input {
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    outline: none;
+    min-width: 180px;
+    transition: border-color 0.15s ease;
+}
+
+.wp-toolbar > .wp-input:focus { border-color: var(--ui-ring); }
+
+/* A section's search (WP.toolbar's search): a magnifier in a wide, soft box. */
+.wp-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 1 320px;
+    min-width: 200px;
+}
+
+.wp-search-icon {
+    position: absolute;
+    left: var(--ui-sp-5);
+    display: flex;
+    color: var(--ui-text-mid);
+    pointer-events: none;
+}
+
+.wp-search-icon svg { width: 13px; height: 13px; }
+
+.wp-search .wp-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    padding: var(--ui-sp-4) var(--ui-sp-5) var(--ui-sp-4) 32px;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.wp-search .wp-input:focus { border-color: var(--ui-ring); }
+
+/* Standalone selects (toolbars, bare rows) get the input's capsule look — without
+   this a bare <select> renders as the native OS control, visibly foreign to the
+   panel. The .wp-field .wp-select reset above out-specifies this for in-field use. */
+.wp-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--ui-surface-subtle);
+    background-image: var(--ui-chevron);
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 12px 12px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    padding: var(--ui-sp-3) 26px var(--ui-sp-3) var(--ui-sp-5);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.wp-select:focus { border-color: var(--ui-ring); }
+
+.wp-select option {
+    background: var(--ui-select-option-bg);
+    color: var(--ui-select-option-fg);
+}
+
+/* ---- Info + media split: a detail pane's text grid with a picture filling the
+   dead space to its right (vehicles' car shot, items' icon) ---- */
+
+.wp-info-split {
+    display: flex;
+    gap: var(--ui-sp-6);
+    align-items: flex-start;
+}
+
+.wp-info-split .wp-info-grid {
+    flex: 1;
+    min-width: 0;
+}
+
+.wp-info-media {
+    flex-shrink: 0;
+    max-width: 300px;
+    /* A picture tile, not a control: the pop corner, as the picker's picture uses. */
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-subtle);
+}
+
+/* For small square sources (item icons): scale UP to fill the split's right side.
+   Width only — height: auto keeps the aspect ratio; padding gives the transparent
+   icon art breathing room inside the capsule. */
+.wp-info-media-fill {
+    /* Fixed SQUARE, not height:auto — icon sources come in every aspect ratio, and a
+       height that tracked the picture made everything below it (the Give row) jump
+       per selection. object-fit keeps the art undistorted inside the constant box. */
+    width: 240px;
+    height: 240px;
+    object-fit: contain;
+    padding: var(--ui-sp-5);
+    box-sizing: border-box;
+}
+
+.wp-cols-2, .wp-cols-3, .wp-cols-4 {
+    display: grid;
+    gap: var(--ui-sp-3);
+}
+/* minmax(0,1fr), not bare 1fr: a bare 1fr floors at the cell's min-content, so a row
+   of labelled fields (Owner charId / Access charId / Locked) could grow past the pane
+   and push its last cell off screen. Forcing the floor to 0 makes the row FIT and
+   lets the fields shrink instead — which needs min-width:0 on .wp-field below. */
+.wp-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wp-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wp-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wp-cols-2 .wp-field, .wp-cols-3 .wp-field, .wp-cols-4 .wp-field { margin-bottom: 0; }
+/* Whatever stacks directly under a grid row — another grid (position row over its
+   Use My Position / Teleport To pair), or a bare button (garages' lone Use My
+   Position) — gets the same breath a field stack gets. */
+:is(.wp-cols-2, .wp-cols-3, .wp-cols-4) + :is(.wp-cols-2, .wp-cols-3, .wp-cols-4, .wp-btn) {
+    margin-top: var(--ui-sp-4);
+}
+.wp-field-full { grid-column: 1 / -1; }
+
+/* A short form of stacked fields (Vehicles' New vehicle): kept to a readable width in a wide pane. */
+.wp-form-narrow { max-width: 480px; }
+
+/* ---- Buttons ---- */
+
+/* The house's buttons: a quiet glass one for most verbs, THE WHITE PILL for the one that
+   finishes the job (Apply, Save, Confirm), red for what cannot be undone. Hover only
+   on a button that can be pressed; a disabled one is faded, the same everywhere. */
+.wp-btn {
+    background: var(--ui-surface-medium);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    padding: var(--ui-sp-4) var(--ui-sp-6);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+    white-space: nowrap;
+}
+
+.wp-btn:not(:disabled):hover { background: var(--ui-surface-hover-strong); border-color: var(--ui-border-hover); }
+
+.wp-btn-primary {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+.wp-btn-primary:not(:disabled):hover { background: var(--ui-pill-hover); border-color: var(--ui-pill-hover); }
+
+/* The inventory's Destroy, the same: an outlined warning on a faint red, not a solid alarm. */
+.wp-btn-danger {
+    background: var(--ui-error-light);
+    border-color: var(--ui-error);
+    color: var(--ui-error);
+}
+.wp-btn-danger:not(:disabled):hover { background: var(--ui-error-subtle); border-color: var(--ui-error); }
+
+.wp-btn-ghost {
+    background: none;
+    border-color: transparent;
+    color: var(--ui-text-mid);
+}
+.wp-btn-ghost:not(:disabled):hover { color: var(--ui-text); background: var(--ui-surface-hover); border-color: transparent; }
+
+/* WP.backBtn: the chevron, then the label, on one line. */
+.wp-btn-back { display: inline-flex; align-items: center; gap: var(--ui-sp-2); padding-left: var(--ui-sp-4); }
+.wp-btn-back svg { flex: none; width: 14px; height: 14px; }
+
+.wp-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* At least 24px tall (32px drawn at 1080p): Change, Remove, Clear sit on many rows, and the pad cursor has to land
+   on them. */
+.wp-btn-sm { min-height: 24px; padding: 4px var(--ui-sp-5); font-size: var(--ui-fs-xs); }
+
+/* ---- Data vocabulary: pills, dots, chips, badges ----
+   Promoted from the Event Monitor redesign — the shared home the "FUTURE: .ui-pill
+   extraction" comments pointed at. */
+
+.wp-pill,
+.wp-nav-badge {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    padding: 2px 7px;
+    /* --ui-radius-pill is 3px, which is a misnomer this file inherited — a 3px corner
+       on a 16px-tall badge reads as a square. 6px matches .dm-active-badge in the dev
+       menu, which is the same component doing the same job. */
+    border-radius: var(--ui-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    color: var(--ui-text-mid);
+    background: var(--ui-surface-medium);
+    flex-shrink: 0;
+}
+
+/* SEMANTIC, AND THEREFORE UNTOUCHED BY THE RETHEME. These four say what a thing IS —
+   healthy, broken, warning, notable — and recolouring them to the neutral scale would
+   be changing what the panel means rather than how it looks. */
+.wp-pill-ok    { color: var(--ui-success); background: var(--ui-success-light); }
+.wp-pill-err   { color: var(--ui-error);   background: var(--ui-error-light); }
+.wp-pill-warn  { color: var(--ui-warning); background: var(--ui-warning-light); }
+.wp-pill-accent{ color: var(--ui-accent);  background: var(--ui-accent-light); }
+
+.wp-nav-badge { color: var(--ui-error); background: var(--ui-error-light); }
+
+/* (A picked row stays dark — the chosen card — so the pills and dots in it keep their own
+   colours.) */
+
+.wp-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+    background: var(--ui-text-dim);
+}
+
+.wp-dot-ok   { background: var(--ui-success); box-shadow: 0 0 4px var(--ui-success); }
+.wp-dot-warn { background: var(--ui-warning); }
+.wp-dot-err  { background: var(--ui-error); }
+
+/* A removable token (a filter, a selected entity). Was accent-on-accent — a tint, a
+   border and a text colour all doing the same job. On the neutral scale it stops
+   competing with the primary button and the focus ring for the accent's meaning. */
+.wp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-2);
+    padding: 3px 6px 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ui-border);
+    color: var(--ui-text);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* ---- Sub-tabs (a section's internal views — the EM's tabs, generalized) ---- */
+
+.wp-tabs {
+    display: flex;
+    gap: var(--ui-sp-1);
+    padding: 0 var(--ui-sp-6);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.wp-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    /* Transparent and kept, like the row borders — it reserves 2px of height, and the
+       tab rail's own hairline sits directly under it. Decoloured, not deleted. */
+    border-bottom: 2px solid transparent;
+    /* Fully round, matching .cr-subtab. The old top-only radius existed to fuse the
+       tab into the underline it no longer has. */
+    border-radius: 999px;
+    padding: var(--ui-sp-4) 16px;
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+
+.wp-tab:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+
+/* .cr-subtab.active: the selection pill, the same token as the primary button's. */
+.wp-tab-active,
+.wp-tab-active:hover {
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-weight: var(--ui-fw-bold);
+}
+/* A count on the open tab: dark on the white pill (the shared light one vanished into it). */
+.wp-tab-active .wp-pill { color: var(--ui-pill-ink-mid); background: rgba(10, 12, 18, 0.08); }
+
+/* Tabs inside a pane (WP.tabs({ inline: true })): the same chips, without the section-width
+   rail's gutter and hairline, which belong to the edge of a section and not the middle of one. */
+.wp-tabs-inline {
+    padding: 0;
+    border-bottom: none;
+    margin-bottom: var(--ui-sp-5);
+}
+
+/* Small chips that wrap (pickers.js vehiclePicker's classes, in the column under the Model box): the
+   same chips at the panel's small size, so a couple of dozen fit beside the pictures. */
+.wp-tabs.wp-tabs-small {
+    flex-wrap: wrap;
+    gap: var(--ui-sp-2);
+    margin-bottom: 0;
+}
+.wp-tabs-small .wp-tab {
+    padding: var(--ui-sp-2) var(--ui-sp-4);
+    font-size: var(--ui-fs-sm);
+}
+
+/* ---- Stepper (WP.stepper): a wizard's rail, body and footer ----
+   The rail's chips are the tabs' chips, and the current step wears the same white pill,
+   because "where you are" is the same idea in both. What a stepper adds is the number: it
+   turns into a tick when the step is done and goes red when Next was refused, so the rail
+   doubles as the wizard's progress. A step not reached yet is dimmed — it can be seen, but
+   not jumped to. */
+
+.wp-stepper {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.wp-step-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-2);
+    padding-bottom: var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+/* The rail beside the wizard's title, on its head row (WP.stepper railInto: wp/vehicles.js): one row for
+   both, and the rail's hairline under the whole row. */
+.wp-actions-row.wp-head-steps {
+    padding-bottom: var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+}
+.wp-head-steps .wp-step-rail {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.wp-step {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 999px;
+    padding: var(--ui-sp-3) var(--ui-sp-6) var(--ui-sp-3) var(--ui-sp-3);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+
+.wp-step:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+
+.wp-step-num {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ui-text-mid);
+}
+
+.wp-step-done .wp-step-num    { background: var(--ui-success-light); color: var(--ui-success); }
+.wp-step-error .wp-step-num   { background: var(--ui-error-light);   color: var(--ui-error); }
+/* Skipped and locked steps are further back than done and current ones, but still read: the label grey
+   (about 4.8:1), not the dim one (2.2:1). */
+.wp-step-skipped { color: var(--ui-text-label); }
+
+.wp-step-locked,
+.wp-step-locked:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--ui-text-label);
+    cursor: default;
+}
+
+/* .wp-tab-active, verbatim, and the number inverts with it, as badges on a white pill do. A done or
+   refused number goes solid green or red with the pill's dark ink on it: white on those light
+   colours is under 3:1. */
+.wp-step-current,
+.wp-step-current:hover {
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-weight: var(--ui-fw-bold);
+}
+
+.wp-step-current .wp-step-num { background: rgba(10, 12, 18, 0.14); color: var(--ui-pill-ink); }
+.wp-step-current.wp-step-done .wp-step-num  { background: var(--ui-success); color: var(--ui-pill-ink); }
+.wp-step-current.wp-step-error .wp-step-num { background: var(--ui-error);   color: var(--ui-pill-ink); }
+
+.wp-step-body {
+    padding: var(--ui-sp-6) 0;
+}
+
+.wp-step-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding-top: var(--ui-sp-5);
+    border-top: 1px solid var(--ui-border);
+}
+
+/* The wizard's voice: why Next was refused, said where the admin is looking. */
+.wp-step-msg {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+}
+
+.wp-step-msg-err { color: var(--ui-error); }
+.wp-step-msg-ok  { color: var(--ui-success); }
+
+/* ---- A wizard across the whole section (the shop set-up wizard) ----
+   .wp-section-solo is a reading column, capped at 860px and scrolled as a whole. A wizard whose
+   steps are pickers wants the section's full width, and its rail and Back / Next held in place
+   while only the step scrolls — so the step body takes what is left and scrolls on its own. */
+.wp-section-wide {
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.wp-section-wide .wp-stepper { flex: 1; }
+.wp-section-wide .wp-step-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- Choice cards: one of a few big answers (what kind of shop) ----
+   The chosen card is the inventory's picked slot, as a picked list row is (.wp-list-item.active). */
+.wp-choices {
+    display: flex;
+    gap: var(--ui-sp-4);
+    margin-bottom: var(--ui-sp-5);
+}
+.wp-choice {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-2);
+    text-align: left;
+    padding: var(--ui-sp-5) var(--ui-sp-6);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.wp-choice:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.wp-choice-title {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    line-height: 1.2;
+}
+.wp-choice-text { font-size: var(--ui-fs-sm); color: var(--ui-text-mid); line-height: 1.45; }
+
+/* ---- Picture tiles: a picture over its name (the NPC picker, the map icons) ----
+   The furnisher's card, in the panel. FLEX-WRAP, NOT GRID, for the reason furnisher.css gives at
+   #fz-grid: inside a zoomed, scrolling grid, CEF hit-tested only the left column of cards. */
+.wp-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--ui-sp-3);
+}
+.wp-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-sp-2);
+    flex: 0 0 auto;
+    width: 108px;
+    box-sizing: border-box;
+    padding: var(--ui-sp-3);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.wp-tile:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.wp-tile { position: relative; }
+.wp-tile-img { width: 100%; height: 64px; object-fit: contain; }
+/* A number in a tile's corner (how busy that item was). */
+.wp-tile-badge {
+    position: absolute;
+    top: var(--ui-sp-2);
+    right: var(--ui-sp-2);
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-accent-light);
+    color: var(--ui-accent);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* A choice that opens a picker: the thing picked, by its picture and name, and a word to change it. */
+.wp-pick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-2) var(--ui-sp-5) var(--ui-sp-2) var(--ui-sp-2);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.wp-pick-btn:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.wp-pick-btn img { width: 52px; height: 52px; object-fit: contain; }
+.wp-pick-btn-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+/* The thing picked is the page's title: the pane title's face, on a button. */
+.wp-pick-btn-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-display);
+    font-weight: var(--ui-fw-display);
+    line-height: 1.1;
+}
+.wp-pick-btn-change { font-size: var(--ui-fs-xs); font-weight: var(--ui-fw-bold); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ui-text-label); }
+.wp-pick-btn:hover .wp-pick-btn-change { color: var(--ui-text); }
+/* NO PICTURE is a normal state (a ped added after the pictures were taken): its glyph stands in. */
+.wp-tile-art { display: none; width: 34px; height: 64px; color: rgba(255, 255, 255, 0.32); }
+.wp-tile-art svg { width: 100%; height: 100%; }
+.wp-tile.wp-noimg .wp-tile-img { display: none; }
+.wp-tile.wp-noimg .wp-tile-art { display: block; }
+.wp-tile-name {
+    width: 100%;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-align: center;
+    line-height: 1.3;
+    text-shadow: var(--ui-rim);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+/* People: the pictures are full-length 2:3 shots, standing on their names. */
+.wp-tiles-tall .wp-tile-img,
+.wp-tiles-tall .wp-tile-art { height: 128px; object-position: 50% 100%; }
+/* Icons (map blips): small and square, in the blip's own colour (an SVG filter, wp/shops.js). */
+.wp-tiles-small .wp-tile { width: 88px; }
+.wp-tiles-small .wp-tile-img { height: 30px; }
+
+/* Picked: the chosen card (a picture tile, a choice card, a colour). */
+.wp-tile.active, .wp-tile.active:hover,
+.wp-choice.active, .wp-choice.active:hover {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 var(--ui-slot-line-w) var(--ui-ring);
+}
+
+/* ---- A picker in two panes: a column to choose from beside what was chosen ----
+   The shop wizard's Shopkeeper (pictures | the one picked, large) and Goods (the Item Browser's list
+   | the shelf being made). Each pane scrolls on its own; the step around them does not. */
+.wp-pick {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: var(--ui-sp-6);
+}
+.wp-pick-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+}
+.wp-pick-col {
+    flex: 0 0 300px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+}
+.wp-pick-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 2px; }
+.wp-pick .wp-tabs-inline { margin-bottom: 0; }
+.wp-pick .wp-search { flex: 0 0 auto; }
+.wp-pick-head { display: flex; align-items: baseline; gap: var(--ui-sp-4); }
+.wp-pick-head .wp-section-title { margin: 0; }
+/* The one picked, large: an NPC's full-length picture. */
+.wp-pick-hero {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    overflow: hidden;
+}
+.wp-pick-hero img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wp-pick-hero .wp-tile-art { display: none; width: 64px; height: 64px; margin: auto; }
+.wp-pick-hero.wp-noimg img { display: none; }
+.wp-pick-hero.wp-noimg .wp-tile-art { display: block; }
+/* The same picture beside a summary (a shop's page): a fixed 2:3 frame. */
+.wp-info-split > .wp-pick-hero { flex: 0 0 200px; height: 300px; }
+/* A square one, for an item's icon (a ground item's page). */
+.wp-info-split > .wp-pick-hero.wp-hero-square { flex: 0 0 220px; height: 220px; align-items: center; padding: var(--ui-sp-5); box-sizing: border-box; }
+/* A wide one, for a vehicle (pickers.js vehiclePicker): the snapshots are landscape, and centred. */
+.wp-pick-hero.wp-hero-wide { flex: 0 0 auto; height: 170px; align-items: center; padding: var(--ui-sp-4); box-sizing: border-box; }
+/* The class chips under the Model box: the column's last block, scrolling on its own if the column is short. */
+.wp-pick-col > .wp-tabs-small { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+/* Vehicle tiles: wide, so a car is not a speck in a square, and as wide as fills the row (--wp-tile-w, set by
+   vehiclePicker); the picture keeps the snapshot's shape. */
+.wp-tiles-wide .wp-tile { width: var(--wp-tile-w, 200px); }
+.wp-tiles-wide .wp-tile-img,
+.wp-tiles-wide .wp-tile-art { height: calc(var(--wp-tile-w, 200px) * 0.46); }
+.wp-tiles-wide .wp-tile-name { font-size: var(--ui-fs-sm); }
+/* Props and items, the same way (pickers.js fillRow): as wide as fills the row, squarer than a car's picture. */
+.wp-tiles-fill .wp-tile { width: var(--wp-tile-w, 108px); }
+.wp-tiles-fill .wp-tile-img,
+.wp-tiles-fill .wp-tile-art { height: calc(var(--wp-tile-w, 108px) * 0.6); }
+/* The prop picked, large, over its chips (pickers.js propPicker): a square, as tall as a car's. */
+.wp-pick-col .wp-pick-hero.wp-hero-square { height: 220px; align-items: center; padding: var(--ui-sp-5); box-sizing: border-box; }
+/* The picked one's name and model never give way to a long run of chips under them (a .wp-item-sub is overflow
+   hidden, so in a short column it was squeezed and cut off): the chips scroll instead. */
+.wp-pick-col > .wp-pick-name, .wp-pick-col > .wp-item-sub { flex: 0 0 auto; }
+/* A picker's top row: a field beside its search (the container wizard's Name), the two sharing the row. */
+.wp-pick-top { flex: 0 0 auto; display: flex; align-items: stretch; gap: var(--ui-sp-4); }
+.wp-pick-top > * { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+.wp-pick-top > .wp-search { flex: 1 1 0; }
+/* Everyone, as a list (pickers.js personList): its search, then the people, scrolling on their own. */
+.wp-people { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--ui-sp-4); }
+.wp-people > .wp-search { flex: 0 0 auto; }
+/* A container opened (pickers.js inventoryPreview): the Vehicle Adjustments preview's panel, its slots four across. */
+.wp-inv-preview.inv-panel { padding: var(--ui-sp-6); }
+.wp-inv-preview .inv-panel-header { margin-bottom: var(--ui-sp-5); }
+.wp-inv-preview .inv-slots-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--ui-sp-3);
+    max-height: 460px;
+    overflow-y: auto;
+}
+.wp-inv-preview-more { margin-top: var(--ui-sp-4); font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+
+/* ---- The container wizard (wp/containers.js) ----
+   Holds and Access: the choices down the left, what they make on the right (the container opened; everyone to pick
+   from). Each side scrolls on its own. Items is the prop picker's shape, its choices in the side column. */
+.cw-split { flex: 1; min-height: 0; display: flex; gap: var(--ui-sp-7); }
+.cw-left { flex: 0 0 380px; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.cw-right { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+.cw-left .wp-choices, .wp-pick-col .wp-choices { flex-direction: column; }
+.cw-left .wp-choice, .wp-pick-col .wp-choice { flex: 0 0 auto; }
+.cw-right > .wp-section-title:first-child, .cw-left > .wp-section-title:first-child { margin-top: 0; }
+/* The container opened, at about the inventory's own size: its column's width, not the whole pane's. */
+.cw-right .wp-inv-preview { max-width: 440px; }
+/* Who it is for, on the left of Access: a row each; the one the list on the right picks for is lit, its players under
+   it. All in the column's own scroll. */
+.cw-who-list { display: flex; flex-direction: column; gap: var(--ui-sp-2); flex: 0 0 auto; }
+.cw-who { cursor: pointer; }
+.cw-who.active, .cw-who.active:hover { background: var(--ui-slot-bg-chosen); border-color: var(--ui-ring); }
+/* A container's page: its picture, and under it where it is on the map, down the right of its summary. */
+.wp-info-split > .cw-detail-side { flex: 0 0 300px; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-4); }
+.cw-detail-side > .wp-pick-hero.wp-hero-square { flex: 0 0 auto; height: 220px; align-items: center; padding: var(--ui-sp-5); box-sizing: border-box; }
+.cw-detail-side .wp-place { width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 0; }
+/* Items' picked list (wp/containers.js pickedRow): each item's picture and name. Over the picture it goes red and the
+   name asks "Remove?"; a click on the picture takes it away. */
+.cw-picked { display: flex; flex-direction: column; gap: var(--ui-sp-3); }
+.cw-picked-row { display: flex; align-items: center; gap: var(--ui-sp-4); min-width: 0; }
+.cw-picked-photo {
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    padding: var(--ui-sp-2);
+    box-sizing: border-box;
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-slot);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.16s var(--ui-ease);
+}
+.cw-picked-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* A player's: their face, round. */
+.cw-picked-photo.cw-picked-face { padding: 0; border-radius: 50%; }
+.cw-picked-face > .wp-avatar { width: 100%; height: 100%; }
+.cw-who-list > .cw-picked-row { padding-left: var(--ui-sp-5); }
+.cw-picked-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ui-error);
+    opacity: 0;
+    transition: opacity 0.16s var(--ui-ease);
+}
+.cw-picked-photo:hover { border-color: var(--ui-error); }
+.cw-picked-photo:hover::after { opacity: 0.55; }
+.cw-picked-photo:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 1px; }
+.cw-picked-name {
+    min-width: 0;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cw-removing .cw-picked-name { color: var(--ui-error); }
+
+/* Raw data, readable: an item's metadata where it is more than a few plain values. */
+.wp-code {
+    margin: 0;
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    max-height: 280px;
+    overflow: auto;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-sm);
+    line-height: 1.5;
+    color: var(--ui-text-mid);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.wp-pick-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    line-height: 1.2;
+}
+
+/* ---- Lines: what was chosen, one per line, each with its own control (a price) ----
+   Flat rows with a hairline between them, the status rows' look: a long column of boxes flattens
+   a page. A line with a problem gets the red rule down its left edge and a faint red wash. */
+.wp-lines { display: flex; flex-direction: column; }
+.wp-line {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 132px auto;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    border-bottom: 1px solid var(--ui-border);
+}
+.wp-line:last-child { border-bottom: none; }
+.wp-line > img { width: 36px; height: 36px; object-fit: contain; }
+.wp-line .wp-field { margin-bottom: 0; }
+.wp-line-err { background: var(--ui-error-subtle); box-shadow: inset 2px 0 0 var(--ui-error); }
+
+/* A line whose control is a choice, not a number (a person's rank): more room for it. */
+.wp-line-wide { grid-template-columns: 36px minmax(0, 1fr) 240px auto; }
+
+/* Somebody's initials in a disc, where a line has no picture (a person on a job's staff). The dot
+   on its corner says they are on duty. */
+.wp-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-surface-medium);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    flex-shrink: 0;
+}
+.wp-avatar .wp-dot { position: absolute; right: 0; bottom: 0; z-index: 1; width: 9px; height: 9px; box-shadow: 0 0 0 2px var(--ui-surface-solid); }
+/* THEIR PORTRAIT (pickers.js avatar): GTA's headshot, framed on the face; the initials stay under it,
+   hidden, for when it is missing. */
+.wp-avatar-img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 30%; }
+.wp-avatar.has-portrait .wp-avatar-initials { visibility: hidden; }
+.wp-avatar-lg { width: 72px; height: 72px; font-size: var(--ui-fs-xl); }
+.wp-avatar-lg .wp-dot { width: 14px; height: 14px; right: 3px; bottom: 3px; }
+/* A face leading a list row (the Player Manager's), in the picture's place. */
+.wp-list-item.wp-has-icon > .wp-avatar { grid-row: 1 / span 2; width: 32px; height: 32px; }
+/* A face beside a name in a table cell (a player's characters). */
+.pmg-char { display: inline-flex; align-items: center; gap: var(--ui-sp-4); }
+.pmg-char .wp-avatar { width: 26px; height: 26px; font-size: var(--ui-fs-xs); }
+/* A player's page, its head (playerManager.js): their name and everyday verbs, and beside them a picture of their
+   game, framed as a place's map is (.wp-place), with Capture Player's Game under it, and their place on the map, the
+   same size. A narrow pane puts the two below. */
+.pmg-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--ui-sp-4) var(--ui-sp-7); }
+.pmg-head-main { flex: 1 1 240px; min-width: 0; }
+/* Their face, their name, and under the name what they are (online, server id, admin...). The pills wrap onto
+   another line rather than squeeze the name out or run under the picture beside them; the name wraps rather
+   than be cut. */
+.pmg-who { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--ui-sp-3) var(--ui-sp-5); }
+.pmg-who > .wp-avatar { grid-row: 1 / span 2; }
+.pmg-who > .wp-pane-title { margin: 0; align-self: end; white-space: normal; overflow-wrap: anywhere; }
+.pmg-pills { display: flex; flex-wrap: wrap; gap: var(--ui-sp-2) var(--ui-sp-3); min-width: 0; align-self: start; }
+.pmg-pills > .wp-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pmg-views { flex: 0 1 auto; min-width: 0; display: flex; gap: var(--ui-sp-4); }
+/* `width`, not only a basis: it is what the pair measures as, so the head keeps both at full size beside the name. */
+.pmg-shot-col, .pmg-place-col { flex: 0 1 auto; width: 280px; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-3); }
+.pmg-place .wp-place { width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 0; }
+.pmg-shot {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    overflow: hidden;
+}
+/* Their game, whole: a screen of another shape gets black bars, not cropped edges. */
+.pmg-shot-img { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.pmg-shot.has-pic .pmg-shot-img { display: block; }
+/* On its way: whip's logo with its loading light, white on the black (css/curtain.css's #loadLogo look). */
+.pmg-shot-logo {
+    --ld-letter: #fff;
+    --ld-ring:   #000;
+    --ld-lit:    #fff;
+    --ld-hole:   #000;
+    --ld-icon:   #000;
+    --ld-fade:   0.55s;
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 62%;
+    transform: translate(-50%, -50%);
+}
+.pmg-shot.waiting .pmg-shot-logo { display: block; }
+.pmg-shot-logo svg { display: block; width: 100%; height: auto; overflow: visible; }
+.pmg-shot-logo .ld-letters { fill: var(--ld-letter); }
+.pmg-shot-logo .ld-ring    { fill: var(--ld-ring); }
+.pmg-shot-logo .ld-disc    { fill: var(--ld-lit); }
+.pmg-shot-logo .ld-hole    { fill: var(--ld-hole); }
+.pmg-shot-logo .ld-icon    { color: var(--ld-icon); }
+.pmg-shot-logo .ld-dot .ld-light { opacity: 0; transition: opacity var(--ld-fade) cubic-bezier(0.25, 0.6, 0.35, 1); }
+.pmg-shot-logo .ld-dot.lit .ld-light { opacity: 1; transition: none; }
+.pmg-shot-msg {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ui-sp-5);
+    text-align: center;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+}
+.pmg-shot.no-pic .pmg-shot-msg { display: flex; }
+/* As tall as the button under the picture, so the map's time sits on the picture's line. */
+.pmg-shot-row { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-sp-4); min-height: 24px; }
+.pmg-shot-when { margin-left: auto; font-size: var(--ui-fs-xs); color: var(--ui-text-label); font-variant-numeric: tabular-nums; }
+
+/* ---- Verb cards (WP.verb): a page's actions, each a card ----
+   In the slot tile's material (a thing you pick), its icon in a small stat disc (the HUD's dark core, white ring and
+   black outline), the verb, and a line saying what it does to this one. A danger verb's disc is red. The verb whose
+   form is open is the chosen card, its disc lit white with the glyph in ink, as the 3D prompt's badge lights when E
+   acts on it. The Player Manager's Actions and the Vehicles page's. Flex-wrap, not grid (.wp-tiles). */
+.wp-verb {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    min-width: 0;
+    min-height: 58px;
+    box-sizing: border-box;
+    padding: var(--ui-sp-4) var(--ui-sp-5) var(--ui-sp-4) var(--ui-sp-4);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.wp-verb-disc {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--sh-disc-core);
+    box-shadow: inset 0 0 0 2px var(--sh-disc-ring), var(--sh-disc-outline);
+    color: var(--ui-text);
+    transition: background 0.16s var(--ui-ease), box-shadow 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.wp-verb-disc svg { width: 19px; height: 19px; }
+.wp-verb-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wp-verb-name { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); line-height: 1.2; }
+.wp-verb-sub {
+    font-size: var(--ui-fs-caption);
+    color: var(--ui-text-label);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.wp-verb:not(:disabled):hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.wp-verb:not(:disabled):hover .wp-verb-disc { box-shadow: inset 0 0 0 2px var(--ui-pill), var(--sh-disc-outline); }
+.wp-verb:disabled { opacity: 0.4; cursor: default; }
+.wp-verb-danger .wp-verb-disc,
+.wp-verb-danger:not(:disabled):hover .wp-verb-disc { box-shadow: inset 0 0 0 2px var(--ui-error), var(--sh-disc-outline); color: var(--ui-error); }
+.wp-verb-danger:not(:disabled):hover { background: var(--ui-error-subtle); border-color: var(--ui-error); }
+.wp-verb.active,
+.wp-verb.active:hover {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 var(--ui-slot-line-w) var(--ui-ring);
+}
+.wp-verb.active .wp-verb-disc { background: var(--ui-pill); color: var(--ui-pill-ink); box-shadow: inset 0 0 0 2px var(--ui-pill), var(--sh-disc-outline); }
+.wp-verb-danger.active .wp-verb-disc { background: var(--ui-error); color: var(--ui-pill-ink); box-shadow: inset 0 0 0 2px var(--ui-error), var(--sh-disc-outline); }
+/* A page's verbs three across (the Vehicles page), each set under its own title. */
+.wp-verb-grid { display: flex; flex-wrap: wrap; gap: var(--ui-sp-3); padding: var(--ui-sp-2) 0 var(--ui-sp-3); }
+.wp-verb-grid > .wp-verb { flex: 0 0 calc((100% - 2 * var(--ui-sp-3)) / 3); }
+
+/* A player's verbs (the Player Manager's Actions group): two sets, a hairline between them: the everyday verbs, and
+   the removals. The pane is ~900px at the panel's zoom: the everyday verbs two across, the removals one, the same
+   width, so the sets stand level beside each other. */
+.pmg-verbs { display: flex; align-items: flex-start; gap: var(--ui-sp-7); padding: var(--ui-sp-3) 0 var(--ui-sp-5); }
+.pmg-verb-set { flex: 2 1 0; min-width: 0; display: flex; flex-wrap: wrap; gap: var(--ui-sp-3); }
+.pmg-verb-remove { flex-grow: 1; padding-left: var(--ui-sp-7); border-left: 1px solid var(--ui-border); }
+.pmg-verb-set > .wp-verb { flex: 0 0 calc((100% - var(--ui-sp-3)) / 2); }
+.pmg-verb-remove > .wp-verb { flex-basis: 100%; }
+
+/* Current Stats: a stat a row. Their gauge as their HUD draws it (.sh-copy, css/status-hud.css), its name and what it
+   is, its value in a field with the stat's top after it, and Apply (the white pill once the value differs from theirs).
+   Kept narrow, so the value stays near its name. A stat with no gauge on their HUD now has its gauge faded. */
+.pmg-stats { max-width: 580px; }
+.pmg-stat {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--ui-sp-6);
+    padding: var(--ui-sp-3) 0;
+    border-bottom: 1px solid var(--ui-border);
+}
+.pmg-stat-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pmg-stat-name { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); }
+.pmg-stat-sub { font-size: var(--ui-fs-caption); color: var(--ui-text-label); }
+.pmg-stat > .wp-field { width: 128px; box-sizing: border-box; margin: 0; }
+.pmg-stat .wp-input { width: 0; text-align: right; font-variant-numeric: tabular-nums; }
+/* The developer mark's value: read, not typed, in the field's place. */
+.pmg-stat-read { width: 128px; box-sizing: border-box; padding: 0 var(--ui-sp-4); font-size: var(--ui-fs-md); color: var(--ui-text-mid); font-variant-numeric: tabular-nums; }
+.pmg-stat-off .sh-copy { opacity: 0.45; }
+.pmg-stats .pmg-stat-msg { margin: var(--ui-sp-2) 0 var(--ui-sp-3) calc(44px + var(--ui-sp-6)); }
+.pmg-stats-foot { padding-top: var(--ui-sp-4); font-size: var(--ui-fs-caption); color: var(--ui-text-label); }
+
+/* Their vehicles: a card each, three across, in the slot tile's material. The car's picture (the new-vehicle picker's,
+   pickers.js vehiclePortrait, its glyph if none) with its state over it in the Vehicles page's words and tones; under
+   it its name, its plate (and whose, with several characters), its garage and fuel. A card opens the car on the
+   Vehicles page, its chevron stepping on as it is hovered. Flex-wrap, not grid (.wp-tiles). */
+.pmg-cars { display: flex; flex-wrap: wrap; gap: var(--ui-sp-4); padding: var(--ui-sp-3) 0 var(--ui-sp-5); }
+.pmg-car {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 calc((100% - 2 * var(--ui-sp-4)) / 3);
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0;
+    overflow: hidden;
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    text-align: left;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+button.pmg-car { cursor: pointer; }
+button.pmg-car:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+/* (Its top clear of the state's pill, so a tall picture, a scooter's mirrors, does not run under it.) */
+.pmg-car > .wp-pick-hero.wp-hero-wide {
+    height: 140px;
+    padding: 32px var(--ui-sp-6) var(--ui-sp-3);
+    border: 0;
+    border-bottom: 1px solid var(--ui-border);
+    border-radius: 0;
+}
+.pmg-car .wp-pick-hero img { width: 100%; height: 100%; }
+.pmg-car-state { position: absolute; top: var(--ui-sp-3); left: var(--ui-sp-3); }
+.pmg-car-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--ui-sp-4) var(--ui-sp-5) var(--ui-sp-5); }
+.pmg-car-head { display: flex; align-items: center; gap: var(--ui-sp-3); min-width: 0; }
+.pmg-car-name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pmg-car-go { flex: 0 0 auto; display: flex; width: 16px; height: 16px; color: var(--ui-text-label); transition: color 0.16s var(--ui-ease), transform 0.16s var(--ui-ease); }
+.pmg-car-go svg { width: 100%; height: 100%; }
+button.pmg-car:hover .pmg-car-go { color: var(--ui-text); transform: translateX(2px); }
+.pmg-car-sub { font-size: var(--ui-fs-caption); color: var(--ui-text-label); white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.pmg-car-plate { font-family: var(--ui-mono); letter-spacing: 0.06em; color: var(--ui-text-mid); }
+.pmg-car-facts { display: flex; flex-wrap: wrap; gap: var(--ui-sp-2) var(--ui-sp-6); margin-top: var(--ui-sp-3); }
+.pmg-car-fact { display: inline-flex; align-items: center; gap: var(--ui-sp-2); min-width: 0; max-width: 100%; font-size: var(--ui-fs-sm); color: var(--ui-text-mid); }
+.pmg-car-fact svg { flex: 0 0 auto; width: 14px; height: 14px; color: var(--ui-text-label); }
+.pmg-car-fact-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Vehicle Adjustments (wp/vehicleModels.js), Josh's mock ----
+   The left half: a category a row (the list's two lines, a caret before them, its count after), open to its
+   vehicles as picture tiles (.wp-tiles, the wizard's vehicleTile) three across. The right half: the picked one's
+   picture large (a category's: three of its vehicles), its name, then each storage with its on / off and two
+   sliders, each with its number (typed in place) and where an untouched one comes from; then the trunk and
+   glovebox as the inventory shows them opened, in the inventory's own panel and slot tiles (inventory.css). */
+.wp-list-col.vmm-browse { width: 50%; }
+.vmm-cat { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; align-items: center; column-gap: var(--ui-sp-4); }
+.vmm-cat.open .wp-group-caret { transform: rotate(90deg); }
+.vmm-cat-text { display: flex; flex-direction: column; min-width: 0; }
+.vmm-cat-count {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+    white-space: nowrap;
+}
+.vmm-grid { padding: var(--ui-sp-2) var(--ui-sp-2) var(--ui-sp-6); }
+.vmm-grid .wp-tile { width: calc((100% - 2 * var(--ui-sp-3)) / 3); }
+.vmm-grid .wp-tile-img,
+.vmm-grid .wp-tile-art { height: 84px; }
+.vmm-grid .wp-tile-name { font-size: var(--ui-fs-sm); }
+.vmm-others { margin: var(--ui-sp-5) var(--ui-sp-4) var(--ui-sp-2); }
+
+.vmm-edit > div > .wp-pick-hero.vmm-hero { height: 140px; margin-bottom: var(--ui-sp-5); }
+.vmm-hero-set { justify-content: space-around; gap: var(--ui-sp-4); }
+.vmm-hero-set > img { flex: 1 1 0; min-width: 0; max-height: 100%; object-fit: contain; }
+.vmm-head-row { display: flex; align-items: center; gap: var(--ui-sp-5); margin-bottom: var(--ui-sp-4); }
+.vmm-head { flex: 1; min-width: 0; }
+.vmm-head > .wp-pane-title { margin-bottom: var(--ui-sp-1); }
+.vmm-sub { font-size: var(--ui-fs-sm); color: var(--ui-text-mid); line-height: 1.45; }
+.vmm-model { font-family: var(--ui-mono); color: var(--ui-text); }
+.vmm-link {
+    padding: 0;
+    background: none;
+    border: 0;
+    font: inherit;
+    color: var(--ui-text);
+    text-decoration: underline;
+    text-decoration-color: var(--ui-border-hover);
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.vmm-link:hover { text-decoration-color: currentColor; }
+.vmm-store { padding: var(--ui-sp-4) 0; border-top: 1px solid var(--ui-border); }
+.vmm-store-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-sp-5); }
+.vmm-store-name { font-family: var(--ui-font-display); font-size: var(--ui-fs-lg); font-weight: var(--ui-fw-display); }
+.vmm-store-note { font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.vmm-sliders { display: flex; gap: var(--ui-sp-7); margin-top: var(--ui-sp-4); }
+.vmm-sliders.vmm-off { opacity: 0.4; }
+.vmm-slider { flex: 1 1 0; min-width: 0; }
+.vmm-slider-top { display: flex; align-items: center; gap: var(--ui-sp-2); }
+.vmm-slider-label {
+    margin-right: auto;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+}
+/* The number: plain text until pointed at, then a box to type in (the field's focus ring). */
+.vmm-num {
+    width: 70px;
+    padding: 2px var(--ui-sp-2);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-sm);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--ui-text);
+    outline: none;
+}
+.vmm-num:hover:not(:disabled) { border-color: var(--ui-border-hover); }
+.vmm-num:focus { border-color: var(--ui-ring); }
+.vmm-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.vmm-unit { min-width: 30px; font-size: var(--ui-fs-xs); color: var(--ui-text-label); }
+/* Not overridden: the number dim (the line over the sliders says where it comes from). */
+.vmm-slider:not(.vmm-own) .vmm-num { color: var(--ui-text-mid); }
+/* Enable override? (the Director's switch, .wd-sw) on the storage's line; Has a trunk, or what the level below gives,
+   under it. */
+.vmm-store-head > .vmm-sw { padding: 0; }
+.vmm-store > .vmm-sw,
+.vmm-store > .vmm-below { margin-top: var(--ui-sp-3); }
+/* The slider: whip's (the lore page's zoom), its thumb dim while the number is the level below's. */
+.vmm-range {
+    width: 100%;
+    height: 4px;
+    margin: var(--ui-sp-4) 0 var(--ui-sp-2);
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--ui-border-hover);
+    border-radius: var(--ui-radius-hair);
+    outline: none;
+    cursor: pointer;
+}
+.vmm-range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ui-text); cursor: pointer; }
+.vmm-slider:not(.vmm-own) .vmm-range::-webkit-slider-thumb { background: var(--ui-text-mid); }
+.vmm-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ui-ring); }
+.vmm-range:disabled { cursor: default; }
+.vmm-actions { flex: 0 0 auto; margin: 0; }
+.vmm-preview-title { margin-top: var(--ui-sp-4); }
+/* The preview: the trunk beside the glovebox, each the inventory's right-column panel. Its slots four across as
+   there (.inv-col-right .inv-slots-grid), and the gap between them in proportion to these smaller slots. A long
+   trunk scrolls inside its panel, as the inventory's column does. */
+.vmm-preview { display: flex; align-items: flex-start; gap: var(--ui-sp-5); }
+.vmm-preview > .inv-panel.vmm-inv { flex: 1 1 0; min-width: 0; padding: var(--ui-sp-6); }
+.vmm-inv .inv-panel-header { margin-bottom: var(--ui-sp-5); }
+.vmm-inv .inv-slots-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--ui-sp-3);
+    max-height: 420px;
+    overflow-y: auto;
+}
+.vmm-inv-off { opacity: 0.6; }
+.vmm-inv-none { font-size: var(--ui-fs-sm); line-height: 1.45; color: var(--ui-text-label); }
+
+/* ---- A vehicle's page (wp/vehicles.js) ----
+   Info first: whose it is (their picture and name, as the Player Manager and the wizard show a person), then the
+   facts beside its map and picture. Then its verbs in four titled sets (.wp-verb-grid), a verb's form (a garage, a
+   player, a stat) under its set. */
+.vm-verbs-title { margin-top: var(--ui-sp-6); }
+.vm-owner { display: flex; align-items: center; gap: var(--ui-sp-5); padding: var(--ui-sp-2) 0 var(--ui-sp-5); }
+.vm-owner-text { min-width: 0; }
+.vm-owner-name { font-size: var(--ui-fs-lg); font-weight: var(--ui-fw-bold); line-height: 1.25; }
+.vm-form { max-width: 620px; padding: var(--ui-sp-2) 0 var(--ui-sp-4); }
+.vm-stat-row { display: flex; align-items: flex-end; gap: var(--ui-sp-4); }
+.vm-stat-row > .wp-field { flex: 1 1 0; min-width: 0; margin: 0; }
+.vm-stat-row > .wp-btn { flex: 0 0 auto; }
+
+/* The new-vehicle wizard's Where and Create (wp/vehicles.js splitInto): what is chosen on the left, what it comes to
+   on the right: the map (your position, the garage), and on Create the car's picture and whose it will be side by
+   side over it, so the column fits the step without scrolling. */
+.vw-split { display: flex; gap: var(--ui-sp-7); align-items: flex-start; }
+/* Owner: who is in the game, as long as it is (a .wp-list fills its column), the search for anyone else under it. */
+.vw-people { flex: 0 0 auto; }
+.vw-main { flex: 1 1 0; min-width: 0; }
+.vw-side { flex: 0 0 520px; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-4); }
+.vw-side .wp-place { width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 0; }
+.vw-glance { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ui-sp-4); align-items: center; }
+.vw-glance .vw-car { width: 100%; max-width: none; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
+.vw-glance .vw-owner { padding: 0; min-width: 0; }
+.vw-glance .vm-owner-name { overflow-wrap: anywhere; }
+
+/* ---- Toggles: a few short things, each on or off (what a rank may do) ----
+   Off is the mid grey, not the dim one: a choice that is off is still live, one click from on, and
+   has to be read to be switched. Dim is for what cannot be used (:disabled, below). On is the
+   chosen card, so the two still read apart at a glance. */
+.wp-toggles { display: flex; flex-wrap: wrap; gap: var(--ui-sp-2); }
+.wp-toggle {
+    padding: var(--ui-sp-2) var(--ui-sp-5);
+    background: var(--ui-surface-medium);
+    border: var(--ui-slot-line-w) solid var(--ui-border);
+    border-radius: 999px;
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.wp-toggle:hover { color: var(--ui-text); border-color: var(--ui-border-hover); }
+.wp-toggle.active, .wp-toggle.active:hover {
+    color: var(--ui-text);
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+}
+.wp-toggle:disabled, .wp-toggle:disabled:hover { cursor: default; opacity: 0.55; }
+/* A row where each chip is its own yes or no (a rank's permissions, a door's jobs): on says so with a tick and off
+   is dashed, so the two differ by more than brightness. One-of rows (7 days / 14 days) stay as they are. */
+.wp-toggles-many .wp-toggle.active::before { content: '\2713'; margin-right: var(--ui-sp-2); font-weight: var(--ui-fw-bold); }
+.wp-toggles-many .wp-toggle:not(.active) { border-style: dashed; }
+
+/* ---- A rank: its name and level, who holds it, what it may do ----
+   Flat rows with a hairline between them, as .wp-line. The top rank (level 100, the owner's) keeps
+   a white rule down its left edge, where it used to wear the white ring. Its account box is gone for
+   now (wp/jobs.js), so the name takes the width it left. */
+.wp-ranks { display: flex; flex-direction: column; }
+.wp-rank {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px 140px auto;
+    align-items: center;
+    gap: var(--ui-sp-3) var(--ui-sp-4);
+    padding: var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+}
+.wp-rank:last-child { border-bottom: none; }
+.wp-rank .wp-field { margin-bottom: 0; }
+.wp-rank > .wp-toggles { grid-column: 1 / -1; }
+.wp-rank-top { box-shadow: inset 2px 0 0 var(--ui-ring); }
+
+/* ---- Colour swatches (a map blip's colour) ---- */
+.wp-swatches { display: flex; flex-wrap: wrap; gap: var(--ui-sp-3); }
+.wp-swatch {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-2) var(--ui-sp-5) var(--ui-sp-2) var(--ui-sp-2);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: 999px;
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    cursor: pointer;
+}
+.wp-swatch:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.wp-swatch-dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.wp-swatch.active, .wp-swatch.active:hover {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 var(--ui-slot-line-w) var(--ui-ring);
+}
+
+/* ---- Status rows (WP.statusRow): one part of something, and how it stands ---- */
+
+.wp-status-row {
+    display: grid;
+    grid-template-columns: 18px 160px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    padding: var(--ui-sp-4) 0;
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.wp-status-row:last-child { border-bottom: none; }
+
+/* ---- Marks (WP.mark): ticks and crosses ----
+   An outline circle, transparent inside, the mark bigger than it. The svg may paint past its box:
+   the tick and the cross break out of the ring on purpose. */
+.wp-mark {
+    display: inline-flex;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.wp-mark svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.wp-mark-ok   { color: var(--ui-success); }
+.wp-mark-err  { color: var(--ui-error); }
+.wp-mark-warn { color: var(--ui-warning); }
+.wp-mark-info { color: var(--ui-info); }
+.wp-mark-off  { color: var(--ui-text-dim); }
+
+.wp-status-label {
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A row that belongs to the one above it (a unit under its template). */
+.wp-status-row-sub { padding-left: var(--ui-sp-7); }
+.wp-status-row-sub .wp-status-label { font-weight: var(--ui-fw-medium); color: var(--ui-text-mid); }
+
+.wp-status-detail {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wp-status-row-warn .wp-status-detail { color: var(--ui-warning); }
+.wp-status-row-err .wp-status-detail  { color: var(--ui-error); }
+.wp-status-row-off .wp-status-label   { color: var(--ui-text-mid); }   /* off, and still readable: it's the one you click */
+
+/* A yes or no you click (statusRow's `yesNo`): the mark is the switch, a tick for yes and a cross
+   for no; the row's name flips it too. A soft disc behind the mark on hover says it is pressable. */
+.wp-mark-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.16s var(--ui-ease), box-shadow 0.16s var(--ui-ease);
+}
+
+.wp-mark-btn:hover,
+.wp-status-row-yesno:hover .wp-mark-btn {
+    background-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.06);
+}
+
+.wp-mark-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.06), 0 0 0 7px var(--ui-ring);
+}
+
+.wp-status-label-btn { cursor: pointer; }
+.wp-status-row-yesno:hover .wp-status-label { color: var(--ui-text); }
+
+/* Export pack's result: the file's text, to select and copy. */
+.wp-export-text {
+    width: 100%;
+    min-height: 220px;
+    margin-top: var(--ui-sp-4);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-sm);
+    white-space: pre;
+    resize: vertical;
+}
+
+/* A row changed in place: its own selects where the button would be. */
+.wp-status-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+}
+
+/* Its own text box and buttons too (the Door Manager's rows): all at the on/off chip's height, so
+   a column of rows keeps one rhythm. The box is a field capsule with no label — the row names it. */
+.wp-status-controls > .wp-field { margin-bottom: 0; padding: var(--ui-sp-2) var(--ui-sp-4); }
+.wp-status-controls > .wp-btn { padding: var(--ui-sp-2) var(--ui-sp-5); }
+.wp-status-controls > .wp-field .wp-input { font-size: var(--ui-fs-sm); }
+
+/* ---- Tables ---- */
+
+.wp-table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 var(--ui-sp-6) var(--ui-sp-6);
+}
+
+.wp-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wp-table th {
+    position: sticky;
+    top: 0;
+    /* OPAQUE BECAUSE IT IS STICKY. At --ui-surface-raised (90%) the rows scrolling
+       underneath ghosted through the header text — tolerable while the whole panel was
+       slightly translucent and everything shared that haze, and the one thing that
+       stands out now the panel behind it is solid. A sticky header's entire job is to
+       stay readable over moving content. */
+    background: var(--ui-surface-solid);
+    text-align: left;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ui-text-label);
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+    white-space: nowrap;
+}
+
+.wp-table td {
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+}
+
+.wp-table-row-click { cursor: pointer; transition: background 0.1s ease; }
+.wp-table-row-click:hover { background: var(--ui-surface-hover); }
+
+.wp-td-num { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.wp-td-hot { color: var(--ui-error); font-weight: var(--ui-fw-bold); }
+.wp-td-mono { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+
+/* ---- Info grid (the gim-info detail language, shared) ---- */
+
+.wp-info-grid { display: grid; grid-template-columns: auto 1fr; gap: var(--ui-sp-3) var(--ui-sp-6); }
+
+.wp-info-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ui-text-label);
+    align-self: center;
+}
+
+.wp-info-value {
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Data values use the ONE panel font (a second face reads as a glitch), at the size of the
+   values beside them, with even digits. */
+.wp-info-value-mono { font-family: var(--ui-font); font-size: var(--ui-fs-md); font-variant-numeric: tabular-nums; }
+
+/* ---- Empty state ---- */
+
+.wp-empty {
+    padding: var(--ui-sp-8) var(--ui-sp-6);
+    text-align: center;
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-md);
+}
+
+/* ---- Field hint ----
+   A sentence under a group's controls saying what they actually do. Added for the Garage
+   Manager, where the two worst problems were a field group named after something that no longer
+   existed and two identical-looking text boxes with very different consequences — neither of
+   which more layout could have fixed, only words. */
+
+/* 64ch, which in Barlow is about 75 characters: the wide detail pane would otherwise run a line to
+   180, past where the eye can find the start of the next one. */
+.wp-hint {
+    max-width: 64ch;
+    margin-bottom: var(--ui-sp-3);
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-sm);
+    line-height: 1.45;
+}
+
+/* ---- A list row that is trying to tell you something ----
+   A garage with no parking bays cannot be reached at all, and looked exactly like a working one.
+   The left rule is deliberately the only structural change: the row stays the same size and
+   stays clickable, it just stops being quiet about it. */
+
+.wp-list-item.wp-item-warn {
+    border-left: 2px solid var(--ui-warning);
+}
+
+.wp-list-item.wp-item-warn .wp-item-sub {
+    color: var(--ui-warning);
+}
+
+/* ---- Result strip ----
+   The panel's own voice. Toasts live at z-900, UNDER this overlay's 9500 and behind
+   its scrim — so for as long as the panel is up, the notification system cannot reach
+   the admin. Every Lua action answer and every refused input lands HERE instead: a
+   slim strip rising from the panel's bottom edge, auto-clearing, announced to screen
+   readers via role="status". */
+
+.wp-result {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-4) var(--ui-sp-6);
+    background: var(--ui-surface-solid);
+    border-top: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+    color: var(--ui-text);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: transform 0.18s var(--ui-ease), opacity 0.18s var(--ui-ease);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.wp-result.wp-result-show { opacity: 1; transform: translateY(0); }
+/* Moved into a footer that is showing (WP.result): just above it, so Back / Next and Apply stay in reach. */
+.wp-step-foot, .cfg-bar { position: relative; }
+.wp-result.wp-result-over { bottom: 100%; }
+
+.wp-result-ok  { border-top-color: var(--ui-success); color: var(--ui-success); background: var(--ui-surface-solid); }
+.wp-result-err { border-top-color: var(--ui-error);   color: var(--ui-error); }
+
+/* ---- Inline field errors ----
+   Silent no-ops were the panel's worst habit: an empty job name, a nine-digit phone
+   number, a zero-length ban — click, nothing, no word why. The field capsule already
+   speaks through its border; the error state extends that voice and adds the reason. */
+
+.wp-field.wp-field-err { border-color: var(--ui-error); }
+
+.wp-field-msg {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-error);
+    margin: calc(-1 * var(--ui-sp-2)) 0 var(--ui-sp-3);
+}
+
+/* ---- Char picker (typeahead over players/characters) ----
+   The answer to bare "charId" number boxes: type a name, pick a person. Attached by
+   WP.attachCharPicker to an existing input; the dropdown floats under it. */
+
+.wp-picker-wrap { position: relative; flex: 1; min-width: 0; display: flex; }
+
+.wp-picker-list {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    box-shadow: var(--ui-shadow-lg);
+    z-index: 20;
+    overflow: hidden;
+}
+
+.wp-picker-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text);
+    cursor: pointer;
+}
+
+.wp-picker-item:hover, .wp-picker-item:focus-visible { background: var(--ui-surface-hover); outline: none; }
+
+.wp-picker-id { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+
+/* ---- Dialog (the plm pattern, shell-level) ---- */
+
+.wp-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.wp-dialog {
+    width: min(420px, 80%);
+    /* Solid too. A confirm dialog is the one surface in the panel that must be read
+       before anything else happens; the section behind it showing through is exactly
+       the competition it should not have. It keeps its own backdrop either way. */
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: var(--ui-shadow-lg);
+    padding: var(--ui-sp-7);
+}
+
+/* Room for a table (a run's interactions): wide, and its body scrolls rather than the window running off the panel. */
+.wp-dialog-wide { width: min(860px, 90%); max-height: 80%; display: flex; flex-direction: column; }
+.wp-dialog-wide > :not(.wp-dialog-title):not(.wp-dialog-actions) { min-height: 0; overflow: auto; margin-bottom: var(--ui-sp-5); }
+
+.wp-dialog-title {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin-bottom: var(--ui-sp-4);
+}
+
+.wp-dialog-body {
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-mid);
+    margin-bottom: var(--ui-sp-6);
+    line-height: 1.5;
+    white-space: pre-line;   /* a body's own line breaks are kept (the Director's export steps) */
+}
+
+.wp-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ui-sp-3);
+}
+
+/* ---- Activity / item log timelines ---- */
+
+/* The Item Log's left column (its search and filters) scrolls on its own, padded like a pane. */
+.wp-log-filters { padding: var(--ui-sp-5); gap: var(--ui-sp-2); overflow-y: auto; }
+/* "← Back to everything", over the title it goes back from. */
+.wp-log-back { margin-bottom: var(--ui-sp-4); }
+
+.wp-log-row { align-items: baseline; flex-wrap: wrap; }
+
+.wp-log-time {
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-label);
+    min-width: 62px;
+    font-variant-numeric: tabular-nums;
+}
+
+.wp-log-who { font-weight: 600; }
+
+/* The pivot of the whole feature: an item with an identity is a LINK to its own
+   timeline. Signal Blue because it is interactive, dotted so it does not shout. */
+.wp-log-item {
+    color: var(--ui-accent);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+.wp-log-item:hover { text-decoration-style: solid; }
+
+.wp-log-plain { color: var(--ui-text); }
+
+.wp-log-detail { color: var(--ui-text-label); font-size: var(--ui-fs-sm); }
+
+/* A person on the Item Log's feed is a link too (their page in the Player Manager): the same dotted
+   underline as an item, in the text's own colour, so a row does not turn blue from end to end. */
+.wp-log-who.wp-log-link {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-decoration-color: var(--ui-text-dim);
+    text-underline-offset: 3px;
+}
+.wp-log-who.wp-log-link:hover { text-decoration-style: solid; text-decoration-color: var(--ui-text); }
+
+/* A row the live feed just brought in: a wash that fades, so new ones are seen arriving. */
+@keyframes wpLogNew {
+    from { background: var(--ui-slot-bg-chosen); }
+    to   { background: transparent; }
+}
+.wp-log-new { animation: wpLogNew 2.4s var(--ui-ease) both; }
+
+/* An item's picture before its name in a row (wp/itemlog.js logIcon): small, sitting on the text's line. */
+.wp-log-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    object-fit: contain;
+    vertical-align: -5px;
+}
+
+/* ---- Numbers that are the point (the Item Log's Economy): came in, went out, the difference ---- */
+.wp-stats { display: flex; gap: var(--ui-sp-4); margin: var(--ui-sp-4) 0 var(--ui-sp-5); }
+.wp-stat {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--ui-sp-5) var(--ui-sp-6);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+}
+.wp-stat-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+}
+.wp-stat-value {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-display);
+    font-weight: var(--ui-fw-display);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    margin-top: var(--ui-sp-2);
+}
+.wp-stat-sub { font-size: var(--ui-fs-sm); color: var(--ui-text-label); margin-top: var(--ui-sp-1); }
+.wp-stat-up   .wp-stat-value { color: var(--ui-success); }
+.wp-stat-down .wp-stat-value { color: var(--ui-error); }
+
+/* ---- Charts (the Item Log's Economy): drawn as SVG by the page, coloured here ----
+   In is the accent, out a quiet grey: the eye goes to what came into the game. */
+.wp-chart-card {
+    padding: var(--ui-sp-5) var(--ui-sp-6) var(--ui-sp-4);
+    margin-bottom: var(--ui-sp-4);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+}
+.wp-chart-head { display: flex; align-items: baseline; gap: var(--ui-sp-5); margin-bottom: var(--ui-sp-3); }
+.wp-chart-head .wp-section-title { margin: 0; }
+.wp-chart-legend { display: flex; gap: var(--ui-sp-5); font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.wp-chart-legend > span { display: inline-flex; align-items: center; gap: var(--ui-sp-2); }
+.wp-chart-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.wp-chart-key-in { background: var(--ui-accent); }
+.wp-chart-key-out { background: rgba(255, 255, 255, 0.3); }
+.wp-chart { display: block; width: 100%; }
+.wp-chart text { font-family: var(--ui-font); font-size: 11px; fill: var(--ui-text-label); font-variant-numeric: tabular-nums; }
+.wp-chart-in { fill: var(--ui-accent); }
+.wp-chart-out { fill: rgba(255, 255, 255, 0.3); }
+.wp-chart-grid { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; }
+.wp-chart-zero { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
+.wp-chart-hit { fill: transparent; }
+.wp-chart-hit:hover, .wp-chart-hit.on { fill: var(--ui-surface-hover); }
+.wp-chart-line { fill: none; stroke: var(--ui-accent); stroke-width: 2; stroke-linejoin: round; }
+.wp-chart-area { fill: var(--ui-accent); opacity: 0.12; }
+.wp-chart-dot { fill: var(--ui-accent); }
+.wp-chart-readout {
+    min-height: 1.4em;
+    margin-top: var(--ui-sp-2);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- Tallies: a name, its amount, and a bar for its share of the biggest ---- */
+.wp-tallies { display: flex; flex-direction: column; gap: var(--ui-sp-1); }
+.wp-tally {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    border-radius: var(--ui-radius-row);
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+}
+button.wp-tally { cursor: pointer; }
+button.wp-tally:hover { background: var(--ui-surface-hover); }
+.wp-tally-name { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-tally-value { font-size: var(--ui-fs-sm); font-variant-numeric: tabular-nums; font-weight: var(--ui-fw-bold); }
+.wp-tally-sub { grid-column: 1 / -1; font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.wp-tally-bar { grid-column: 1 / -1; height: 3px; margin-top: var(--ui-sp-2); border-radius: 2px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.wp-tally-bar > span { display: block; height: 100%; background: var(--ui-accent); border-radius: 2px; }
+.wp-tally-out .wp-tally-bar > span { background: var(--ui-text-dim); }
+
+/* ---- Pane lead title ----
+   The name of the thing you selected — the pane's PRIMARY element: the one loud line a
+   pane gets; everything below it supports. */
+
+.wp-pane-title {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-display);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--ui-text);
+    margin: 0 0 var(--ui-sp-4);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- Section titles inside detail panes (sub-labels: 'Metadata', 'Permissions') ---- */
+
+.wp-section-title {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ui-text-label);
+    margin: var(--ui-sp-5) 0 var(--ui-sp-3);
+}
+
+/* ---- Feed list (EM prepend-model rows outside the EM — shared minimal form) ---- */
+
+.wp-feed {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.wp-feed-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-sm);
+}
+
+/* ---- A place on the map (WP.place) ----
+   whip's GTA map (pause-map.js, css/pause.css), small, under the row that names the place, with Open map in its
+   corner. The map element fills its box (.pmap is absolute, inset 0). */
+.wp-place {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+    height: 180px;
+    margin: var(--ui-sp-3) 0 var(--ui-sp-4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    overflow: hidden;
+}
+.wp-place-open { position: absolute; right: var(--ui-sp-3); bottom: var(--ui-sp-3); z-index: 3; }
+
+/* Open map: over the panel, outside its zoom (the map reads the pointer in screen px), so only its head is zoomed
+   to the panel's size. */
+.wp-place-big {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+}
+.wp-place-big-card {
+    display: flex;
+    flex-direction: column;
+    width: min(88vw, 1600px);
+    height: 84vh;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: calc(var(--ui-radius-panel) * var(--ui-scale) * 1.8);
+    box-shadow: var(--ui-shadow-modal);
+    overflow: hidden;
+}
+.wp-place-big-head {
+    zoom: calc(var(--ui-scale) * 1.8);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-sp-5);
+    padding: var(--ui-sp-5) var(--ui-sp-6);
+}
+.wp-place-big-title {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+}
+/* The title with a page's hint under it; the page's buttons and Close on the right (WP.openPlace). */
+.wp-place-big-words { display: flex; flex-direction: column; gap: var(--ui-sp-1); min-width: 0; }
+.wp-place-big-actions { display: flex; align-items: center; gap: var(--ui-sp-3); flex-shrink: 0; }
+.wp-place-big-map { position: relative; flex: 1; }
+/* Marks that open a card (WP.place's `card`): a hand over them, on the small map as on the big one. Marks that move
+   (placeArea's onMove): a grip. */
+.wp-place-cards .pmap-blip, .wp-place-big-map .pmap-blip { cursor: pointer; }
+.wp-place-movable .pmap-blip { cursor: grab; }
+/* + and -, bottom right: the wheel's zoom, as buttons. Zoomed to the panel's size, as the head is. */
+.wp-place-zoom {
+    zoom: calc(var(--ui-scale) * 1.8);
+    position: absolute;
+    right: var(--ui-sp-5);
+    bottom: var(--ui-sp-5);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-2);
+}
+.wp-place-zoom-btn { width: 32px; min-height: 32px; padding: 0; font-size: var(--ui-fs-lg); line-height: 1; }
+/* A mark's card: top right over the map, the page's words for the mark, the others on its spot under them. The box
+   is in the map's own px (its height, never past the map's, scrolls); its inside is zoomed to the panel's size. */
+.wp-place-info {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 3;
+    width: calc(300px * var(--ui-scale) * 1.8);
+    max-height: calc(100% - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: calc(var(--ui-radius-row) * var(--ui-scale) * 1.8);
+    box-shadow: var(--ui-shadow-modal);
+}
+.wp-place-info[hidden] { display: none; }
+.wp-place-info-in { zoom: calc(var(--ui-scale) * 1.8); position: relative; padding: var(--ui-sp-5); }
+.wp-place-info-x {
+    position: absolute;
+    top: var(--ui-sp-3);
+    right: var(--ui-sp-3);
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-lg);
+    line-height: 1;
+    cursor: pointer;
+}
+.wp-place-info-x:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.wp-place-info-x:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; }
+.wp-place-info-also { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-sp-3); margin-top: var(--ui-sp-5);
+    padding-top: var(--ui-sp-4); border-top: 1px solid var(--ui-border); }
+.wp-place-info-also-title { width: 100%; font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+
+/* ---- Pick several, act once (WP.picks) ----
+   A box on each row, white when picked (the chosen white), and while any is picked a bar over the list with how
+   many, Clear and the action. */
+.wp-pick-box {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--ui-radius-xs);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    cursor: pointer;
+}
+.wp-pick-box:hover { border-color: var(--ui-ring); }
+.wp-pick-box.on { background: var(--ui-pill); border-color: var(--ui-pill); color: var(--ui-pill-ink); }
+.wp-pick-box:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; }
+.wp-pick-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    border-radius: var(--ui-radius-row);
+    background: var(--ui-surface-hover);
+}
+.wp-pick-bar[hidden] { display: none; }
+
+/* ---- Settings pages (wp/config.js): config.lua's settings, edited in game ----
+   One row per setting: its name and place in Config, a sentence on what it does, the editor
+   with config.lua's default beside it, and who changed it last. Flat rows with a hairline
+   between them; the one box is an edited row, blue inside a blue ring until Apply, so a long
+   scroll still shows what is about to be sent. A form card (an item, a stat: .cfg-form) stays a
+   box: it is one thing with many fields. */
+
+.cfg-detail { padding-bottom: var(--ui-sp-8); }
+
+.cfg-row {
+    padding: var(--ui-sp-6) var(--ui-sp-5);
+    border: 1px solid transparent;
+    border-bottom-color: var(--ui-border);
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease), box-shadow 0.16s var(--ui-ease);
+}
+
+.cfg-row-edited {
+    background: var(--ui-accent-subtle);
+    border-color: var(--ui-accent-medium);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: 0 0 0 1px var(--ui-accent-medium);
+}
+
+.cfg-form {
+    margin: var(--ui-sp-4) 0;
+    padding: var(--ui-sp-6) var(--ui-sp-7);
+    border-color: var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    background: var(--ui-surface-subtle);
+}
+
+.cfg-row-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    min-width: 0;
+}
+
+.cfg-row-label {
+    font-family: var(--ui-font-display);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    color: var(--ui-text);
+    font-size: var(--ui-fs-lg);
+}
+
+.cfg-row-path {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-label);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cfg-spacer { flex: 1; }
+
+.cfg-pill-dim { color: var(--ui-text-mid); background: rgba(255, 255, 255, 0.06); }
+
+.cfg-help { margin: var(--ui-sp-2) 0 var(--ui-sp-3); }
+
+.cfg-why {
+    margin: calc(-1 * var(--ui-sp-2)) 0 var(--ui-sp-3);
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-xs);
+}
+
+/* A table setting: rows of fields (fuel stations, job roles) or rows by name (badge offsets). It
+   takes the whole line; a wide one scrolls sideways inside its own box. */
+.cfg-table-wrap {
+    flex: 1 0 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ui-sp-3);
+}
+
+.cfg-table { border-collapse: collapse; }
+
+.cfg-table th {
+    text-align: left;
+    padding: 0 var(--ui-sp-3) var(--ui-sp-2) 0;
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.cfg-table td { padding: 0 var(--ui-sp-3) var(--ui-sp-2) 0; vertical-align: middle; }
+
+.cfg-row-edit .wp-input.cfg-cell-input { min-width: 0; width: 160px; padding: var(--ui-sp-2) var(--ui-sp-3); font-size: var(--ui-fs-sm); }
+.cfg-row-edit .wp-input.cfg-cell-num,
+.cfg-row-edit .wp-input.cfg-cell-axis { width: 90px; font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+.cfg-row-edit .wp-input.cfg-cell-key { width: 200px; font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+.cfg-table .wp-select { font-size: var(--ui-fs-sm); }
+.cfg-cell-vec { display: flex; align-items: center; gap: var(--ui-sp-2); }
+.cfg-check { width: 18px; height: 18px; accent-color: var(--ui-accent); }
+.cfg-table-empty { color: var(--ui-text-label); font-size: var(--ui-fs-sm); }
+
+/* A form card (an item, a stat): its fields are settings of their own, laid out as a grid of
+   compact rows, each with its own changed dot, Reset and error. */
+.cfg-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--ui-sp-3) var(--ui-sp-4);
+}
+
+.cfg-form-grid .cfg-row {
+    margin: 0;
+    padding: var(--ui-sp-2) var(--ui-sp-3);
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-slot);
+    background: none;
+}
+
+.cfg-form-grid .cfg-row.cfg-row-edited {
+    background: var(--ui-accent-subtle);
+    border-color: var(--ui-accent-medium);
+    box-shadow: none;
+}
+
+/* A camera's card: place, turn and zoom one under another (three boxes and two buttons do not fit a column). */
+.cfg-form-camera .cfg-form-grid { grid-template-columns: 1fr; }
+/* A field in a card is labelled like a field, in the body face; the card's own name is the title. */
+.cfg-row-compact .cfg-row-label {
+    font-family: var(--ui-font);
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0;
+    font-size: var(--ui-fs-sm);
+}
+.cfg-row-compact .cfg-row-head { margin-bottom: var(--ui-sp-2); }
+.cfg-row-compact .cfg-row-edit { gap: var(--ui-sp-2); }
+/* Direct children only: an axis box sits in a column (.cfg-axis), where a 120px basis is a height. */
+.cfg-row-compact .cfg-row-edit > .wp-input { min-width: 0; flex: 1 1 120px; }
+.cfg-row-compact .cfg-default { margin-left: 0; flex-basis: 100%; font-size: var(--ui-fs-xs); }
+
+/* A fixed setting's value, where the editor would be. */
+.cfg-fixed {
+    margin: 0 0 var(--ui-sp-3);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+}
+
+.cfg-row-edit {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+}
+
+.cfg-row-edit .wp-input {
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    outline: none;
+    min-width: 220px;
+    transition: border-color 0.15s ease;
+}
+
+.cfg-row-edit .wp-input:focus { border-color: var(--ui-ring); }
+.cfg-row-edit .wp-input.cfg-input-num { min-width: 0; width: 120px; font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+/* Names and lists of names: room for several model names before the box scrolls. */
+.cfg-row-edit .wp-input.cfg-input-text { flex: 1 1 320px; max-width: 640px; }
+/* The Items page (wp/items.js): each box as long as what goes in it, longer text scrolling inside.
+   A name is one line of about 30 characters, a description a short paragraph (taller if dragged). */
+.cfg-row-edit .wp-input.cfg-input-name { flex: 0 0 auto; min-width: 0; max-width: 100%; width: calc(30ch + 2 * var(--ui-sp-4) + 2px); }
+.cfg-row-edit .wp-input.cfg-input-long { flex: 0 0 auto; min-width: 0; max-width: 100%; width: calc(46ch + 2 * var(--ui-sp-4) + 2px); line-height: 1.4; resize: vertical; }
+/* Its default beside the box, and Reset to default under it. */
+.cfg-default-stack { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-sp-2); margin-left: var(--ui-sp-3); }
+.cfg-default-stack .cfg-default { margin-left: 0; }
+
+/* ---- The Items page's settings (wp/items.js): side by side on a 12-column grid, each a cell its LAYOUT span wide.
+   The row look (.cfg-row) as a card, so an edited one rings the same way. ---- */
+.ib-fields {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: start;   /* each cell its own height: a description's box does not stretch the name's card */
+    gap: var(--ui-sp-4);
+    margin-top: var(--ui-sp-6);
+}
+/* What it is, beside its picture: its weight and stacking are facts, not problems (the red is the cross's alone). */
+.ib-summary .wp-status-row .wp-status-detail { color: var(--ui-text-mid); }
+.cfg-row.ib-cell {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: var(--ui-sp-5);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    background: var(--ui-surface-subtle);
+}
+.ib-cell .cfg-help { margin: 0 0 var(--ui-sp-3); font-size: var(--ui-fs-xs); }
+.ib-cell .cfg-row-edit { flex-wrap: nowrap; }
+/* Every box as wide as its cell: the cell is the measure now, not the text's length. */
+.ib-cell .cfg-row-edit .wp-input,
+.ib-cell .cfg-row-edit .wp-input.cfg-input-num,
+.ib-cell .cfg-row-edit .wp-input.cfg-input-name,
+.ib-cell .cfg-row-edit .wp-input.cfg-input-long,
+.ib-cell .cfg-row-edit .wp-select { flex: 1 1 auto; width: 100%; min-width: 0; max-width: none; }
+.ib-cell .cfg-row-edit .cfg-toggle { flex: 0 0 auto; }
+.ib-cell-foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-2) var(--ui-sp-3);
+    margin-top: var(--ui-sp-3);
+}
+.ib-cell-foot .cfg-default { margin-left: 0; font-size: var(--ui-fs-xs); }
+.ib-cell .cfg-fixed { margin: 0; }
+.ib-cell .cfg-meta { margin-top: auto; padding-top: var(--ui-sp-2); }
+
+/* ---- Its pictures: each one filling its square, its name under it, outside. ---- */
+.ib-pics-part { margin-top: var(--ui-sp-7); }
+.ib-pics-head { display: flex; align-items: center; gap: var(--ui-sp-3); }
+.ib-pics-head .wp-section-title { margin: 0; }
+.ib-pics { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--ui-sp-5) var(--ui-sp-4); margin-top: var(--ui-sp-4); }
+.ib-pic { display: flex; flex-direction: column; align-items: center; gap: var(--ui-sp-2); width: 116px; }
+.ib-pic-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 116px;
+    height: 116px;
+    box-sizing: border-box;
+    padding: var(--ui-sp-3);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    color: rgba(255, 255, 255, 0.32);
+    font: inherit;
+}
+button.ib-pic-frame {
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+button.ib-pic-frame:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+button.ib-pic-frame:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ui-ring); }
+.ib-pic-frame img { width: 100%; height: 100%; object-fit: contain; }
+.ib-pic-frame svg { width: 40px; height: 40px; }
+.ib-pic-cap {
+    width: 100%;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    text-align: center;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+/* The picture being edited: ringed, its name lit. */
+.ib-pic-sel .ib-pic-frame,
+.ib-pic-sel button.ib-pic-frame:hover { border-color: var(--ui-ring); box-shadow: 0 0 0 1px var(--ui-ring), var(--ui-slot-lift); }
+.ib-pic-sel .ib-pic-cap { color: var(--ui-text); }
+/* Add picture: an empty slot to drop one into. */
+.ib-pic-add .ib-pic-frame { background: transparent; border-style: dashed; box-shadow: none; color: var(--ui-text-mid); }
+.ib-pic-add .ib-pic-frame svg { width: 32px; height: 32px; }
+/* Unsaved: its heading in the edited colour. */
+.ib-pics-edited .ib-pics-head .wp-section-title { color: var(--ui-accent); }
+/* The car makers' pictures under a {make} picture: smaller. */
+.ib-pics-small .ib-pic { width: 80px; }
+.ib-pics-small .ib-pic-frame { width: 80px; height: 80px; }
+
+/* The picked picture's editor: its boxes on one line where they fit, the buttons after. */
+.ib-pic-edit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    margin-top: var(--ui-sp-5);
+    padding: var(--ui-sp-5);
+    border: 1px solid var(--ui-ring);
+    border-radius: var(--ui-radius-row);
+    background: var(--ui-surface-subtle);
+}
+.ib-pic-edit .wp-field.ib-pic-edit-part { margin-bottom: 0; flex: 0 1 auto; }
+.ib-pic-edit .wp-field.ib-pic-edit-link { flex: 1 1 360px; }
+.ib-pic-edit .wp-field.ib-pic-edit-value { flex: 0 1 180px; }
+.ib-pic-edit-btns { display: flex; gap: var(--ui-sp-2); margin-left: auto; }
+.ib-pic-why { margin-top: var(--ui-sp-3); }
+
+/* A position: one labelled box per axis, and "Use where I stand" at the end of the line. */
+.cfg-vec {
+    display: flex;
+    flex: 1 0 100%;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+}
+
+/* Under a position, the default sits on its own line, flush with the boxes. */
+.cfg-vec ~ .cfg-default { margin-left: 0; }
+
+.cfg-axis {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-1);
+}
+
+.cfg-axis-label {
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cfg-row-edit .wp-input.cfg-input-axis { width: 112px; }
+
+.cfg-toggle { min-width: 64px; }
+
+/* THE STATS PAGE'S GAUGE ROW (StatOrder): the HUD's capsule drawn small, each gauge
+   in its own colour as the classic skin has it, held and moved along the row to reorder. A gauge that
+   is turned off (hunger, thirst) is faded and marked, and still takes a place. The default sits on the
+   line below it. */
+.cfg-gauges {
+    flex: 0 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--ui-sp-2);
+    max-width: 100%;
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+}
+
+.cfg-gauges ~ .cfg-default { flex-basis: 100%; margin-left: 0; }
+
+.cfg-gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-sp-1);
+    width: 68px;
+    padding: var(--ui-sp-2) 0;
+    border-radius: var(--ui-radius-slot);
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s var(--ui-ease), background-color 0.15s ease;
+}
+
+.cfg-gauge:hover,
+.cfg-gauge.pad-over { background: var(--ui-surface); }
+
+.cfg-gauge-disc {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 3px solid var(--gauge-color);
+    background: var(--gauge-haze);
+    color: var(--gauge-color);
+}
+
+.cfg-gauge-disc svg { width: 20px; height: 20px; }
+
+.cfg-gauge-name {
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cfg-gauge-tag {
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-xs);
+}
+
+.cfg-gauge-off .cfg-gauge-disc,
+.cfg-gauge-off .cfg-gauge-name { opacity: 0.4; }
+
+/* THE CHARACTER SCREEN'S HERO SHOTS: a card per character place, its summary and
+   Edit in world on the first line, its pose and sky as fields under it. A place with no shot of its own
+   is a dashed outline that says which shot it shows meanwhile. */
+.cfg-heroes {
+    flex: 1 0 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-3);
+}
+
+.cfg-heroes ~ .cfg-default { flex-basis: 100%; margin-left: 0; }
+
+.cfg-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+}
+
+.cfg-hero.cfg-hero-unset {
+    background: none;
+    border-style: dashed;
+}
+
+.cfg-hero-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui-sp-4);
+}
+
+.cfg-hero-title {
+    color: var(--ui-text);
+    font-weight: var(--ui-fw-semibold);
+}
+
+.cfg-hero-sum {
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.cfg-hero-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ui-sp-3) var(--ui-sp-5);
+}
+
+/* The weather list at the boxes' size, so the row reads as one line of fields. */
+.cfg-hero-fields .wp-select { font-size: var(--ui-fs-sm); }
+
+/* MAP POINTS (widget 'mapPoints'): every row an icon on a map tall enough to hold the whole island, Edit on the map in
+   its corner. On the big map, a picked icon's card: its name, Remove, and what was refused. */
+.cfg-points .wp-place { width: 100%; max-width: 560px; height: 500px; margin: 0; }
+.cfg-point-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ui-sp-4);
+    padding-right: var(--ui-sp-6);
+}
+.cfg-point-card .wp-field { width: 100%; }
+.cfg-point-card .wp-field-msg:empty { display: none; }
+
+/* THE ARRIVAL SCENES' ADD SCENES: a search over GTA's switch scenes, a tick per scene. The ones the list has
+   already are ticked and dimmed. The list scrolls inside the dialog. */
+.cfg-arrival-pick {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-3);
+    min-width: 520px;
+}
+
+.cfg-arrival-search { width: 100%; }
+
+.cfg-arrival-rows {
+    display: flex;
+    flex-direction: column;
+    max-height: 46vh;
+    overflow-y: auto;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+}
+
+.cfg-arrival-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-2) var(--ui-sp-4);
+    border-bottom: 1px solid var(--ui-border);
+    cursor: pointer;
+}
+
+.cfg-arrival-row:last-child { border-bottom: none; }
+.cfg-arrival-row:hover { background: var(--ui-surface); }
+.cfg-arrival-name { color: var(--ui-text); flex: 1; }
+.cfg-arrival-had { cursor: default; opacity: 0.55; }
+
+/* Held: ringed. Moving: lifted, the rest of the row making room as it passes. */
+.cfg-gauge-held .cfg-gauge-disc { box-shadow: 0 0 0 3px var(--ui-accent-medium); }
+.cfg-gauge-drag { transform: translateY(-4px); cursor: grabbing; }
+
+.cfg-unit { color: var(--ui-text-mid); font-size: var(--ui-fs-sm); }
+
+.cfg-default {
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-sm);
+    margin-left: var(--ui-sp-3);
+}
+
+.cfg-error { margin: var(--ui-sp-3) 0 0; }
+
+.cfg-meta {
+    margin-top: var(--ui-sp-3);
+    color: var(--ui-text-label);
+    font-size: var(--ui-fs-xs);
+}
+
+/* The Apply bar: always there, quiet until something is waiting to be sent. */
+.cfg-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-4) var(--ui-sp-7);
+    border-top: 1px solid var(--ui-border);
+}
+
+.cfg-bar-text { color: var(--ui-text-label); font-size: var(--ui-fs-sm); }
+.cfg-bar-live .cfg-bar-text { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
+.cfg-bar-text.cfg-bar-err { color: var(--ui-error); }
+
+/* ---- The Director (wp/director.js) ---- */
+/* A clickable row's first cell is a button too (the keyboard reaches it), drawn as the cell's own text. */
+.wd-row-go { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+/* A cell read in full (Shipped's Needs: what is missing is the point of the row): it wraps, never cut off. */
+.wd-wrap { display: block; white-space: normal; }
+/* A scenario's head: what it is and Active on the left; on the right, who made it (a face and a name, as the Player
+   Manager's list has them, Delete at the far end) over its things on the map. */
+.wd-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: var(--ui-sp-7); align-items: start; }
+.wd-head-about { display: flex; flex-direction: column; gap: var(--ui-sp-6); min-width: 0; }
+.wd-desc { max-width: 60ch; font-size: var(--ui-fs-lg); line-height: 1.5; color: var(--ui-text); white-space: pre-line; }
+.wd-desc-none { font-size: var(--ui-fs-md); color: var(--ui-text-label); }
+.wd-head-side { display: flex; flex-direction: column; gap: var(--ui-sp-4); min-width: 0; }
+.wd-maker { display: flex; align-items: center; gap: var(--ui-sp-4); min-width: 0; }
+.wd-maker-words { display: flex; flex-direction: column; min-width: 0; }
+/* ACTIVE: the Director editor's switch (director.css .dr-switch), the white pill when on, grey when off. */
+.wd-active { display: flex; flex-direction: column; gap: var(--ui-sp-2); }
+.wd-active .wp-hint { margin: 0; }
+.wd-sw { display: inline-flex; align-items: center; gap: var(--ui-sp-5); align-self: flex-start; padding: 6px 0; border: 0;
+    background: transparent; color: var(--ui-text); font-family: var(--ui-font); cursor: pointer; }
+.wd-sw-name { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); }
+.wd-switch { position: relative; flex: none; width: 42px; height: 24px; box-sizing: border-box; border-radius: 12px;
+    border: 1px solid var(--ui-border-hover); background: var(--ui-slot-bg-filled);
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease); }
+.wd-switch::after { content: ''; position: absolute; left: 3px; top: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--ui-text-mid); transition: left 0.16s var(--ui-ease), background 0.16s var(--ui-ease); }
+.wd-switch.on { background: var(--ui-pill); border-color: var(--ui-pill); }
+.wd-switch.on::after { left: 19px; background: var(--ui-pill-ink); }
+.wd-sw:hover .wd-switch:not(.on) { border-color: var(--ui-slot-line-hover); }
+.wd-sw:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; border-radius: var(--ui-radius-xs); }
+/* The Overview's numbers: Payout leads, twice the room and a bigger number; the rest smaller beside it. */
+.wd-stats > .wp-stat { padding: var(--ui-sp-4) var(--ui-sp-5); }
+.wd-stats > .wp-stat .wp-stat-value { font-size: var(--ui-fs-xl); }
+.wd-stats > .wd-stat-lead { flex: 2.4 1 0; padding: var(--ui-sp-4) var(--ui-sp-6); }
+.wd-stats > .wd-stat-lead .wp-stat-value { font-size: calc(var(--ui-fs-display) * 1.5); line-height: 1.1; }
+/* Access: what gives it, in the middle of the page; a person in its table, their face beside their name. */
+.wd-grant { justify-content: center; }
+.wd-person { display: inline-flex; align-items: center; gap: var(--ui-sp-4); min-width: 0; }
+.wd-person .wp-avatar { flex: none; width: 26px; height: 26px; font-size: var(--ui-fs-xs); }
+.wd-person-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Dungeon Mode: what it does, under its title, at a reading width. */
+.wd-live-lead { margin: 0 0 var(--ui-sp-6); max-width: 76ch; color: var(--ui-text-label); line-height: 1.5; }
+.wd-map.wp-place { width: 100%; height: 230px; margin: 0; }
+/* A mark's card on that map (placeCard): the thing's picture (its glyph until one loads), name and kind; what it
+   does; its settings. A ped's picture is the whole of them: closed in on the head, as the lore faces are. */
+.wd-pc { display: flex; flex-direction: column; gap: var(--ui-sp-4); padding-right: var(--ui-sp-6); }
+.wd-pc-head { display: flex; align-items: center; gap: var(--ui-sp-5); min-width: 0; }
+.wd-pc-art { position: relative; flex: none; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;
+    box-sizing: border-box; padding: 16px; border-radius: var(--ui-radius-row); overflow: hidden;
+    background: var(--ui-surface-medium); color: var(--ui-text); }
+.wd-pc-art > svg { width: 100%; height: 100%; display: block; }
+.wd-pc-art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; user-select: none; }
+.wd-pc-art.wd-pc-has { background: #f4f5f7; }
+.wd-pc-art.wd-pc-has > img { opacity: 1; }
+.wd-pc-art.wd-pc-has > svg { visibility: hidden; }
+.wd-pc-art.wd-pc-ped > img, .wd-pc-art.wd-pc-face > img { object-fit: cover; }
+.wd-pc-art.wd-pc-ped > img { object-position: 50% 0; transform-origin: 50% 17%; transform: scale(2.4); }
+.wd-pc-words { display: flex; flex-direction: column; gap: var(--ui-sp-1); min-width: 0; }
+.wd-pc .wp-section-title { margin: var(--ui-sp-3) 0 0; }
+.wd-pc-does { display: flex; flex-direction: column; gap: var(--ui-sp-3); }
+.wd-pc-line { font-size: var(--ui-fs-md); }
+.wd-pc-sub { margin-top: var(--ui-sp-2); font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.wd-pc-steps, .wd-pc-uses { margin: 0; padding-left: 20px; font-size: var(--ui-fs-md); line-height: 1.5; }
+.wd-pc-uses { list-style: disc; }
+/* A car's takes: each its line's colour, beside its name and length (wp/director.js TAKE_COLOURS). */
+.wd-pc-takes { display: flex; flex-direction: column; gap: var(--ui-sp-3); margin: 0; padding: 0; list-style: none; font-size: var(--ui-fs-md); }
+.wd-pc-takes li { display: flex; align-items: center; gap: var(--ui-sp-4); }
+.wd-pc-take-swatch { flex: none; width: 18px; height: 4px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6); }
+/* The runs chart takes the keyboard (Left and Right walk the days): the panel's focus ring round it. */
+.wd-chart-keys:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; border-radius: var(--ui-radius-xs); }
+/* The Overview's runs a day, stacked: succeeded, failed, the rest (called off, still going). */
+.wd-chart-ok  { fill: var(--ui-success); }
+.wd-chart-bad { fill: var(--ui-error); }
+.wd-chart-off { fill: rgba(255, 255, 255, 0.3); }
+.wp-chart-key.wd-chart-ok  { background: var(--ui-success); }
+.wp-chart-key.wd-chart-bad { background: var(--ui-error); }
+.wp-chart-key.wd-chart-off { background: rgba(255, 255, 255, 0.3); }
+.wd-form .wp-field { margin-bottom: var(--ui-sp-4); }
+/* Why New scenario / Duplicate cannot make it yet (a key taken, a key that is not one); empty while it can. */
+.wd-form-why { min-height: 1.4em; font-size: var(--ui-fs-sm); color: var(--ui-warning); }
+
+/* ---- Lore characters (wp/lore.js): each one's dashboard ----
+   The detail pane splits in two and scrolls in parts: the profile on the left (their picture large, their name, key
+   and ped, their notes as a bio, a few facts, Retire at its foot), and the tabs on the right, whose body scrolls
+   under them with the save bar pinned below it. */
+.wp-detail.wl-detail { padding: 0; overflow: hidden; display: flex; }
+.wl-dash { flex: 1; min-width: 0; display: grid; grid-template-columns: 252px minmax(0, 1fr); }
+.wl-ico { display: inline-flex; width: 14px; height: 14px; flex: none; }
+.wl-ico svg { width: 100%; height: 100%; }
+
+/* The profile */
+.wl-profile { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: var(--ui-sp-5);
+    padding: var(--ui-sp-7) var(--ui-sp-6) var(--ui-sp-6); border-right: 1px solid var(--ui-border); text-align: center; }
+/* Their face, large: the ring is the edge of a portrait, not a card (a hairline, a soft drop under it). */
+.wl-portrait { position: relative; width: 168px; height: 168px; flex: none; border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--ui-border-hover), 0 12px 28px rgba(0, 0, 0, 0.45); }
+.wl-face { overflow: hidden; }
+.wl-face > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none; }
+.wl-face.wl-ped > img { object-position: 50% 0; transform-origin: 50% 17%; transform: scale(3.2); }
+.wl-face.wl-face-xl { width: 100%; height: 100%; font-family: var(--ui-font-display); font-size: 52px;
+    font-weight: var(--ui-fw-display); letter-spacing: -0.02em; color: var(--ui-text-mid); }
+/* A picked row's face in the list keeps its ring off the chosen card's. */
+.wp-list-item .wl-face { background: var(--ui-surface-medium); }
+.wl-pic-btn { display: inline-flex; align-items: center; gap: var(--ui-sp-3); margin-top: calc(-1 * var(--ui-sp-2)); }
+.wl-who { display: flex; flex-direction: column; align-items: center; gap: var(--ui-sp-2); max-width: 100%; }
+.wl-name { font-family: var(--ui-font-display); font-weight: var(--ui-fw-display); font-size: 22px; letter-spacing: -0.02em;
+    line-height: 1.15; color: var(--ui-text); text-wrap: balance; overflow-wrap: anywhere; }
+.wl-handle { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--ui-sp-4); font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label); }
+.wl-handle > span + span::before { content: '·'; margin-right: var(--ui-sp-4); }
+.wl-who .wp-pill { margin-top: var(--ui-sp-2); }
+/* Their notes, as a profile's bio: the first few lines (the Details tab has all of it). */
+.wl-bio { margin: 0; font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-mid); display: -webkit-box;
+    -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.wl-bio[hidden] { display: none; }
+/* A few facts: a label over its value, left-aligned under the centred head. */
+.wl-facts { width: 100%; margin: 0; padding-top: var(--ui-sp-5); border-top: 1px solid var(--ui-border); display: grid;
+    grid-template-columns: auto minmax(0, 1fr); gap: var(--ui-sp-3) var(--ui-sp-5); text-align: left; }
+.wl-facts dt { font-size: var(--ui-fs-xs); font-weight: var(--ui-fw-semibold); text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--ui-text-label); align-self: baseline; white-space: nowrap; }
+.wl-facts dd { margin: 0; font-size: var(--ui-fs-sm); color: var(--ui-text); align-self: baseline; overflow-wrap: anywhere; }
+.wl-profile-foot { margin-top: auto; padding-top: var(--ui-sp-5); width: 100%; display: flex; justify-content: center; }
+
+/* Edit picture: the portrait becomes its frame (drag it; the slider zooms), the link and the buttons under it. */
+.wl-pic-edit { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--ui-sp-4); }
+.wl-frame { overflow: hidden; background: var(--ui-surface-medium); touch-action: none; }
+.wl-frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; user-select: none;
+    pointer-events: none; visibility: hidden; }
+.wl-frame.wl-frame-on { cursor: grab; box-shadow: 0 0 0 2px var(--ui-ring), 0 12px 28px rgba(0, 0, 0, 0.45); }
+.wl-frame.wl-frame-on:active { cursor: grabbing; }
+.wl-frame.wl-frame-on > img { visibility: visible; }
+.wl-frame-none { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: var(--ui-sp-7);
+    font-size: var(--ui-fs-sm); line-height: 1.4; color: var(--ui-text-label); }
+.wl-frame.wl-frame-on > .wl-frame-none { display: none; }
+.wl-zoom-row { width: 100%; display: flex; align-items: center; gap: var(--ui-sp-4); color: var(--ui-text-label); }
+.wl-zoom { flex: 1; min-width: 0; height: 4px; margin: 6px 0; appearance: none; background: var(--ui-border-hover);
+    border-radius: var(--ui-radius-hair); outline: none; cursor: pointer; }
+.wl-zoom::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ui-text); cursor: pointer; }
+.wl-zoom:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ui-ring); }
+.wl-zoom:disabled { opacity: 0.35; cursor: default; }
+.wl-pic-actions { width: 100%; display: flex; align-items: center; gap: var(--ui-sp-3); }
+.wl-pic-actions .wp-btn[hidden] { display: none; }
+
+/* Standalone inputs (a picture's link, a variant's link and subtitle): the field's look without its capsule label. */
+.wl-input { width: 100%; min-width: 0; box-sizing: border-box; text-align: left; background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border); border-radius: var(--ui-radius-slot); padding: var(--ui-sp-3) var(--ui-sp-4);
+    color: var(--ui-text); font-family: var(--ui-font); font-size: var(--ui-fs-sm); outline: none; transition: border-color 0.15s ease; }
+.wl-input:focus { border-color: var(--ui-ring); }
+.wl-why { width: 100%; font-size: var(--ui-fs-sm); line-height: 1.4; color: var(--ui-text-label); text-align: left; }
+.wl-why.wl-why-bad { color: var(--ui-error); }
+.wl-why:empty { display: none; }
+
+/* The tabs and their body */
+.wl-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.wl-main > .wp-tabs { flex: none; margin: 0; padding: var(--ui-sp-6) var(--ui-sp-7) var(--ui-sp-5); }
+.wl-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--ui-sp-7) var(--ui-sp-7); }
+.wl-body > .wp-section-title:first-child, .wl-body > .wp-stats:first-child { margin-top: 0; }
+.wl-lead { max-width: 64ch; margin-bottom: var(--ui-sp-5); font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-mid); }
+.wl-help { font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-label); }
+
+/* Details: the fields at a readable width, their ped standing beside them. */
+.wl-details { display: grid; grid-template-columns: minmax(0, 520px) 168px; gap: var(--ui-sp-7); align-items: start; }
+.wl-fields { min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-4); }
+.wl-fields > .wp-cols-2 + .wp-cols-2 { margin-top: 0; }
+.wl-key { display: flex; align-items: center; gap: var(--ui-sp-3); min-width: 0; padding: var(--ui-sp-3) var(--ui-sp-4);
+    border: 1px dashed var(--ui-border); border-radius: var(--ui-radius-slot); }
+.wl-key-value { font-size: var(--ui-fs-md); color: var(--ui-text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-field.wl-field-col { flex-direction: column; align-items: stretch; margin-bottom: 0; }
+.wp-field .wp-input.wl-notes { width: 100%; resize: vertical; line-height: 1.45; text-align: left; font-size: var(--ui-fs-md); }
+.wl-meta { font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.wl-ped-card { position: relative; margin: 0; height: 248px; display: flex; flex-direction: column; justify-content: flex-end;
+    background: var(--ui-surface-subtle); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-pop); overflow: hidden; }
+.wl-ped-card > img { position: absolute; inset: 0 0 26px; width: 100%; height: calc(100% - 26px); object-fit: contain;
+    object-position: 50% 100%; user-select: none; visibility: hidden; }
+.wl-ped-card.wl-ped-on > img { visibility: visible; }
+.wl-ped-none { position: absolute; inset: 0 0 26px; display: flex; align-items: center; justify-content: center;
+    font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.wl-ped-card.wl-ped-on > .wl-ped-none { display: none; }
+.wl-ped-card figcaption { position: relative; padding: var(--ui-sp-3) var(--ui-sp-4); font-size: var(--ui-fs-sm); color: var(--ui-text-mid);
+    text-align: center; border-top: 1px solid var(--ui-border); background: var(--ui-surface-solid); overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+/* Their look beside the fields: the card, and the character editor's buttons under it. A look made there shows its
+   portrait (a headshot: the head, in the middle) where a GTA ped stands. */
+.wl-look { display: flex; flex-direction: column; gap: var(--ui-sp-3); min-width: 0; }
+.wl-look > .wp-btn, .wl-look-pair > .wp-btn { width: 100%; justify-content: center; }
+.wl-look-card > img { object-position: 50% 50%; }
+.wl-look-or { margin-top: var(--ui-sp-2); font-size: var(--ui-fs-xs); color: var(--ui-text-label); text-align: center; }
+.wl-look-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ui-sp-3); }
+
+/* Audio's test strip: their NPC in front of the builder for a while (Spawn to test); lit while it is out. */
+.wl-test { display: flex; align-items: center; gap: var(--ui-sp-6); margin-bottom: var(--ui-sp-5); padding: var(--ui-sp-5) var(--ui-sp-6);
+    background: var(--ui-surface-subtle); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-row); }
+.wl-test.wl-test-on { background: var(--ui-success-light); border-color: var(--ui-success); }
+.wl-test-words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-1); }
+.wl-test-title { display: flex; align-items: center; gap: var(--ui-sp-3); font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.wl-test-help { font-size: var(--ui-fs-sm); line-height: 1.4; color: var(--ui-text-mid); }
+.wl-test .wp-btn { flex: none; }
+
+/* Audio: each line a row (its name, how many variants, what makes it say it, + Variant), its variants under it. */
+.wl-lines { display: flex; flex-direction: column; }
+.wl-line { padding: var(--ui-sp-5) 0; border-bottom: 1px solid var(--ui-border); }
+.wl-line:last-child { border-bottom: 0; }
+.wl-line-head { display: flex; align-items: center; gap: var(--ui-sp-5); }
+.wl-line-words { flex: 1; min-width: 0; }
+.wl-line-top { display: flex; align-items: baseline; gap: var(--ui-sp-4); }
+.wl-line-name { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.wl-line-count { font-size: var(--ui-fs-sm); color: var(--ui-text-mid); font-variant-numeric: tabular-nums; }
+.wl-line-empty .wl-line-count { color: var(--ui-text-dim); }
+.wl-line-help { margin-top: var(--ui-sp-1); font-size: var(--ui-fs-sm); line-height: 1.4; color: var(--ui-text-label); }
+.wl-add { display: inline-flex; align-items: center; gap: var(--ui-sp-2); flex: none; }
+.wl-add .wl-ico { width: 11px; height: 11px; }
+/* A line's If talking: a small select beside its buttons. */
+.wp-select.wl-busy { flex: none; font-size: var(--ui-fs-xs); font-weight: var(--ui-fw-semibold); padding: 4px 24px 4px var(--ui-sp-4);
+    min-height: 24px; color: var(--ui-text-mid); }
+.wl-variants { display: flex; flex-direction: column; gap: var(--ui-sp-3); }
+.wl-variants:not(:empty) { margin-top: var(--ui-sp-4); }
+.wl-variant { display: grid; grid-template-columns: 1.4em minmax(0, 3fr) minmax(0, 2fr) auto auto; align-items: center; gap: var(--ui-sp-3); }
+.wl-variant-n { font-size: var(--ui-fs-sm); color: var(--ui-text-label); text-align: right; font-variant-numeric: tabular-nums; }
+.wl-variant.bad .wl-variant-url { border-color: var(--ui-error); }
+.wl-variant > .wl-why { grid-column: 2 / -1; }
+.wl-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; min-height: 28px; padding: 0; }
+.wl-icon-btn .wl-ico { width: 12px; height: 12px; }
+
+/* Interactions: the numbers, then the scenarios that use them (a row opens one), their phone, what they paid. */
+.wl-rows { display: flex; flex-direction: column; gap: var(--ui-sp-2); }
+.wl-row { display: flex; align-items: center; gap: var(--ui-sp-5); width: 100%; padding: var(--ui-sp-4) var(--ui-sp-5);
+    background: var(--ui-surface-subtle); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-row);
+    font: inherit; color: inherit; text-align: left; cursor: pointer; transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease); }
+.wl-row:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+.wl-row:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; }
+.wl-row-words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-sp-1); }
+.wl-row-title { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.wl-row-sub { font-size: var(--ui-fs-sm); color: var(--ui-text-label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-phone { display: flex; align-items: center; gap: var(--ui-sp-7); flex-wrap: wrap; }
+.wl-phone-number { font-family: var(--ui-font-display); font-weight: var(--ui-fw-display); font-size: var(--ui-fs-xl);
+    letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: var(--ui-text); }
+.wl-facts.wl-facts-wide { width: auto; flex: 1; min-width: 260px; padding-top: 0; border-top: 0; }
+.wl-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The bar: what is not saved yet, Discard and Save. Under the tab body, never over it. */
+.wl-bar { flex: none; display: flex; align-items: center; gap: var(--ui-sp-4); padding: var(--ui-sp-5) var(--ui-sp-7);
+    border-top: 1px solid var(--ui-border); background: var(--ui-surface-solid); }
+.wl-bar[hidden] { display: none; }
+.wl-bar-text { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+
+/* ---- Banks (wp/banks.js): a holder's dashboard and an account's page ---- */
+.bk-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ui-sp-5); }
+.bk-head > .pmg-who { flex: 1 1 auto; min-width: 0; }
+.bk-who-plain { grid-template-columns: minmax(0, 1fr); }
+.bk-who-plain > .wp-pane-title { align-self: start; }
+.bk-title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-sp-4); margin-bottom: var(--ui-sp-3); }
+.bk-title-row > .wp-section-title { margin: 0; }
+.wp-section-title.bk-title-gap { margin-top: var(--ui-sp-7); }
+.bk-account-name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--ui-sp-2) var(--ui-sp-3); }
+.bk-form {
+    margin-bottom: var(--ui-sp-4);
+    padding: var(--ui-sp-5) var(--ui-sp-6);
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+}
+.bk-form > .wp-actions-row:first-child { padding-top: 0; }
+.bk-form > .wp-actions-row > .wp-field { flex: 1 1 0; }
+/* A number's heading over its numbers. */
+.wp-section[data-section="banks"] .wp-table th.wp-td-num { text-align: right; }
+/* A money figure at the end of a line of the net worth, or of a group's head. */
+.bk-group-value {
+    margin-left: auto;
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+    color: var(--ui-text);
+}
+.bk-worth-line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-3) 0;
+    /* Lined up under a group's caret and name. */
+    padding-left: calc(16px + var(--ui-sp-3));
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: rgba(255, 255, 255, 0.62);
+}
+.bk-worth-total { margin-top: var(--ui-sp-3); padding-top: var(--ui-sp-4); border-top: 1px solid var(--ui-border); color: var(--ui-text); }
+.bk-worth-total .bk-group-value { font-size: var(--ui-fs-lg); }
+.wp-table td.bk-in { color: var(--ui-success); }
+.wp-table td.bk-quiet, .bk-quiet { color: var(--ui-text-label); }
+.bk-log-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-sp-3) var(--ui-sp-5); margin-bottom: var(--ui-sp-4); }
+.bk-log-bar > .wp-field { flex: 0 1 340px; margin: 0; }
+.bk-head + .wp-toggles { margin-top: var(--ui-sp-4); }
+
+/* ---- Space between a page's blocks ----
+   A page says how far a block stands from its neighbours with one of these, never with a margin of
+   its own. Last in the file, so they win over a piece's own margin (a code block's 0).
+     apart  a new part of a page or a step: the Review step's closing sentence, the buttons under rows
+     after  the next block of the same part: a second row of fields, a feed under its head
+     near   a row that goes with the field above it: a row of chips under its field
+     near-next  the same, with the field below it: chips over the search that adds to them */
+.wp-apart { margin-top: var(--ui-sp-5); }
+.wp-after { margin-top: var(--ui-sp-4); }
+.wp-near  { margin-top: var(--ui-sp-3); }
+.wp-near-next { margin-bottom: var(--ui-sp-3); }
+
+/* A row of stat tiles that opens its pane (Ground's, Time's) starts at the top. */
+.wp-stats:first-child { margin-top: 0; }

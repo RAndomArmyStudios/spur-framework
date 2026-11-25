@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256"><!-- spur_gunny class icon. Original drawing for spur_gunny (RedM port, 25 Nov 2026); LGPL-3.0 with the resource. --><g transform="translate(-38.00 -33.26) scale(1.420)"><rect x="62" y="44" width="52" height="10" rx="2" fill="#b9b4aa" stroke="#1c1712" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="108" y="39" width="4" height="6" fill="#1c1712"/>
+<path d="M44 60 L30 96 Q28 104 38 104 L50 104 L60 62 Z" fill="#8a5a36" stroke="#1c1712" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="40" y="40" width="26" height="23" rx="5" fill="#b9b4aa" stroke="#1c1712" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M46 46 h14 M46 52 h14 M46 58 h14" fill="none" stroke="#1c1712" stroke-width="1.5"/>
+<path d="M41 42 l-7 -9 l8 3 z" fill="#b9b4aa" stroke="#1c1712" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M58 63 q7.0 12 14 0" fill="none" stroke="#1c1712" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg>

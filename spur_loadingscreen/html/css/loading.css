@@ -1,0 +1,168 @@
+/* ========================================
+   spur_loadingscreen
+
+   The SPUR wordmark over an 1899 backdrop, the four circles in its bar the loading light (see THE LOGO).
+
+   RedM (spur_loadingscreen, 23 Nov 2026): whip_loadingscreen's logo styles, with a backdrop drawn here in place of
+   its three.js blueprint: a sepia ground lit like a lamp from the middle, film grain over it, and a printer's double
+   rule round the edge. All CSS: no WebGL, no pictures, nothing to download.
+   ======================================== */
+
+/* ---- To change (no need to touch anything else) ---- */
+:root {
+    /* How long the backdrop takes to fade in from black when the screen first shows. */
+    --fade-in: 1.4s;
+
+    /* The backdrop's colours: the ground from the middle out, the lamp's warmth, and the rule's ink. */
+    --ground-mid:  #2c1f15;
+    --ground-edge: #0a0705;
+    --lamp:        rgba(214, 160, 92, 0.20);
+    --rule:        rgba(230, 205, 160, 0.22);
+
+    /* How strong the grain is (0 turns it off). */
+    --grain: 0.09;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+/* ========================================
+   THE BACKDROP
+   ======================================== */
+
+#backdrop {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: radial-gradient(ellipse 120% 100% at 50% 50%, var(--ground-mid) 0%, #1a120c 55%, var(--ground-edge) 100%);
+}
+
+/* The lamp: a warm pool in the middle that breathes a little, as a flame would. */
+#backdrop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 62% 55% at 50% 46%, var(--lamp) 0%, rgba(214, 160, 92, 0.06) 45%, rgba(0, 0, 0, 0) 75%);
+    animation: lamp 7s ease-in-out infinite;
+}
+@keyframes lamp {
+    0%   { opacity: 0.82; }
+    38%  { opacity: 1; }
+    52%  { opacity: 0.9; }
+    68%  { opacity: 1; }
+    100% { opacity: 0.82; }
+}
+
+/* Film grain: one small tile of noise, twice the screen's size, jumped about a few times a second. */
+#backdrop .grain {
+    position: absolute;
+    left: -50%;
+    top: -50%;
+    width: 200%;
+    height: 200%;
+    opacity: var(--grain);
+    mix-blend-mode: overlay;
+    background-size: 256px 256px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 0.7s steps(1) infinite;
+}
+@keyframes grain {
+    0%   { transform: translate(0, 0); }
+    17%  { transform: translate(-4%, 3%); }
+    33%  { transform: translate(3%, -5%); }
+    50%  { transform: translate(-6%, -2%); }
+    67%  { transform: translate(5%, 4%); }
+    83%  { transform: translate(-2%, 6%); }
+}
+
+/* A printer's double rule round the edge, as on a bill or a broadsheet. */
+#backdrop .frame {
+    position: absolute;
+    inset: 3.2vh;
+    border: 1px solid var(--rule);
+}
+#backdrop .frame::after {
+    content: '';
+    position: absolute;
+    inset: 0.7vh;
+    border: 1px solid var(--rule);
+    opacity: 0.55;
+}
+
+/* Black over the backdrop, fading away as the screen first shows. The logo is above it, there at once. */
+#curtain {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    pointer-events: none;
+    animation: curtainUp var(--fade-in) ease-out 0.2s both;
+}
+@keyframes curtainUp {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+/* ========================================
+   THE LOGO — and its loading indicator
+
+   Centred, at the landing page's size, so it is where the landing page shows it next. Drawn as SVG in
+   index.html; js/logo.js moves the light.
+
+   THE CIRCLES IN THE BAR: one lit at a time, left to right. A circle LIGHTS AT ONCE (.dot.lit sets
+   `transition: none`) and FADES when the light moves on (the transition on plain .dot's light), its dark
+   silhouette staying underneath. The fade is a little longer than a step, so a faint trail follows the
+   light along.
+
+   RedM (spur_loadingscreen, 23 Nov 2026): the letters are a warm ivory and the dark parts a deep brown, to sit on
+   the sepia backdrop; whip_loadingscreen's were white and black.
+   ======================================== */
+
+#logo {
+    --logo-letter: #f2e8d5;
+    --logo-ring:   #120c08;   /* the dark ring that sets a lit circle apart from the bar */
+    --logo-lit:    #f2e8d5;
+    --logo-hole:   #120c08;   /* an unlit circle: a dark hole in the bar */
+    --logo-icon:   #120c08;   /* the interaction icon on a lit circle */
+    --logo-fade:   0.55s;
+
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    /* The landing page's size (spur_core's css/landing.css). */
+    width: min(38vw, 149vh);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    filter: drop-shadow(0 4px 22px rgba(0, 0, 0, 0.6));
+}
+
+#logo svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+#logo .letters { fill: var(--logo-letter); }
+#logo .ring    { fill: var(--logo-ring); }
+#logo .disc    { fill: var(--logo-lit); }
+#logo .hole    { fill: var(--logo-hole); }
+#logo .icon    { color: var(--logo-icon); }   /* the icons draw in currentColor */
+
+/* Unlit: the light fades away... */
+#logo .dot .light {
+    opacity: 0;
+    transition: opacity var(--logo-fade) cubic-bezier(0.25, 0.6, 0.35, 1);
+}
+
+/* ...lit: on at once. */
+#logo .dot.lit .light {
+    opacity: 1;
+    transition: none;
+}

@@ -1,0 +1,91 @@
+/* ========================================
+   PAD CURSOR — js/pad-cursor.js: the Director's and the /whip panel's
+   ========================================
+   The circle is the mouse: the inventory's ring and dot, the size of the screen's height (3.9vh), moved
+   by transform only and never hit by the page (the thing under it must answer). It tightens over
+   something it can press, and that thing is ringed white; held down (A), it tightens more. Only on a
+   pad, and not while the pad keyboard is up. */
+.pad-cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: 10003;          /* over every screen it drives, their menus and its own */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s var(--ui-ease);
+}
+.pad-cursor.on { opacity: 1; }
+.pad-cursor.typing,
+html:not([data-input="pad"]) .pad-cursor { display: none; }
+
+.pad-cursor-ring {
+    position: absolute;
+    left: -1.95vh;
+    top: -1.95vh;
+    width: 3.9vh;
+    height: 3.9vh;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--ui-pill);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 12px rgba(0, 0, 0, 0.45);
+    transition: transform 0.12s var(--ui-ease), background 0.12s var(--ui-ease);
+}
+.pad-cursor-ring::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    border-radius: 50%;
+    background: var(--ui-pill);
+}
+.pad-cursor.over .pad-cursor-ring { transform: scale(0.78); background: rgba(255, 255, 255, 0.12); }
+.pad-cursor.down .pad-cursor-ring { transform: scale(0.62); background: rgba(255, 255, 255, 0.26); }
+
+html[data-input="pad"] .pad-over {
+    outline: 2px solid var(--ui-pill);
+    outline-offset: 2px;
+}
+
+/* ---- a list's choices, for a screen with no menu of its own (the /whip panel's selects) ----
+   Real pixels at the circle, sized to the screen's height like the circle, over the screen it came
+   from and under the circle. */
+.pad-menu {
+    position: fixed;
+    z-index: 10002;
+    min-width: 18vh;
+    max-width: 50vw;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.6vh;
+    background: var(--ui-surface-solid);   /* solid, as the panel's own pop-ups are: nothing shows through */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.2vh;
+    box-shadow: 0 1vh 3vh rgba(0, 0, 0, 0.55);
+    font-family: var(--ui-font);
+}
+.pad-menu::-webkit-scrollbar { display: none; }
+.pad-menu-row {
+    display: block;
+    width: 100%;
+    padding: 0.9vh 1.4vh;
+    border: 0;
+    border-radius: 0.8vh;
+    background: transparent;
+    color: var(--ui-text);
+    font: inherit;
+    font-size: 1.5vh;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.pad-menu-row + .pad-menu-row { margin-top: 2px; }
+.pad-menu-row:hover,
+.pad-menu-row.pad-over { background: rgba(255, 255, 255, 0.10); }
+html[data-input="pad"] .pad-menu-row.pad-over { outline-offset: -2px; }

@@ -1,0 +1,275 @@
+/* ========================================
+   THE DEBUG PANEL — html/js/debug-panel.js
+
+   One pane at the top right holding every /w debug tool that is on, each a section, one under the
+   other; the pane grows to fit them. The house look (DESIGN.md): solid night glass under the corner
+   glow, the display face for the title, hairlines between sections. Read-only: no focus, no clicks.
+
+   It owns the top-right corner while it is up. Notifications and objective cards read --dbg-h (its
+   height in screen pixels, set by the JS) and move down under it (ui.css).
+   ======================================== */
+
+#debug-panel {
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    z-index: 930;               /* under the notifications (950) and objective cards (940) it pushes down */
+    width: 400px;
+    box-sizing: border-box;
+    padding: 18px 16px 14px;
+
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    line-height: 1.35;
+    pointer-events: none;
+
+    /* A long car (ten stats fitted, a page of attached data) scrolls inside rather than running off
+       the screen. Divided by the zoom: vh is not scaled and the zoom multiplies what this resolves to. */
+    max-height: calc((100vh - 24px) / (var(--ui-scale) * var(--dbg-zoom)));
+    overflow-y: auto;
+    scrollbar-width: none;
+
+    opacity: 0;
+    transform: translateX(16px);
+    transition: opacity 0.25s var(--ui-ease), transform 0.25s var(--ui-ease);
+
+    /* One knob for the whole pane, like the /w menu's --dm-zoom. */
+    --dbg-zoom: 1.25;
+    zoom: calc(var(--ui-scale) * var(--dbg-zoom));
+}
+
+#debug-panel::-webkit-scrollbar { width: 0; height: 0; }
+
+#debug-panel.visible {
+    opacity: 1;
+    transform: none;
+}
+
+.dbg-title {
+    padding: 0 2px 8px;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+.dbg-sections {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- A section ---- */
+
+.dbg-section { display: none; }
+.dbg-section.visible { display: block; }
+
+/* Every section after the first stands on a hairline (order, not DOM position, decides "first"). */
+.dbg-section.visible ~ .dbg-section.visible {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.dbg-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.dbg-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    white-space: nowrap;
+}
+
+.dbg-meta {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+
+.dbg-caption {
+    margin: 10px 0 4px;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+
+.dbg-empty {
+    padding: 2px 0;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-dim);
+}
+
+/* ---- A stat: name, bar, value; a second line for the readings beside it ---- */
+
+.dbg-stat {
+    --dbg-c: rgba(255, 255, 255, 0.75);
+    display: grid;
+    grid-template-columns: 112px 1fr 74px;
+    align-items: center;
+    column-gap: 10px;
+    padding: 3px 0;
+}
+
+.dbg-stat-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* The stat's own colour (its HUD registration) as a dot, so the panel and the gauge agree. */
+.dbg-stat-name::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: var(--dbg-c);
+    vertical-align: 1px;
+}
+
+.dbg-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.dbg-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--dbg-c);
+    transition: width 0.2s var(--ui-ease);
+}
+
+.dbg-stat-val {
+    text-align: right;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+
+.dbg-stat-extra {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px 0 0 14px;
+}
+
+/* A car's value column holds the amount and its percentage. */
+.dbg-section[data-id="vehicle"] .dbg-stat { grid-template-columns: 112px 1fr 92px; }
+
+/* A stat the thing does not carry (a part not fitted): there, but quiet. */
+.dbg-stat.is-dim .dbg-stat-name,
+.dbg-stat.is-dim .dbg-stat-val { color: var(--ui-text-dim); }
+.dbg-stat.is-dim .dbg-stat-name::before { background: rgba(255, 255, 255, 0.2); }
+
+/* ---- Small readings ---- */
+
+.dbg-chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-xs);
+    background: rgba(255, 255, 255, 0.06);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.02em;
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+}
+
+.dbg-chip.is-warn { color: var(--ui-warning); background: var(--ui-warning-light); }
+.dbg-chip.is-up   { color: var(--ui-success); background: var(--ui-success-subtle); }
+.dbg-chip.is-down { color: var(--ui-error); background: var(--ui-error-subtle); }
+
+/* ---- A change ---- */
+
+.dbg-change {
+    display: grid;
+    grid-template-columns: 56px 92px 1fr 44px;
+    column-gap: 8px;
+    align-items: baseline;
+    padding: 1px 0;
+    font-size: var(--ui-fs-sm);
+}
+
+.dbg-change-d {
+    text-align: right;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text-mid);
+}
+.dbg-change-d.is-up      { color: var(--ui-success); }
+.dbg-change-d.is-down    { color: var(--ui-error); }
+.dbg-change-d.is-cleared { color: var(--ui-warning); }
+
+.dbg-change-what { font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbg-change-src  { color: var(--ui-text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbg-change-ago  {
+    text-align: right;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-dim);
+}
+
+/* ---- A name and its readings on one line (an effect) ---- */
+
+.dbg-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 6px;
+    padding: 2px 0;
+}
+
+.dbg-line-name {
+    margin-right: 2px;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* ---- A key and its value ---- */
+
+.dbg-kv {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    column-gap: 10px;
+    padding: 2px 0;
+    font-size: var(--ui-fs-sm);
+}
+
+.dbg-kv-k { color: var(--ui-text-label); font-weight: var(--ui-fw-semibold); }
+.dbg-kv-v {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ui-fw-semibold);
+}

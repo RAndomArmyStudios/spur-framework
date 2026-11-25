@@ -1,0 +1,464 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>interact badge atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE BADGE ATLAS — a texture, not an overlay.
+
+   Rendered offscreen into a GPU texture by CreateDui and sampled by
+   DrawTexturedPoly in client/interact_world.lua. Nothing here is composited over
+   the game, so the usual NUI instincts invert:
+
+     · Fixed pixel size, not a viewport. This document IS the texture.
+     · Transparent background, always. A background colour becomes a visible
+       rectangle floating in mid-air.
+     · No --ui-scale. Apparent size is the quad's size in metres.
+
+   WHY AN ATLAS AT ALL. A DUI is a whole browser. One per prompt would be
+   unaffordable, and the badge is IDENTICAL for every prompt in the game — so it
+   is drawn once, here, in every variant it can take, and Lua picks a cell with
+   UV coordinates. That makes a state change cost nothing: no repaint, no
+   message, just different numbers in the draw call.
+
+   THE GRID. Columns are key letters (almost always just E); rows are the three
+   states, in the order client/interact_world.lua indexes them:
+
+       row 0   idle      a faint ring — something is there
+       row 1   active    a brighter ring — in range, but NOT the one
+       row 2   focused   filled disc with the key — this is what E acts on
+
+   ONLY ROW 2 CARRIES THE KEY, and that is the point of the ladder rather than an
+   oversight. "In range" can be true of a dozen things at once — stand over a
+   table with four stacks of cash and all four are within reach — but E has only
+   ever acted on ONE of them, the highest-scoring one. Putting the letter on every
+   nearby prompt was four invitations with one of them true and no way to tell
+   which. The ring says "something is here"; the key says "this one".
+
+   Cell size and column count are agreed with the Lua side. Change one, change
+   both.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+#atlas {
+    display: grid;
+    /* Sized in JS from the dimensions Lua sends, so neither side hardcodes the
+       other's numbers. */
+    grid-auto-flow: row;
+}
+
+.cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The disc. A percentage of the cell so the art scales with whatever cell size
+   the Lua side asks for.
+
+   THE FRACTION COMES FROM LUA, as BADGE_DISC_FRAC in the setup message, and is
+   applied to --disc-frac below: one copy of the number, owned by Lua because Lua
+   is what divides by it to size the quad.
+
+   The margin it leaves is not spare room either — every shadow below has to fit
+   inside it, or the glow bleeds into the neighbouring cell and shows up as a
+   smudge on an unrelated badge. At 128px cells that budget is ~14px. */
+.disc svg { width: 100%; height: 100%; display: block; }
+
+.disc {
+    /* SET FROM LUA (BADGE_DISC_FRAC, delivered in the setup message) — the 78% here is only the
+       value used before that message arrives, so the atlas is not blank for a frame. Lua is the
+       authority because Lua is what divides by it to size the quad. Editing this literal changes
+       nothing once the first message lands. */
+    width: var(--disc-frac, 78%);
+    height: var(--disc-frac, 78%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    font-weight: 700;
+
+    /* SO A FULL-BLEED GLYPH IS CUT OFF BY THE CIRCLE. Most icons are small things floating in the
+       middle of the disc and never come near the edge — but the hood and boot ones are a slice of
+       a car that deliberately runs past it, and the disc's own rim is what crops them. Clipping
+       descendants does not touch this element's own box-shadows, so the outline and halo below are
+       unaffected. */
+    overflow: hidden;
+}
+
+/* A HARD BLACK OUTLINE ON EVERY STATE.
+   The badge is drawn onto whatever the world happens to be, and a white ring over
+   a pale wall or a bright sky simply disappears. A soft glow is not enough — it
+   dilutes against bright ground exactly when it is needed. A solid ring does not.
+   `0 0 0 Npx` is spread with no blur, so it is a crisp edge rather than a haze.
+
+   EVERY SHADOW HERE HAS TO FIT THE CELL'S MARGIN, about 14px at 128px cells.
+   Spreads are measured from the disc's edge and do not stack, so the budget is
+   the largest spread plus the largest blur — never their sum. Overrun it and the
+   ring bleeds onto the neighbouring cell, which shows up as a smudge on an
+   unrelated badge. */
+
+/* A RASTER GLYPH CANNOT BE HIDDEN BY `color: transparent`.
+   Every SVG icon here draws with currentColor, so the two ring states hide their glyph for free by
+   setting the colour transparent. A PNG ignores colour entirely — so a manufacturer logo would
+   have been the one glyph visible on an idle ring, which is precisely the state that is supposed
+   to say "something is here" and nothing more. Hidden explicitly instead. */
+.disc .swatch { display: flex; width: 100%; height: 100%; }   /* a colour swatch: swatch_, below */
+.s0 .disc img,
+.s1 .disc img,
+.s0 .disc .swatch,
+.s1 .disc .swatch { display: none; }   /* a swatch is the same: its colours are its own */
+
+/* ---- idle: a faint outline, no letter ----
+   A key you cannot press yet is an instruction that is not true. */
+.s0 .disc {
+    background: rgba(10, 12, 18, 0.55);
+    border: 4px solid rgba(255, 255, 255, 0.55);
+    color: transparent;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9),
+                inset 0 0 0 2px rgba(0, 0, 0, 0.55),
+                0 0 6px rgba(0, 0, 0, 0.85);
+}
+
+/* ---- active: in range, still not the one ----
+   The same ring, brighter. Near enough to reach, not what E is offering — so it
+   gets a step up from idle and nothing more. Still no letter: that belongs to
+   exactly one prompt at a time. */
+.s1 .disc {
+    background: rgba(10, 12, 18, 0.55);
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    color: transparent;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9),
+                inset 0 0 0 2px rgba(0, 0, 0, 0.55),
+                0 0 8px rgba(0, 0, 0, 0.85);
+}
+
+/* ---- focused: the one E acts on ----
+   Fills, and only now shows the key. White is the loudest thing available against
+   a game that is mostly not white, and it is what makes this read as a button
+   rather than a marker. The letter takes the dark ground colour for the same
+   reason the creator's primary button does: whip's text token would be invisible
+   on white.
+
+   Order matters here: the black ring is listed FIRST so it paints over the white
+   halo behind it, giving disc -> black edge -> white halo rather than the reverse. */
+.s2 .disc {
+    background: #fff;
+    border: 4px solid #fff;
+    color: rgb(10, 12, 18);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9),
+                0 0 0 6px rgba(255, 255, 255, 0.30),
+                0 0 5px rgba(0, 0, 0, 0.6);
+}
+
+/* THE WHITE CELL. Not a badge: a column that is solid white all through, in every theme, for the
+   hold ring (client/interact_world.lua drawHoldRing) to sample — its quads take any colour by
+   multiplying it, and a theme's own disc is not white everywhere (glass and rim are dark). */
+.cell.white { background: #fff; }
+
+/* ============================================================================
+   THEMES — the same atlas in another look.
+
+   A style can ask for a theme (`theme = 'glass'`). Each theme in use is its OWN copy of this page,
+   made by Lua the first time a prompt wears it, with the theme's name in the setup message — which
+   puts `t-<name>` on the body. Everything above is 'classic', the look every prompt had; a theme
+   only overrides the three states' discs. The same margin budget applies: every shadow has to fit
+   the ~14px round the disc.
+
+   A DARK DISC NEEDS A LIGHT LOGO. The car makers' logos are black (for the white classic disc), so
+   the dark themes turn them white.
+   ============================================================================ */
+
+/* GLASS — dark and see-through with the key in white: the HUD capsule's own colours. */
+.t-glass .s0 .disc {
+    background: rgba(10, 12, 18, 0.35);
+    border: 3px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55), 0 0 6px rgba(0, 0, 0, 0.6);
+}
+.t-glass .s1 .disc {
+    background: rgba(10, 12, 18, 0.5);
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 0, 0, 0.7);
+}
+.t-glass .s2 .disc {
+    background: rgba(10, 12, 18, 0.78);
+    border: 4px solid #fff;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+/* RIM — a solid black disc in a white rim, as the HUD's black skin draws its gauges. */
+.t-rim .s0 .disc {
+    background: rgba(0, 0, 0, 0.6);
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6), 0 0 6px rgba(0, 0, 0, 0.7);
+}
+.t-rim .s1 .disc {
+    background: rgba(0, 0, 0, 0.78);
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.8);
+}
+.t-rim .s2 .disc {
+    background: #000;
+    border: 7px solid #fff;
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+.t-glass .s2 .disc img,
+.t-rim .s2 .disc img { filter: invert(1); }
+
+/* KEYCAP — a rounded square, a key to press: the hint capsule's keycaps, in the world. */
+.t-keycap .disc { border-radius: 26%; }
+.t-keycap .s0 .disc {
+    background: rgba(10, 12, 18, 0.5);
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.85), 0 0 6px rgba(0, 0, 0, 0.7);
+}
+.t-keycap .s1 .disc {
+    background: rgba(10, 12, 18, 0.55);
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.8);
+}
+.t-keycap .s2 .disc {
+    background: #fff;
+    border: 4px solid #fff;
+    color: rgb(10, 12, 18);
+    /* The lip along the bottom is what makes it read as a key rather than a tile. */
+    box-shadow: inset 0 -9px 0 rgba(10, 12, 18, 0.16),
+                0 0 0 3px rgba(0, 0, 0, 0.9),
+                0 4px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* DARK — black and white swapped, on the two shapes (a player's Dark prompts, or a style's `dark`): the
+   key black with a white outline and a white symbol, and the rings dark, edged in white instead of black.
+   Lua sends `dark` with the theme (a `dark` class beside t-<theme>); the other themes have no dark copy.
+   After the keycap's rules, so the same specificity wins here; the keycap's key keeps its lip, light now. */
+.dark .s0 .disc {
+    background: rgba(10, 12, 18, 0.6);
+    border: 4px solid rgba(10, 12, 18, 0.85);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55),
+                0 0 6px rgba(0, 0, 0, 0.6);
+}
+.dark .s1 .disc {
+    background: rgba(10, 12, 18, 0.72);
+    border: 4px solid rgba(10, 12, 18, 0.95);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95),
+                0 0 8px rgba(0, 0, 0, 0.7);
+}
+.dark .s2 .disc {
+    background: rgb(10, 12, 18);
+    border: 4px solid rgb(10, 12, 18);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95),
+                0 0 0 6px rgba(10, 12, 18, 0.30),
+                0 0 5px rgba(0, 0, 0, 0.6);
+}
+.t-keycap.dark .s2 .disc {
+    box-shadow: inset 0 -9px 0 rgba(255, 255, 255, 0.14),
+                0 0 0 3px rgba(255, 255, 255, 0.95),
+                0 4px 6px rgba(0, 0, 0, 0.55);
+}
+.dark .s2 .disc img { filter: invert(1); }   /* the car makers' black logos, white on the black key */
+
+/* DOT — small while it is only something to notice: a dot far off, a ring in reach, the full key
+   when it is the one. Scaled discs, so the crossfade between states reads as it growing. */
+.t-dot .s0 .disc {
+    transform: scale(0.34);
+    background: rgba(255, 255, 255, 0.9);
+    border: 0;
+    box-shadow: 0 0 0 7px rgba(0, 0, 0, 0.75);
+}
+.t-dot .s1 .disc {
+    transform: scale(0.56);
+    background: rgba(10, 12, 18, 0.55);
+    border: 6px solid #fff;
+    box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.85);
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+
+<!-- THE ICONS: whip's shared table, which the whip logo's light reads too (see its
+     own header). Relative to this file: nui://spur_core/html/js/glyphs.js. -->
+<script src="../js/glyphs.js"></script>
+<script>
+(function () {
+    var atlas = document.getElementById('atlas');
+
+    // ICONS, NOT JUST KEY LETTERS — drawn in html/js/glyphs.js, with the reasoning behind each one.
+    // A column of this atlas is "whatever goes in the middle of the disc": for almost everything
+    // the key you press, and for doors, cars, cash and the rest, one of those icons. They draw in
+    // currentColor, so they take the disc's colour exactly as a letter does.
+    var SHARED = window.WhipGlyphs || { glyphs: {}, fullBleed: {} };
+    var GLYPHS = SHARED.glyphs;
+
+    // WHICH GLYPHS FILL THE WHOLE DISC rather than sitting in the middle of it. See renderGlyph.
+    var FULL_BLEED = SHARED.fullBleed;
+
+    // ---- PNG GLYPHS, BY CONVENTION RATHER THAN BY TABLE ----
+    //
+    // Anything named `mfr_<brand>` draws html/img/manufacturers/<brand>.png. There are sixty-six of
+    // those and they change when Rockstar ships a DLC, so listing them here would be sixty-six
+    // entries to keep in step with a directory — the prefix rule means adding a brand is dropping
+    // in a file.
+    //
+    // THE LOGOS ARE BLACK, WHICH IS ONLY CORRECT BECAUSE THE FOCUSED DISC IS WHITE. They were
+    // extracted from the game as white-on-transparent and recoloured; on the two ring states the
+    // glyph is not drawn at all, so there is no state where black-on-dark can happen.
+    //
+    // Sized a little tighter than the SVG icons: these are real logos with their own internal
+    // margins, and letting them run to the disc edge makes the wordmarks touch the rim.
+    var PNG_PREFIX = 'mfr_';
+
+    function pngGlyph(name, cell) {
+        var brand = name.slice(PNG_PREFIX.length).replace(/[^a-z0-9_]/g, '');
+        if (!brand) return '';
+        var px = Math.round(cell * 0.52);
+        // object-fit keeps a non-square logo's proportions inside the square box. The game's own
+        // are all 64x64, but a replacement dropped in by hand need not be.
+        return '<span style="display:flex;width:' + px + 'px;height:' + px + 'px">'
+             + '<img src="../img/manufacturers/' + brand + '.png" '
+             + 'style="width:100%;height:100%;object-fit:contain" alt="">'
+             + '</span>';
+    }
+
+    // A COLOUR SWATCH, NOT AN ICON: `swatch_<walls>_<trim>_<floor>`, six hex digits each (a home theme's
+    // option, client/properties.lua). Full-bleed like the circles above, so the disc's own shape crops it:
+    // the walls over the floor with the trim between, the theme panel's strip, round.
+    var SWATCH_PREFIX = 'swatch_';
+
+    function swatchGlyph(name) {
+        var parts = name.slice(SWATCH_PREFIX.length).split('_');
+        function hex(p) { return /^[0-9a-f]{6}$/i.test(p || '') ? '#' + p : null; }
+        var walls = hex(parts[0]);
+        if (!walls) return '';
+        var trim = hex(parts[1]) || walls, floor = hex(parts[2]) || walls;
+        return '<span class="swatch" style="background:linear-gradient(180deg,'
+             + walls + ' 0%,' + walls + ' 54%,' + trim + ' 54%,' + trim + ' 64%,' + floor + ' 64%,' + floor + ' 100%)"></span>';
+    }
+
+    /** The middle of the disc: an icon if the name is one, otherwise the letter itself. */
+    function renderGlyph(name, cell) {
+        if (name.indexOf(PNG_PREFIX) === 0) return pngGlyph(name, cell);
+        if (name.indexOf(SWATCH_PREFIX) === 0) return swatchGlyph(name);
+
+        var g = GLYPHS[name];
+        if (g) {
+            // FULL-BLEED ONES FILL THE DISC AND ARE CROPPED BY IT. Stretching to 100% of the
+            // parent rather than to a computed pixel size is what puts the art edge-to-edge
+            // inside the disc's border box, where `overflow: hidden` and the 50% radius crop it.
+            if (FULL_BLEED[name]) {
+                return '<span style="display:flex;width:100%;height:100%">' + g + '</span>';
+            }
+            // Sized against the CELL rather than the disc, so it tracks the same knob the letter
+            // does. Slightly smaller than the type because a padlock is blockier than a capital
+            // and reads larger at the same nominal size.
+            var px = Math.round(cell * 0.46);
+            return '<span style="display:flex;width:' + px + 'px;height:' + px + 'px">' + g + '</span>';
+        }
+        // A KEY NAME LONGER THAN A LETTER (F1, TAB, SPACE: a player's own Interact binding) is set
+        // smaller the longer it is, or the disc's rim crops it.
+        var text = name.replace(/[<&]/g, '');
+        var size = text.length <= 1 ? 1 : text.length === 2 ? 0.72 : text.length === 3 ? 0.52
+                 : text.length === 4 ? 0.42 : 0.34;
+        if (size === 1) return text;
+        return '<span style="font-size:' + size + 'em">' + text + '</span>';
+    }
+
+    // Defaults so the page is not blank before Lua's first message — useful when
+    // opening this file straight in a browser to look at the art.
+    var state = { cell: 128, cols: 6, perRow: 6, keys: ['E'] };
+
+    function render() {
+        var cell = state.cell;
+        var cols = state.cols;
+        // Columns wrap into bands of perRow, each band 3 state rows tall, so the texture stays narrow
+        // enough for every GPU. Lua samples the same layout (badgeUV in client/interact_world.lua).
+        var perRow = Math.min(state.perRow || cols, cols);
+        var bands = Math.ceil(cols / perRow);
+        var w = cell * perRow, h = cell * 3 * bands;
+
+        // The document is the texture, so its size is the atlas size.
+        document.documentElement.style.width  = w + 'px';
+        document.documentElement.style.height = h + 'px';
+        document.body.style.width  = w + 'px';
+        document.body.style.height = h + 'px';
+
+        atlas.style.width = w + 'px';
+        atlas.style.height = h + 'px';
+        atlas.style.gridTemplateColumns = 'repeat(' + perRow + ', ' + cell + 'px)';
+        atlas.style.gridTemplateRows = 'repeat(' + (3 * bands) + ', ' + cell + 'px)';
+
+        var html = '';
+        for (var b = 0; b < bands; b++)
+        for (var s = 0; s < 3; s++) {
+            for (var x = 0; x < perRow; x++) {
+                var c = b * perRow + x;
+                var key = c < cols ? state.keys[c] : undefined;
+                // A column with no key assigned stays EMPTY rather than falling
+                // back to something. Lua never points a quad at an unassigned
+                // column, and a stray glyph there would be a silent wrong answer
+                // rather than an obvious blank.
+                // The ring's white cell (see .cell.white): no disc, no glyph, white all through.
+                if (key === '__white') {
+                    html += '<div class="cell white"></div>';
+                    continue;
+                }
+                var glyph = (key === undefined) ? '' : String(key);
+                // THE GLYPH FILLS THE DISC. 0.62 of the cell, against a disc that is
+                // 0.78 of it — so the em box is about 80% of the disc's width, and
+                // the cap height lands around 60% of it. It was 0.42, which put a
+                // small letter in a mostly empty circle and meant the whole badge had
+                // to be drawn large just to be readable.
+                html += '<div class="cell s' + s + '" style="font-size:'
+                     +  Math.round(cell * 0.62) + 'px"><div class="disc">'
+                     +  renderGlyph(glyph, cell) + '</div></div>';
+            }
+        }
+        atlas.innerHTML = html;
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        // SendDuiMessage takes a JSON string; whether it arrives parsed is not
+        // worth assuming, and being wrong means a blank atlas with no error.
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d) return;
+        if (d.cell) state.cell = d.cell;
+        if (d.cols) state.cols = d.cols;
+        if (d.perRow) state.perRow = d.perRow;
+        if (d.keys) state.keys = d.keys;
+        // HOW MUCH OF A CELL THE DISC FILLS, from Lua rather than from the stylesheet below.
+        // Lua needs this number to size the quad — the quad is a whole cell, the badge is only the
+        // disc inside it — so having the CSS hold a second copy meant two numbers that agreed only
+        // until somebody edited one. Applied as a custom property so .disc reads it.
+        if (d.discFrac) {
+            document.documentElement.style.setProperty('--disc-frac', (d.discFrac * 100) + '%');
+        }
+        // THIS COPY'S THEME (see THEMES in the stylesheet): one name, letters only; and dark or not
+        // (DARK, the same).
+        if (typeof d.theme === 'string' && /^[a-z]+$/.test(d.theme)) {
+            document.body.className = (d.theme === 'classic' ? '' : 't-' + d.theme) + (d.dark === true ? ' dark' : '');
+        }
+        render();
+    });
+
+    render();
+})();
+</script>
+</body>
+</html>

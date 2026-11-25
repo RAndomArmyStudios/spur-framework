@@ -1,0 +1,231 @@
+/* ========================================
+   A HOME'S THEME — the sign's Theme (js/property-themes.js, client/property_themes.lua)
+
+   THE EMOTE MENU'S CLOTHES (emotes.css): one solid panel docked to the right edge, so the room being
+   repainted stays in view beside it — near-black with the faint blue glow in its top corner, the title
+   in the display face, the creator's cards. A colour preview like whip_autos' paints: each card is a
+   strip of the room in that look: the walls,
+   the trim, the floor, with its name and, on the one in force, "In use" (the paint list's "Fitted").
+
+   ONE SCALED BOX (.pt-scale), transformed rather than zoomed (emotes.css says why: CEF 103 does not
+   move what is clicked under `zoom`).
+
+   2022-SAFE: Chromium 103. No :has(), no nesting, no color-mix(), no container queries.
+
+   Structure (built by js/property-themes.js):
+     #property-themes      fixed full screen, .pt-open to show
+       .pt-scale           the one scaled box
+         .pt-panel         head, cards, foot
+   ======================================== */
+
+#property-themes {
+    position: fixed;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    z-index: 41;
+
+    --pt-zoom:    calc(var(--ui-scale, 1) * 1.8);
+    --pt-w:       330px;
+    --pt-pad:     26px;
+    --pt-gap:     9px;
+    --pt-display: var(--ui-font-display);
+}
+
+#property-themes.pt-open { display: block; }
+
+.pt-scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--pt-zoom));
+    height: calc(100% / var(--pt-zoom));
+    transform: scale(var(--pt-zoom));
+    transform-origin: top left;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pt-panel {
+    pointer-events: auto;
+    flex: 0 0 var(--pt-w);
+    box-sizing: border-box;
+    max-height: calc(100% - 48px);
+    margin-right: 24px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px var(--pt-pad) 18px;
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    animation: pt-in 0.35s var(--ui-ease);
+}
+
+@keyframes pt-in {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ---- head ---- */
+
+.pt-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.pt-title {
+    font-family: var(--pt-display);
+    font-size: 22px;
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+.pt-sub {
+    margin-top: 8px;
+    font-size: 9px;
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.4;
+    color: var(--ui-text-mid);
+}
+
+.pt-x {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui-border);
+    border-radius: 50%;
+    background: var(--ui-surface-hover);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+.pt-x svg { width: 9px; height: 9px; }
+.pt-x:hover { background: var(--ui-slot-bg-hover); color: var(--ui-text); }
+
+/* ---- the cards: two across, the creator's ----
+   FLEX-WRAP, NOT CSS GRID (emotes.css: CEF's grid in a scaled box answers the mouse on one column only). */
+
+.pt-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--pt-gap);
+    padding: 1px 4px 1px 1px;
+}
+
+.pt-card {
+    position: relative;
+    flex: 0 0 calc((100% - var(--pt-gap)) / 2);
+    box-sizing: border-box;
+    min-width: 0;
+    margin: 0;
+    padding: 6px 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-align: left;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    border-radius: var(--ui-radius-row);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    box-shadow: var(--ui-slot-lift);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease);
+}
+.pt-card:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+/* The one chosen (the mouse, the keys or the pad on it): the creator's — blue inside a white ring. */
+.pt-card.pt-focus,
+.pt-card.pt-focus:hover {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-ring);
+    box-shadow: 0 0 0 1px var(--ui-ring), var(--ui-slot-lift);
+}
+
+/* The colour preview: the room in this look, top to bottom — walls, the trim along their foot, the
+   floor. Three blocks of colour, each a fill of its own (the Flat-Glass Rule is about surfaces; these
+   are the paint chips). The colours come from the theme, so they are set by the page, not here. */
+.pt-room {
+    display: flex;
+    flex-direction: column;
+    /* A width of its own: Chromium 103 does not stretch a flex child inside a <button>, and it was 0 wide. */
+    width: 100%;
+    height: 62px;
+    border-radius: var(--ui-radius-sm);
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.pt-walls { flex: 1 1 auto; }
+.pt-trim  { flex: 0 0 6px; }
+.pt-floor { flex: 0 0 17px; }
+
+.pt-name-row {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 0 2px;
+}
+.pt-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+}
+/* "In use": the paint list's "Fitted" pill, white with dark ink. "Applying…": dim, while the server answers. */
+.pt-tag {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: var(--ui-radius-pill);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+.pt-tag.pt-busy { background: var(--ui-surface-hover); color: var(--ui-text-mid); }
+
+/* ---- the foot: the white pill, and a dark Close ---- */
+
+.pt-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+.pt-btn {
+    flex: 1 1 0;
+    padding: 9px 12px;
+    border-radius: var(--ui-radius-row);
+    font-family: var(--ui-font);
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), opacity 0.1s var(--ui-ease);
+}
+.pt-btn-main { background: var(--ui-pill); color: var(--ui-pill-ink); border: 1px solid transparent; }
+.pt-btn-main:hover { background: #fff; }
+.pt-btn-quiet { background: var(--ui-surface-hover); color: var(--ui-text); border: 1px solid var(--ui-border); }
+.pt-btn-quiet:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-border-hover); }
+.pt-btn[disabled], .pt-btn[disabled]:hover { opacity: 0.4; cursor: default; background: var(--ui-pill); }
+.pt-btn-quiet[disabled], .pt-btn-quiet[disabled]:hover { background: var(--ui-surface-hover); }

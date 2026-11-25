@@ -1,0 +1,128 @@
+/* ========================================
+   CURTAIN — css/curtain.css
+
+   A full-screen blackout the SCRIPT controls, as opposed to GTA's own screen
+   fade. It exists because the character screen travels between hero shots and
+   the journey has to be hidden: the world is streamed, a ped is built and
+   posed, and the camera is thrown across the map, none of which should ever be
+   on screen. Doing it here rather than with DoScreenFadeOut means the effect is
+   ours — this file is the only place a different look would be authored.
+
+   It is also why the handshake works. A CSS transition tells us when it has
+   finished, so Lua can wait for the picture to genuinely be gone before it
+   starts moving things, instead of guessing at a duration.
+
+   Deliberately generic: nothing here knows about the character screen, and the
+   creator could use it tomorrow.
+
+   2022-safe CSS only (CEF is Chromium 103).
+   ======================================== */
+
+#curtain {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+
+    /* NEVER TAKES CLICKS. NUI focus is Lua's to grant, and a full-screen layer
+       that swallowed input would silently break every screen underneath it the
+       moment it was left covered. */
+    pointer-events: none;
+
+    /* Above the panels it hides — the character screen sits at 2 and the
+       creator at 100 — and above the inventory's 9000, so it can cover
+       anything that ever needs covering. */
+    z-index: 9500;
+
+    /* DURATION IS NOT DECIDED HERE. Every call carries its own, from
+       Config.CharSelect and Config.Creator, and they differ by an order of
+       magnitude on purpose: travelling between hero shots is a blink of
+       ~160ms because it is the screen answering a click, while committing to
+       a character or arriving in the world runs 500-900ms because those are
+       events worth the weight. The value below is only a fallback.
+
+       The curve has to work across that whole range, which is why both ends
+       are eased rather than linear: the black arrives softly instead of
+       slamming on and releases softly instead of snapping off. An earlier
+       version was linear on the theory that easing a blackout looks like a
+       mistake — true of a heavy ease-out at half a second, where the tail
+       becomes a visible dwell, and false at a sixth of one, where linear is
+       the thing that reads as a cut. This curve is gentle enough at both ends
+       to avoid either.
+
+       Uncovering uses this; covering overrides it below. */
+    transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The timing function is read from the state being transitioned TO, so a curve
+   declared here applies on the way down and the one above applies on the way
+   back up. Slightly more front-loaded than the lift: the screen commits to
+   black promptly and settles into it, because this is the direction somebody
+   is waiting on. */
+#curtain.covered {
+    opacity: 1;
+    transition-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+/* ========================================
+   THE LOGO OVER THE BLACK — #loadLogo
+
+   whip's logo in full, bottom right, while the screen is black for a load: the landing page's
+   white-on-black look (css/landing.css), its I's light run by js/logo-light.js. js/curtain.js
+   builds it and shows it (.shown) for as long as client/curtain.lua says the load lasts — longer
+   than the curtain element itself, which the long loads lift part way through.
+   ======================================== */
+
+#loadLogo {
+    --ld-letter: #fff;
+    --ld-ring:   #000;     /* the black ring that sets a lit circle apart from the white letter */
+    --ld-lit:    #fff;
+    --ld-hole:   #000;     /* an unlit circle: a black hole in the letter */
+    --ld-icon:   #000;     /* the interaction icon on a lit circle */
+    --ld-fade:   0.55s;    /* a lit circle fading as the light moves on — the loading screen's */
+
+    position: fixed;
+    right: 3.6vh;
+    bottom: 3.6vh;
+    /* A corner mark, not a title: under half the landing page's logo, and big enough that the
+       light's icons still read (345 px wide at 1080p). */
+    width: min(18vw, 32vh);
+
+    /* Above the curtain it sits on, and like it, never takes a click. */
+    z-index: 9600;
+    pointer-events: none;
+
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    /* For the moment the black is still falling, and the picture shows behind it. */
+    filter: drop-shadow(0 0.3vh 1.4vh rgba(0, 0, 0, 0.5));
+}
+
+#loadLogo.shown {
+    opacity: 1;
+    transition-duration: 0.25s;
+}
+
+#loadLogo svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+#loadLogo .ld-letters { fill: var(--ld-letter); }
+#loadLogo .ld-ring    { fill: var(--ld-ring); }
+#loadLogo .ld-disc    { fill: var(--ld-lit); }
+#loadLogo .ld-hole    { fill: var(--ld-hole); }
+#loadLogo .ld-icon    { color: var(--ld-icon); }   /* the icons draw in currentColor */
+
+/* The I's circles: a lit one comes on at once, and fades when the light moves on. */
+#loadLogo .ld-dot .ld-light {
+    opacity: 0;
+    transition: opacity var(--ld-fade) cubic-bezier(0.25, 0.6, 0.35, 1);
+}
+
+#loadLogo .ld-dot.lit .ld-light {
+    opacity: 1;
+    transition: none;
+}

@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "kind": "system",
+  "name": "Speed Camera",
+  "description": "A line across a road: a car crossing it faster than 80 km/h is fined $1 (once every 30 seconds per driver), and the driver is told how fast they were going.",
+  "settings": {},
+  "vars": [],
+  "nodes": [
+    { "id": "line",  "type": "when.lineCrossed", "v": 1, "x": 0,    "y": 0,   "props": { "a": "spot:a", "b": "spot:b" } },
+    { "id": "fast",  "type": "math.formula",     "v": 1, "x": 260,  "y": 120, "props": { "expr": "speed > limit" }, "values": { "limit": 80 } },
+    { "id": "check", "type": "flow.branch",      "v": 1, "x": 520,  "y": 0,   "props": {} },
+    { "id": "once",  "type": "flow.cooldown",    "v": 1, "x": 760,  "y": 0,   "props": { "scope": "player" }, "values": { "seconds": 30 } },
+    { "id": "fine",  "type": "money.fine",       "v": 1, "x": 1000, "y": 0,   "props": { "method": "auto" }, "values": { "amount": 1, "reason": "Speeding (speed camera)" } },
+    { "id": "kmh",   "type": "text.number",      "v": 1, "x": 260,  "y": 300, "props": {}, "values": { "places": 0, "unit": "km/h" } },
+    { "id": "said",  "type": "text.join",        "v": 1, "x": 520,  "y": 300, "props": {}, "values": { "a": "Speed camera: " } },
+    { "id": "fined", "type": "text.join",        "v": 1, "x": 760,  "y": 300, "props": {}, "values": { "b": " in an 80 zone. You were fined $1." } },
+    { "id": "broke", "type": "text.join",        "v": 1, "x": 760,  "y": 420, "props": {}, "values": { "b": " in an 80 zone. You could not pay the $1 fine." } },
+    { "id": "tell",  "type": "player.notify",    "v": 1, "x": 1260, "y": 0,   "props": { "kind": "warning" } },
+    { "id": "tell2", "type": "player.notify",    "v": 1, "x": 1260, "y": 160, "props": { "kind": "error" } }
+  ],
+  "links": [
+    { "id": "e1", "from": { "node": "line",  "pin": "out" },     "to": { "node": "check", "pin": "in" } },
+    { "id": "e2", "from": { "node": "check", "pin": "yes" },     "to": { "node": "once",  "pin": "in" } },
+    { "id": "e3", "from": { "node": "once",  "pin": "ready" },   "to": { "node": "fine",  "pin": "in" } },
+    { "id": "e4", "from": { "node": "fine",  "pin": "paid" },    "to": { "node": "tell",  "pin": "in" } },
+    { "id": "e5", "from": { "node": "fine",  "pin": "cantPay" }, "to": { "node": "tell2", "pin": "in" } },
+    { "id": "v1", "from": { "node": "line",  "pin": "speed" },   "to": { "node": "fast",  "pin": "speed" } },
+    { "id": "v2", "from": { "node": "fast",  "pin": "result" },  "to": { "node": "check", "pin": "condition" } },
+    { "id": "v3", "from": { "node": "line",  "pin": "speed" },   "to": { "node": "kmh",   "pin": "value" } },
+    { "id": "v4", "from": { "node": "kmh",   "pin": "result" },  "to": { "node": "said",  "pin": "b" } },
+    { "id": "v5", "from": { "node": "said",  "pin": "result" },  "to": { "node": "fined", "pin": "a" } },
+    { "id": "v6", "from": { "node": "said",  "pin": "result" },  "to": { "node": "broke", "pin": "a" } },
+    { "id": "v7", "from": { "node": "fined", "pin": "result" },  "to": { "node": "tell",  "pin": "text" } },
+    { "id": "v8", "from": { "node": "broke", "pin": "result" },  "to": { "node": "tell2", "pin": "text" } },
+    { "id": "v9", "from": { "node": "line",  "pin": "player" },  "to": { "node": "tell",  "pin": "player" } },
+    { "id": "v10", "from": { "node": "line", "pin": "player" },  "to": { "node": "tell2", "pin": "player" } }
+  ]
+}

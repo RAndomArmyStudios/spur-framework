@@ -1,0 +1,335 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>world marks atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE WORLD MARKS ATLAS — the world builder's marks, as a texture.
+
+   Same rules as badge.html and label.html: this document IS a texture, rendered offscreen by
+   CreateDui and sampled by DrawTexturedPoly in client/world_marks.lua. Transparent background,
+   fixed pixel size, no --ui-scale: apparent size is the quad's size in metres.
+
+   THE SAME FAMILY AS THE 3D PROMPTS: a disc with the hard black edge that reads on any wall, the
+   kind's glyph in it (an item spot shows the item's picture), and beside it the name and what it
+   is, in the prompts' label type. A stem and a ring on the ground are drawn from the parts row.
+
+   THE GRID, in cells of `cell` px (Lua sends every number; change one side, change both):
+
+       rows 0..slots-1   one per mark close enough to be named:
+                           [disc] [name and detail, `text` px wide] [the disc, selected]
+       row slots         each kind's disc, for a mark too far off to be named
+       row slots+1       the same, selected
+       row slots+2       the parts: the ground ring, the ring selected, the stem
+
+   A SLOT IS REPAINTED ONLY WHEN WHAT IT SHOWS CHANGES (a message per change, never per frame), and
+   Lua waits a moment before drawing a slot it has just repainted, so a mark never shows the last
+   one's name.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+#atlas { position: relative; }
+
+.cell {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* THE DISC. 78% of its cell, the badge's own fraction (BADGE_DISC_FRAC): the rest is the margin
+   every shadow below has to fit in, or it bleeds into the next cell. */
+.disc {
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #fff;
+    background: rgba(10, 12, 18, 0.62);
+    border: 6px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.9),
+                inset 0 0 0 2px rgba(0, 0, 0, 0.55),
+                0 0 8px rgba(0, 0, 0, 0.85);
+}
+.disc svg { width: 100%; height: 100%; display: block; }
+.disc .glyph { display: flex; width: 46%; height: 46%; }
+.disc .pic { width: 74%; height: 74%; object-fit: contain; }
+.disc .key { font-weight: 700; line-height: 1; }
+
+/* SELECTED: filled white with the glyph dark, as a focused prompt is, and a white halo past the black
+   edge. */
+.sel .disc {
+    background: #fff;
+    border-color: #fff;
+    color: rgb(10, 12, 18);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.9),
+                0 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* A PROMPT A RUN PUTS UP, seen from further than its own range: the prompt's idle ring, as the
+   player will first see it — dimmer, and empty. Selected, it fills as the focused prompt does. */
+.ring .disc {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(10, 12, 18, 0.55);
+    color: transparent;
+}
+.ring .disc .pic { display: none; }
+.sel.ring .disc { border-color: #fff; background: #fff; color: rgb(10, 12, 18); }
+
+/* THE WORDS: the label atlas's type. A hard black outline drawn as eight offset copies (see
+   label.html for why not -webkit-text-stroke), then a soft drop. Left-aligned, the rest of the cell
+   transparent: Lua cannot ask how wide a string rendered, so the quad is the whole cell. */
+.text {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0 10px;
+    gap: 2px;
+    overflow: hidden;
+}
+.text span {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    color: #fff;
+}
+.text .name {
+    letter-spacing: 0.5px;
+    text-shadow:
+        -3px -3px 0 #000,  0 -3px 0 #000,  3px -3px 0 #000,
+        -3px  0   0 #000,                  3px  0   0 #000,
+        -3px  3px 0 #000,  0  3px 0 #000,  3px  3px 0 #000,
+         0 4px 14px rgba(0, 0, 0, 0.9);
+}
+.text .detail {
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.86);
+    text-shadow:
+        -2px -2px 0 #000,  0 -2px 0 #000,  2px -2px 0 #000,
+        -2px  0   0 #000,                  2px  0   0 #000,
+        -2px  2px 0 #000,  0  2px 0 #000,  2px  2px 0 #000,
+         0 3px 10px rgba(0, 0, 0, 0.9);
+}
+.text .detail:empty { display: none; }
+
+/* THE RING ON THE GROUND, at the exact spot: white with black edges and a faint fill. Selected, it
+   is heavier and doubled by a halo. Drawn flat by Lua, so the circle here is a circle on the floor. */
+.groundring {
+    width: 88%;
+    height: 88%;
+    border-radius: 50%;
+    border: 6px solid #fff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.85),
+                inset 0 0 0 3px rgba(0, 0, 0, 0.6);
+}
+.sel .groundring {
+    width: 76%;
+    height: 76%;
+    border-width: 8px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.85),
+                0 0 0 12px rgba(255, 255, 255, 0.24);
+}
+
+/* THE STEM: white with a black edge each side, the cell's full height. Lua samples only its width. */
+.stem {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #fff;
+    border-left: 4px solid rgba(0, 0, 0, 0.9);
+    border-right: 4px solid rgba(0, 0, 0, 0.9);
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+
+<!-- The prompts' icons (whip's shared table), relative to this file: nui://spur_core/html/js/glyphs.js. -->
+<script src="../js/glyphs.js"></script>
+<!-- Which media pack holds each picture: the index, then its asking (whipAssetUrl). -->
+<script src="../js/assets-index.js"></script>
+<script src="../js/assets.js"></script>
+<script>
+(function () {
+    var atlas = document.getElementById('atlas');
+    var SHARED = window.WhipGlyphs || { glyphs: {} };
+
+    // The kinds' own glyphs where the shared table has none: a container is a chest.
+    var OWN = {
+        chest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+             + 'stroke-linejoin="round"><path d="M3.5 9h17v10h-17Z"/><path d="M3.5 9a8.5 4.5 0 0 1 17 0"/>'
+             + '<path d="M3.5 13h17"/><path d="M12 12v3"/></svg>',
+    };
+
+    // Lua's numbers (the setup message); these only so the page is not blank opened in a browser.
+    var state = { cell: 128, text: 640, slots: 12, kinds: [] };
+    var slots = [];
+
+    /** An icon by name, or a key's letter (a prompt with no icon shows its key, as the focused prompt does). */
+    function glyphHtml(name) {
+        if (!name) return '';
+        var g = OWN[name] || SHARED.glyphs[name];
+        if (g) return '<span class="glyph">' + g + '</span>';
+        var text = String(name).replace(/[<&"]/g, '');
+        if (text.length > 3) return '';
+        return '<span class="key" style="font-size:' + Math.round(state.cell * (text.length === 1 ? 0.42 : 0.28)) + 'px">'
+             + text + '</span>';
+    }
+
+    // Pictures are relative to html/, as the main UI's are; a full URL (nui://… or https://cfx-nui-…)
+    // is used as it is. The same rule as preview.html.
+    function resolve(path) {
+        var p = String(path).replace(/^\/+/, '');
+        if (/^[a-z][a-z0-9+.-]*:\/\//i.test(p)) return p;
+        if (/^img\/(vehicles|props|peds)\//.test(p)) return whipAssetUrl(p) || '';
+        return '../' + p;
+    }
+
+    /** A disc: the picture when there is one (a glyph standing in if it will not load), else the glyph. */
+    function discHtml(glyph, pic) {
+        var inner = glyphHtml(glyph);
+        if (pic) {
+            inner = '<img class="pic" alt="" src="' + resolve(pic).replace(/"/g, '&quot;') + '"'
+                  + ' onerror="this.parentNode.innerHTML=this.parentNode.getAttribute(\'data-fallback\')">';
+        }
+        return '<div class="disc" data-fallback="' + glyphHtml(glyph).replace(/"/g, '&quot;') + '">' + inner + '</div>';
+    }
+
+    function place(el, x, y, w, h) {
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+        el.style.width = w + 'px';
+        el.style.height = h + 'px';
+    }
+
+    function cell(cls, x, y, w, h, html) {
+        var el = document.createElement('div');
+        el.className = 'cell ' + cls;
+        place(el, x, y, w, h);
+        el.innerHTML = html || '';
+        atlas.appendChild(el);
+        return el;
+    }
+
+    /** A slot's words, smaller when the name is too long for the cell (never under 70%: past that the
+     *  ellipsis is the honest answer). */
+    function fitName(span, size) {
+        var floor = Math.round(size * 0.7);
+        span.style.fontSize = size + 'px';
+        while (size > floor && span.scrollWidth > span.clientWidth) {
+            size -= 2;
+            span.style.fontSize = size + 'px';
+        }
+    }
+
+    function paintSlot(i) {
+        var c = state.cell, s = slots[i];
+        var row = document.getElementById('slot' + i);
+        if (!row || !s) return;
+        var ring = s.ring ? ' ring' : '';
+        row.children[0].className = 'cell' + ring;
+        row.children[0].innerHTML = s.on ? discHtml(s.glyph, s.pic) : '';
+        row.children[2].className = 'cell sel' + ring;
+        row.children[2].innerHTML = s.on ? discHtml(s.glyph, s.pic) : '';
+        var name = row.children[1].children[0], detail = row.children[1].children[1];
+        // textContent: the words come from a scenario's own names.
+        name.textContent = s.on ? (s.name || '') : '';
+        detail.textContent = s.on ? (s.detail || '') : '';
+        detail.style.fontSize = Math.round(c * 0.27) + 'px';
+        fitName(name, Math.round(c * 0.4));
+    }
+
+    function build() {
+        var c = state.cell, t = state.text, n = state.slots;
+        var w = c * 2 + t, h = c * (n + 3);
+        document.documentElement.style.width = w + 'px';
+        document.documentElement.style.height = h + 'px';
+        document.body.style.width = w + 'px';
+        document.body.style.height = h + 'px';
+        atlas.style.width = w + 'px';
+        atlas.style.height = h + 'px';
+        atlas.innerHTML = '';
+
+        for (var i = 0; i < n; i++) {
+            var row = document.createElement('div');
+            row.id = 'slot' + i;
+            row.style.position = 'absolute';
+            place(row, 0, i * c, w, c);
+            row.innerHTML = '<div class="cell"></div><div class="cell text"><span class="name"></span>'
+                + '<span class="detail"></span></div><div class="cell sel"></div>';
+            place(row.children[0], 0, 0, c, c);
+            place(row.children[1], c, 0, t, c);
+            place(row.children[2], c + t, 0, c, c);
+            atlas.appendChild(row);
+            paintSlot(i);
+        }
+
+        // Each kind's disc, plain then selected. 'prompt' is a prompt's idle ring, empty.
+        for (var k = 0; k < state.kinds.length; k++) {
+            var kind = state.kinds[k];
+            var ring = kind.ring ? ' ring' : '';
+            cell(ring.trim(), k * c, n * c, c, c, discHtml(kind.glyph, null));
+            cell('sel' + ring, k * c, (n + 1) * c, c, c, discHtml(kind.glyph, null));
+        }
+
+        // The parts: the ground ring, the ring selected, the stem (16px, in the middle of its cell).
+        cell('', 0, (n + 2) * c, c, c, '<div class="groundring"></div>');
+        cell('sel', c, (n + 2) * c, c, c, '<div class="groundring"></div>');
+        var stem = document.createElement('div');
+        stem.className = 'stem';
+        stem.style.left = (2 * c + c / 2 - 8) + 'px';
+        stem.style.width = '16px';
+        stem.style.top = ((n + 2) * c) + 'px';
+        stem.style.height = c + 'px';
+        stem.style.bottom = 'auto';
+        atlas.appendChild(stem);
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        // SendDuiMessage takes a JSON string; whether it arrives parsed is not worth assuming.
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d) return;
+        if (d.setup) {
+            if (d.setup.cell) state.cell = d.setup.cell;
+            if (d.setup.text) state.text = d.setup.text;
+            if (d.setup.slots) state.slots = d.setup.slots;
+            if (d.setup.kinds) state.kinds = d.setup.kinds;
+            build();
+            return;
+        }
+        if (typeof d.slot === 'number' && d.slot >= 0 && d.slot < state.slots) {
+            slots[d.slot] = { on: d.on !== false, name: d.name, detail: d.detail, glyph: d.glyph, pic: d.pic, ring: d.ring === true };
+            paintSlot(d.slot);
+        }
+    });
+
+    build();
+
+    // Slots painted before the font arrived were fitted in the fallback face: fitted again once it has.
+    if (document.fonts && document.fonts.load) {
+        document.fonts.load('700 51px "Barlow"').then(function () {
+            for (var i = 0; i < state.slots; i++) paintSlot(i);
+        }, function () {});
+    }
+})();
+</script>
+</body>
+</html>

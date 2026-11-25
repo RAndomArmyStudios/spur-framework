@@ -1,0 +1,374 @@
+/* ========================================
+   MONITOR — the /whip panel's Monitor section (html/js/event-monitor.js)
+   One screen: the glance (four tiles), the feed, the rail (who, what, Sentinel), and the two
+   views in depth in the feed's place. The house's tokens and pieces (wp-stat, wp-mark, wp-avatar, wp-toggle,
+   wp-search, wp-tabs); this file lays them out and draws the feed's rows.
+   CEF is Chromium 103: no :has(), no nesting, no color-mix().
+   ======================================== */
+
+.mon {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: var(--ui-sp-5);
+    padding: var(--ui-sp-5) var(--ui-sp-7) var(--ui-sp-6);
+}
+
+/* ---- The glance ---- */
+
+.mon-tiles { margin: 0; flex: 0 0 auto; }
+
+.mon-tile {
+    text-align: left;
+    font: inherit;
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: border-color 0.15s var(--ui-ease), background 0.15s var(--ui-ease);
+}
+.mon-tile:hover { border-color: var(--ui-border-hover); background: var(--ui-surface-medium); }
+.mon-tile .wp-stat-value { font-size: var(--ui-fs-xl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mon-tile .wp-stat-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mon-tile-alert { border-color: var(--ui-error); box-shadow: 0 0 0 1px var(--ui-error); }
+
+.mon-tile-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--ui-sp-4); min-width: 0; }
+
+/* The last ten minutes, a bar a minute; a problem's share red at its foot. */
+.mon-spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    flex: 0 0 120px;
+    height: 30px;
+}
+.mon-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 3px;
+    border-radius: 2px 2px 0 0;
+    background: var(--ui-accent-medium);
+    overflow: hidden;
+}
+.mon-bar-empty { background: var(--ui-surface-medium); }
+.mon-bar-prob { width: 100%; background: var(--ui-error); }
+
+/* ---- Feed and rail ---- */
+
+.mon-body { flex: 1; min-height: 0; display: flex; gap: var(--ui-sp-5); }
+.mon-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.mon-rail {
+    flex: 0 0 360px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+    overflow-y: auto;
+}
+
+.mon-card {
+    background: var(--ui-slot-bg-filled);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    min-width: 0;
+}
+.mon-card-alert { border-color: var(--ui-error); }
+.mon-view { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+.mon-card-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+}
+.mon-card-title { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.mon-card-sub { font-size: var(--ui-fs-xs); color: var(--ui-text-label); }
+.mon-link { margin-left: auto; }
+.mon-search { flex: 0 1 300px; min-width: 200px; }
+.mon-search .wp-input { font-size: var(--ui-fs-sm); padding-top: var(--ui-sp-3); padding-bottom: var(--ui-sp-3); }
+
+/* The feed's head carries its two choices smaller than a section's tabs, so the head stays one line. */
+.mon-card-head .wp-tabs { padding: 0; border-bottom: none; gap: var(--ui-sp-2); }
+.mon-card-head .wp-tab { font-size: var(--ui-fs-sm); padding: var(--ui-sp-2) var(--ui-sp-5); }
+
+/* Under the head: the search, then what narrows the feed and how much it shows. */
+.mon-facets-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+}
+.mon-facets-bar .mon-facets { flex: 1; min-width: 0; padding: 0; min-height: 0; }
+
+/* Problems' count on its tab. */
+.mon-tab-count {
+    margin-left: var(--ui-sp-2);
+    padding: 0 6px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-error);
+    color: var(--ui-pill-ink);   /* dark on the light red: white on it is 2.8:1 */
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* What narrows the feed, and how much it shows. */
+.mon-facets {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-3);
+    padding: var(--ui-sp-3) var(--ui-sp-5);
+    min-height: 34px;
+    box-sizing: border-box;
+}
+.mon-facet {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-2);
+    padding: 2px 4px 2px 10px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-accent-subtle);
+    border: 1px solid var(--ui-accent-medium);
+    color: var(--ui-accent);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+}
+.mon-facet-x {
+    background: none;
+    border: none;
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-md);
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.mon-facet-x:hover { color: var(--ui-error); }
+.mon-count { font-size: var(--ui-fs-xs); color: var(--ui-text-label); font-variant-numeric: tabular-nums; margin-left: auto; }
+
+/* ---- A row: when, how it went, what, who, the outcome ---- */
+
+.mon-row {
+    display: grid;
+    grid-template-columns: 62px 18px minmax(0, 1.25fr) minmax(140px, 0.75fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--ui-sp-4);
+    padding: 7px var(--ui-sp-5);
+    border-bottom: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-sm);
+}
+.mon-cols {
+    padding-top: var(--ui-sp-2);
+    padding-bottom: var(--ui-sp-2);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+}
+
+.mon-entry { cursor: pointer; transition: background 0.1s ease; }
+.mon-entry:hover { background: var(--ui-surface-medium); }
+.mon-entry .wp-mark { width: 15px; height: 15px; flex-basis: 15px; }
+.mon-ok .wp-mark { opacity: 0.4; }
+
+/* A problem stands out on its edge; one that broke, or a tamper, on its ground too. */
+.mon-refused { box-shadow: inset 3px 0 0 var(--ui-warning); }
+.mon-error   { box-shadow: inset 3px 0 0 var(--ui-error); background: var(--ui-error-light); }
+.mon-tamper  { box-shadow: inset 3px 0 0 var(--ui-error); background: var(--ui-warning-light); }
+.mon-error:hover, .mon-tamper:hover { background: var(--ui-surface-medium); }
+
+.mon-time {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-dim);
+}
+
+.mon-what { display: flex; align-items: center; gap: var(--ui-sp-3); min-width: 0; }
+.mon-title {
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.mon-what .mon-title { cursor: pointer; }
+.mon-what .mon-title:hover { color: var(--ui-accent); }
+.mon-times {
+    flex: 0 0 auto;
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-surface-hover);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+}
+.mon-res {
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-surface-medium);
+    color: var(--ui-text-dim);
+    font-size: var(--ui-fs-xs);
+    white-space: nowrap;
+}
+
+.mon-who { display: flex; align-items: center; gap: var(--ui-sp-3); min-width: 0; cursor: pointer; }
+.mon-who:hover .mon-name { color: var(--ui-accent); }
+.mon-av { width: 22px; height: 22px; font-size: var(--ui-fs-xs); }
+.mon-name { color: var(--ui-text-mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mon-id, .mon-dim { color: var(--ui-text-dim); font-variant-numeric: tabular-nums; }
+.mon-id { font-family: var(--ui-mono); font-size: var(--ui-fs-xs); flex: 0 0 auto; }
+
+.mon-out {
+    color: var(--ui-text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+.mon-refused .mon-out { color: var(--ui-warning); }
+.mon-error .mon-out, .mon-tamper .mon-out { color: var(--ui-error); font-weight: var(--ui-fw-semibold); }
+
+/* Its detail, on a click: across the whole row. */
+.mon-detail {
+    display: none;
+    grid-column: 1 / -1;
+    margin: var(--ui-sp-3) 0 var(--ui-sp-2) 80px;
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-raised);
+    cursor: default;
+}
+.mon-expanded { background: var(--ui-surface-subtle); }
+.mon-expanded .mon-detail { display: block; }
+.mon-detail-line { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: var(--ui-sp-4); padding: 2px 0; }
+.mon-detail-k { color: var(--ui-text-label); font-size: var(--ui-fs-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.mon-detail-v { color: var(--ui-text); word-break: break-all; font-family: var(--ui-mono); font-size: var(--ui-fs-xs); }
+.mon-detail-acts { display: flex; gap: var(--ui-sp-3); margin-top: var(--ui-sp-4); }
+
+.mon-list-wrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.mon-list { flex: 1; min-height: 0; overflow-y: auto; }
+.mon-empty { padding: var(--ui-sp-7); }
+
+/* "N new ↑" while scrolled down: the feed never moves under the reader. */
+.mon-new-chip {
+    position: absolute;
+    top: var(--ui-sp-4);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--ui-sp-2) var(--ui-sp-6);
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-accent-subtle);
+    border: 1px solid var(--ui-accent-medium);
+    color: var(--ui-accent);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    box-shadow: var(--ui-shadow);
+    z-index: 2;
+}
+
+/* ---- The rail ---- */
+
+.mon-rail-body { padding: var(--ui-sp-2) var(--ui-sp-3) var(--ui-sp-3); }
+.mon-rail-empty { padding: var(--ui-sp-4) var(--ui-sp-3); font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+
+.mon-line {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    width: 100%;
+    padding: 5px var(--ui-sp-3);
+    background: none;
+    border: none;
+    border-radius: var(--ui-radius-sm);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.mon-line:hover { background: var(--ui-surface-medium); }
+.mon-line.active { background: var(--ui-accent-subtle); box-shadow: inset 0 0 0 1px var(--ui-accent-medium); }
+.mon-line-words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mon-line-head { display: flex; align-items: baseline; gap: var(--ui-sp-3); min-width: 0; }
+.mon-line .mon-av { width: 24px; height: 24px; }
+.mon-line-title {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mon-line-sub { font-size: var(--ui-fs-xs); color: var(--ui-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mon-line-bar { height: 3px; margin-top: 3px; border-radius: 2px; background: var(--ui-surface-medium); overflow: hidden; }
+.mon-line-fill { display: block; height: 100%; background: var(--ui-accent); border-radius: 2px; }
+/* Its count at the edge, its problems before it, on one line: a line stays one row tall. */
+.mon-line-nums { display: flex; flex-direction: row-reverse; align-items: baseline; gap: var(--ui-sp-3); flex: 0 0 auto; }
+.mon-line-n {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+.mon-line-p { font-size: var(--ui-fs-xs); color: var(--ui-warning); white-space: nowrap; }
+
+.mon-sn-state { display: flex; align-items: center; gap: var(--ui-sp-4); padding: var(--ui-sp-3) var(--ui-sp-3) var(--ui-sp-4); }
+.mon-sn-state .wp-mark { width: 20px; height: 20px; flex-basis: 20px; }
+.mon-sn-last { padding: var(--ui-sp-3); font-size: var(--ui-fs-xs); border-top: 1px solid var(--ui-border); margin-top: var(--ui-sp-2); }
+.mon-sn-key { font-family: var(--ui-mono); font-size: var(--ui-fs-xs); color: var(--ui-text); }
+
+/* ---- In depth: every event, Sentinel's keys ---- */
+
+.mon-table-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--ui-sp-5) var(--ui-sp-5); }
+.mon-table { width: 100%; border-collapse: collapse; }
+.mon-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--ui-surface-solid);
+    text-align: left;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+    padding: var(--ui-sp-4) var(--ui-sp-4);
+    border-bottom: 1px solid var(--ui-border);
+    white-space: nowrap;
+}
+.mon-th-sort { cursor: pointer; }
+.mon-th-sort:hover { color: var(--ui-text-mid); }
+.mon-th-active { color: var(--ui-accent); }
+.mon-table td {
+    padding: var(--ui-sp-3) var(--ui-sp-4);
+    border-bottom: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 380px;
+}
+.mon-table-row { cursor: pointer; transition: background 0.1s ease; }
+.mon-table-row:hover { background: var(--ui-surface-medium); }
+.mon-table .mon-num { text-align: right; font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+.mon-hot { color: var(--ui-error); font-weight: var(--ui-fw-bold); }
+.mon-key { font-family: var(--ui-mono); font-size: var(--ui-fs-xs); color: var(--ui-text-dim); overflow: hidden; text-overflow: ellipsis; }
+.mon-watch { display: flex; align-items: center; gap: var(--ui-sp-2); }
+.mon-watch .wp-mark { width: 15px; height: 15px; flex-basis: 15px; }
+.mon-table-wrap > .wp-section-title { margin-top: var(--ui-sp-6); }
+.mon-sn-row { cursor: default; }
+.mon-got { color: var(--ui-error); font-family: var(--ui-mono); }
+.mon-exp { color: var(--ui-success); font-family: var(--ui-mono); }

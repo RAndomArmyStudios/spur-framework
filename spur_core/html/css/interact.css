@@ -1,0 +1,222 @@
+/* ============================================================================
+   3D INTERACTION INDICATORS — THE NUI RENDERER'S HALF
+
+   The circle you see at range, and the [E] prompt you get up close.
+
+   THERE ARE TWO RENDERERS NOW, and this styles one of them. client/interact.lua
+   decides what should be on screen; client/interact_nui.lua projects those points
+   and drives the markup below, and client/interact_world.lua draws the same
+   prompts as textured polygons in the world instead, using its own art in
+   html/interact3d/. Config.InteractRenderer picks between them.
+
+   Nothing here applies under the world renderer — no divs are involved in it at
+   all. Restyling this file changes the 'nui' look only; its counterpart is
+   html/interact3d/badge.html.
+
+   THIS IS WHERE THE HOUSE STYLE STARTED. inventory.css says its slot is "the .interact-key
+   square" — a bordered square at an 8px radius. The slot then moved on, and this file did not: it went to
+   a transparent fill behind a 2.8px outline while the key here kept a 2px border over a 0.12
+   tint, and the box was still a flat rgba(0,0,0,0.55) with no border and no shadow while every
+   other surface in whip had become the translucent ground with a hairline on it.
+
+   So this is a catch-up rather than a redesign. Same shapes, same three states, same behaviour —
+   drawn the way the things it inspired are now drawn, and a size up, because at 1080p the prompt
+   was small next to the panels it sits beside.
+   ============================================================================ */
+
+#interact-layer {
+    /* Local token block, scoped to the layer, the way object-viewer.css does it.
+       Surface and radius are restated; text, accent, font and ease come from the shared set. */
+    --it-surface: var(--ui-surface);
+    --it-border: var(--ui-border);
+    --it-shadow: var(--ui-shadow);
+    --it-radius: var(--ui-radius-panel);
+
+    /* One duration for the whole indicator.
+       client/interact.js holds this same figure in milliseconds (FADE_DURATION) because it has
+       to keep an element alive until the fade finishes. The two move together or the box is
+       destroyed mid-transition. */
+    --it-fade: 0.25s;
+
+    /* Dark rim for anything drawn against the world. A white stroke over a bright sky or a pale
+       wall disappears entirely without it, and the circle here never had it. */
+    --it-rim: 0 0 3px rgba(0, 0, 0, 0.9), inset 0 0 3px rgba(0, 0, 0, 0.9);
+
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 500;
+    display: none;
+    overflow: hidden;
+}
+
+/* ---- Indicator: a zero-size anchor, not a row ----
+
+   IT USED TO BE A FLEX ROW CENTRED ON THE WORLD POINT, which worked only because the circle
+   collapsed to nothing the moment the label opened — the panel then became the thing the
+   -50%/-50% was centring. The circle survives now, so a row would have pushed it left off the
+   object every time a label appeared, growing and shrinking with the length of the text.
+
+   Zero size instead: the element IS the point. The circle is centred on it and the label hangs
+   off to the right, so the badge sits exactly on the thing it belongs to no matter what it says.
+   The scale still applies to both, around that same point. */
+.interact-indicator {
+    position: absolute;
+    width: 0;
+    height: 0;
+    /* TWO SCALES, MULTIPLIED, ANSWERING DIFFERENT QUESTIONS.
+
+       --interact-scale is DISTANCE: interact.js writes it per prompt, so a point further away draws
+       smaller. --ui-scale is RESOLUTION: utils.js sets it to window.innerHeight / 1440, because
+       every pixel figure in this file was chosen on a 1440p screen.
+
+       WITHOUT THE SECOND ONE THE PROMPTS SWELL ON A SMALLER SCREEN. A 44px circle is a fixed count
+       of pixels, and a fixed count is a bigger share of a shorter window — about 3% of 1440p and 6%
+       of 720p — so anyone playing windowed or at a lower resolution got circles twice the size they
+       were designed at. The world renderer carried the identical bug in its own maths; see
+       REFERENCE_H in client/interact_world.lua, which is this same decision expressed in metres. */
+    transform: scale(calc(var(--interact-scale, 1) * var(--ui-scale, 1)));
+    --interact-scale: 1;
+    will-change: transform, opacity;
+    opacity: 0;
+    transition: opacity var(--it-fade) var(--ui-ease);
+}
+
+/* Three states: a hint at range, readable in range, solid when it is the one E will act on.
+
+   IN-RANGE WENT 0.55 -> 0.85 WHEN THE PANEL WENT. A washed-out prompt was survivable while the
+   label sat on an opaque band that held it against the world; with the text now printed straight
+   onto the scene, 0.55 white on a pale wall is barely there. The gap to `focused` is carried by
+   the halo and the label going full white instead — cues that do not depend on the background
+   being dark. */
+.interact-indicator.visible                { opacity: 0.35; }
+.interact-indicator.visible.active         { opacity: 0.85; }
+.interact-indicator.visible.focused        { opacity: 1; }
+.interact-indicator.fading-out             { opacity: 0; }
+
+/* ---- THE CIRCLE — one object through every state ----
+
+   At range it is the hollow ring whip has always used to mean "something here". Up close it
+   fills white and the key appears inside it. It does not move, resize or hand over to anything
+   else on the way: same element, same place, same 44px, so the transition reads as the marker
+   turning into a button rather than one thing leaving and another arriving. */
+.interact-circle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -50%);
+
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--it-surface);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: var(--it-rim);
+
+    transition: background var(--it-fade) var(--ui-ease),
+                border-color var(--it-fade) var(--ui-ease),
+                box-shadow var(--it-fade) var(--ui-ease);
+}
+
+/* ---- The key ----
+   No longer a bordered square beside a label — it is the letter printed inside the circle, so it
+   carries type only. Hidden at range, because a letter you cannot act on is an instruction that
+   is not true yet. */
+.interact-key {
+    font-family: var(--ui-font);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity var(--it-fade) var(--ui-ease),
+                color var(--it-fade) var(--ui-ease);
+}
+
+/* ---- The label ----
+
+   NO PANEL BEHIND IT ANY MORE. It hangs off the circle's right edge and sits directly on the
+   world, which is the whole point of the change — so its legibility has to come from the type
+   itself. Two shadows do that job: a tight dark rim that holds the glyph edges against a pale
+   wall, and a wider soft drop that separates it from busy ground.
+
+   Absolutely positioned so its length cannot move the circle. Left is the circle's radius plus
+   the gap. */
+.interact-label {
+    position: absolute;
+    left: 30px;
+    top: 0;
+    transform: translateY(-50%) translateX(-6px);
+
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-family: var(--ui-font);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--ui-text);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.85);
+
+    opacity: 0;
+    transition: opacity var(--it-fade) var(--ui-ease),
+                transform var(--it-fade) var(--ui-ease),
+                color var(--it-fade) var(--ui-ease);
+}
+
+/* ---- FOCUSED — THE KEY AND THE LABEL BELONG TO ONE PROMPT ONLY ----
+
+   These were keyed on `.active`, which is "within interaction range" and can be true of a dozen
+   things at once. Stand over a table with four stacks of cash on it and all four told you to
+   press E, when E has only ever acted on ONE of them — the highest-scoring one. Four invitations,
+   one of them true, and no way to tell which.
+
+   `.focused` IS that one. So the key cap and the label are its alone, and everything else in
+   range stays a ring: something is there, it is not what you are pointing at.
+
+   The ring fills white because white is the loudest thing available against a game that is mostly
+   not white, and it is what makes the badge read as a key cap rather than a marker. The letter
+   goes to the dark ground colour for the same reason the creator's primary button does: on white,
+   whip's text token would be invisible. */
+.interact-indicator.focused .interact-circle {
+    background: #fff;
+    border-color: #fff;
+    /* The rim's INSET half is dropped here — it would grey the inside edge of a white disc.
+       What is left is an outer dark edge plus a drop, so the badge holds against a bright sky. */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.55), 0 3px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* RedM (spur_core, 23 Nov 2026): the key can be a glyph (js/interact.js, setKey). 24x24 like the badge's, in the key's
+   colour. */
+.interact-key svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+.interact-indicator.focused .interact-key {
+    opacity: 1;
+    color: rgb(10, 12, 18);
+}
+
+.interact-indicator.focused .interact-label {
+    opacity: 1;
+    color: #fff;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* ---- ACTIVE, BUT NOT THE ONE ----
+   In range, so it could be reached — just not what E would act on right now. It stays a ring and
+   brightens, which is the whole distinction: near enough to matter, not the one being offered.
+   Without a step here, "in range" and "out of range" would look identical and walking into a
+   pile of items would give no feedback at all until one of them won focus. */
+.interact-indicator.active:not(.focused) .interact-circle {
+    border-color: rgba(255, 255, 255, 0.95);
+}

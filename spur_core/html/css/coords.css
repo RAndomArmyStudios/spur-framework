@@ -1,0 +1,107 @@
+/* ========================================
+   COORDS — the /w Coords readout, in the house look
+   ========================================
+
+   THE SAME FAMILY AS THE HINT CAPSULE AND THE OBJECTIVE CARDS, built of their parts: .sh-capsule, an
+   .sh-stat disc (ui.css §9, which lists .co-card beside .dt-cap and .ob-card) and the card's body:
+
+       ( needle )  X -360.96   Y 51.44   Z 54.43        the position, as the title
+                   H 177.83°   [G] Copy vector4         the heading, and the key
+
+   The disc's needle points the way you face on a north-up dial, so the heading reads at a glance
+   before the number does (turned in coords.js, as a shape, so it stays sharp while it turns). A copy lights the ring green for a moment and swaps the needle for a
+   tick, as a changed objective lights its ring blue — no toast.
+
+   TOP CENTRE, at the objective cards' height and scale (--ui-scale × 1.25). The numbers are steady
+   figures, right-aligned in fixed widths: they change ten times a second while you walk, and a
+   readout whose columns jump is one you cannot read. */
+
+#coords-overlay {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9700;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    zoom: calc(var(--ui-scale) * 1.25);
+}
+
+/* Two classes: status-hud.css loads after this file, and .sh-capsule's own gap and padding would win. */
+.sh-capsule.co-card {
+    position: relative;
+    gap: 0;
+    padding-right: 26px;
+    white-space: nowrap;
+
+    /* entrance start: down from the top edge it sits on */
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s var(--ui-ease), transform 0.3s var(--ui-ease);
+}
+
+.sh-capsule.co-card.visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---- the disc ---- */
+
+/* The needle turns with the heading — BY ITS PATH'S SVG TRANSFORM, eased in coords.js, and never by
+   a CSS transform or transition here: those turn a bitmap of it on the compositor, and under the
+   overlay's zoom the needle goes blurry for every turn. */
+
+.co-tick { display: none; }
+
+/* COPIED: the ring goes green and the needle gives way to a tick, for a moment (coords.js). */
+.co-card.copied .sh-stat.dt-disc::after {
+    border-color: var(--ui-success);
+}
+
+.co-card.copied .co-needle { display: none; }
+.co-card.copied .co-tick { display: block; }
+
+/* ---- the position ---- */
+
+.co-xyz {
+    align-items: baseline;
+    gap: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.co-pair {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+/* X / Y / Z / H: the label role, so the numbers are what the eye lands on. */
+.co-axis {
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.08em;
+    color: var(--ui-text-label);
+}
+
+/* Right-aligned in a fixed width, so the decimal point stays put as "-98.20" becomes "-102.75". */
+.co-num {
+    display: inline-block;
+    min-width: 7ch;
+    text-align: right;
+}
+
+/* ---- the row ---- */
+
+.co-head {
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+.co-head .co-num {
+    min-width: 6.5ch;
+}
+
+.co-card.copied .co-copy {
+    color: var(--ui-success);
+}

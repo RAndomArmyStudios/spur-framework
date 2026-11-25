@@ -1,0 +1,263 @@
+/* ========================================
+   CAMERA CREATOR HUD — Precision Dark
+   ======================================== */
+
+@keyframes ccIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ccStatusFade {
+    0%   { opacity: 0; transform: translateY(4px); }
+    15%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+}
+
+#camera-creator-overlay {
+    position: fixed;
+    top: 94px;
+    right: 20px;
+    z-index: 9700;
+    pointer-events: none;
+    font-family: var(--ui-font);
+}
+
+.cc-panel {
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    zoom: calc(var(--ui-scale) * 1.495);
+    background:
+        linear-gradient(to right, transparent, rgba(96, 165, 250, 0.14), transparent) top center / 60% 1px no-repeat,
+        linear-gradient(180deg, rgba(96, 165, 250, 0.025) 0%, transparent 40%),
+        var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+    box-shadow: var(--ui-shadow);
+    animation: ccIn 0.3s var(--ui-ease) both;
+    overflow: hidden;
+}
+
+/* ---- Header ---- */
+
+.cc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+}
+
+.cc-title {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ui-text-mid);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.cc-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cc-filter-badge {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 8px;
+    color: var(--ui-accent);
+    opacity: 0.7;
+    letter-spacing: 0.3px;
+}
+
+.cc-mode {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--ui-accent);
+    background: var(--ui-accent-glow);
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.8px;
+}
+
+/* ---- Hero Metrics (FOV + Speed) ---- */
+
+.cc-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--ui-border);
+}
+
+.cc-hero-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 0 4px;
+}
+
+.cc-hero-item + .cc-hero-item {
+    border-left: 1px solid var(--ui-border);
+}
+
+.cc-hero-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--ui-text-dim);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 1px;
+}
+
+.cc-hero-val {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ui-text);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+/* ---- Coordinates ---- */
+
+.cc-coords {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px 2px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.cc-coord {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.cc-coord-label {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--ui-text-dim);
+    letter-spacing: 0.3px;
+}
+
+.cc-coord-val {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    color: var(--ui-text);
+    letter-spacing: -0.3px;
+}
+
+/* ---- Rotation + Waypoints Row ---- */
+
+.cc-rot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px 4px;
+}
+
+.cc-rot {
+    display: flex;
+    gap: 8px;
+}
+
+.cc-rot-item {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.cc-rot-label {
+    font-size: 7px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.12);
+    letter-spacing: 0.3px;
+}
+
+.cc-rot-val {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 9px;
+    color: var(--ui-text-dim);
+}
+
+.cc-wp-inline {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.cc-meta-label {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--ui-text-dim);
+    letter-spacing: 0.3px;
+}
+
+.cc-meta-val {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 9px;
+    color: var(--ui-accent);
+}
+
+.cc-meta-val.cc-wp {
+    color: var(--ui-success);
+    font-weight: 600;
+}
+
+/* ---- Hints ---- */
+
+.cc-hints {
+    padding: 4px 10px 5px;
+    border-top: 1px solid var(--ui-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px 6px;
+    line-height: 1;
+}
+
+.cc-hint {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.cc-hint kbd {
+    display: inline-block;
+    padding: 1px 3px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 7px;
+    color: var(--ui-text-dim);
+    line-height: 1;
+}
+
+.cc-hint span {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.18);
+    letter-spacing: 0.1px;
+}
+
+/* ---- Status Toast ---- */
+
+.cc-status {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ui-success);
+    background: var(--ui-surface-raised);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    pointer-events: none;
+}

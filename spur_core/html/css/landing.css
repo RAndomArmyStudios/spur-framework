@@ -1,0 +1,117 @@
+/* ========================================
+   LANDING PAGE — css/landing.css
+
+   Between the loading screen and the character screen, on joining (client/landing.lua): one camera
+   shot, the SPUR logo in the middle of it, and "Press any button to continue" underneath.
+
+   THE LOGO IS THE LOADING SCREEN'S (spur_loadingscreen/html/css/loading.css), in white and black here:
+   white letters, the bar's circles black holes, a lit one white in a black ring with an interaction icon on
+   it. Over a bright sky white letters need help, so a soft shadow sits under them and a faint dark
+   pool sits behind the middle of the screen. Neither reaches the edges: the shot is the point.
+
+   Under the curtain (9500) and the capsule, over the character screen's layer (2), which is not up
+   at the same time anyway.
+
+   2022-safe CSS only (CEF is Chromium 103).
+   ======================================== */
+
+#landing {
+    --ld-letter: #fff;
+    --ld-ring:   #000;     /* the black ring that sets a lit circle apart from the white letter */
+    --ld-lit:    #fff;
+    --ld-hole:   #000;     /* an unlit circle: a black hole in the letter */
+    --ld-icon:   #000;     /* the interaction icon on a lit circle */
+    --ld-fade:   0.55s;    /* a lit circle fading as the light moves on — the loading screen's */
+
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    background: radial-gradient(ellipse 58% 42% at 50% 50%,
+        rgba(0, 0, 0, 0.34) 0%,
+        rgba(0, 0, 0, 0.14) 55%,
+        rgba(0, 0, 0, 0) 100%);
+
+    /* The page holds NUI focus while this is up, with the cursor on so mouse buttons reach it. A
+       pointer over a title screen means nothing, so it is not drawn. */
+    cursor: none;
+    pointer-events: none;
+}
+
+#landing.shown {
+    display: flex;
+    pointer-events: auto;
+}
+
+/* ---- The logo ---- */
+
+#landing .ld-logo {
+    /* A little over a third of the screen's width (on a very wide screen, held to its height). */
+    width: min(38vw, 149vh);
+    filter: drop-shadow(0 0.4vh 2.2vh rgba(0, 0, 0, 0.45));
+}
+
+#landing svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+#landing .ld-letters { fill: var(--ld-letter); }
+#landing .ld-ring    { fill: var(--ld-ring); }
+#landing .ld-disc    { fill: var(--ld-lit); }
+#landing .ld-hole    { fill: var(--ld-hole); }
+#landing .ld-icon    { color: var(--ld-icon); }   /* the icons draw in currentColor */
+
+/* The bar's circles: a lit one comes on at once, and fades when the light moves on. */
+#landing .ld-dot .ld-light {
+    opacity: 0;
+    transition: opacity var(--ld-fade) cubic-bezier(0.25, 0.6, 0.35, 1);
+}
+
+#landing .ld-dot.lit .ld-light {
+    opacity: 1;
+    transition: none;
+}
+
+/* ---- The prompt ---- */
+
+#landing .ld-prompt {
+    margin-top: 4.4vh;
+    font-family: var(--ui-font);
+    font-weight: 600;
+    font-size: max(13px, 1.5vh);
+    letter-spacing: 0.32em;
+    /* The spacing trails the last letter too; this puts the words back in the middle. */
+    padding-left: 0.32em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 1.4vh rgba(0, 0, 0, 0.6);
+
+    /* In a beat after the logo, as the curtain finishes lifting, then breathing. */
+    opacity: 0;
+    animation: ld-prompt-in 0.7s var(--ui-ease) 0.7s both,
+               ld-prompt-breathe 2.6s ease-in-out 1.4s infinite;
+}
+
+@keyframes ld-prompt-in {
+    from { opacity: 0; transform: translateY(0.6vh); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes ld-prompt-breathe {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+}
+
+/* Pressed: the words go at once while the curtain falls, so the press is seen to land. */
+#landing.leaving .ld-prompt {
+    animation: none;
+    opacity: 0;
+}

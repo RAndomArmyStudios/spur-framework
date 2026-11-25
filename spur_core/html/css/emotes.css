@@ -1,0 +1,482 @@
+/* ========================================
+   THE EMOTE MENU — a panel down the right-hand side
+
+   THE MAIN MENU'S CLOTHES (the look whip's pause menu, character creator and Director share).
+   One solid panel docked to the right edge, the creator's mirrored: near-black (--ui-surface-solid)
+   with the faint blue glow in its top corner, an edge line and a deep shadow, so the player beside it
+   stays in view. Inside, the same pieces the creator uses:
+     the title     the display face, extra-bold, with a line under it
+     the groups    Emotes / Walks / Expressions as the main menu's words: dim, white with a rounded
+                   underline drawing itself when chosen (creator.css .cr-group)
+     the tabs      the categories, the Director's smaller words over a line (creator.css .cr-tab)
+     the cards     the creator's: a lifted tile, blue with a white ring when it is the one playing
+     the legend    the creator's, in the panel's foot
+   Tokens (--ui-*) for colour and type, so a theme reskins it.
+
+   ONE SCALED BOX (.em-scale), transformed rather than zoomed — the furnisher's note on why: on
+   CEF's Chromium 103 `zoom` scales what is painted but not what is clicked. Sizes below are before the
+   scale (x1.35 at 1080p): 22px is the creator's 30px title on screen.
+
+   2022-SAFE: Chromium 103. No :has(), no nesting, no color-mix(), no container queries.
+
+   Structure (index.html):
+     #emotes           fixed full screen, .em-open to show
+       .em-scale       the one scaled box
+         .em-panel     head, groups, "playing now", search, tabs, cards, legend
+   ======================================== */
+
+#emotes {
+    position: fixed;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    z-index: 41;
+
+    /* x1.35 on screen at 1080p (--ui-scale is the height / 1440): the mock's sizes, a third of the width */
+    --em-zoom:    calc(var(--ui-scale, 1) * 1.8);
+    --em-w:       474px;    /* three cards across: 640px on screen at 1080p */
+    --em-pad:     30px;
+    --em-gap:     9px;      /* between cards */
+    --em-display: var(--ui-font-display);
+    --em-ink:     var(--ui-pill-ink);
+    --em-bright:  var(--ui-pill);
+    --em-word-off: rgba(255, 255, 255, 0.34);   /* the main menu's unpicked word (creator.css) */
+    --em-tab-off:  rgba(255, 255, 255, 0.5);
+}
+
+#emotes.em-open { display: block; }
+
+.em-scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--em-zoom));
+    height: calc(100% / var(--em-zoom));
+    transform: scale(var(--em-zoom));
+    transform-origin: top left;
+    display: flex;
+    justify-content: flex-end;
+    z-index: 1;
+}
+
+/* ---- the panel: the creator's, docked right ---- */
+.em-panel {
+    pointer-events: auto;
+    flex: 0 0 var(--em-w);
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 27px var(--em-pad) 18px;
+    background:
+        radial-gradient(120% 60% at 100% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-left: 1px solid var(--ui-border);
+    box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+    animation: em-in 0.35s var(--ui-ease);
+}
+
+@keyframes em-in {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ---- head: the title, and the Director's round close ---- */
+
+.em-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.em-title {
+    font-family: var(--em-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+.em-sub {
+    margin-top: 4px;
+    font-size: 8.5px;
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.4;
+    color: var(--ui-text-mid);
+}
+.em-sub code { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.75); }
+
+.em-x {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui-border);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.em-x svg { width: 9px; height: 9px; }
+.em-x:hover { background: rgba(255, 255, 255, 0.12); color: var(--ui-text); }
+
+/* ---- the groups: the main menu's words ---- */
+
+.em-tabs {
+    display: flex;
+    gap: 17px;
+    margin-top: 16px;
+}
+
+/* Posing a hero shot's character (Emotes.pickFor): emotes only, so Walks and Expressions are not offered,
+   and the line under the title says what a click does there. */
+#emotes.em-picking .em-tab:not([data-tab="emotes"]) { display: none; }
+#emotes .em-sub.em-sub-pick { display: none; }
+#emotes.em-picking .em-sub:not(.em-sub-pick) { display: none; }
+#emotes.em-picking .em-sub.em-sub-pick { display: block; }
+
+.em-tab {
+    position: relative;
+    margin: 0;
+    padding: 0 0 6px;
+    border: 0;
+    background: none;
+    font-family: var(--em-display);
+    font-size: 19.5px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    color: var(--em-word-off);
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.em-tab:hover { color: rgba(255, 255, 255, 0.62); }
+.em-tab.active { color: var(--em-bright); }
+/* The chosen word is underlined by the logo's rounded stroke, drawing itself (creator.css). */
+.em-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3.3px;
+    border-radius: 2px;
+    background: var(--em-bright);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.em-tab.active::after { transform: scaleX(1); }
+
+/* ---- playing now: a blue strip, the white Stop ---- */
+
+.em-now {
+    display: none;
+    align-items: center;
+    gap: 9px;
+    margin-top: 15px;
+    padding: 7px 7px 7px 12px;
+    border-radius: 8px;
+    background: rgba(96, 165, 250, 0.12);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+.em-now.on { display: flex; }
+.em-now::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ui-accent);
+    box-shadow: 0 0 0 3px var(--ui-accent-glow);
+}
+
+.em-now-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.em-now-label { color: var(--ui-text-mid); margin-right: 6px; font-weight: var(--ui-fw-medium); }
+.em-now-name { font-weight: var(--ui-fw-bold); }
+
+/* ---- search ---- */
+
+.em-search {
+    flex: 0 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    height: 31px;
+    margin-top: 10px;
+    padding: 0 11px 0 30px;
+    background: rgba(255, 255, 255, 0.05)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")
+        no-repeat 11px center / 11px 11px;
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 9.6px;
+    outline: none;
+    transition: background-color 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.em-search:focus { background-color: rgba(255, 255, 255, 0.08); border-color: var(--ui-border-hover); }
+.em-search::placeholder { color: var(--ui-text-mid); }
+
+/* ---- the categories: the Director's tabs over a line ---- */
+
+.em-chips {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 12px;
+    row-gap: 4px;
+    margin-top: 13px;
+    border-bottom: 1px solid var(--ui-border);
+}
+.em-chips:empty { display: none; }
+
+.em-chip {
+    position: relative;
+    margin: 0;
+    padding: 0 0 7.5px;
+    border: 0;
+    background: none;
+    font-family: var(--em-display);
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    color: var(--em-tab-off);
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.em-chip:hover { color: rgba(255, 255, 255, 0.75); }
+.em-chip.active { color: var(--em-bright); }
+.em-chip::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2.6px;
+    border-radius: 2px;
+    background: var(--em-bright);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.em-chip.active::after { transform: scaleX(1); }
+
+/* ---- the cards: the creator's ----
+
+   THREE ACROSS, THREE DOWN: each card is a third of the grid's width and a third of its HEIGHT, so
+   whatever the screen, three rows of videos fill the view and the rest scroll up behind them.
+
+   FLEX-WRAP, NOT CSS GRID — the furnisher's rule, learnt the hard way in the creator: inside a
+   scaled, scrolling box, CEF's grid tracks left only the leftmost column answering the mouse.
+   `flex: 1 1 0` on the grid itself so it scrolls rather than being squeezed. */
+.em-list {
+    flex: 1 1 0;
+    min-height: 0;
+    margin-top: 13px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--em-gap);
+    padding: 1px 4px 1px 1px;
+}
+
+.em-card {
+    position: relative;
+    flex: 0 0 calc((100% - 2 * var(--em-gap)) / 3);
+    height: calc((100% - 2 * var(--em-gap)) / 3);
+    box-sizing: border-box;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--ui-radius-slot);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    box-shadow: var(--ui-slot-lift);
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.em-card:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+/* The one playing (or chosen): the creator's chosen card — blue, with a white ring. */
+.em-card.current,
+.em-card.current:hover {
+    background: var(--ui-accent-light);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), var(--ui-slot-lift);
+}
+
+/* The picture: the videos are portrait and have no background of their own. `contain`, so a whole
+   pose is always in frame. */
+.em-card-media {
+    flex: 1 1 0;
+    min-height: 0;
+}
+.em-card-video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+/* No video (scenarios and props-only emotes are not filmed): the emote glyph and "No preview" instead. */
+.em-card-none {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.4);
+}
+.em-card-none svg { width: 34%; height: 34%; }
+.em-card-none-text {
+    font-size: 9px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.3);
+}
+.em-card.current .em-card-none { color: rgba(255, 255, 255, 0.7); }
+
+.em-card-text {
+    flex: 0 0 auto;
+    padding: 6px 9px 8px;
+}
+
+.em-card-name {
+    font-size: 10px;
+    font-weight: var(--ui-fw-bold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.em-card-cmd {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 8px;
+    color: var(--ui-text-mid);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Place, on top of the picture: a dark chip, brighter under the pointer. */
+.em-card-place {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 3px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    background: rgba(10, 12, 18, 0.9);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 8px;
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.16s var(--ui-ease), background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.em-card:hover .em-card-place { opacity: 1; }
+.em-card-place:hover { background: var(--em-bright); color: var(--em-ink); }
+
+/* Expressions have no video: small name cards, still three across. */
+.em-card-small {
+    height: auto;
+    justify-content: center;
+}
+
+.em-act {
+    flex: 0 0 auto;
+    height: 24px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 9px;
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease);
+}
+.em-act:hover { background: rgba(255, 255, 255, 0.14); }
+.em-act-primary { background: var(--em-bright); color: var(--em-ink); }
+.em-act-primary:hover { background: #fff; }
+
+.em-empty {
+    padding: 18px 4px;
+    font-size: 10px;
+    color: var(--ui-text-mid);
+}
+
+.em-x:focus-visible,
+.em-tab:focus-visible,
+.em-chip:focus-visible,
+.em-act:focus-visible,
+.em-card-place:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+
+/* ---- the legend: the creator's, in the panel's foot ---- */
+
+.em-foot {
+    flex: 0 0 auto;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 13px;
+    font-size: 8.5px;
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.55);
+}
+.em-hint { display: flex; align-items: center; gap: 4px; }
+.em-hint b { font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.em-key,
+.em-foot code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.10);
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+.em-key { font-family: var(--ui-font); }
+
+.em-list::-webkit-scrollbar { width: var(--ui-scrollbar-w); }
+.em-list::-webkit-scrollbar-thumb { background: var(--ui-scrollbar-thumb); border-radius: 3px; }
+.em-list::-webkit-scrollbar-thumb:hover { background: var(--ui-scrollbar-thumb-hover); }
+
+/* ---- on a controller (emotes.js emNav) ----
+   The white ring on what A presses; a ringed card shows its Place (X) as a hovered one does. The foot
+   speaks of clicks, so on a pad the hint strip says it instead. Only under a pad: a mouse never sees it. */
+html[data-input="pad"] #emotes .pad-focus {
+    outline: 2px solid var(--ui-pill);
+    outline-offset: 2px;
+}
+html[data-input="pad"] #emotes .em-card.pad-focus .em-card-place { opacity: 1; }
+html[data-input="pad"] #emotes .em-foot { display: none; }
+/* Room for the ring on the outer cards: the list would clip it. */
+html[data-input="pad"] #emotes .em-list { padding: 3px 6px 3px 3px; }

@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "kind": "system",
+  "name": "Car Wash",
+  "description": "A prompt at the wash (E: Wash my car). Sat in your car, it takes $25 and cleans it; on foot it says to drive in first; short of money it says so. If the car cannot be reached after paying, Call Off gives the $25 back.",
+  "settings": {},
+  "vars": [],
+  "nodes": [
+    { "id": "wash",      "type": "when.pointUsed", "v": 1, "x": 0,    "y": 0,   "props": { "at": "spot:wash", "label": "Wash my car ($25)", "reach": 3 } },
+    { "id": "car",       "type": "player.car",     "v": 1, "x": 260,  "y": 180, "props": {} },
+    { "id": "inCar",     "type": "flow.branch",    "v": 1, "x": 520,  "y": 0,   "props": {} },
+    { "id": "pay",       "type": "money.charge",   "v": 1, "x": 760,  "y": 0,   "props": { "method": "auto" }, "values": { "amount": 25, "reason": "Car wash" } },
+    { "id": "clean",     "type": "car.clean",      "v": 1, "x": 1000, "y": 0,   "props": {} },
+    { "id": "done",      "type": "player.notify",  "v": 1, "x": 1240, "y": 0,   "props": { "kind": "success" }, "values": { "text": "Your car is clean. $25 paid." } },
+    { "id": "broke",     "type": "player.notify",  "v": 1, "x": 1000, "y": 220, "props": { "kind": "error" },   "values": { "text": "A wash is $25: you do not have enough." } },
+    { "id": "walkIn",    "type": "player.notify",  "v": 1, "x": 760,  "y": 300, "props": { "kind": "info" },    "values": { "text": "Drive your car in first, then press E." } },
+    { "id": "lost",      "type": "player.notify",  "v": 1, "x": 1240, "y": 220, "props": { "kind": "warning" }, "values": { "text": "The wash could not reach your car: you were not charged." } },
+    { "id": "refund",    "type": "flow.callOff",   "v": 1, "x": 1480, "y": 220, "props": {}, "values": { "why": "the car could not be reached" } }
+  ],
+  "links": [
+    { "id": "e1", "from": { "node": "wash",  "pin": "out" },     "to": { "node": "inCar",  "pin": "in" } },
+    { "id": "e2", "from": { "node": "inCar", "pin": "yes" },     "to": { "node": "pay",    "pin": "in" } },
+    { "id": "e3", "from": { "node": "inCar", "pin": "no" },      "to": { "node": "walkIn", "pin": "in" } },
+    { "id": "e4", "from": { "node": "pay",   "pin": "paid" },    "to": { "node": "clean",  "pin": "in" } },
+    { "id": "e5", "from": { "node": "pay",   "pin": "cantPay" }, "to": { "node": "broke",  "pin": "in" } },
+    { "id": "e6", "from": { "node": "clean", "pin": "out" },     "to": { "node": "done",   "pin": "in" } },
+    { "id": "e7", "from": { "node": "clean", "pin": "notOut" },  "to": { "node": "lost",   "pin": "in" } },
+    { "id": "e8", "from": { "node": "lost",  "pin": "out" },     "to": { "node": "refund", "pin": "in" } },
+    { "id": "v7", "from": { "node": "wash",  "pin": "player" },  "to": { "node": "lost",   "pin": "player" } },
+    { "id": "v1", "from": { "node": "wash",  "pin": "player" },  "to": { "node": "car",    "pin": "player" } },
+    { "id": "v2", "from": { "node": "car",   "pin": "driving" }, "to": { "node": "inCar",  "pin": "condition" } },
+    { "id": "v3", "from": { "node": "car",   "pin": "car" },     "to": { "node": "clean",  "pin": "car" } },
+    { "id": "v4", "from": { "node": "wash",  "pin": "player" },  "to": { "node": "done",   "pin": "player" } },
+    { "id": "v5", "from": { "node": "wash",  "pin": "player" },  "to": { "node": "broke",  "pin": "player" } },
+    { "id": "v6", "from": { "node": "wash",  "pin": "player" },  "to": { "node": "walkIn", "pin": "player" } }
+  ]
+}

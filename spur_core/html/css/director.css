@@ -1,0 +1,2591 @@
+/* ========================================
+   THE DIRECTOR — the hub and the blueprint editor (js/director/*.js)
+
+   Two surfaces, each its own root (DESIGN.md, the One-Zoom Rule):
+     the CANVAS fills the screen and is never zoomed: its cards ride one transform (pan and zoom)
+       and its grid is its own background, set from the same numbers (canvas.js)
+     the COLUMN overlays its left side, whiplash's picker on core tokens, and wears --dr-zoom
+   Popovers (the card search, a card's menu, the confirm box) are roots of their own: positioned
+   unzoomed at the cursor, the box inside zoomed.
+
+   The canvas is the one opaque field whip draws edge to edge (--dr-* tokens in base.css, for the
+   owner to approve in game). CEF 103: no :has, nesting, color-mix or container queries here.
+   ======================================== */
+
+.dr-root {
+    position: fixed;
+    inset: 0;
+    /* Over every other screen (the inventory 9000, the /whip panel 9500), under the death screen.
+       The in-world editor HUDs (9600+) only show while this is hidden for placing a thing. */
+    z-index: 9550;
+    display: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    user-select: none;
+}
+.dr-root.open { display: block; }
+.dr-root.away { display: none; }   /* placing a thing in the world: the game, not the page */
+
+/* THE DIRECTOR'S SIZE: --ui-scale times 1.35, as the /whip panel (x1.8) and /w (x1.2) multiply theirs,
+   so its text draws at 11 to 13px on a 1080p screen. Every zoomed box here wears it once; .dr-float is
+   on the body, outside .dr-root, so it is set there as well. */
+.dr-root, .dr-float, .dr-twcol { --dr-zoom: calc(var(--ui-scale) * 1.35); }
+
+/* ---------------------------------------- */
+/* The canvas                               */
+/* ---------------------------------------- */
+
+.dr-canvas {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background-color: var(--dr-canvas);
+    /* strong lines first (drawn on top), then the fine ones; sizes and offsets come from canvas.js */
+    background-image:
+        linear-gradient(var(--dr-grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dr-grid-major) 1px, transparent 1px),
+        linear-gradient(var(--dr-grid-minor) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dr-grid-minor) 1px, transparent 1px);
+    cursor: default;
+}
+.dr-canvas.dr-far {
+    background-image:
+        linear-gradient(var(--dr-grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dr-grid-major) 1px, transparent 1px);
+}
+.dr-canvas.dr-panning { cursor: grabbing; }
+
+.dr-world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    will-change: transform;   /* (let go and taken up again once the view is still, so it is drawn sharp: canvas.js settle) */
+}
+/* A dot nobody sees, in a layer of its own: canvas.js settle changes it to ask for new frames, so the cards' fresh
+   picture is put on screen without waiting for a click. */
+.dr-ticker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    background: var(--dr-canvas);
+    opacity: 0.01;
+    will-change: opacity;
+    pointer-events: none;
+}
+.dr-cards { position: absolute; left: 0; top: 0; }
+.dr-notes { position: absolute; left: 0; top: 0; }
+
+/* ---- comment boxes: under the wires and the cards; the title drags, the corner resizes ---- */
+
+.dr-note {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: var(--ui-radius-slot);
+    background: var(--ui-surface-subtle);
+    box-shadow: 0 0 0 1px var(--ui-border);
+}
+.dr-note.selected { box-shadow: 0 0 0 2px var(--ui-accent); }
+.dr-note-head {
+    height: 30px;   /* GEO.HEAD */
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: var(--ui-radius-slot) var(--ui-radius-slot) 0 0;
+    background: var(--ui-surface-medium);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: move;
+}
+.dr-note-none { color: var(--ui-text-label); font-weight: var(--ui-fw-regular); font-style: italic; }
+.dr-note-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2px 6px;
+    border: 1px solid var(--ui-accent);
+    border-radius: var(--ui-radius-sm);
+    background: var(--dr-card);
+    color: var(--ui-text);
+    font: inherit;
+    outline: none;
+    user-select: text;
+}
+.dr-note-grip {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    border-right: 2px solid var(--ui-text-dim);
+    border-bottom: 2px solid var(--ui-text-dim);
+    border-radius: 0 0 var(--ui-radius-slot) 0;
+    opacity: 0.6;
+}
+.dr-note-grip:hover { opacity: 1; border-color: var(--ui-accent); }
+
+/* ---- the selection box: on the field, not the world, so it is never scaled ---- */
+
+.dr-marquee {
+    position: absolute;
+    display: none;
+    box-sizing: border-box;
+    border: 1px solid var(--ui-accent);
+    background: var(--ui-accent-subtle);
+    pointer-events: none;
+}
+
+.dr-wires {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+    pointer-events: none;
+}
+.dr-wire {
+    fill: none;
+    stroke: var(--dr-wire);
+    stroke-width: 2.2px;
+}
+.dr-wire.selected { stroke: var(--ui-accent); stroke-width: 3px; }
+.dr-wire.ran { stroke: var(--ran, var(--ui-success)); stroke-width: 2.6px; }   /* the last test went this way */
+/* ...as the playback reaches it: its dashes run in towards the card, in the run's colour. */
+.dr-wire.flow {
+    stroke: var(--ran, var(--ui-success));
+    stroke-width: 3.4px;
+    stroke-dasharray: 10 8;
+    animation: dr-wire-pulse 0.7s linear;
+}
+/* A pulse: a live run just went along it, or a test's playback did. */
+.dr-wire.pulse {
+    stroke: var(--ui-success);
+    stroke-width: 3.4px;
+    stroke-dasharray: 10 8;
+    animation: dr-wire-pulse 0.7s linear;
+}
+@keyframes dr-wire-pulse {
+    from { stroke-dashoffset: 72; }
+    to   { stroke-dashoffset: 0; }
+}
+.dr-wire.temp { stroke: var(--dr-wire-dim); stroke-dasharray: 6 5; }
+.dr-wire-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 14px;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+.dr-empty {
+    position: absolute;
+    left: calc(50% + 192px);   /* the middle of the grid the column (384px) leaves */
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-label);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ---- a card ---- */
+
+/* (--kind-solid: the Board style's head and wires, .dr-board below.) */
+.kind-events   { --kind: var(--dr-kind-events);   --kind-tint: var(--dr-kind-events-tint);   --kind-solid: var(--dr-solid-events); }
+.kind-goals    { --kind: var(--dr-kind-goals);    --kind-tint: var(--dr-kind-goals-tint);    --kind-solid: var(--dr-solid-goals); }
+.kind-flow     { --kind: var(--dr-kind-flow);     --kind-tint: var(--dr-kind-flow-tint);     --kind-solid: var(--dr-solid-flow); }
+.kind-dialog   { --kind: var(--dr-kind-dialog);   --kind-tint: var(--dr-kind-dialog-tint);   --kind-solid: var(--dr-solid-dialog); }
+.kind-world    { --kind: var(--dr-kind-world);    --kind-tint: var(--dr-kind-world-tint);    --kind-solid: var(--dr-solid-world); }
+.kind-player   { --kind: var(--dr-kind-player);   --kind-tint: var(--dr-kind-player-tint);   --kind-solid: var(--dr-solid-player); }
+.kind-scenario { --kind: var(--dr-kind-scenario); --kind-tint: var(--dr-kind-scenario-tint); --kind-solid: var(--dr-solid-scenario); }
+/* Fail Conditions: red, the run's failure (a card with no wires: it watches the whole run). */
+.kind-fail     { --kind: var(--dr-tint-red);      --kind-tint: var(--dr-tint-red-bg);      --kind-solid: var(--dr-solid-red); }
+/* Lore: green, the tint no core group uses, so another resource's lore cards (Whip.card color 'green') match */
+.kind-lore     { --kind: var(--dr-tint-green);    --kind-tint: var(--dr-tint-green-bg);    --kind-solid: var(--dr-solid-green); }
+.kind-unknown  { --kind: var(--ui-error);         --kind-tint: var(--ui-error-subtle);     --kind-solid: var(--ui-error); }
+/* Another resource's cards: the colour they asked for by name (Whip.card's `color`; slate if none). */
+.kind-c-blue   { --kind: var(--dr-tint-blue);   --kind-tint: var(--dr-tint-blue-bg);   --kind-solid: var(--dr-solid-blue); }
+.kind-c-teal   { --kind: var(--dr-tint-teal);   --kind-tint: var(--dr-tint-teal-bg);   --kind-solid: var(--dr-solid-teal); }
+.kind-c-green  { --kind: var(--dr-tint-green);  --kind-tint: var(--dr-tint-green-bg);  --kind-solid: var(--dr-solid-green); }
+.kind-c-amber  { --kind: var(--dr-tint-amber);  --kind-tint: var(--dr-tint-amber-bg);  --kind-solid: var(--dr-solid-amber); }
+.kind-c-red    { --kind: var(--dr-tint-red);    --kind-tint: var(--dr-tint-red-bg);    --kind-solid: var(--dr-solid-red); }
+.kind-c-violet { --kind: var(--dr-tint-violet); --kind-tint: var(--dr-tint-violet-bg); --kind-solid: var(--dr-solid-violet); }
+.kind-c-slate  { --kind: var(--dr-tint-slate);  --kind-tint: var(--dr-tint-slate-bg);  --kind-solid: var(--dr-solid-slate); }
+.dr-owner b { color: var(--ui-text); font-weight: 600; }
+.dr-field-hint { margin: -4px 0 8px; }
+/* A card kept to a permission this builder has not got: marked, its fields read-only. */
+.dr-lockset { border: 0; margin: 0; padding: 0; min-width: 0; opacity: 0.6; }
+.dr-card.locked .dr-card-title::after { content: ' · locked'; color: var(--ui-text-mid); font-weight: normal; }
+.dr-pal-row.locked { opacity: 0.5; }
+.dr-pal-row.locked b::after { content: ' (locked)'; font-weight: normal; color: var(--ui-text-mid); }
+
+.dr-card {
+    position: absolute;
+    background: var(--dr-card);
+    border-radius: var(--ui-radius-slot);
+    /* The edge is a shadow, not a border: a border would move the pin rows off the heights the
+       wires are drawn to (canvas.js GEO). The lift under it is --dr-lift's (the Board's hard shadow), else the
+       standard one: every state below keeps it. */
+    box-shadow: 0 0 0 1px var(--ui-border), var(--dr-lift, var(--ui-shadow));
+    font-size: var(--ui-fs-sm);
+}
+/* THE LAST TEST, PLAYED BACK: what it went through is lit in the run's colour as the
+   playback reaches it — green it succeeded, red it failed, yellow it could not go on (went wrong, or
+   called off) — and only the card it ended on flashes (canvas.js reveal / finishRun). */
+.ran-ok    { --ran: var(--ui-success); --ran-glow: var(--ui-success-medium); }
+.ran-bad   { --ran: var(--ui-error);   --ran-glow: rgba(248, 113, 113, 0.5); }
+.ran-stuck { --ran: var(--ui-warning); --ran-glow: rgba(251, 191, 36, 0.5); }
+.dr-card { transition: box-shadow 0.25s ease-out; }
+.dr-card.ran { box-shadow: 0 0 0 1.5px var(--ran-glow, var(--ui-success-medium)), var(--dr-lift, var(--ui-shadow)); }   /* the last test ran it */
+.dr-card.selected { box-shadow: 0 0 0 2px var(--ui-accent), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.has-warn { box-shadow: 0 0 0 1.5px var(--ui-warning), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.has-error { box-shadow: 0 0 0 1.5px var(--ui-error), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.selected.has-warn,
+.dr-card.selected.has-error { box-shadow: 0 0 0 2px var(--ui-accent), 0 0 0 4px var(--ui-error-light), var(--dr-lift, var(--ui-shadow)); }
+/* The card the last test ended on: marked in the run's colour, flashing a few times as the playback ends. */
+.dr-card.ran-end { box-shadow: 0 0 0 2.5px var(--ran), 0 0 16px 3px var(--ran-glow), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.ran-end.selected { box-shadow: 0 0 0 2px var(--ui-accent), 0 0 0 4.5px var(--ran), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.ran-flash { animation: dr-card-end 0.9s ease-in-out 4; }
+@keyframes dr-card-end {
+    0%, 100% { box-shadow: 0 0 0 2.5px var(--ran), 0 0 16px 3px var(--ran-glow), var(--dr-lift, var(--ui-shadow)); }
+    50%      { box-shadow: 0 0 0 3.5px var(--ran), 0 0 36px 12px var(--ran-glow), var(--dr-lift, var(--ui-shadow)); }
+}
+/* THE CARDS THAT USE A PLACED THING: lit white while its World row is open, flashing
+   as it opens (app.js showUses). */
+.dr-card.uses { box-shadow: 0 0 0 2px var(--ui-text), 0 0 18px 4px rgba(255, 255, 255, 0.22), var(--dr-lift, var(--ui-shadow)); }
+.dr-card.uses-flash { animation: dr-card-uses 0.6s ease-in-out 3; }
+@keyframes dr-card-uses {
+    0%, 100% { box-shadow: 0 0 0 2px var(--ui-text), 0 0 18px 4px rgba(255, 255, 255, 0.22), var(--dr-lift, var(--ui-shadow)); }
+    50%      { box-shadow: 0 0 0 3px var(--ui-text), 0 0 34px 12px rgba(255, 255, 255, 0.5), var(--dr-lift, var(--ui-shadow)); }
+}
+.dr-card.pulse { animation: dr-card-pulse 0.7s ease-out; }   /* a live run (or a playback) entered it */
+@keyframes dr-card-pulse {
+    0%   { box-shadow: 0 0 0 2px var(--ui-success), 0 0 18px 4px var(--ui-success-medium), var(--dr-lift, var(--ui-shadow)); }
+    100% { box-shadow: 0 0 0 1px var(--ui-border), var(--dr-lift, var(--ui-shadow)); }
+}
+
+/* ---- a Reroute: a dot, its two pins at its ends, the middle to drag it by ---- */
+
+.dr-card.dr-reroute {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px;
+    background: var(--dr-card);
+    cursor: move;
+}
+.dr-reroute .dr-pin { height: 24px; gap: 0; }
+
+/* ---- zoomed far out (canvas.js .dr-far, under half size): each card its name alone ----
+   The card wears its head's colour all over, and its name lies across the whole card, drawn at a size that reads on
+   screen however far out (15px over the zoom, --dr-z from canvas.js applyView), as large as fits the card in up to
+   three lines (--dr-fit, canvas.js farFit), never smaller than it was. Nothing moves: the head and the pin rows keep
+   their room, so the wires still end on the pins, whose dots stay on top. (.dr-canvas.dr-far: over the Board's own
+   head and title rules.) */
+
+.dr-far .dr-card-body,
+.dr-far .dr-pin span { visibility: hidden; }
+.dr-canvas.dr-far .dr-card { background: var(--kind-tint); }
+.dr-canvas.dr-far.dr-board .dr-card { background: var(--kind-solid); }
+.dr-canvas.dr-far .dr-card-head::before,
+.dr-canvas.dr-far .dr-card-head > :not(.dr-card-title) { visibility: hidden; }
+.dr-canvas.dr-far .dr-card-title {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    overflow: hidden;
+    white-space: normal;
+    text-overflow: clip;
+    text-align: center;
+    font-size: max(var(--ui-fs-xl), min(calc(15px / var(--dr-z, 0.5)), var(--dr-fit, 40px)));
+    line-height: 1.08;
+}
+.dr-canvas.dr-far .dr-pin i { position: relative; z-index: 1; }
+.dr-far .dr-note-head { font-size: 26px; height: 48px; }
+
+.dr-card-head {
+    height: 30px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: 0 10px;
+    border-radius: var(--ui-radius-slot) var(--ui-radius-slot) 0 0;
+    background: var(--kind-tint);
+}
+/* The card's kind: its colour as a dot before the title, on the kind's tint. */
+.dr-card-head::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kind);
+}
+.dr-card-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dr-badge {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-pill-ink);
+    background: var(--ui-error);
+}
+.has-warn .dr-badge { background: var(--ui-warning); }
+/* Only Once switched on (canvas.js): a quiet word on the head, the run's way through it changed. */
+.dr-once {
+    flex: none;
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-pill);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--ui-text-mid);
+    font-size: 9.5px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.dr-card-pins {
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    padding: 6px 0;   /* GEO.PAD */
+}
+.dr-pin-col { display: flex; flex-direction: column; min-width: 0; }
+.dr-pin-col.in { flex: 0 0 auto; align-items: flex-start; }
+.dr-pin-col.out { flex: 1 1 auto; align-items: flex-end; }
+
+.dr-pin {
+    height: 22px;   /* GEO.ROW */
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+    cursor: crosshair;
+    white-space: nowrap;
+}
+.dr-pin span { overflow: hidden; text-overflow: ellipsis; }
+.dr-pin.in span { margin-right: 10px; }
+.dr-pin.out span { margin-left: 10px; text-align: right; }
+.dr-pin i {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1.5px solid var(--dr-wire);
+    background: var(--dr-card);
+}
+.dr-pin.in i { margin-left: -5px; }    /* its middle on the card's edge, where the wire ends */
+.dr-pin.out i { margin-right: -5px; }
+.dr-pin.wired i { background: var(--dr-wire); }
+.dr-pin:hover i { box-shadow: 0 0 0 3px var(--ui-accent-glow); border-color: var(--ui-accent); }
+.dr-pin.tone-bad i { border-color: var(--ui-error); }
+.dr-pin.tone-bad.wired i { background: var(--ui-error); }
+
+.dr-card-body {
+    padding: 0 10px 9px;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+}
+.dr-card-body:empty { display: none; }
+.dr-card-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+.dr-card-line span { color: var(--ui-text-label); }
+.dr-card-line em { font-style: normal; }   /* the value (the Board sets it under its label) */
+.dr-card-line.dr-bad { color: var(--ui-error); }
+.dr-card-who {
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+    margin-bottom: 2px;
+}
+/* All of what a Dialog Line says: the card grows to show it (canvas.js cardHeight counts it for boxes). */
+.dr-card-quote {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ui-text);
+    overflow-wrap: anywhere;
+}
+
+/* ---- THE BOARD: the other card style (each builder's pick, kept on their PC: app.js cardStyle) ----
+   A heist board: each card's head painted in its kind's colour, the title in dark ink and its step in the run
+   (canvas.js stepsOf) at the end; the outcomes plain words, the bad ones red; the fields small labels over their
+   values; the wires in the colour of the card they leave (red dots from an outcome that went wrong); navy cards
+   (the classic cards' colour) on a hard shadow, over a quiet dot grid in the canvas's own navy. Its head, pin row
+   and padding are
+   canvas.js STYLES.board (42, 26, 8): change one, change the other. */
+.dr-canvas.dr-board,
+.dr-canvas.dr-board.dr-far { background-image: radial-gradient(circle, var(--dr-board-dot) 0.9px, transparent 1.4px); }
+.dr-board { --dr-lift: var(--dr-board-lift); }
+.dr-board .dr-card { border-radius: 14px; background: var(--dr-board-card); }
+.dr-board .dr-card.dr-reroute { border-radius: 12px; }
+/* Picked: a white ring and a longer shadow, the card lifted off the board. */
+.dr-board .dr-card.selected { box-shadow: 0 0 0 3px var(--ui-pill), var(--dr-board-lift-hi); }
+.dr-board .dr-card.has-warn { box-shadow: 0 0 0 3px var(--ui-warning), var(--dr-lift); }
+.dr-board .dr-card.has-error { box-shadow: 0 0 0 3px var(--ui-error), var(--dr-lift); }
+.dr-board .dr-card.selected.has-warn,
+.dr-board .dr-card.selected.has-error { box-shadow: 0 0 0 3px var(--ui-pill), 0 0 0 6px var(--ui-error-light), var(--dr-board-lift-hi); }
+.dr-board .dr-card-head {
+    height: 42px;   /* STYLES.board.HEAD */
+    gap: var(--ui-sp-4);
+    padding: 0 12px;
+    border-radius: 14px 14px 0 0;
+    background: var(--kind-solid);
+}
+.dr-board .dr-card-head::before { display: none; }
+.dr-board .dr-card-title {
+    font-family: var(--ui-font-display);
+    font-weight: 800;
+    font-size: 15.5px;
+    letter-spacing: -0.2px;
+    color: var(--ui-pill-ink);
+}
+.dr-board .dr-card.locked .dr-card-title::after { color: var(--ui-pill-ink-mid); }
+.dr-board .dr-step {
+    flex: none;
+    font-family: var(--ui-font-display);
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--ui-pill-ink);
+    opacity: 0.38;
+}
+.dr-board .dr-badge {
+    width: auto;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 10px;
+    background: var(--ui-pill-ink);
+    color: var(--ui-error);
+    font-size: var(--ui-fs-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.dr-board .has-warn .dr-badge { background: var(--ui-pill-ink); color: var(--ui-warning); }
+.dr-board .dr-once { background: var(--ui-pill-ink); color: var(--ui-pill); }
+.dr-board .dr-pin {
+    height: 26px;   /* STYLES.board.ROW */
+    font-size: 12.5px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+.dr-board .dr-pin.tone-bad span { color: var(--ui-error); }
+.dr-board .dr-pin i { width: 12px; height: 12px; border: 2px solid var(--ui-pill); background: var(--dr-board-card); }
+.dr-board .dr-pin.in i { margin-left: -6px; }
+.dr-board .dr-pin.out i { margin-right: -6px; }
+.dr-board .dr-pin.wired i { background: var(--ui-pill); }
+.dr-board .dr-pin.tone-bad i { border-color: var(--ui-error); }
+.dr-board .dr-pin.tone-bad.wired i { background: var(--ui-error); }
+.dr-board .dr-pin:hover i { border-color: var(--ui-accent); }
+.dr-board .dr-card-body { padding: 8px 12px 10px; border-top: 1px solid var(--ui-border); }
+.dr-board .dr-card-line { white-space: normal; line-height: 1.3; margin-bottom: 6px; }
+.dr-board .dr-card-line:last-child { margin-bottom: 0; }
+.dr-board .dr-card-line span {
+    display: block;
+    font-size: 9.5px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.dr-board .dr-card-line em {
+    display: block;
+    font-size: 13px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* A Dialog Line: the one speaking in their card's colour, what they say as it is. */
+.dr-board .dr-card-who {
+    font-family: var(--ui-font-display);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--kind-solid);
+}
+.dr-board .dr-card-quote { font-size: 13px; }
+/* The wires: the colour of the card each leaves (canvas.js puts its kind on it), red dots from an outcome that
+   went wrong. A picked wire, a test's and a dragged one keep their own. */
+.dr-board .dr-wire { stroke: var(--kind-solid, var(--dr-wire)); stroke-width: 2.5px; stroke-linecap: round; }
+.dr-board .dr-wire.bad { stroke: var(--ui-error); stroke-dasharray: 2 6; }
+.dr-board .dr-wire.selected { stroke: var(--ui-accent); stroke-width: 3px; stroke-dasharray: none; }
+.dr-board .dr-wire.ran { stroke: var(--ran, var(--ui-success)); stroke-width: 2.6px; stroke-dasharray: none; }
+.dr-board .dr-wire.flow,
+.dr-board .dr-wire.pulse { stroke-dasharray: 10 8; }
+.dr-board .dr-wire.flow { stroke: var(--ran, var(--ui-success)); }
+.dr-board .dr-wire.pulse { stroke: var(--ui-success); }
+.dr-board .dr-wire.temp { stroke: var(--dr-wire-dim); }
+
+/* ---------------------------------------- */
+/* The column                               */
+/* ---------------------------------------- */
+
+/* THE PAUSE MENU'S PANEL (pause.css .pm-side): flush to the left edge, top to bottom,
+   the faint blue light in its top corner, a hard edge and a deep shadow onto the grid. Its tabs are the
+   menu's words (the heavy display face, dim until picked, then white with the rounded stroke drawing in
+   under them), and its lists are the map legend's rows: no boxes, a line between each. */
+.dr-col {
+    --dr-pad: 28px;
+    --dr-display: var(--ui-font-display);
+    --dr-menu-off: rgba(255, 255, 255, 0.34);   /* the pause menu's unpicked item */
+    --dr-row-off: rgba(255, 255, 255, 0.62);    /* the legend's unpicked row */
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 384px;
+    zoom: var(--dr-zoom);
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(120% 60% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-right: 1px solid var(--ui-border);
+    box-shadow: 18px 0 48px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.dr-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: 30px var(--dr-pad) 14px;
+}
+.dr-head-main { flex: 1; min-width: 0; }
+.dr-title {
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--ui-pill);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dr-sub {
+    margin-top: 5px;
+    font-size: 13px;
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* The editor's line under the name: the key and draft, whether it is on (a pill), not saved. */
+.dr-sub.dr-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 7px;
+    white-space: normal;
+}
+.dr-dirty { color: var(--ui-warning); font-weight: var(--ui-fw-semibold); }
+.dr-icon {
+    flex: none;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.dr-icon:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); color: var(--ui-text); }
+.dr-icon svg { width: 16px; height: 16px; }
+
+.dr-bar { display: flex; gap: var(--ui-sp-3); padding: 0 var(--dr-pad) 16px; }
+
+/* THE DIRECTOR'S TOOLBAR (.tools): Save, Test and Check at their own widths, then Undo and Redo as icons
+   at the right. Check carries how many problems the last check found. (The Systems Creator's bar
+   shares its buttons out evenly: .dr-bar .dr-btn below.) */
+.dr-bar.tools { align-items: center; gap: var(--ui-sp-3); padding-bottom: 12px; }
+.dr-bar-gap { flex: 1; }
+.dr-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--ui-radius-capsule);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-error);
+    color: var(--ui-pill-ink);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+}
+.dr-count.warn { background: var(--ui-warning); }
+
+/* A button that is an icon (Undo, Redo, a scenario's Delete): named by its aria-label and title. */
+.dr-ibtn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.dr-ibtn svg { width: 17px; height: 17px; }
+.dr-ibtn:hover:not(:disabled) { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-ibtn:disabled { opacity: 0.38; cursor: default; }
+.dr-ibtn.boxed { border-color: var(--ui-border); background: rgba(255, 255, 255, 0.04); }
+.dr-ibtn.danger:hover:not(:disabled) { background: var(--ui-error-light); border-color: var(--ui-error); color: var(--ui-error); }
+
+/* The tabs: the pause menu's words, smaller. */
+.dr-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 20px;
+    padding: 0 var(--dr-pad) 12px;
+}
+.dr-tab {
+    position: relative;
+    padding: 4px 0 12px;
+    border: 0;
+    background: none;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--dr-menu-off);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.dr-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 3px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ui-pill);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.dr-tab:hover { color: var(--dr-row-off); }
+.dr-tab.on { color: var(--ui-pill); }
+.dr-tab.on::after { transform: scaleX(1); }
+
+/* THE DIRECTOR'S TABS (.chips): the /whip panel's tab chips (whip-panel.css .wp-tab), the chosen one the
+   selection pill, four on one row. A card's settings and Check are pages over them, not tabs. (The
+   Systems Creator keeps the menu's words above.) */
+.dr-tabs.chips { flex-wrap: nowrap; gap: var(--ui-sp-2); padding-bottom: 14px; }
+.dr-tabs.chips .dr-tab {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--ui-surface-hover);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: 0;
+    line-height: 1.35;
+    color: var(--ui-text-mid);
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.dr-tabs.chips .dr-tab::after { display: none; }
+.dr-tabs.chips .dr-tab:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.dr-tabs.chips .dr-tab.on { background: var(--ui-pill); color: var(--ui-pill-ink); font-weight: var(--ui-fw-bold); }
+
+.dr-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px var(--dr-pad) var(--dr-pad);
+    border-top: 1px solid var(--ui-border);
+}
+
+.dr-foot {
+    min-height: 32px;
+    padding: 10px var(--dr-pad) 14px;
+    border-top: 1px solid var(--ui-border);
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ui-text-mid);
+}
+.dr-foot:empty { min-height: 0; padding: 0; border-top: none; }
+.dr-foot.ok { color: var(--ui-success); }
+.dr-foot.warn { color: var(--ui-warning); }
+.dr-foot.error { color: var(--ui-error); }
+
+/* A CARD'S PAGE, ON THE RIGHT (app.js drawSide): the column on the other side, as the world builder's Configure panel
+   is (furnisher.css .fz-cfg): flush to the right edge, top to bottom, the faint blue light in its top corner, a hard
+   edge and a deep shadow onto the grid, its title in the display face, its X the column's. Slides in as it opens.
+   The dock and the variant buttons keep clear of it (.side-open). */
+.dr-side {
+    --dr-pad: 28px;
+    --dr-display: var(--ui-font-display);
+    --dr-menu-off: rgba(255, 255, 255, 0.34);
+    --dr-row-off: rgba(255, 255, 255, 0.62);
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 384px;
+    zoom: var(--dr-zoom);
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(120% 60% at 100% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-left: 1px solid var(--ui-border);
+    box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    animation: dr-side-in 0.3s var(--ui-ease);
+}
+.dr-side[hidden] { display: none; }
+@keyframes dr-side-in {
+    from { transform: translateX(32px); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+}
+.dr-side-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: 30px var(--dr-pad) 14px;
+}
+.dr-side-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--ui-pill);
+}
+.dr-side-head .dr-icon { align-self: center; }
+.dr-side-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px var(--dr-pad) var(--dr-pad);
+    border-top: 1px solid var(--ui-border);
+}
+.dr-side-body.split { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.dr-root.side-open .dr-dock { right: calc(384px + 24px); }
+.dr-root.side-open .dr-variants { right: calc(384px + 24px); }
+
+/* THE DOCK, top right over the grid (app.js drawDock): Isolate world, and the tutorial. A root of its own,
+   unzoomed, the buttons inside zoomed (One-Zoom Rule). Isolate world lit Signal Blue while you are in it:
+   a selected state. Under the confirm box (z 5). */
+.dr-dock {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 3;
+    display: flex;
+    gap: 8px;
+    zoom: var(--dr-zoom);
+}
+.dr-dock-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px 0 12px;
+    border-radius: var(--ui-radius-pill);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-bold);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.dr-dock-btn:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); color: var(--ui-text); }
+.dr-dock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    opacity: 0.7;
+}
+.dr-dock-btn.on { border-color: var(--ui-accent-medium); background: var(--ui-accent-light); color: var(--ui-text); }
+.dr-dock-btn.on .dr-dock-dot { border-color: var(--ui-accent); background: var(--ui-accent); opacity: 1; box-shadow: 0 0 0 3px var(--ui-accent-glow); }
+.dr-dock-q {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* THE COLUMN AWAY (its X: app.js drawColHidden): the grid the whole screen, Add card in the column's top left to bring it
+   back (a dock button, as the world builder's Blueprint window has its Cards), what the column would say low on the left.
+   The variant buttons move up beside Add card. */
+.dr-root.col-hidden .dr-col { display: none; }
+.dr-colback {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 3;
+    display: none;
+    zoom: var(--dr-zoom);
+}
+.dr-root.col-hidden .dr-colback { display: flex; }
+.dr-colback-btn { width: 120px; justify-content: center; color: var(--ui-text); }
+.dr-colback-btn svg { width: 15px; height: 15px; flex: none; }
+.dr-colback-status {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    z-index: 3;
+    display: none;
+    max-width: 560px;
+    padding: 8px 14px;
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ui-text-mid);
+    zoom: var(--dr-zoom);
+    pointer-events: none;
+}
+.dr-root.col-hidden .dr-colback-status:not(:empty) { display: block; }
+.dr-colback-status.ok { color: var(--ui-success); }
+.dr-colback-status.warn { color: var(--ui-warning); }
+.dr-colback-status.error { color: var(--ui-error); }
+.dr-root.col-hidden .dr-variants { left: calc(24px + 120px + 8px); }
+
+/* THE VARIANT BUTTONS, top left over the grid, right of the column (app.js drawVariants): one pill per variant, its
+   number in a disc, the open one lit Signal Blue (a selected state, as the dock's Isolate world), then + Variant. The
+   open one's ⋯ opens its actions; one with errors says how many in the error tone. In the world builder's Blueprint
+   window (the grid moved there: .fz-bp-body) it sits in the window's own top left. A root of its own, zoomed. */
+.dr-variants {
+    position: absolute;
+    top: 24px;
+    left: calc(384px + 24px);
+    right: 300px;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    zoom: var(--dr-zoom, 1);
+    pointer-events: none;
+}
+.dr-variants[hidden] { display: none; }
+.fz-bp-body .dr-variants { top: 8px; left: 8px; right: 8px; zoom: var(--fz-zoom, 1); }
+.dr-var {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 240px;
+    height: 34px;
+    padding: 0 14px 0 6px;
+    border-radius: var(--ui-radius-pill);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-bold);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.dr-var:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); color: var(--ui-text); }
+.dr-var b {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ui-surface-hover);
+    font-size: 11.5px;
+}
+.dr-var-name { overflow: hidden; text-overflow: ellipsis; }
+.dr-var.on { border-color: var(--ui-accent-medium); background: var(--ui-accent-light); color: var(--ui-text); }
+.dr-var.on b { background: var(--ui-accent); color: #fff; }
+.dr-var-err {
+    flex: none;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-error-light);
+    color: var(--ui-error);
+    font-style: normal;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+}
+.dr-var-more {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 22px;
+    margin: 0 -8px 0 0;
+    border-radius: var(--ui-radius-pill);
+    color: var(--ui-text-mid);
+}
+.dr-var-more svg { width: 16px; height: 16px; fill: currentColor; }
+.dr-var-more:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-var.add { padding: 0 14px; border-style: dashed; background: transparent; box-shadow: none; }
+.dr-var.add:hover { background: var(--ui-surface-raised); }
+.dr-var.editing { cursor: default; }
+.dr-var-input {
+    width: 150px;
+    height: 24px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ui-text);
+    font: inherit;
+}
+
+/* THE TUTORIAL (js/director/tutorial.js): a coach card, a ring round what it is about, and for the
+   stages that hold the page (the tour, the showcase) a clear sheet that takes the clicks, the page dimmed
+   round the ring (its shadow) or all over when nothing is ringed. Over the dock, under the confirm box
+   (z 5). The card is a root of its own: placed unzoomed, its box zoomed (One-Zoom Rule). */
+.dr-root { --dr-tut-dim: rgba(10, 12, 18, 0.55); }
+.dr-tut-block {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: none;
+}
+.dr-tut-block.on { display: block; }
+.dr-tut-block.dim { background: var(--dr-tut-dim); }
+.dr-tut-ring {
+    position: absolute;
+    z-index: 4;
+    display: none;
+    border-radius: var(--ui-radius-row);
+    border: 2px solid var(--ui-accent);
+    box-shadow: 0 0 0 4px var(--ui-accent-glow);
+    pointer-events: none;
+    animation: dr-tut-ring 1.8s var(--ui-ease) infinite;
+}
+.dr-tut-ring.spot { box-shadow: 0 0 0 4px var(--ui-accent-glow), 0 0 0 4000px var(--dr-tut-dim); animation: none; }
+@keyframes dr-tut-ring {
+    0%, 100% { box-shadow: 0 0 0 4px var(--ui-accent-glow); }
+    50%      { box-shadow: 0 0 0 9px var(--ui-accent-light); }
+}
+.dr-tut-card {
+    position: absolute;
+    z-index: 4;
+    display: none;
+    left: 0;
+    top: 0;
+}
+.dr-tut-box {
+    zoom: var(--dr-zoom);
+    width: 340px;
+    padding: 18px 18px 14px;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    user-select: none;
+}
+.dr-tut-box.wide { width: 600px; }
+.dr-tut-kicker {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-accent);
+}
+.dr-tut-title { margin-top: 6px; font-size: var(--ui-fs-lg); font-weight: var(--ui-fw-bold); letter-spacing: -0.2px; }
+.dr-tut-text { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--ui-text-mid); }
+.dr-tut-text b { color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
+.dr-tut-wait {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ui-text-label);
+}
+.dr-tut-wait i { width: 7px; height: 7px; border-radius: 50%; background: var(--ui-accent); animation: dr-tut-wait 1.2s ease-in-out infinite; }
+@keyframes dr-tut-wait { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+.dr-tut-btns { display: flex; justify-content: flex-end; gap: var(--ui-sp-3); margin-top: 14px; }
+.dr-tut-btns .dr-btn { padding: 7px 13px; }
+
+/* The stage list (the dock's Tutorial button). */
+.dr-tut-stages { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.dr-tut-stage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.dr-tut-stage:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+.dr-tut-stage b { display: block; font-size: 13px; font-weight: var(--ui-fw-bold); }
+.dr-tut-stage span span { display: block; margin-top: 2px; font-size: 12px; line-height: 1.4; color: var(--ui-text-mid); }
+.dr-tut-n {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--ui-accent-medium);
+    background: var(--ui-accent-subtle);
+    color: var(--ui-accent);
+    font-size: 12px;
+    font-weight: var(--ui-fw-bold);
+}
+
+/* Every kind of card (the showcase): the palette's colours. */
+.dr-tut-gallery-sum { margin-top: 10px; font-size: 12px; color: var(--ui-text-label); }
+.dr-tut-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.dr-tut-kind {
+    padding: 9px 10px 10px;
+    border-radius: var(--ui-radius-row);
+    background: var(--kind-tint);
+}
+.dr-tut-kind-head { display: flex; justify-content: space-between; align-items: baseline; }
+.dr-tut-kind-head b { font-size: 13px; font-weight: var(--ui-fw-bold); }
+.dr-tut-kind-head b::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--kind);
+    vertical-align: 1px;
+}
+.dr-tut-kind-head span { font-size: 12px; font-weight: var(--ui-fw-bold); color: var(--kind); }
+.dr-tut-kind-says { margin-top: 3px; font-size: 11.5px; line-height: 1.4; color: var(--ui-text-mid); }
+.dr-tut-kind-eg { margin-top: 4px; font-size: 11px; line-height: 1.4; color: var(--ui-text-label); }
+
+/* ---- buttons ---- */
+
+/* The pause menu's buttons (pause.css .pm-btn): the first choice white, the rest dark glass. */
+.dr-btns { display: flex; flex-wrap: wrap; gap: var(--ui-sp-3); margin: 12px 0; }
+.dr-btns .dr-end { margin-left: auto; }
+.dr-bar .dr-btn { flex: 1; }
+/* One height with Check's count or without it, and the icon buttons' (34px), so the row never moves. */
+.dr-bar.tools .dr-btn { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding-top: 0; padding-bottom: 0; }
+.dr-btn {
+    padding: 8px 14px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-bold);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.dr-btn:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+.dr-btn.primary { background: var(--ui-pill); border-color: var(--ui-pill); color: var(--ui-pill-ink); }
+.dr-btn.primary:hover { opacity: 0.88; }
+/* Nothing to do yet (Save with nothing changed): dark glass like the rest, not a faded white block. */
+.dr-btn.primary:disabled { background: rgba(255, 255, 255, 0.04); border-color: var(--ui-border); color: var(--ui-text); }
+.dr-btn.danger { background: var(--ui-error-light); border-color: var(--ui-error); color: var(--ui-error); }
+.dr-btn.ghost { background: transparent; border-color: transparent; color: var(--ui-text-mid); }
+.dr-btn.ghost:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-btn:disabled { opacity: 0.38; cursor: default; }
+/* Another resource's button on a thing's page (panels.js thingButtons): its icon before its name. */
+.dr-btn.dr-btn-tool { display: inline-flex; align-items: center; gap: 7px; }
+.dr-btn.dr-btn-tool svg { width: 14px; height: 14px; flex: none; }
+
+/* ---- fields ---- */
+
+.dr-row { margin-top: 12px; }
+.dr-label {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ui-sp-4);
+    margin-bottom: 5px;
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+}
+.dr-label span { color: var(--ui-text-label); font-weight: var(--ui-fw-regular); }
+.dr-field {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.dr-field::placeholder { color: var(--ui-text-mid); }
+.dr-field:focus { border-color: var(--ui-accent-medium); }
+textarea.dr-field { resize: vertical; line-height: 1.45; }
+
+.dr-seg {
+    display: flex;
+    padding: 2px;
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-light);
+}
+.dr-seg-key {
+    flex: 1;
+    height: 24px;
+    padding: 0 6px;
+    border: none;
+    border-radius: var(--ui-radius-xs);
+    background: transparent;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.dr-seg-key:hover { color: var(--ui-text); }
+.dr-seg-key.on { background: var(--ui-pill); color: var(--ui-pill-ink); }
+
+/* A two-way choice with no hint sits on its label's line. */
+.dr-row.inline { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-sp-6); }
+.dr-row.inline .dr-label { margin: 0; }
+.dr-row.inline .dr-seg { flex: none; width: 190px; }
+
+/* Two short fields on one line (Name and Id, Weapon and Armour, Runs at once and Team size). */
+.dr-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--ui-sp-5); }
+.dr-pair.narrow { grid-template-columns: minmax(0, 1fr) 92px; }
+
+/* A LENGTH OF TIME (panels.js timeField): a box a unit, its number and its letter ("8h", "42m"), typed, its chevron
+   its list (dropdown.js). */
+.dr-dhms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--ui-sp-3); }
+.dr-dhms.hms { grid-template-columns: repeat(3, minmax(0, 1fr)); }   /* a task's time: hours, minutes, seconds */
+.dr-dhms-box {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 4px 0 10px;
+    box-sizing: border-box;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    transition: border-color 0.15s;
+}
+.dr-dhms-box:focus-within { border-color: var(--ui-accent-medium); }
+.dr-dhms-in {
+    width: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 18px;
+    font-weight: var(--ui-fw-bold);
+    text-align: right;
+    outline: none;
+}
+.dr-dhms-in::placeholder { color: var(--ui-text-mid); }
+.dr-dhms-u { flex: none; margin: 0 2px 0 1px; font-size: 14px; font-weight: var(--ui-fw-semibold); color: var(--ui-text-label); }
+.dr-dhms-dd {
+    flex: none;
+    width: 22px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: var(--ui-radius-sm);
+    background: none;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+}
+.dr-dhms-dd:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-dhms-dd svg { display: block; width: 12px; height: 12px; margin: 0 auto; fill: none; stroke: currentColor; stroke-width: 2.6;
+    stroke-linecap: round; stroke-linejoin: round; }
+
+/* A YES OR NO: /w's switch (dev-menu.css .dm-switch) on the label's line, the white pill when on; the
+   whole row flips it. Switches one under another share a hairline. */
+.dr-sw {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-sp-6);
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 0;
+    border: 0;
+    background: transparent;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+}
+.dr-sw + .dr-sw { margin-top: 0; border-top: 1px solid var(--ui-border); }
+.dr-sw-name { min-width: 0; font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); }
+.dr-sw-name small { display: block; margin-top: 1px; font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-medium); color: var(--ui-text-mid); }
+.dr-switch {
+    position: relative;
+    flex: none;
+    width: 42px;
+    height: 24px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    border: 1px solid var(--ui-border-hover);
+    background: var(--ui-slot-bg-filled);
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.dr-switch::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ui-text-mid);
+    transition: left 0.16s var(--ui-ease), background 0.16s var(--ui-ease);
+}
+.dr-switch.on { background: var(--ui-pill); border-color: var(--ui-pill); }
+.dr-switch.on::after { left: 19px; background: var(--ui-pill-ink); }
+.dr-sw:hover .dr-switch:not(.on) { border-color: var(--ui-slot-line-hover); }
+.dr-sw:disabled { cursor: default; opacity: 0.6; }
+
+/* A group of fields: /w's group heads (dev-menu.css .dm-sep). */
+.dr-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    margin: 20px 0 0;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+
+/* A PAGE OVER A TAB (a card's settings, a placed thing's, Check): the way back leads it, as a /w page's
+   back row does, then its head. */
+.dr-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    margin: 10px 0 0 -6px;
+    padding: 4px 8px 4px 4px;
+    border: 0;
+    border-radius: var(--ui-radius-slot);
+    background: transparent;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.dr-back:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-back svg { width: 16px; height: 16px; }
+.dr-page-head { display: flex; align-items: center; gap: var(--ui-sp-5); margin-top: 8px; }
+.dr-page-head .dr-item-main b { color: var(--ui-pill); padding-bottom: 2px; font-size: 18px; line-height: 1.2; }
+/* A placed thing's page: its picture big enough to read what it is (the World list's rows keep theirs small). */
+.dr-page-head > .dr-world-art { width: 76px; height: 58px; }
+.dr-page-head > .dr-world-art.dr-world-glyph { width: 58px; }
+.dr-page-head > .dr-world-art svg, .dr-page-head > .dr-world-art .dr-world-glyph svg { width: 34px; height: 34px; }
+/* UNDER THE NAME AND PICTURE, never beside them (they had the name squeezed to a few letters): its pills (Always
+   present, Not placed, Needs work). Change model is the General tab's last row (director/panels.js worldPage). */
+.dr-page-sub { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ui-sp-4); margin-top: var(--ui-sp-4); }
+
+/* A PLACED THING'S TABS (General, Eye sight, Tasks...): the editor's own tab chips (.dr-tabs.chips) one step smaller,
+   so the order reads the editor's tabs, then a thing's, then its fields (as big display words they were louder than
+   the tabs above them). The open one is the selection pill. A count or "On" rides in a chip beside the
+   word, 11px; a red dot is a task that needs work. */
+.dr-ptabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui-sp-2);
+    margin: 14px 0 6px;
+}
+.dr-ptab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ui-surface-hover);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1.35;
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.dr-ptab:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.dr-ptab.on { background: var(--ui-pill); color: var(--ui-pill-ink); font-weight: var(--ui-fw-bold); }
+.dr-ptab em {
+    font-family: var(--ui-font);
+    font-style: normal;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: var(--ui-radius-sm);
+    color: var(--ui-text);
+    background: var(--ui-surface-medium);
+}
+.dr-ptab.on em { color: var(--ui-pill); background: var(--ui-pill-ink); }
+.dr-ptab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ui-error); }
+
+/* A slider with its value beside it (panels.js sliderField): the inventory's split slider, its track filled to the
+   thumb (--p, kept up as it moves by app.js). */
+.dr-slide { display: flex; align-items: center; gap: var(--ui-sp-5); }
+.dr-slider {
+    flex: 1;
+    min-width: 0;
+    height: 4px;
+    margin: 8px 0;
+    appearance: none;
+    border-radius: var(--ui-radius-pill);
+    background: linear-gradient(90deg, var(--ui-pill) 0 var(--p, 0%), var(--ui-border-hover) var(--p, 0%) 100%);
+    outline: none;
+    cursor: pointer;
+}
+.dr-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ui-text);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+.dr-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ui-accent-medium); }
+.dr-slider-val {
+    flex: none;
+    min-width: 52px;
+    text-align: right;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+/* An NPC's Outfit (panels.js outfitGroup): each part its name, then its Style and Colour sliders under it, their
+   words in a narrow column of their own so the tracks line up. */
+.dr-look-part { margin-top: 12px; }
+.dr-look-line { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: var(--ui-sp-4); }
+.dr-look-what { font-size: var(--ui-fs-caption); color: var(--ui-text-label); }
+
+/* Dialog Line's answers: each numbered, its rules a line under it, then Add an answer up to four. */
+.dr-ans { display: flex; align-items: center; gap: var(--ui-sp-4); }
+.dr-ans-n {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-slot-bg-filled);
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+}
+.dr-ans .dr-field { flex: 1; min-width: 0; }
+.dr-add {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    width: 100%;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border: 1px dashed var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-slot);
+    background: transparent;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    text-align: left;
+    cursor: pointer;
+}
+.dr-add:hover { color: var(--ui-text); border-color: var(--ui-slot-line-hover); }
+.dr-add svg { width: 14px; height: 14px; }
+
+.dr-hint { margin: 8px 0; font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-mid); }
+.dr-hint.warn { color: var(--ui-warning); }   /* (what a preview left out, and why) */
+.dr-code {
+    margin: 0 0 8px; padding: 8px 10px; border-radius: var(--ui-radius-row);
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--ui-border);
+    font-family: var(--ui-mono); font-variant-numeric: tabular-nums; font-size: 12px; line-height: 1.5; color: var(--ui-text);
+    white-space: pre-wrap; word-break: break-all; user-select: text;
+}
+.dr-none { padding: 14px 0; text-align: center; font-size: 12px; color: var(--ui-text-label); }
+.dr-sep { height: 1px; margin: 14px 0 10px; background: var(--ui-border); }
+.dr-warn-text { color: var(--ui-warning) !important; }
+
+/* A heading in the column: the legend's ("Legend"), at the column's size. */
+.dr-title2 {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    margin: 16px 0 6px;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--ui-pill);
+}
+.dr-idtag { margin-left: auto; font-family: var(--ui-font); font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-regular); color: var(--ui-text-label); }
+.dr-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--kind); }
+
+/* ---- the palette ---- */
+
+.dr-pal-search { margin-top: 10px; }
+/* A kind of card: a heading with its colour, then its cards as the legend's rows. */
+.dr-cat {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    margin: 22px 0 4px;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--ui-pill);
+}
+.dr-cat::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--kind); }
+.dr-pal-row {
+    padding: 10px 0;
+    border-top: 1px solid var(--ui-border);
+    cursor: grab;
+}
+.dr-cat + .dr-pal-row { border-top: 0; }
+.dr-pal-row b {
+    display: block;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--dr-row-off);
+    transition: color 0.18s var(--ui-ease), transform 0.22s var(--ui-ease);
+}
+.dr-pal-row:hover b { color: var(--ui-pill); transform: translateX(4px); }
+.dr-pal-row span { display: block; margin-top: 3px; font-size: var(--ui-fs-caption); line-height: 1.4; color: var(--ui-text-mid); }
+
+/* THE DIRECTOR'S CARD LIST (.line): a card a line, /w's way, and the one pointed at says what it does in
+   the strip under the list (always three lines high, more cut: the list's edge never moves, so the last card stays
+   where the pointer is). The search and the group chips
+   stay over the list as it scrolls. (Rows without .line: the Systems Creator's palette.) */
+.dr-body.split { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.dr-pal-top { flex: none; }
+.dr-search-box { position: relative; margin-top: 12px; }
+.dr-search-box svg { position: absolute; left: 10px; top: 50%; width: 15px; height: 15px; transform: translateY(-50%); color: var(--ui-text-mid); pointer-events: none; }
+.dr-search-box .dr-field { margin-top: 0; padding-left: 32px; }
+.dr-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 2px; }
+.dr-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    padding: 4px 9px 4px 8px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ui-surface-hover);
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.dr-chip::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--kind); }
+.dr-chip:hover { background: var(--ui-surface-hover-strong); color: var(--ui-text); }
+.dr-chip em { font-style: normal; font-weight: var(--ui-fw-medium); color: var(--ui-text-label); }
+.dr-pal-list { position: relative; flex: 1; min-height: 0; overflow-y: auto; margin: 0 calc(-1 * var(--dr-pad)); padding: 0 var(--dr-pad) 16px; }
+.dr-cat.line {
+    margin: 16px 0 3px;
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+.dr-cat.line::before { width: 8px; height: 8px; }
+.dr-pal-row.line { margin: 0 -8px; padding: 6px 8px; border-top: 0; border-radius: var(--ui-radius-slot); transition: background 0.15s; }
+.dr-pal-row.line:hover { background: var(--ui-surface-hover); }
+.dr-pal-row.line b { font-family: var(--ui-font); font-size: var(--ui-fs-body-lg); font-weight: var(--ui-fw-semibold); letter-spacing: 0; }
+.dr-pal-strip { flex: none; margin: 0 calc(-1 * var(--dr-pad)); padding: 11px var(--dr-pad) 13px; border-top: 1px solid var(--ui-border); }
+.dr-pal-strip b { display: block; height: 1.3em; line-height: 1.3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--ui-fs-lg); font-weight: var(--ui-fw-bold); }
+.dr-pal-strip p { margin: 3px 0 0; height: calc(3 * 1.45em); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+    font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-mid); }
+
+/* A chip with no kind's colour (the item picker's kinds); the one picked is the selection pill. */
+.dr-chip.plain::before { display: none; }
+.dr-chip.on { background: var(--ui-pill); color: var(--ui-pill-ink); }
+.dr-chip.on em { color: var(--ui-pill-ink-mid); }
+
+/* AN ITEM FIELD: the item picked, its picture and name, pressed to open the item picker. */
+.dr-pick {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    width: 100%;
+    padding: 5px 10px 5px 5px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.dr-pick:hover { background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+.dr-pick > svg { flex: none; width: 14px; height: 14px; color: var(--ui-text-mid); }
+.dr-pick-art {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-slot-bg-filled);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--ui-text-dim);
+}
+.dr-pick-art img { width: 28px; height: 28px; object-fit: contain; }
+.dr-pick-art svg { width: 18px; height: 18px; }
+.dr-pick-main { flex: 1; min-width: 0; }
+.dr-pick-main b, .dr-pick-main span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dr-pick-main b { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); }
+.dr-pick-main span { margin-top: 1px; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+.dr-pick.empty .dr-pick-main b { color: var(--ui-text-mid); font-weight: var(--ui-fw-medium); }
+
+/* THE ITEM PICKER (a page over the field's): every item a row with its picture; the one picked now is
+   /w's chosen row, a blue tint inside a white ring (the list's top padding keeps the ring unclipped). */
+.dr-pick-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-sp-4); }
+.dr-pick-head .dr-btn { padding: 6px 10px; }
+.dr-pick-count { margin: 8px 0 4px; font-size: var(--ui-fs-caption); color: var(--ui-text-label); }
+.dr-pick-list { padding-top: 3px; }
+.dr-pick-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    width: calc(100% + 16px);
+    margin: 0 -8px 2px;
+    padding: 4px 8px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.dr-pick-row:hover { background: var(--ui-surface-hover); }
+.dr-pick-row.on { background: var(--ui-slot-bg-chosen); border-color: var(--ui-ring); box-shadow: 0 0 0 1px var(--ui-ring); }
+/* The voice picker's row (GTA Speech): the voice to pick, and Hear beside it. */
+.dr-voice-row { display: flex; align-items: center; gap: var(--ui-sp-4); }
+.dr-voice-row .dr-pick-row { flex: 1; min-width: 0; width: auto; margin: 0 0 2px -8px; }
+.dr-voice-row .dr-pick-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr-voice-row > .dr-btn { flex: none; }
+.dr-pick-row .dr-pick-art { width: 38px; height: 38px; }
+.dr-pick-row .dr-pick-art img { width: 34px; height: 34px; }
+
+.dr-drag-ghost {
+    position: fixed;
+    z-index: 950;
+    pointer-events: none;
+    padding: 6px 10px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-accent-medium);
+    background: var(--ui-surface-raised);
+    box-shadow: var(--ui-shadow);
+    font-size: 12px;
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* ---- rows: scenarios, placed things, variables ---- */
+
+/* A row: the legend's — no box, a line above each but the first; the name in the menu's type, dim
+   until it is hovered or open, and an open one underlined as the legend's picked blip is. */
+.dr-item {
+    border-top: 1px solid var(--ui-border);
+}
+.dr-item:first-child,
+.dr-btns + .dr-item,
+.dr-sep + .dr-item { border-top: 0; }
+.dr-item-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-sp-4);
+    padding: 12px 0;
+    cursor: pointer;
+}
+.dr-item-main { flex: 1; min-width: 0; }
+
+/* A World row's picture (the world builder): a car's, an NPC's or a prop's, or its kind's
+   glyph — the glyph standing in when the picture is not there (.dr-noimg, set by the image's error). */
+.dr-world-art {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 34px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text-dim);
+}
+.dr-world-art img { width: 100%; height: 100%; object-fit: contain; }
+/* (Fitted to the thing itself, an NPC's head: what spills past the box is cut, the body under the head.) */
+.dr-world-art:not(.dr-world-glyph) { overflow: hidden; border-radius: 6px; }
+.dr-world-art .dr-world-glyph { display: none; width: 26px; height: 26px; }
+.dr-world-art.dr-world-glyph { width: 46px; }
+.dr-world-art.dr-world-glyph svg, .dr-world-art .dr-world-glyph svg { width: 26px; height: 26px; }
+.dr-world-art.dr-noimg img { display: none; }
+.dr-world-art.dr-noimg .dr-world-glyph { display: block; }
+
+/* SEVERAL SELECTED in the world builder (panels.js multiPage): their pictures in a row over "5 selected", and a field
+   whose value differs between them, Mixed: no value shown, the word beside its name. */
+.dr-multi-art { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.dr-multi-art .dr-world-art { width: 52px; height: 40px; margin-top: 0; border-radius: 6px; background: var(--ui-slot-bg-filled); }
+.dr-multi-more { font-size: var(--ui-fs-md); font-weight: var(--ui-fw-semibold); color: var(--ui-text-mid); padding: 0 4px; }
+.dr-mixed > .dr-label::after,
+.dr-sw.dr-mixed .dr-sw-name::after {
+    content: 'Mixed';
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 9px;
+    background: var(--ui-slot-bg-filled);
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-medium);
+}
+.dr-sw[aria-checked="mixed"] .dr-switch::after { left: 11px; border-radius: 3px; height: 4px; top: 9px; }
+
+/* A RANDOM VEHICLE'S MODELS (panels.js carModelsGroup): a row each, a line between, as the World list's: its picture and
+   name with its × at the end, its chance slider under them, its resources' buttons (Whiplash) under that. Picking one
+   in the world builder's Vehicles is said in a band of the accent: a state, as Isolate world's is. */
+.dr-carmodel { padding: 10px 0 12px; border-bottom: 1px solid var(--ui-border); }
+.dr-carmodel-head { display: flex; align-items: center; gap: var(--ui-sp-4); margin-bottom: 4px; }
+.dr-carmodel-head .dr-world-art { margin-top: 0; }
+.dr-carmodel-name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--ui-mono);
+    font-size: 13px;
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dr-carmodel .dr-btns { margin-top: 8px; }
+.dr-carmodel-pick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px var(--ui-sp-4);
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--ui-accent-medium);
+    border-radius: var(--ui-radius-slot);
+    background: var(--ui-accent-light);
+}
+.dr-carmodel-pick b { flex: 1 1 100%; font-size: var(--ui-fs-md); color: var(--ui-text); }
+.dr-carmodel-pick span { flex: 1; min-width: 0; font-size: var(--ui-fs-caption); line-height: 1.45; color: var(--ui-text-mid); }
+.dr-carmodel-add { display: flex; align-items: center; gap: var(--ui-sp-4); }
+.dr-carmodel-add .dr-field { flex: 1; min-width: 0; margin: 0; }
+/* (Adding one stays over the list, which grows down under it.) */
+.dr-carmodels { margin-top: 10px; border-top: 1px solid var(--ui-border); }
+.dr-carmodels > .dr-none { padding: 10px 0; }
+
+/* A VEHICLE POOL'S CARS at the top of its page (panels.js poolArt): side by side over its name, then how many more. */
+.dr-pool-row { margin-top: 8px; }
+.dr-pool-art { display: flex; align-items: center; gap: 6px; }
+.dr-pool-art .dr-world-art { width: 72px; height: 54px; margin-top: 0; }
+.dr-pool-more { padding: 0 4px; font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-bold); color: var(--ui-text-mid); }
+
+/* ANOTHER RESOURCE'S LIST ON ITS CARD (panels.js entriesField): a row each, a line between, as the World list's: its
+   number, its own words (two lines at most), Change and x. */
+.dr-entry {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--ui-border);
+}
+.dr-entry-n {
+    flex: none;
+    width: 18px;
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-label);
+}
+.dr-entry-text {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ui-fs-md);
+    line-height: 1.4;
+    color: var(--ui-text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.dr-entry .dr-btn { flex: none; }
+/* A task's number on its row (panels.js tasksGroup): the open one in the pill's colours. */
+.dr-task-n {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    margin-top: 2px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-surface-medium);
+    color: var(--ui-text);
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-md);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.dr-task-n.on { background: var(--ui-pill); color: var(--ui-pill-ink); }
+.dr-task-pal { max-height: none; }
+.dr-item-main b {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 2px 0 8px;
+    vertical-align: top;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: var(--dr-row-off);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.18s var(--ui-ease), transform 0.22s var(--ui-ease);
+}
+.dr-item-main b::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--ui-pill);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.dr-item-head:hover .dr-item-main b,
+.dr-item.open > .dr-item-head .dr-item-main b { color: var(--ui-pill); }
+.dr-item.open > .dr-item-head .dr-item-main b { transform: translateX(5px); }
+.dr-item.open > .dr-item-head .dr-item-main b::after { transform: scaleX(1); }
+.dr-item-main span { display: block; margin-top: 3px; font-size: var(--ui-fs-caption); line-height: 1.4; color: var(--ui-text-mid); }
+.dr-item-body, .dr-world-edit { padding: 0 0 16px; }
+.dr-meta { margin: 4px 0; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+/* A lore character's ped, under its model's box (hidden when there is no picture) */
+.dr-lore-pic { display: block; width: 72px; height: 96px; margin: -4px 0 8px; object-fit: contain; }
+.dr-lore-pic[hidden] { display: none; }
+/* Their picture link's preview, round as a phone shows a contact: dragged to move it, zoomed by the slider beside it
+   (its framing, drawn on the img: app.js frameStyle). Beside it too, why a link is refused or how to frame it. */
+.dr-lore-face-row { display: flex; align-items: center; gap: 12px; margin: 8px 0 12px; min-height: 20px; }
+.dr-lore-face-box { flex: none; width: 88px; height: 88px; border-radius: 50%; overflow: hidden; cursor: grab; touch-action: none;
+    background: var(--ui-surface-hover-strong); }
+.dr-lore-face-box:active { cursor: grabbing; }
+.dr-lore-face-box[hidden] { display: none; }
+.dr-lore-face { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
+.dr-lore-face-side { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* the zoom slider (as the inventory's split slider) */
+.dr-lore-zoom { width: 100%; max-width: 220px; height: 4px; margin: 6px 0; appearance: none; background: var(--ui-border-hover);
+    border-radius: var(--ui-radius-pill); outline: none; cursor: pointer; }
+.dr-lore-zoom::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--ui-text); cursor: pointer; }
+.dr-lore-zoom:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ui-accent-medium); }
+.dr-lore-zoom[hidden] { display: none; }
+.dr-lore-face-why { font-size: var(--ui-fs-caption); line-height: 1.4; color: var(--ui-text-mid); }
+.dr-lore-clip { display: block; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; }
+.dr-lore-clip img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.dr-world-art.dr-noimg .dr-lore-clip { display: none; }
+
+.dr-pills { flex: none; display: flex; gap: var(--ui-sp-2); }
+.dr-pill {
+    padding: 2px 7px;
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-surface-medium);
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.dr-pill.ok { background: var(--ui-success-light); color: var(--ui-success); }
+.dr-pill.warn { background: var(--ui-warning-light); color: var(--ui-warning); }
+.dr-pill.err { background: var(--ui-error-light); color: var(--ui-error); }
+
+.dr-where {
+    padding: 7px 9px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-subtle);
+    font-size: var(--ui-fs-caption);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+.dr-where.none { color: var(--ui-warning); }
+.dr-readvar { display: flex; align-items: center; gap: var(--ui-sp-4); font-size: 12px; }
+
+/* ---- a Dialog Line answer's rules: its gear beside the answer, the box under it (panels.js answerField, ruleField) ---- */
+
+/* The gear: grey with no rule, blue (the accent) with one; it keeps its room on an empty answer, unseen. */
+.dr-ans-gear {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    border: 0;
+    border-radius: var(--ui-radius-slot);
+    background: transparent;
+    color: var(--ui-text-mid);
+    cursor: pointer;
+}
+.dr-ans-gear svg { width: 100%; height: 100%; display: block; }
+.dr-ans-gear:hover { background: rgba(255, 255, 255, 0.08); color: var(--ui-text); }
+.dr-ans-gear.on, .dr-ans-gear.on:hover { color: var(--ui-accent); }
+.dr-ans-gear.open { background: var(--ui-surface-light); }
+.dr-ans-gear.none { visibility: hidden; }
+.dr-ans-gear:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; }
+/* Open, a box of its own fields under the answer (in from its number). */
+.dr-rule {
+    margin: 4px 0 0 28px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-light);
+}
+.dr-rule-body { padding: 9px; }
+
+/* In order (panels.js variantsGroup): the variants a new run takes in turn, a row each, as the legend's rows. */
+.dr-vorder { margin: 4px 0 2px; }
+.dr-vorder-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--ui-border);
+}
+.dr-vorder-row:first-child { border-top: 0; }
+.dr-vorder-n {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-surface-hover);
+    color: var(--ui-text-mid);
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-bold);
+}
+.dr-vorder-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ui-text);
+    font-size: 14px;
+    font-weight: var(--ui-fw-bold);
+}
+
+.dr-rev {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-4);
+    padding: 11px 0;
+    border-top: 1px solid var(--ui-border);
+}
+.dr-title2 + .dr-rev { border-top: 0; }
+.dr-rev > div { flex: 1; min-width: 0; }
+.dr-rev b {
+    display: block;
+    font-family: var(--dr-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--ui-pill);
+}
+.dr-rev span { display: block; margin-top: 3px; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+
+/* ---- problems ---- */
+
+.dr-probs { margin: 8px 0; }
+.dr-probs:empty { display: none; }
+.dr-prob {
+    margin: 4px 0;
+    padding: 7px 9px 7px 10px;
+    border-radius: var(--ui-radius-xs);
+    background: var(--ui-error-subtle);
+    font-size: var(--ui-fs-caption);
+    line-height: 1.45;
+}
+/* Its kind as a disc leading the row: an error's red cross, a warning's amber "!" (the Systems
+   Creator's .sy-glyph look; a .sy-glyph inside a row is hidden, systems.css). */
+.dr-prob::before {
+    content: '\2715';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--ui-error);
+    color: var(--ui-pill-ink);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    vertical-align: -2px;
+}
+.dr-prob.warn { background: var(--ui-warning-light); }
+.dr-prob.warn::before { content: '!'; font-size: var(--ui-fs-sm); background: var(--ui-warning); }
+.dr-prob.link { cursor: pointer; }
+.dr-prob-cards { color: var(--ui-text-mid); white-space: nowrap; }
+.dr-prob-fix { display: block; margin-top: 4px; padding: 3px 8px; }
+.dr-prob.link:hover { filter: brightness(1.25); }
+.dr-steps { margin: 6px 0; max-height: 320px; overflow-y: auto; }
+.dr-step {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-sp-3);
+    padding: 4px 6px;
+    border-radius: var(--ui-radius-xs);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+    cursor: pointer;
+}
+.dr-step:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+.dr-step b { flex: none; font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.dr-step i { min-width: 0; color: var(--ui-warning); font-style: normal; }
+.dr-step-bad { flex: none; color: var(--ui-error); }
+.dr-step-at { flex: none; width: 44px; color: var(--ui-text-label); font-variant-numeric: tabular-nums; }
+.dr-sum { padding: 6px 0; font-size: 12px; font-weight: var(--ui-fw-semibold); color: var(--ui-text-mid); }
+.dr-sum.ok { color: var(--ui-success); }
+.dr-sum.warn { color: var(--ui-warning); }
+.dr-sum.error { color: var(--ui-error); }
+
+/* ---------------------------------------- */
+/* Popovers: the card search, a menu, the confirm box */
+/* ---------------------------------------- */
+
+.dr-float { position: fixed; z-index: 9560; }   /* on the body, so over .dr-root */
+
+.dr-search, .dr-menu {
+    zoom: var(--dr-zoom);
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+}
+.dr-search { width: 300px; padding: 10px; display: flex; flex-direction: column; }
+.dr-search-title { margin-bottom: 6px; font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.dr-search-list { max-height: 300px; margin-top: 6px; overflow-y: auto; }
+.dr-search-cat {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+    margin: 10px 4px 3px;
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+}
+.dr-search-cat::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--kind); }
+.dr-search-row { padding: 6px 8px; border-radius: var(--ui-radius-slot); cursor: pointer; }
+.dr-search-row.on { background: var(--ui-surface-medium); box-shadow: inset 0 0 0 1px var(--ui-accent-medium); }
+.dr-search-row b { display: block; font-size: 12.5px; font-weight: var(--ui-fw-semibold); }
+.dr-search-row span { display: block; margin-top: 1px; font-size: var(--ui-fs-sm); color: var(--ui-text-mid); }
+.dr-search-none { padding: 12px 0; text-align: center; font-size: 12px; color: var(--ui-text-label); }
+
+.dr-menu { min-width: 170px; padding: 4px; }
+.dr-menu-row { padding: 7px 10px; border-radius: var(--ui-radius-sm); font-size: 12px; cursor: pointer; }
+.dr-menu-row:hover { background: var(--ui-surface-hover); }
+.dr-menu-row.danger { color: var(--ui-error); }
+
+/* ---- WHIP'S DROPDOWN (director/dropdown.js) ----
+   The select stays, invisible over its box (its code reads and writes it; a tutorial ring still finds its place),
+   and the box is whip's: the choice (its picture and a line under it when it has them) and a chevron. Its list is a
+   float on the body, as the menus are: a search once there are many, groups, a tick on the choice. */
+.dr-dd-wrap { position: relative; display: block; }
+.dr-dd-wrap > select.dr-field { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.dr-dd {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 34px;
+    padding: 4px 10px;
+    box-sizing: border-box;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-semibold);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.dr-dd:hover { background: rgba(255, 255, 255, 0.07); border-color: var(--ui-border-hover); }
+.dr-dd.open, .dr-dd:focus-visible { border-color: var(--ui-accent-medium); outline: none; }
+.dr-dd.empty .dr-dd-label { color: var(--ui-text-mid); font-weight: 500; }
+.dr-dd:disabled { opacity: 0.45; cursor: default; }
+.dr-dd-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dr-dd-label, .dr-dd-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dr-dd-sub { font-size: 11px; font-weight: 500; color: var(--ui-text-mid); }
+.dr-dd-chev { flex: none; width: 12px; height: 12px; color: rgba(255, 255, 255, 0.6); transition: transform 0.15s; }
+.dr-dd.open .dr-dd-chev { transform: rotate(180deg); }
+.dr-dd-chev svg, .dr-dd-tick svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.6;
+    stroke-linecap: round; stroke-linejoin: round; }
+/* A ped's or a car's picture, round: a ped's shows its head. */
+.dr-dd-pic { flex: none; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255, 255, 255, 0.07); }
+.dr-dd-pic img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+.dr-dd-pic.none img { display: none; }
+
+.dr-dd-list {
+    zoom: var(--dr-zoom);
+    box-sizing: border-box;
+    max-height: 340px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border-hover);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+}
+.dr-dd-find {
+    flex: none;
+    height: 34px;
+    margin-bottom: 4px;
+    padding: 0 10px;
+    border-radius: var(--ui-radius-slot);
+    border: 1px solid var(--ui-accent-medium);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    outline: none;
+}
+.dr-dd-find::placeholder { color: var(--ui-text-mid); }
+.dr-dd-rows { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.dr-dd-group { padding: 8px 10px 4px; font-size: 10.5px; font-weight: var(--ui-fw-bold); letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ui-text-label); }
+.dr-dd-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 34px;
+    padding: 5px 10px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius-slot);
+    background: none;
+    color: var(--ui-text-mid);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+.dr-dd-opt[hidden] { display: none; }
+.dr-dd-opt:hover { background: var(--ui-surface-hover); color: var(--ui-text); }
+/* The keys' place (and the pad's): the white ring. */
+.dr-dd-opt:focus { outline: none; border-color: var(--ui-ring); color: var(--ui-text); }
+.dr-dd-opt.on { background: var(--ui-accent-light); color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
+.dr-dd-opt:disabled { opacity: 0.4; cursor: default; }
+.dr-dd-tick { flex: none; width: 16px; height: 16px; color: var(--ui-accent); }
+.dr-dd-none { display: none; padding: 12px 10px; font-size: 12.5px; color: var(--ui-text-mid); text-align: center; }
+.dr-dd-float.nothing .dr-dd-none { display: block; }
+
+.dr-modal-back {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui-scrim);
+}
+/* (Asked over the world builder, the Director's page being away: on the body, over the builder.) */
+.dr-modal-back.dr-modal-over { position: fixed; z-index: 9560; }
+.dr-modal {
+    zoom: var(--dr-zoom);
+    min-width: 380px;
+    max-width: 560px;
+    padding: 18px;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-solid);
+    box-shadow: var(--ui-shadow-modal);
+}
+/* The house look's title (Bricolage), and the answers on one row at the right (app.js ask: the main one last). */
+.dr-modal-title { font-family: var(--ui-font-display); font-size: var(--ui-fs-xl); font-weight: var(--ui-fw-display); letter-spacing: -0.01em; }
+.dr-modal-text { margin: 8px 0 4px; font-size: var(--ui-fs-md); line-height: 1.5; color: var(--ui-text-mid); }
+.dr-modal .dr-btns { flex-wrap: nowrap; justify-content: flex-end; }
+
+/* ---- recording a take (client/director_takes.lua; app.js recHud) ----
+   On the body while the page is out of the way: the recording's capsule at the top (REC, its name, the
+   time), the count before it starts, and its keys at the bottom left, as the world builder draws keys. */
+.dr-rec { --rz: calc(var(--ui-scale) * 1.35); position: fixed; inset: 0; z-index: 9550; pointer-events: none;
+    font-family: var(--ui-font); color: var(--ui-text); }
+.dr-rec-top { position: absolute; left: 0; right: 0; top: calc(40px * var(--rz)); display: flex; flex-direction: column;
+    align-items: center; gap: calc(8px * var(--rz)); }
+.dr-rec-cap { display: flex; align-items: center; gap: calc(14px * var(--rz)); padding: calc(10px * var(--rz)) calc(22px * var(--rz));
+    border-radius: 999px; background: rgba(12, 14, 20, 0.86); border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45); }
+.dr-rec-dot { width: calc(11px * var(--rz)); height: calc(11px * var(--rz)); border-radius: 50%; background: var(--ui-error);
+    box-shadow: 0 0 0 calc(4px * var(--rz)) rgba(248, 113, 113, 0.25); }
+.dr-rec-tag { font-size: calc(14px * var(--rz)); font-weight: 700; letter-spacing: 0.12em; color: var(--ui-error); }
+.dr-rec-bar { width: 1px; height: calc(20px * var(--rz)); background: rgba(255, 255, 255, 0.16); }
+.dr-rec-name { font-family: var(--ui-font-display); font-size: calc(19px * var(--rz)); font-weight: 800; }
+.dr-rec-time { font-size: calc(20px * var(--rz)); font-weight: 700; font-variant-numeric: tabular-nums; }
+.dr-rec-of { font-size: calc(14px * var(--rz)); font-weight: 600; color: var(--ui-text-mid); }
+.dr-rec-sub { font-size: calc(13px * var(--rz)); font-weight: 600; color: var(--ui-text-mid); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
+.dr-rec.held .dr-rec-dot { background: var(--ui-warning); box-shadow: 0 0 0 calc(4px * var(--rz)) rgba(251, 191, 36, 0.25); }
+.dr-rec.held .dr-rec-tag { color: var(--ui-warning); }
+.dr-rec.saving .dr-rec-dot, .dr-rec.count .dr-rec-dot { background: var(--ui-text-mid); box-shadow: none; }
+.dr-rec.saving .dr-rec-tag, .dr-rec.count .dr-rec-tag { color: var(--ui-text-mid); }
+.dr-rec-count { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+    font-family: var(--ui-font-display); font-size: calc(110px * var(--rz)); font-weight: 800; line-height: 1;
+    text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6); }
+.dr-rec-count:empty { display: none; }
+.dr-rec-keys { position: absolute; left: calc(46px * var(--rz)); bottom: calc(36px * var(--rz)); display: flex; align-items: center;
+    gap: calc(18px * var(--rz)); padding: calc(9px * var(--rz)) calc(15px * var(--rz)); border-radius: calc(10px * var(--rz));
+    background: rgba(12, 14, 20, 0.86); border: 1px solid rgba(255, 255, 255, 0.08); }
+.dr-rec-keys span { display: flex; align-items: center; gap: calc(7px * var(--rz)); font-size: calc(13px * var(--rz)); font-weight: 600; }
+.dr-rec-keys kbd { display: inline-flex; align-items: center; justify-content: center; min-width: calc(30px * var(--rz));
+    height: calc(22px * var(--rz)); padding: 0 calc(5px * var(--rz)); box-sizing: border-box; border-radius: calc(5px * var(--rz));
+    background: #fff; color: #0b0d12; font-family: var(--ui-font); font-size: calc(11px * var(--rz)); font-weight: 700; }
+
+/* ---- on a controller (js/director/pad.js) ----
+   The circle, and the white ring on what it would press, are the shared cursor's: css/pad-cursor.css. */
+
+/* ---- a card's icon, and trying a card here (js/director/panels.js glyphField, cardTry; try.js) ----
+   An icon field: the one picked and Change; open, every glyph as a key (a segmented key's, the picked one the
+   pill), the Director's own first. Under some cards, Play skill check or Simulate (the ring and the bar, played on
+   this page) and how their card or prompt looks. */
+.dr-glyph-row { display: flex; align-items: center; gap: var(--ui-sp-4); }
+.dr-glyph-now { flex: none; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+    padding: 6px; box-sizing: border-box; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: var(--ui-text); }
+.dr-glyph-now svg { width: 100%; height: 100%; display: block; }
+.dr-glyph-now.none { font-size: 13px; font-weight: 700; }
+.dr-glyph-word { flex: 1; min-width: 0; font-size: var(--ui-fs-sm); color: var(--ui-text-mid); text-transform: capitalize; }
+.dr-glyphs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.dr-seg-key.dr-glyph-key { flex: none; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 6px;
+    box-sizing: border-box; border-radius: 8px; background: rgba(255, 255, 255, 0.04); }
+.dr-seg-key.dr-glyph-key svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+.dr-seg-key.dr-glyph-key:hover { background: rgba(255, 255, 255, 0.1); }
+.dr-seg-key.dr-glyph-key.on { background: var(--ui-pill); color: var(--ui-pill-ink); }
+.dr-glyph-none { font-size: 13px; font-weight: 700; }
+.dr-glyph-head { margin-top: 10px; font-size: var(--ui-fs-sm); color: var(--ui-text-label); }
+.dr-btns.dr-btns-tight { margin-top: 6px; }
+
+.dr-try { display: flex; align-items: center; gap: var(--ui-sp-5); margin-top: 10px; }
+.dr-try-out { font-size: var(--ui-fs-sm); font-weight: var(--ui-fw-semibold); color: var(--ui-text-mid); }
+/* The ring's dot follows the mouse while it is played: the pointer would only be in the way. While either is
+   tried, the layer the ring and the bar are on (#ui-layer, ui.css) is over this screen (9550), not under it as
+   in the game's own order. */
+html.dr-trying, html.dr-trying * { cursor: none !important; }
+html.dr-trying .dr-root { filter: brightness(0.45); }   /* the ring read over the cards, not lost in their lines */
+html.dr-try-up #ui-layer { z-index: 9600; }
+
+/* How it looks: on a dark ground like the world's at night, the card or the prompt at the size it has there. */
+.dr-preview { display: flex; align-items: center; justify-content: center; min-height: 86px; margin-top: 10px; padding: 18px 14px;
+    border-radius: var(--ui-radius-row); background: radial-gradient(120% 140% at 30% 20%, #2c3442 0%, #11151c 70%);
+    border: 1px solid var(--ui-border); overflow: hidden; }
+.dr-preview .sh-capsule.ob-card { max-width: 100%; }
+.dr-preview .ob-card .dt-title { white-space: normal; }
+/* The prompt: its focused disc (interact3d/badge.html's .s2: white, the black edge, a white halo) and its words
+   in white, edged in black (label.html). */
+.dr-preview-prompt { gap: 14px; }
+.dr-pr-disc { flex: none; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; box-sizing: border-box;
+    padding: 9px; border-radius: 50%; background: #fff; border: 3px solid #fff; color: rgb(10, 12, 18);
+    box-shadow: 0 0 0 2.5px rgba(0, 0, 0, 0.9), 0 0 0 5px rgba(255, 255, 255, 0.3), 0 0 5px rgba(0, 0, 0, 0.6); }
+.dr-pr-disc svg { width: 100%; height: 100%; display: block; }
+.dr-pr-disc b { font-size: 20px; line-height: 1; }
+.dr-pr-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 19px; font-weight: 700;
+    letter-spacing: 0.4px; color: #fff;
+    text-shadow: -1.5px -1.5px 0 #000, 0 -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 0 0 #000, 1.5px 0 0 #000,
+                 -1.5px 1.5px 0 #000, 0 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 7px rgba(0, 0, 0, 0.9); }
+
+/* ---- Create Container's slots (js/director/panels.js lootEditor) ----
+   The container as the inventory shows it: the inventory's own panel, grid and slots (inventory.css), the right
+   column's look (four across, no names) without its width or its entrance. Each slot a button: what it may hold,
+   most likely first, its chance in the corner; the picked one ringed. */
+.dr-loot-inv.inv-col-right { width: auto; opacity: 1; transform: none; animation: none; margin-top: 10px; }
+.dr-loot-inv .inv-panel { padding: 14px; }
+.dr-loot-inv .inv-panel-header { margin-bottom: 10px; }
+.dr-loot-inv .inv-slots-grid { gap: 6px; }
+button.inv-slot.dr-loot-slot { padding: 0; font: inherit; color: inherit; cursor: pointer; }
+button.inv-slot.dr-loot-slot:disabled { cursor: default; }
+.inv-slot.dr-loot-slot.dr-loot-on { border-color: var(--ui-text); box-shadow: 0 0 0 2px var(--ui-ring); }
+.dr-loot-chance { position: absolute; left: 4px; top: 4px; z-index: 3; padding: 1px 5px; border-radius: 6px;
+    background: rgba(10, 12, 18, 0.82); font-size: 10px; font-weight: 700; line-height: 1.4; color: var(--ui-text);
+    font-variant-numeric: tabular-nums; }
+.dr-loot-head { margin-top: 14px; font-size: var(--ui-fs-md); font-weight: var(--ui-fw-bold); }
+.dr-loot-row { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--ui-border); }
+.dr-loot-row:first-of-type { border-top: 0; }
+.dr-loot-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ui-sp-4); }
+
+/* ---- a card's several placed things (js/director/panels.js worldsField: Spawn NPC's NPCs) ----
+   Each its row; its page and taking it off the card as two small icon buttons, so the name keeps the room. */
+.dr-icon-btn { flex: none; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 6px;
+    box-sizing: border-box; border: 0; border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--ui-text-mid); cursor: pointer; }
+.dr-icon-btn svg { width: 100%; height: 100%; display: block; }
+.dr-icon-btn:hover { background: rgba(255, 255, 255, 0.12); color: var(--ui-text); }
+.dr-icon-btn.danger:hover { background: rgba(248, 113, 113, 0.16); color: var(--ui-error); }
+.dr-icon-btn:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 2px; }
+.dr-worlds-row .dr-item-head { align-items: center; gap: 8px; }
+/* (Another thing's tasks, shown to be copied: read, not opened. panels.js taskCopier) */
+.dr-item-head.dr-item-still { cursor: default; }
+
+/* ---- the test window (js/director/testwin.js): the blueprint over the game while a test runs ----
+   Top right, under the goals' cards while there are any (ui.js sets --obj-n: a card and its gap are 93px at the cards'
+   zoom, as css/editor-hud.css has it) and the debug panel: the window, and under it the trail of the run's steps. As
+   wide as two of the widest cards side by side at the Director's size (canvas.js GEO.W_WIDE 284, a gap and room round
+   them: 600). Looked at, they let the game have the mouse (no pointer events, a little see-through); with the mouse
+   (H: .mouse) they take clicks. The grid is the editor's, never zoomed; the head and the trail wear --dr-zoom. */
+.dr-twcol {
+    position: fixed;
+    top: calc(20px + var(--obj-n, 0) * 93px * var(--ui-scale, 1) * 1.25 + var(--dbg-h, 0px));
+    right: 20px;
+    bottom: 16px;
+    z-index: 9560;
+    width: calc(var(--dr-zoom) * 600px);
+    max-width: calc(100vw - 40px);
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    transition: top 0.3s var(--ui-ease);
+}
+.dr-twcol.on { display: flex; }
+.dr-twcol.on.hidden { display: none; }   /* G: out of sight while the test goes on (client/director.lua) */
+.dr-tw {
+    flex: none;
+    height: min(460px, 46vh);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-solid);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    opacity: 0.9;
+    pointer-events: none;
+    user-select: none;
+}
+.dr-tw.show { display: flex; }
+.dr-tw.mouse { opacity: 1; pointer-events: auto; border-color: var(--ui-border-hover); }
+.dr-tw-head {
+    zoom: var(--dr-zoom);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px 7px 12px;
+    border-bottom: 1px solid var(--ui-border);
+}
+.dr-tw-title { font-family: var(--ui-font-display); font-size: var(--ui-fs-md); font-weight: var(--ui-fw-display); }
+.dr-tw-name { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-size: var(--ui-fs-sm); color: var(--ui-text-mid); }
+.dr-tw-state { padding: 2px 8px; border-radius: var(--ui-radius-pill); font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-bold);
+    background: var(--ui-surface-medium); }
+.dr-tw-state.live { color: var(--ui-accent); }
+.dr-tw-state.ok { color: var(--ui-success); }
+.dr-tw-state.bad { color: var(--ui-error); }
+.dr-tw-key { font-size: var(--ui-fs-caption); color: var(--ui-text-mid); white-space: nowrap; }
+.dr-tw kbd, .dr-tw-trail kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 18px; padding: 0 5px;
+    margin-right: 4px; box-sizing: border-box; border-radius: 4px; background: #fff; color: #0b0d12; font-family: var(--ui-font);
+    font-size: 10px; font-weight: 700; }
+.dr-tw-x { height: 24px; padding: 0 10px; border-radius: var(--ui-radius-sm); border: 1px solid var(--ui-border);
+    background: var(--ui-surface-hover); color: var(--ui-text); font-family: var(--ui-font); font-size: var(--ui-fs-caption);
+    font-weight: var(--ui-fw-bold); cursor: pointer; }
+.dr-tw-x:hover { background: var(--ui-surface-hover-strong); }
+/* Free camera: the game's until H gives the window the mouse; on, in the accent. */
+.dr-tw:not(.mouse) .dr-tw-cam { opacity: 0.6; cursor: default; }
+.dr-tw-cam.on { border-color: var(--ui-accent); color: var(--ui-accent); background: var(--ui-accent-light); }
+.dr-tw-body { flex: 1 1 auto; min-height: 0; display: flex; }
+.dr-tw-grid { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.dr-tw-outs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.dr-tw-out { padding: 3px 8px; border-radius: var(--ui-radius-pill); border: 1px solid var(--ui-border); background: var(--ui-surface-hover);
+    color: var(--ui-text); font-family: var(--ui-font); font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-semibold); cursor: pointer; }
+.dr-tw-out:hover:not(:disabled) { background: var(--ui-accent-light); border-color: var(--ui-accent-medium); }
+.dr-tw-out.bad { color: var(--ui-error); }
+.dr-tw-out:disabled { cursor: default; opacity: 0.75; }
+/* Another resource's card: the outcome PgDn takes, ringed. */
+.dr-tw-out.pick { border-color: var(--ui-accent); box-shadow: 0 0 0 1px var(--ui-accent); color: var(--ui-text); }
+.dr-tw-why { margin-top: 3px; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); line-height: 1.35;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.dr-tw-hint { font-size: var(--ui-fs-caption); color: var(--ui-text-mid); padding: 5px 0 0; }
+/* Isolate world on (the editor's own button): said in the head, as a warning-toned pill. */
+.dr-tw-own { padding: 2px 8px; border-radius: var(--ui-radius-pill); font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-bold);
+    color: var(--ui-warning); background: var(--ui-surface-medium); white-space: nowrap; }
+.dr-tw-own[hidden] { display: none; }
+
+/* HOW EACH CARD WENT, ON THE MAP (testwin.js mark): a ring and a badge on its top right corner. Ran: green and a tick,
+   the outcome it took lit on its pin. Failed (or the run went wrong there): red, pulsing a few times, and a cross.
+   Out of reach: hatched grey and a crossed circle. Waiting: a dashed ring breathing, an hourglass and its time. */
+.dr-tw .dr-tw-grid .dr-card.tw-ok { box-shadow: 0 0 0 3px var(--ui-success), var(--dr-lift, var(--ui-shadow)); }
+.dr-tw .dr-tw-grid .dr-card.tw-bad {
+    --ran: var(--ui-error);
+    --ran-glow: rgba(248, 113, 113, 0.5);
+    box-shadow: 0 0 0 3px var(--ran), 0 0 16px 3px var(--ran-glow), var(--dr-lift, var(--ui-shadow));
+    animation: dr-card-end 0.9s ease-in-out 4;
+}
+.dr-tw .dr-tw-grid .dr-card.tw-gone { filter: grayscale(1); opacity: 0.55; }
+.dr-tw .dr-tw-grid .dr-card.tw-gone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(135deg, rgba(8, 11, 17, 0.55) 0 7px, rgba(150, 160, 180, 0.2) 7px 10px);
+    pointer-events: none;
+}
+.dr-tw .dr-tw-grid .dr-card.tw-wait::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border: 3px dashed var(--ui-accent);
+    border-radius: 20px;
+    animation: dr-tw-breathe 1.6s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes dr-tw-breathe { 50% { opacity: 0.35; } }
+.dr-tw-mark {
+    position: absolute;
+    top: -13px;
+    right: -13px;
+    z-index: 2;
+    min-width: 28px;
+    height: 28px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    font-family: var(--ui-font);
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+.dr-tw-mark svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.dr-tw-mark em { font-style: normal; }
+.dr-tw-mark.ok { background: var(--ui-success); color: #06200f; }
+.dr-tw-mark.bad { background: var(--ui-error); color: #2a0a0d; }
+.dr-tw-mark.gone { background: var(--ui-surface-medium); color: var(--ui-text-mid); }
+.dr-tw-mark.gone svg { stroke-width: 2.4; }
+.dr-tw-mark.wait { padding: 0 10px 0 7px; background: var(--ui-accent); color: #0b0d12; }
+.dr-tw-mark.wait svg { stroke-width: 2.4; }
+.dr-tw .dr-pin.out.tw-took span { color: var(--ui-success); font-weight: var(--ui-fw-bold); }
+.dr-tw .dr-pin.out.tw-took i { background: var(--ui-success); border-color: var(--ui-success); box-shadow: 0 0 0 3px var(--ui-success-medium); }
+.dr-tw .dr-pin.out.tw-took-bad span { color: var(--ui-error); font-weight: var(--ui-fw-bold); }
+.dr-tw .dr-pin.out.tw-took-bad i { background: var(--ui-error); border-color: var(--ui-error); box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.35); }
+
+/* THE TRAIL under the map (testwin.js trailHtml): a step an icon in its card's kind's colour, a short line between, the
+   newest at the right (the rest scroll off the left; the wheel brings them back). Red with a cross where an outcome
+   failed, dashed and ringing while it waits, faded once a rewind undid it. With the mouse a step opens under it (.tip):
+   its outcomes to take or to go back and on from. Under that the run's clock, what there is to say, F5 and F9. */
+.dr-tw-trail {
+    zoom: var(--dr-zoom);
+    flex: none;
+    position: relative;
+    display: none;
+    overflow: hidden;
+    border-radius: var(--ui-radius-pop);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-solid);
+    box-shadow: var(--ui-shadow-lg);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    opacity: 0.9;
+    pointer-events: none;
+    user-select: none;
+}
+.dr-twcol.on .dr-tw-trail { display: block; }
+.dr-twcol.mouse .dr-tw-trail { opacity: 1; pointer-events: auto; border-color: var(--ui-border-hover); }
+.dr-tw-steps { position: relative; display: flex; align-items: center; gap: 14px; padding: 11px 12px; overflow: hidden; }
+.dr-tw-node {
+    position: relative;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 2px solid var(--kind);
+    background: var(--ui-surface-solid);
+    color: var(--kind);
+    cursor: default;
+    transition: transform 0.15s var(--ui-ease);
+}
+.dr-tw-node + .dr-tw-node::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 2px);
+    width: 14px;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--ui-border-hover);
+}
+.dr-tw-node svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dr-twcol.mouse .dr-tw-node { cursor: pointer; }
+.dr-twcol.mouse .dr-tw-node:hover { transform: scale(1.12); }
+.dr-tw-node.open { transform: scale(1.15); box-shadow: 0 0 0 3px var(--ui-accent-medium); }
+.dr-tw-node.bad { border-color: var(--ui-error); background: var(--ui-error); color: #2a0a0d; }
+.dr-tw-node.bad svg { stroke-width: 2.6; }
+.dr-tw-node.wait { border-style: dashed; border-color: var(--ui-accent); color: var(--ui-accent); }
+.dr-tw-node.wait::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid var(--ui-accent);
+    animation: dr-tw-ring 1.6s ease-out infinite;
+    pointer-events: none;
+}
+@keyframes dr-tw-ring { from { transform: scale(0.85); opacity: 0.8; } to { transform: scale(1.35); opacity: 0; } }
+.dr-tw-node.skip { border-style: dotted; }
+.dr-tw-node.back { width: 22px; height: 22px; border-color: var(--ui-accent); color: var(--ui-accent); }
+.dr-tw-node.back svg { width: 11px; height: 11px; fill: currentColor; stroke: none; }
+.dr-tw-node.undone { opacity: 0.35; }
+.dr-tw-more { flex: none; font-size: var(--ui-fs-caption); font-weight: var(--ui-fw-bold); color: var(--ui-text-mid); }
+.dr-tw-none { padding: 6px 0; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+.dr-tw-tip { position: relative; margin: 0 10px 10px; padding: 9px 11px 10px; border-radius: var(--ui-radius-slot); background: var(--ui-surface-medium); }
+.dr-tw-tip[hidden] { display: none; }
+.dr-tw-tip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: calc(var(--ax, 24px) - 6px);
+    width: 12px;
+    height: 12px;
+    background: inherit;
+    transform: rotate(45deg);
+}
+.dr-tw-tip-h { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font-size: var(--ui-fs-sm); }
+.dr-tw-tip-h b { font-weight: var(--ui-fw-bold); }
+.dr-tw-tip-h span { color: var(--ui-success); font-weight: var(--ui-fw-semibold); }
+.dr-tw-tip-h span.bad { color: var(--ui-error); }
+.dr-tw-tip-back { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+.dr-tw-tip-back svg { width: 12px; height: 12px; fill: currentColor; }
+.dr-tw-bar { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-caption); color: var(--ui-text-mid); }
+.dr-tw-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ui-accent); }
+.dr-tw-dot.ok { background: var(--ui-success); }
+.dr-tw-dot.bad { background: var(--ui-error); }
+.dr-tw-clock { font-family: var(--ui-font-display); font-size: var(--ui-fs-md); font-weight: var(--ui-fw-display); color: var(--ui-text);
+    font-variant-numeric: tabular-nums; }
+.dr-tw-say { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ui-accent); }
+.dr-tw-k { flex: none; display: inline-flex; align-items: center; }
+.dr-tw-k svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }

@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>bubble atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE /me BUBBLE ATLAS — one cell per player with a bubble up (client/bubbles.lua).
+
+   A DUI texture, like html/interact3d: rendered offscreen and drawn as one quad per
+   cell, anchored at the cell's bottom-centre above the player's head. The page owns
+   the look and every animation (unfold, stack, fold, dot to line); Lua only places
+   the quad, says when a bubble starts, and says whether its owner is in a vehicle
+   (the line down through the roof) or not (a dot). Cell size, cell count and the stack limit come from Lua
+   in the URL, so the numbers live in one place.
+
+   The capsule is the player HUD's (css/status-hud.css): the same glass, the same
+   38px radius, the same 67px height and the notice text's face. CEF 103: no :has,
+   no color-mix, no text-wrap: balance.
+   ============================================================================ */
+
+:root {
+    /* whip's tokens (html/css/base.css), copied: a DUI page cannot load that file's cascade. */
+    --ui-surface: rgba(10, 12, 18, 0.75);
+    --ui-border:  rgba(255, 255, 255, 0.08);
+    --ui-text:    rgba(255, 255, 255, 0.93);
+    --ui-shadow-text: 0 1px 6px rgba(0, 0, 0, 0.8);
+    --ui-ease:    cubic-bezier(0.16, 1, 0.3, 1);
+
+    --cap-h:    67px;    /* one line: the HUD capsule's ring height */
+    --line-h:   40px;
+    --pad-x:    28px;
+    --gap:      10px;    /* between stacked capsules */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+#atlas { position: relative; }
+
+.cell {
+    position: absolute;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+
+/* ---- the stack: newest at the bottom, older ones pushed up ---- */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* A slot's height opens and closes, so the bubbles above slide rather than jump. */
+.slot {
+    display: flex;
+    justify-content: center;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    transition:
+        max-height 0.25s var(--ui-ease),
+        margin-top 0.25s var(--ui-ease),
+        opacity 0.2s ease;
+}
+.slot.in {
+    /* The tallest capsule: four lines (an NPC's, 67 + 3 x 40 = 187 px), with room to spare. */
+    max-height: 200px;
+    margin-top: var(--gap);
+    opacity: 1;
+}
+
+/* ---- the capsule: a dot that unfolds to fit its text ---- */
+
+.cap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--cap-h);
+    height: var(--cap-h);
+    overflow: hidden;
+
+    background: var(--ui-surface);
+    border-radius: 38px;
+    border: 2px solid var(--ui-border);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    transition:
+        width 0.4s var(--ui-ease),
+        height 0.4s var(--ui-ease),
+        transform 0.25s var(--ui-ease),
+        opacity 0.2s ease;
+}
+
+/* The dot grows in as its slot opens, and shrinks away as it closes (instead of sliding onto the line). */
+.slot:not(.in) .cap {
+    transform: scale(0.4);
+    opacity: 0;
+}
+
+/* Top-edge glass highlight, as on the HUD. */
+.cap::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 16%;
+    right: 16%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.txt {
+    flex: 0 0 auto;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: var(--line-h);
+    text-align: center;
+    color: var(--ui-text);
+    text-shadow: var(--ui-shadow-text);
+    overflow-wrap: anywhere;
+
+    /* Two lines at most; anything past that ends in an ellipsis. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.cap.open .txt {
+    opacity: 1;
+    transition: opacity 0.2s ease 0.2s;
+}
+
+/* ---- under the capsule: a dot, or (in a vehicle) the line down through the roof ---- */
+
+/* The cell's bottom is the anchor above the head, so this room's height is how high the capsule sits.
+   On foot it is just the dot: the capsule comes down and the dot sits where the line would end. In a
+   vehicle (client/bubbles.lua says when) it opens to the line's height: the capsule rises and the line
+   fills it, down to the same spot, through the roof. Both move as one. */
+.stalk-room {
+    flex: 0 0 auto;
+    margin-top: var(--gap);
+    height: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    transition: height 0.3s var(--ui-ease);
+}
+.cell.long .stalk-room { height: var(--stalk-h); }
+
+/* On foot: a white dot. In a vehicle: the line, always the room's full height. */
+.stalk {
+    width: 14px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 7px;
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55), 0 0 6px rgba(0, 0, 0, 0.6);
+    transform: scale(0);
+    transform-origin: 50% 100%;
+    transition:
+        transform 0.25s var(--ui-ease),
+        width 0.3s var(--ui-ease),
+        border-radius 0.3s var(--ui-ease);
+}
+.cell.long .stalk {
+    width: 4px;
+    border-radius: 2px;
+    transform: scaleY(0);
+}
+.cell .stalk.in, .cell.long .stalk.in { transform: none; }
+
+/* Measures text off screen before a capsule opens (Lua cannot: DUI is one-way). */
+#measure {
+    position: absolute;
+    left: -10000px;
+    top: 0;
+    visibility: hidden;
+}
+#measure .txt { display: inline-block; opacity: 1; -webkit-line-clamp: unset; }
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<div id="measure"><div class="txt"></div></div>
+
+<script>
+(function () {
+    // ---- geometry, from client/bubbles.lua ----
+    var q = new URLSearchParams(location.search);
+    var W     = parseInt(q.get('w'), 10) || 1024;
+    var H     = parseInt(q.get('h'), 10) || 512;
+    var CELLS = parseInt(q.get('cells'), 10) || 6;
+    var STACK = parseInt(q.get('stack'), 10) || 3;
+    var STALK = parseInt(q.get('stalk'), 10) || 64;
+
+    var CAP_H = 67, LINE_H = 40, PAD_X = 28, BORDER = 2;
+    var TEXT_MAX = W - 2 * PAD_X - 2 * BORDER - 40;   // room for the shadow at the cell edge
+
+    // Fold: text out (150) -> dot (400) -> slot shut (250). Lua waits a little longer than this.
+    var TEXT_OUT_MS = 150, SHRINK_MS = 400, SLOT_MS = 250;
+
+    var atlas = document.getElementById('atlas');
+    var measureTxt = document.querySelector('#measure .txt');
+    measureTxt.style.maxWidth = TEXT_MAX + 'px';
+
+    document.documentElement.style.width = W + 'px';
+    document.documentElement.style.height = (H * CELLS) + 'px';
+    document.documentElement.style.setProperty('--stalk-h', STALK + 'px');
+    document.body.style.width = W + 'px';
+    document.body.style.height = (H * CELLS) + 'px';
+
+    var cells = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.top = (i * H) + 'px';
+        cell.style.width = W + 'px';
+        cell.style.height = H + 'px';
+        var stack = document.createElement('div');
+        stack.className = 'stack';
+        var room = document.createElement('div');
+        room.className = 'stalk-room';   // its height: the dot's, or --stalk-h in a vehicle (the CSS)
+        var stalk = document.createElement('div');
+        stalk.className = 'stalk';
+        room.appendChild(stalk);
+        cell.appendChild(stack);
+        cell.appendChild(room);
+        atlas.appendChild(cell);
+        cells.push({ el: cell, stack: stack, stalk: stalk, items: [], gen: 0 });
+    }
+
+    /** Lines a capsule may wrap to: two for a /me, more for an NPC's line. */
+    function linesOf(n) {
+        n = Math.floor(Number(n) || 2);
+        return Math.max(1, Math.min(4, n));
+    }
+
+    /** The capsule's open size for this text: the widest wrapped line, at most `maxLines` lines. */
+    function measure(text, maxLines) {
+        measureTxt.textContent = text;
+        var range = document.createRange();
+        range.selectNodeContents(measureTxt);
+        var rects = range.getClientRects();
+        var left = Infinity, right = -Infinity, tops = {};
+        for (var r = 0; r < rects.length; r++) {
+            left = Math.min(left, rects[r].left);
+            right = Math.max(right, rects[r].right);
+            tops[Math.round(rects[r].top)] = true;
+        }
+        var lines = Math.max(1, Math.min(maxLines, Object.keys(tops).length));
+        var textW = isFinite(left) ? Math.ceil(right - left) + 2 : 0;
+        textW = Math.min(TEXT_MAX, textW);
+        return {
+            textW: textW,
+            w: Math.max(CAP_H, textW + 2 * PAD_X + 2 * BORDER),
+            h: CAP_H + (lines - 1) * LINE_H,
+        };
+    }
+
+    function fold(c, item) {
+        if (item.folding) return;
+        item.folding = true;
+        clearTimeout(item.timer);
+        var gen = c.gen;   // a clear() in between hands the cell to someone else: leave its stalk alone
+        item.cap.classList.remove('open');
+        setTimeout(function () {
+            item.cap.style.width = CAP_H + 'px';
+            item.cap.style.height = CAP_H + 'px';
+        }, TEXT_OUT_MS);
+        setTimeout(function () {
+            item.slot.classList.remove('in');
+        }, TEXT_OUT_MS + SHRINK_MS);
+        setTimeout(function () {
+            if (item.slot.parentNode) item.slot.parentNode.removeChild(item.slot);
+            if (c.gen !== gen) return;
+            var at = c.items.indexOf(item);
+            if (at >= 0) c.items.splice(at, 1);
+            if (c.items.length === 0) c.stalk.classList.remove('in');
+        }, TEXT_OUT_MS + SHRINK_MS + SLOT_MS);
+    }
+
+    function add(c, text, ms, maxLines) {
+        maxLines = linesOf(maxLines);
+        var size = measure(text, maxLines);
+
+        var slot = document.createElement('div');
+        slot.className = 'slot';
+        var cap = document.createElement('div');
+        cap.className = 'cap';
+        var txt = document.createElement('div');
+        txt.className = 'txt';
+        txt.style.width = size.textW + 'px';
+        txt.style.webkitLineClamp = String(maxLines);
+        // textContent, never innerHTML: this is a player's own words.
+        txt.textContent = text;
+        cap.appendChild(txt);
+        slot.appendChild(cap);
+        c.stack.appendChild(slot);
+
+        var item = { slot: slot, cap: cap, folding: false, timer: null };
+        c.items.push(item);
+
+        // Over the limit: the oldest still showing folds away now.
+        var live = c.items.filter(function (it) { return !it.folding; });
+        if (live.length > STACK) fold(c, live[0]);
+
+        c.stalk.classList.add('in');
+        // Two frames so the closed state is painted before the transition starts.
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                slot.classList.add('in');
+                setTimeout(function () {
+                    if (item.folding) return;
+                    cap.style.width = size.w + 'px';
+                    cap.style.height = size.h + 'px';
+                    cap.classList.add('open');
+                }, 120);
+            });
+        });
+
+        item.timer = setTimeout(function () { fold(c, item); }, Math.max(500, ms));
+    }
+
+    function clear(c) {
+        c.gen++;
+        c.items.forEach(function (it) { clearTimeout(it.timer); it.folding = true; });
+        c.items = [];
+        c.stack.innerHTML = '';
+        c.stalk.classList.remove('in');
+        c.el.classList.remove('long');
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.cell !== 'number') return;
+        var c = cells[d.cell];
+        if (!c) return;
+        if (d.clear) clear(c);
+        // In a vehicle: raised, the line down through the roof. On foot: lowered onto the dot (client/bubbles.lua).
+        if (typeof d.long === 'boolean') c.el.classList.toggle('long', d.long);
+        if (d.add && typeof d.add.text === 'string') add(c, d.add.text, Number(d.add.ms) || 5000, d.add.lines);
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+-- ============================================
+-- Item: hacked_vehicle_key — Client Logic
+-- ============================================
+--
+-- Empty: the ignition-hack skill check is server-run. server/events_vehicles.lua's attemptHackIgnition
+-- calls Skill.run, which sends spur_core:client:serverSkillCheck; client/ui.lua plays it and answers
+-- with the one-shot token.

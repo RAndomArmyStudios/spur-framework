@@ -1,0 +1,285 @@
+/* ============================================================================
+   PAD OVERLAY — /paddebug
+
+   A DEV TOOL, AND STYLED LIKE ONE, the same call radar-debug.css makes: it borrows whip's
+   tokens so it does not look foreign, and deliberately skips the craft the player-facing
+   surfaces get. No entrance animation, no theming, no zoom. It exists to be read while you
+   are looking at something else, which is a different job from looking good.
+
+   IT NEVER TAKES INPUT, and the CSS is half of how that is guaranteed. `pointer-events: none`
+   on the root means a click goes through it to whatever is behind — there is nothing here to
+   press, and an overlay that could swallow a click would change the input it exists to show.
+   The other half is client/controller_debug.lua never calling SetNuiFocus.
+
+   PINNED RIGHT AND NARROW because the things being watched are elsewhere: the interaction
+   prompt is centre-screen, the vehicle HUD is bottom right, the player HUD bottom left. This
+   sits as far out of the way as the screen allows and still reads at a glance.
+
+   CEF IS CHROMIUM 103. No :has(), no nesting, no color-mix().
+   ============================================================================ */
+
+#pad-debug {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    /* Wider than it was: the list grew from "the pad" to "every control whip touches on either
+       device", which is what it took to find the trigger/D-pad collision.
+
+       IT CLIPS RATHER THAN SCROLLS, and that is forced rather than chosen — `pointer-events:
+       none` below means nothing here can be scrolled, so a scrollbar would be a promise the
+       panel cannot keep. What it does instead is ORDER BY WHAT YOU WATCH: status and the action
+       log sit at the top, the reference tables below them, so a short window loses the tables —
+       which you read once — and never the log, which is live. */
+    width: 388px;
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
+    z-index: 9400;
+
+    display: flex;
+    flex-direction: column;
+
+    background: rgba(10, 12, 18, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+
+    font-family: var(--ui-mono, 'Barlow', sans-serif);
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.86);
+
+    /* THE LOAD-BEARING LINE. See the header — this is what lets the overlay sit on top of a
+       live game without intercepting anything. */
+    pointer-events: none;
+}
+
+#pad-debug.pd-hidden { display: none; }
+
+/* ---- head ---- */
+
+.pd-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pd-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.pd-chip {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* The white pill again — whip's one "this is the live state" idiom. */
+.pd-chip.on {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgb(10, 12, 18);
+    font-weight: 700;
+}
+
+/* ---- status block ---- */
+
+.pd-status {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pd-srow {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.pd-skey { color: rgba(255, 255, 255, 0.36); }
+.pd-sval { color: rgba(255, 255, 255, 0.82); text-align: right; }
+.pd-sval.warn { color: #f0b54a; }
+.pd-sval.bad  { color: #ff5f6d; }
+.pd-sval.good { color: #3fd07f; }
+
+/* ---- groups ---- */
+
+.pd-group { padding: 6px 10px 2px; }
+
+.pd-gtitle {
+    font-size: 9px;
+    letter-spacing: 0.13em;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 3px;
+}
+
+/* A row is one CONTROL, not one button — several rows can share a physical input, which is the
+   whole reason this tool exists. The pad column repeating "A" twice, or reading "D-Right + RT",
+   is the point rather than a bug.
+
+   FOUR COLUMNS: control id, what it is on a pad, what it is on a keyboard, and what whip does
+   with it. The two device columns sit together so a collision is one glance rather than two
+   lookups in a table somewhere else. */
+.pd-row {
+    display: grid;
+    grid-template-columns: 24px 60px 52px 1fr;
+    align-items: baseline;
+    gap: 5px;
+    padding: 1px 0;
+    color: rgba(255, 255, 255, 0.28);
+    transition: color 0.05s linear;
+}
+
+/* DOWN IS BRIGHT AND EVERYTHING ELSE IS DIM, rather than the row appearing and disappearing.
+   A row that vanishes takes its neighbours' positions with it, and a list that reflows while
+   you are pressing things is unreadable — the eye cannot tell a moved row from a lit one. */
+.pd-row.down { color: rgba(255, 255, 255, 0.95); }
+
+.pd-pad, .pd-kb {
+    text-align: center;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 700;
+    font-size: 9px;
+    padding: 1px 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* THE EMPTY CELL IS A FINDING, NOT A GAP. A scroll control with no pad binding is one a trigger
+   cannot reach — which is the entire search this table exists to run. Styled as absence rather
+   than left blank, so an empty cell cannot be mistaken for data that failed to load. */
+.pd-pad.empty, .pd-kb.empty {
+    background: none;
+    color: rgba(255, 255, 255, 0.16);
+    font-weight: 400;
+}
+
+.pd-row.down .pd-pad, .pd-row.down .pd-kb {
+    background: rgba(255, 255, 255, 0.92);
+    color: rgb(10, 12, 18);
+}
+.pd-row.down .pd-pad.empty, .pd-row.down .pd-kb.empty {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pd-cid { color: rgba(255, 255, 255, 0.28); text-align: right; font-size: 9px; }
+.pd-row.down .pd-cid { color: rgba(255, 255, 255, 0.6); }
+
+.pd-claim { font-size: 9.5px; }
+
+/* A control whip does not read at all. Dimmer still, and it stays listed: confirming that a
+   press produced NOTHING is half of debugging input. */
+.pd-claim.none { color: rgba(255, 255, 255, 0.22); font-style: italic; }
+.pd-row.down .pd-claim.none { color: rgba(255, 255, 255, 0.45); }
+
+/* ---- axes ---- */
+
+.pd-axis {
+    display: grid;
+    grid-template-columns: 74px 1fr 34px;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.pd-axis-label { color: rgba(255, 255, 255, 0.36); font-size: 9.5px; }
+
+.pd-axis-track {
+    position: relative;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+}
+
+/* CENTRE LINE ON STICKS ONLY. A stick runs -1 to 1 and rests in the middle, so the middle is
+   where the eye needs a reference. A trigger runs 0 to 1 and rests at the left, where the track's
+   own edge already is — a centre line there would read as a threshold that does not exist. */
+.pd-axis-track.bipolar::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    bottom: -2px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* THE HALF-TRAVEL LINE ON A TRIGGER, which is where GTA starts reporting it as a pressed button
+   (the docs say so of L2_INDEX/R2_INDEX). Drawn because the interesting question about a trigger
+   is never "how far is it" on its own — it is "how far is it RELATIVE to the point the game
+   changes its mind", and a bar without that line cannot answer it.
+
+   Amber rather than white so it reads as a boundary rather than as part of the reading. */
+.pd-axis-mark {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 1px;
+    background: rgba(240, 181, 74, 0.75);
+}
+
+.pd-axis-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 2px;
+}
+
+.pd-axis-val { text-align: right; font-size: 9.5px; color: rgba(255, 255, 255, 0.6); }
+
+/* ---- the log ---- */
+
+.pd-log-head {
+    padding: 6px 10px 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 9px;
+    letter-spacing: 0.13em;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.pd-log {
+    padding: 0 10px 7px;
+    min-height: 0;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pd-line {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 6px;
+    padding: 1px 0;
+}
+
+.pd-src {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 9.5px;
+}
+.pd-src.nav      { color: #5aa2ff; }
+.pd-src.interact { color: #3fd07f; }
+.pd-src.bind     { color: #f2c14e; }
+.pd-src.combo    { color: #e879f9; }
+.pd-src.pad      { color: #f97316; }
+
+.pd-what { color: rgba(255, 255, 255, 0.82); font-size: 9.5px; }
+.pd-detail { color: rgba(255, 255, 255, 0.35); }
+
+/* The newest line is the one being read; the rest are context fading out behind it. */
+.pd-line.fresh .pd-what { color: #fff; font-weight: 700; }
+
+.pd-empty {
+    color: rgba(255, 255, 255, 0.25);
+    font-style: italic;
+    font-size: 9.5px;
+    padding: 2px 0 4px;
+}

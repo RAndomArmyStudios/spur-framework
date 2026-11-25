@@ -1,0 +1,354 @@
+/* ========================================
+   DEATH SCREEN — Cinematic Blackout & Wake
+   spur_core · Precision Dark
+
+   Flow:
+   1. death-active  → visceral snap to black
+   2.                  held ~3s by Lua (ragdoll settling)
+   3. death-fadein  → eye-flutter wake-up reveal
+   4. (class reset) → instant cleanup
+
+   Architecture: parent is visibility container only.
+   ::before = main black (eye flutter animation).
+   ::after  = vignette (independent, lingers longer).
+   This lets each layer animate opacity independently
+   so the vignette persists while the center clears.
+   ======================================== */
+
+/* ---- Base Container ---- */
+#death-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    pointer-events: none;
+    visibility: hidden;
+    zoom: var(--ui-scale);
+}
+
+/* ---- Main Black Layer ---- */
+#death-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    will-change: opacity;
+}
+
+/* ---- Vignette Layer ----
+   Radial gradient: transparent center, dense black edges.
+   Oversized (inset: -15%) to ensure no edge bleed during
+   any sub-pixel rendering at screen boundaries.
+   Animates independently from the main black layer so
+   peripheral darkness lingers after central vision returns. */
+#death-overlay::after {
+    content: '';
+    position: absolute;
+    inset: -15%;
+    background: radial-gradient(
+        ellipse 52% 44% at 50% 50%,
+        transparent 0%,
+        rgba(0, 0, 0, 0.15) 28%,
+        rgba(0, 0, 0, 0.6) 58%,
+        rgba(0, 0, 0, 0.88) 78%,
+        #000 100%
+    );
+    opacity: 0;
+    will-change: opacity;
+}
+
+/* ============================================
+   STATE: Snap to Black (moment of death)
+
+   A 200ms animation that flashes deep crimson
+   on the first frames (blood-rush impact) then
+   settles to pure black. Feels visceral, not
+   like a gentle fade — you got DROPPED.
+   ============================================ */
+
+#death-overlay.death-active {
+    visibility: visible;
+}
+
+#death-overlay.death-active::before {
+    animation: deathImpact 200ms ease-out both;
+}
+
+#death-overlay.death-active::after {
+    opacity: 1;
+    transition: opacity 0s;
+}
+
+@keyframes deathImpact {
+    0%   { opacity: 0;   background-color: rgba(65, 2, 2, 1); }
+    45%  { opacity: 1;   background-color: rgba(22, 0, 0, 1); }
+    100% { opacity: 1;   background-color: #000; }
+}
+
+/* ============================================
+   STATE: Wake-Up Reveal (eye flutter)
+
+   Simulates consciousness returning post-knockout.
+   The opacity doesn't just fade — it FLUTTERS:
+   eyes crack open, slam shut (too bright), open
+   again, brief reflex blink, then stabilize.
+
+   Meanwhile the vignette fades on its own slower
+   timeline — peripheral vision is last to return,
+   creating natural tunnel-vision clearing.
+   ============================================ */
+
+#death-overlay.death-fadein {
+    visibility: visible;
+}
+
+#death-overlay.death-fadein::before {
+    animation: deathEyeFlutter 3.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+#death-overlay.death-fadein::after {
+    animation: deathVignetteLinger 5.5s ease-in both;
+}
+
+/* Eye flutter rhythm:
+   0-25%  — unconscious, total darkness
+   32%    — eyes crack, blinding light floods in
+   40%    — reflex slam shut, too overwhelming
+   52%    — open again, world starts to resolve
+   59%    — involuntary micro-flutter
+   70-100% — vision stabilizes, clears fully */
+@keyframes deathEyeFlutter {
+    0%    { opacity: 1; }
+    25%   { opacity: 1; }
+    32%   { opacity: 0.15; }
+    40%   { opacity: 0.88; }
+    52%   { opacity: 0.06; }
+    59%   { opacity: 0.28; }
+    70%   { opacity: 0.03; }
+    84%   { opacity: 0.008; }
+    100%  { opacity: 0; }
+}
+
+/* Vignette timeline:
+   Holds strong through the flutter phase, then
+   slowly dissolves — edges clear last, like
+   peripheral awareness gradually returning. */
+@keyframes deathVignetteLinger {
+    0%    { opacity: 1; }
+    22%   { opacity: 1; }
+    45%   { opacity: 0.92; }
+    64%   { opacity: 0.55; }
+    80%   { opacity: 0.18; }
+    100%  { opacity: 0; }
+}
+
+
+/* ============================================
+   THE DEATH SCREEN (#death-screen, js/death.js)
+
+   A red curtain rising from the bottom edge (--ui-death-curtain: an edge
+   curtain like the inventory's, the one kind of gradient the glass
+   allows, there to fade out and leave the world above it), and on it
+   "You are dead", the seconds until respawn with a bar that empties,
+   then the white pill "Hold E to respawn" with the bar filling. Kept
+   short: the curtain is 230px before --ui-scale,
+   about 170px of a 1080p screen.
+
+   Bottom right, the key that hides it (H / Y), on a pane of glass. It
+   stays when the screen is hidden, saying Show.
+
+   Under the blackout above (99999), which covers it until the player
+   wakes, and under the text band (910) and every screen.
+   ============================================ */
+
+#death-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 905;
+    pointer-events: none;
+    zoom: var(--ui-scale);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    font-variant-numeric: tabular-nums;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.4s var(--ui-ease), visibility 0s linear 0.4s;
+}
+
+#death-screen.on {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.4s var(--ui-ease);
+}
+
+/* The key names follow the device in the player's hands (controller.js settles html[data-input]). */
+html[data-input="pad"] #death-screen .ds-kbm { display: none; }
+html:not([data-input="pad"]) #death-screen .ds-pad { display: none; }
+
+.ds-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 230px;
+    box-sizing: border-box;
+    padding-bottom: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    background: var(--ui-death-curtain);
+    transition: opacity 0.3s var(--ui-ease), transform 0.3s var(--ui-ease);
+}
+
+/* The screen's bottom edge, in the error red. */
+.ds-band::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--ui-error);
+    opacity: 0.6;
+}
+
+/* Rises as the screen comes up, and goes down and out when hidden. Transitions, not an animation:
+   an animation's fill would hold the band up over the hidden state. */
+#death-screen:not(.on) .ds-band { transform: translateY(16px); }
+
+#death-screen.ds-hidden .ds-band {
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+.ds-title {
+    font-family: var(--ui-font-display);
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    text-shadow: var(--ui-shadow-text);
+}
+
+/* (No white stroke under the title, as on every whip title.) */
+
+.ds-row {
+    margin-top: 14px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.ds-count {
+    gap: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: var(--ui-shadow-text);
+}
+
+.ds-count b {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.ds-hold {
+    display: none;
+    gap: 10px;
+    padding: 0 18px 0 7px;
+    border-radius: var(--ui-radius-row);
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: var(--ui-shadow);
+}
+
+#death-screen.ds-ready .ds-count { display: none; }
+#death-screen.ds-ready .ds-hold  { display: flex; }
+
+/* A resource holds the respawn (HoldRespawn): its words where the count was, set like the count, and no hold. */
+.ds-held {
+    display: none;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: var(--ui-shadow-text);
+}
+
+#death-screen.ds-held-on .ds-count,
+#death-screen.ds-held-on .ds-hold { display: none; }
+#death-screen.ds-held-on .ds-held { display: flex; }
+
+/* A key's name: a keycap on a keyboard, the button's picture on a pad. */
+.ds-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    font-weight: 800;
+}
+
+.ds-hold .ds-key {
+    width: 30px;
+    height: 30px;
+}
+
+.ds-hold .ds-kbm {
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-pill-ink);
+    color: #fff;
+    font-size: 14px;
+    transition: transform 0.1s var(--ui-ease);
+}
+
+/* Held: the key goes down. */
+#death-screen.ds-holding .ds-hold .ds-key { transform: scale(0.92); }
+
+.ds-track {
+    width: 360px;
+    height: 3px;
+    margin-top: 12px;
+    border-radius: 2px;
+    background: var(--ui-death-track);
+    overflow: hidden;
+}
+
+.ds-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--ui-pill);
+    transition: width 1s linear;          /* the countdown: one step a second, run smooth */
+}
+
+#death-screen.ds-ready .ds-fill { transition: width 80ms linear; }
+
+.ds-toggle {
+    position: absolute;
+    right: 32px;
+    bottom: 28px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 0 15px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: var(--ui-radius-row);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ds-toggle .ds-key {
+    width: 30px;
+    height: 30px;
+}
+
+.ds-toggle .ds-kbm {
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-size: 14px;
+}

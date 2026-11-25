@@ -1,0 +1,155 @@
+/* ============================================
+   VEHICLE CONTROLS — a vehicle's buttons over the rev dial for a few seconds (js/vehicle-controls.js;
+   client/pad.lua)
+
+   A column of rows, one per button, standing on the dial's top edge and lined up with its right edge
+   (the module places it in window pixels from the dial's canvas). THE 3D PROMPTS' LOOK, FLAT ON THE
+   SCREEN: no capsule. Each button sits in the prompt's own key, the one E acts on
+   (interact3d/badge.html's focused state, .s2), in the player's prompt shape: a white rounded
+   square ('keycap', with its lip) or a white circle ('classic'). The button's picture (img/pad) is where
+   the prompt's icon would be. What it does is set as the prompt's label is (interact3d/label.html): Barlow
+   bold in white with a hard black outline and a soft drop, since there is no panel behind it.
+
+   AT BODY LEVEL, like the dial, so its place is not multiplied by the HUD's zoom; the column inside
+   carries that zoom (--ui-scale x 1.25, as #status-hud does). On a keyboard the key holds words (the engine's
+   binding: 'E', 'SCROLL ▲'), .vc-keytext.
+   ============================================ */
+
+#vehicle-controls {
+    position: fixed;
+    /* Over the dial (7500) and the HUD layer it sits beside; under the status HUD's own panels (9600) and every
+       menu, so the pause menu and the inventory cover it. */
+    z-index: 7550;
+    display: none;
+    pointer-events: none;
+    /* Moved with the dial out of the way of another resource's UI (the phone): css/vehicle-dial.css's move */
+    transform: translate(var(--dial-dx, 0px), var(--dial-dy, 0px));
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#vehicle-controls.up {
+    display: block;
+}
+
+.vc-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    zoom: calc(var(--ui-scale, 1) * 1.25);
+}
+
+.vc-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    white-space: nowrap;
+    /* In from the right, one after another (the module staggers .in), and out the same way together. */
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity 0.28s var(--ui-ease), transform 0.28s var(--ui-ease);
+}
+
+.vc-row.in {
+    opacity: 1;
+    transform: none;
+}
+
+#vehicle-controls.leaving .vc-row {
+    opacity: 0;
+    transform: translateX(14px);
+    transition-duration: 0.6s;
+}
+
+.vc-btns {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: none;
+}
+
+/* ---- The key: the prompt's focused state, at this size ----
+   badge.html's numbers are for a disc about 100px across; these are the same fractions of 34px. Every
+   shadow fits inside the gap between rows. */
+.vc-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 34px;
+    min-width: 34px;
+    padding: 0 4px;          /* a wide button (LB) widens the key */
+    background: #fff;
+    border: 2px solid #fff;
+}
+
+/* 'keycap': a rounded square, its lip along the bottom (.t-keycap .s2) */
+.vc-keycap .vc-key {
+    border-radius: 9px;
+    box-shadow: inset 0 -4px 0 rgba(10, 12, 18, 0.16),
+                0 0 0 1.5px rgba(0, 0, 0, 0.9),
+                0 2px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* 'classic': round (a pill round a wide button), a black edge and then a white halo (.s2) */
+.vc-classic .vc-key {
+    border-radius: 999px;
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.9),
+                0 0 0 3px rgba(255, 255, 255, 0.30),
+                0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.vc-keytext {
+    padding: 0 5px;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    color: #10131a;
+}
+
+.vc-glyph {
+    display: block;
+    width: auto;
+    height: 24px;
+}
+
+/* NO KEY (each player's Settings, under Server: pad.vehicleControlsKeys): the button's own picture, a little larger,
+   kept off the ground by a dark edge and drop as the words are. */
+.vc-bare .vc-key {
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.vc-bare .vc-glyph {
+    height: 30px;
+    filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+}
+
+/* ---- The words: the prompt's label (label.html) ----
+   The outline is eight offset copies, not -webkit-text-stroke, which paints over the letters and thins
+   them; label.html says why. */
+.vc-label,
+.vc-plus {
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: #fff;
+    text-shadow:
+        -1.5px -1.5px 0 #000,  0 -1.5px 0 #000,  1.5px -1.5px 0 #000,
+        -1.5px  0     0 #000,                    1.5px  0     0 #000,
+        -1.5px  1.5px 0 #000,  0  1.5px 0 #000,  1.5px  1.5px 0 #000,
+         0 2px 7px rgba(0, 0, 0, 0.9);
+}
+
+.vc-label {
+    font-size: 19px;
+    letter-spacing: 0.5px;
+}
+
+.vc-plus {
+    font-size: 14px;
+}

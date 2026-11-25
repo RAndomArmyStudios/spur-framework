@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>guard marks</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   THE GUARD MARKS — one cell per guard near you that is noticing someone (client/vision.lua).
+
+   A DUI texture, like html/bubble3d: rendered offscreen, each cell drawn as a camera-facing quad over its
+   guard's head, so it sits exactly on the guard every frame and a wall hides it. The page owns the look
+   and the motion; Lua says only what a cell shows, and only when that changes (the server's meter moves
+   in twentieths, at most four times a second).
+
+   One mark: the HUD's glass disc, an eye in it, and a ring round it that fills as the guard notices you.
+     your meter         the ring, amber, clockwise from the top
+     someone else's     a thin white ring inside it (a guard noticing your friend)
+     spotted / alert    the ring full and red, a "!" for the eye, a slow pulse
+     searching          amber "?" (it is coming to look where someone was seen)
+   CEF 103: conic-gradient is fine; no :has, no color-mix.
+   ============================================================================ */
+
+:root {
+    /* whip's tokens (html/css/base.css), copied: a DUI page cannot load that file's cascade. */
+    --ui-surface: rgba(10, 12, 18, 0.75);
+    --ui-border:  rgba(255, 255, 255, 0.08);
+    --ui-text:    rgba(255, 255, 255, 0.93);
+    --ui-warning: #fbbf24;
+    --ui-error:   #f87171;
+    --ui-ease:    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { background: transparent; overflow: hidden; font-family: 'Barlow', 'Segoe UI', sans-serif; }
+
+.cell {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The whole mark grows in from nothing, and shrinks away. */
+.mark {
+    position: relative;
+    width: 72%;
+    height: 72%;
+    transform: scale(0.3);
+    opacity: 0;
+    transition: transform 0.3s var(--ui-ease), opacity 0.2s ease;
+}
+.cell.on .mark { transform: none; opacity: 1; }
+
+/* The ring: a conic fill to --m (0..1) under a mask that leaves only the band. */
+.ring, .other {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%, #000 100%);
+}
+.ring {
+    background:
+        conic-gradient(var(--ring) calc(var(--m) * 360deg), rgba(255, 255, 255, 0.10) 0);
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
+}
+.other {
+    inset: 9%;
+    -webkit-mask: radial-gradient(circle, transparent 66%, #000 67%, #000 74%, transparent 75%);
+    background: conic-gradient(rgba(255, 255, 255, 0.75) calc(var(--o) * 360deg), transparent 0);
+}
+
+/* The glass disc, as the HUD's capsule. */
+.disc {
+    position: absolute;
+    inset: 17%;
+    border-radius: 50%;
+    background: var(--ui-surface);
+    border: 3px solid var(--ui-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+.disc svg { width: 56%; height: 56%; }
+.disc b {
+    display: none;
+    font-weight: 800;
+    font-size: 96px;
+    line-height: 1;
+    margin-top: -4px;
+}
+
+.cell { --ring: var(--ui-warning); }
+
+/* Spotted, or after someone: full and red, "!" for the eye. */
+.cell.spotted, .cell.alert { --ring: var(--ui-error); --m: 1 !important; }
+.cell.spotted .disc, .cell.alert .disc { border-color: rgba(248, 113, 113, 0.55); }
+.cell.spotted .disc svg, .cell.alert .disc svg, .cell.search .disc svg { display: none; }
+.cell.spotted .disc b.bang, .cell.alert .disc b.bang { display: block; color: var(--ui-error); }
+.cell.search .disc b.ask { display: block; color: var(--ui-warning); }
+.cell.spotted .mark, .cell.alert .mark { animation: pulse 1.4s ease-in-out infinite; }
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.07); }
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script>
+(function () {
+    // ---- geometry, from client/vision.lua ----
+    var q = new URLSearchParams(location.search);
+    var S     = parseInt(q.get('s'), 10) || 256;
+    var CELLS = parseInt(q.get('cells'), 10) || 8;
+
+    var atlas = document.getElementById('atlas');
+    document.documentElement.style.width = S + 'px';
+    document.documentElement.style.height = (S * CELLS) + 'px';
+    document.body.style.width = S + 'px';
+    document.body.style.height = (S * CELLS) + 'px';
+
+    var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+    var cells = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.top = (i * S) + 'px';
+        cell.style.width = S + 'px';
+        cell.style.height = S + 'px';
+        cell.style.setProperty('--m', '0');
+        cell.style.setProperty('--o', '0');
+        cell.innerHTML = '<div class="mark"><div class="ring"></div><div class="other"></div>'
+            + '<div class="disc">' + EYE + '<b class="bang">!</b><b class="ask">?</b></div></div>';
+        atlas.appendChild(cell);
+        cells.push(cell);
+    }
+
+    function clamp(n) { n = Number(n) || 0; return Math.max(0, Math.min(1, n)); }
+
+    // { cell, m, o, s } shows a cell (s: 'spotted' | 'alert' | 'search' | ''), { cell, off: true } hides it.
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.cell !== 'number') return;
+        var c = cells[d.cell];
+        if (!c) return;
+        if (d.off) { c.className = 'cell'; return; }
+        c.style.setProperty('--m', String(clamp(d.m)));
+        c.style.setProperty('--o', String(clamp(d.o)));
+        var s = d.s === 'spotted' || d.s === 'alert' || d.s === 'search' ? ' ' + d.s : '';
+        c.className = 'cell on' + s;
+    });
+})();
+</script>
+</body>
+</html>

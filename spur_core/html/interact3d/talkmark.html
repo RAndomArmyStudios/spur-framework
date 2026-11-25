@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>talk mark atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE TALK MARK — over the head of an NPC a Director card waits for a run's player to talk to
+   (client/director_talk.lua).
+
+   A texture, like the rest of html/interact3d: two 128x128 cells side by side, chosen by UV.
+
+       x 0-128     THE TALK SIGN   the prompts' own talk glyph (html/js/glyphs.js), white on the dark disc:
+                                   "you are talking with them" (walked off mid-conversation)
+       x 128-256   ATTENTION       a dark "!" on the warning amber: "talk to them to go on"
+
+   A card that wants them to talk flips between the two; one they walked off from shows the talk sign
+   alone. Nothing here animates: Lua picks the cell. CHROMIUM 103: plain CSS.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 256px; height: 128px; background: transparent; overflow: hidden; }
+
+.cell {
+    position: absolute;
+    top: 0;
+    width: 128px;
+    height: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cell.talk { left: 0; }
+.cell.attention { left: 128px; }
+
+/* The prompts' disc: night glass, a white rim. */
+.disc {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.talk .disc {
+    background: rgba(10, 12, 18, 0.92);
+    border: 5px solid rgba(255, 255, 255, 0.93);
+    color: rgba(255, 255, 255, 0.93);
+}
+.talk .disc svg { width: 60px; height: 60px; display: block; }
+/* Attention: whip's warning amber (--ui-warning), the "!" in the glass's ink. */
+.attention .disc {
+    background: #fbbf24;
+    border: 5px solid rgba(255, 255, 255, 0.93);
+    color: #0a0c12;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    font-weight: 800;
+    font-size: 78px;
+    line-height: 1;
+    padding-bottom: 4px;
+}
+</style>
+</head>
+<body>
+<div class="cell talk"><div class="disc" id="talk"></div></div>
+<div class="cell attention"><div class="disc">!</div></div>
+<script src="../js/glyphs.js"></script>
+<script>
+(function () {
+    var g = window.WhipGlyphs && window.WhipGlyphs.glyphs;
+    // The prompts' own talk glyph; without the table (it did not load), the word.
+    document.getElementById('talk').innerHTML = (g && g.talk) || '<span style="font: 700 22px Barlow, sans-serif">TALK</span>';
+})();
+</script>
+</body>
+</html>

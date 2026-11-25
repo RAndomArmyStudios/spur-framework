@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>camera creator gizmo atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   THE CAMERA CREATOR'S GIZMO ATLAS — tools/camera.lua: the number on the back of each camera's box, and
+   its settings (FOV) on the frame.
+
+   A texture, as badge.html and label.html are: rendered offscreen, sampled by DrawTexturedPoly
+   (client/world_quad.lua), transparent, fixed pixels, no --ui-scale. ONE CELL PER CAMERA, Lua handing each
+   placed camera its cell (a single shot cell 0; a path's waypoints in order, or the nearest when there are
+   more than there are cells). 80 cells, 4 across and 20 down, filled across then down:
+
+       | back plate |  FOV 45.0°  ....... |      126 + 384 px wide, 96 px high: tools/camera.lua's
+                                                 GZ_BACK_W / GZ_LABEL_W / GZ_CELL_H / GZ_COLS / GZ_ROWS
+                                                 say the same; the page is 2040 x 1920
+   - the back plate: drawn on the camera body's back face. Night glass, a ring in the camera's state
+     (green: the shot placed or the waypoint picked; the house blue: the rest), and its number in white —
+     or, a single shot, the camera glyph.
+   - the settings: drawn in the frame's corner. A night-glass pill, the setting's name in the label role
+     and its value in white. Only the FOV for now; the rest of the row is transparent, so a pill a few
+     characters wider costs nothing (DUI is one-way: Lua cannot ask how wide text drew).
+
+   Message (SendDuiMessage, JSON): { rows: [ { back = '1' | nil, icon = 'camera' | nil, fov = '45.0°',
+   on = true|false }, ... ] } — one entry per cell, the whole set each time; cells past it are cleared.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 2040px;
+    height: 1920px;
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+}
+
+.row { position: absolute; left: 0; width: 510px; height: 96px; }
+
+/* ---- The back plate ---- */
+.plate {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 116px;
+    height: 86px;
+    border-radius: 18px;
+    background: rgba(10, 12, 18, 0.88);
+    border: 5px solid #60a5fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+}
+.plate.on { border-color: #4ade80; }
+.plate.empty { display: none; }
+.plate svg { width: 46px; height: 46px; display: block; }
+
+/* ---- The settings pill ---- */
+.set {
+    position: absolute;
+    left: 132px;
+    top: 14px;
+    height: 68px;
+    padding: 0 26px;
+    border-radius: 34px;
+    background: rgba(10, 12, 18, 0.82);
+    border: 3px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    white-space: nowrap;
+}
+.set.on { border-color: rgba(74, 222, 128, 0.55); }
+.set.empty { display: none; }
+.set .k {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+.set .v {
+    font-size: 40px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+
+<!-- The camera glyph, for a single shot's plate: whip's one icon table. -->
+<script src="../js/glyphs.js"></script>
+<script>
+(function () {
+    // 4 across, 20 down, filled across then down: tools/camera.lua's drawGizmo reads cell n at the same place.
+    var COLS = 4, CELLS = 80, CELL_W = 510, CELL_H = 96;
+    var atlas = document.getElementById('atlas');
+    var rows = [];
+
+    for (var i = 0; i < CELLS; i++) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        row.style.left = ((i % COLS) * CELL_W) + 'px';
+        row.style.top = (Math.floor(i / COLS) * CELL_H) + 'px';
+        var plate = document.createElement('div');
+        plate.className = 'plate empty';
+        var set = document.createElement('div');
+        set.className = 'set empty';
+        var k = document.createElement('span');
+        k.className = 'k';
+        k.textContent = 'FOV';
+        var v = document.createElement('span');
+        v.className = 'v';
+        set.appendChild(k);
+        set.appendChild(v);
+        row.appendChild(plate);
+        row.appendChild(set);
+        atlas.appendChild(row);
+        rows.push({ plate: plate, set: set, v: v });
+    }
+
+    function glyph(name) {
+        var g = window.WhipGlyphs && window.WhipGlyphs.glyphs;
+        return (g && g[name]) || '';
+    }
+
+    function paint(list) {
+        for (var i = 0; i < CELLS; i++) {
+            var r = rows[i];
+            var d = list[i];
+            if (!d) {
+                r.plate.className = 'plate empty';
+                r.set.className = 'set empty';
+                continue;
+            }
+            r.plate.className = 'plate' + (d.on ? ' on' : '');
+            // textContent for the number; the glyph is whip's own markup.
+            if (d.icon) r.plate.innerHTML = glyph(d.icon);
+            else r.plate.textContent = d.back || '';
+            r.set.className = 'set' + (d.on ? ' on' : '') + (d.fov ? '' : ' empty');
+            r.v.textContent = d.fov || '';
+        }
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d) return;
+        // An empty Lua table encodes as {} as well as []: either is no rows.
+        if (d.rows !== undefined) paint(Array.isArray(d.rows) ? d.rows : []);
+    });
+})();
+</script>
+</body>
+</html>

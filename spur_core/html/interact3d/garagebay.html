@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>garage bay atlas</title>
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE GARAGE BAY ATLAS — the bay a driver sees on the tarmac.
+
+   Same rules as badge.html and label.html: this document IS a texture, rendered
+   offscreen and sampled by DrawTexturedPoly. Transparent background, fixed pixel
+   size, no --ui-scale. Nothing here is ever composited onto the screen, so there
+   is no such thing as a responsive layout in this file.
+
+   THE HOUSE LOOK, ON THE GROUND. A bay is a place a car goes, so it is drawn as the house's
+   SLOT — the tile that means "a thing goes here" in the inventory and the hotbar —
+   and a car in it is the house's CHOSEN CARD: the blue wash inside a white ring
+   that the creator and the inventory use for "this one".
+
+   FOUR CELLS, ONE BROWSER. A 384x1024 page: the bay down the left, its icon in
+   the strip on the right.
+
+       x 0-256,   v 0.00 - 0.50    BAY APPROACHING   glass slab, the ring drawing itself on
+       x 0-256,   v 0.50 - 1.00    BAY PARKED        the chosen card: blue wash, white ring
+       x 256-384, v 0.000 - 0.125  ICON APPROACHING  the dark disc, the icon in white
+       x 256-384, v 0.125 - 0.250  ICON PARKED       the disc lit white, the icon cut out
+
+   All of them render continuously and Lua chooses by sampling a different band.
+   That is the badge atlas's trick and it is here for the same reason: a state
+   change must not cost a message, a repaint, or a second browser. There is
+   exactly ONE DUI for this feature however many bays are on screen — which is
+   also why every bay in a garage draws on in step with the others. The cell
+   positions are mirrored in client/garage_helper.lua (BAY_U1, ROW_*, ICON_*).
+
+   THE ICON IS ITS OWN QUAD, flat on the floor and turned to face you. Lua lays it over the
+   bay's centre and turns it every frame so its top points away from the camera:
+   it reads the right way up whether the car drives in nose first or reverses in.
+   It is never part of the bay cells, which turn with the bay.
+
+   WHY SVG AND NOT A DIV WITH A BORDER. The ring draws on as a stroke along a path
+   — stroke-dasharray sets how much of it shows, stroke-dashoffset moves that — and
+   pathLength="100" makes those numbers percentages of the path, so they do not
+   have to be re-worked whenever the rectangle or its corners change.
+
+   THE ASPECT IS NOT ARBITRARY. A bay cell is 256x512, a 1:2 rectangle, matching
+   the 2.6m x 5.2m bay the quad is drawn at (Config.GaragePositionHelper). Change
+   one without the other and the ring goes oval: it is drawn in texture space, so
+   it stretches with the texture. About 1 px = 1 cm. An icon cell is 128x128 and
+   its quad is half the bay's width square, so it has the same pixels per metre.
+
+   WHICH WAY IS UP. The top of a bay cell is the bay's FRONT — the end a car parked
+   by the bay's heading points at (WorldQuad.groundBasis). Nothing in the bay cells
+   has a right way up: the ring draws on from BOTH short ends at once, so it looks
+   the same either way round. The top of an icon cell is the side AWAY from the
+   camera.
+
+   TINTED BY THE EDITOR. The bay editor (client/garage_helper.lua) draws this same
+   texture with a green or red tint, which DrawTexturedPoly multiplies in: the
+   white ring and icon take the colour, the dark glass stays dark. Keep the parts
+   that must carry a tint white.
+
+   CHROMIUM 103. No :has(), no nesting, no color-mix() — see the CSS notes in
+   html/css. Everything below is plain 2022 CSS and SVG 1.1.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 384px;
+    height: 1024px;
+    background: transparent;
+    overflow: hidden;
+}
+
+.cell {
+    position: absolute;
+    left: 0;
+    width: 256px;
+    height: 512px;
+}
+
+.cell.approaching { top: 0; }
+.cell.parked      { top: 512px; }
+
+.icon {
+    position: absolute;
+    left: 256px;
+    width: 128px;
+    height: 128px;
+}
+
+.icon.approaching { top: 0; }
+.icon.parked      { top: 128px; }
+
+.cell svg { display: block; width: 256px; height: 512px; }
+.icon svg { display: block; width: 128px; height: 128px; }
+
+/* THE SLAB. Night glass (the house's rgba(10,12,18)) laid on the tarmac, at 0.3:
+   enough to say "this patch is a place" on bright concrete, light enough that the
+   ground shows through.
+   The corners are the slot's row radius scaled to the bay — cut, not blobby. */
+.slab {
+    fill: #0a0c12;
+    fill-opacity: 0.3;
+}
+
+/* The slot's hairline edge, so the shape reads before the ring has drawn. */
+.edge {
+    fill: none;
+    stroke: #ffffff;
+    stroke-opacity: 0.22;
+    stroke-width: 3;
+}
+
+/* THE RING, DRAWING ITSELF ON. Two strokes, one from the middle of each short end,
+   each drawing half the way round — so they meet at the far ends and the picture is
+   the same turned 180 degrees. dasharray 50 150 on a pathLength of 100 is "the first
+   half, then nothing"; the offset walks it from hidden (50.5 — a hair past 50, or a
+   round cap leaves a dot at the start) to drawn (0).
+
+   The house's own ease (cubic-bezier(0.16, 1, 0.3, 1), the hint capsule's gauge):
+   fast out, settling in. It holds drawn for a moment, fades, and starts again — the
+   fade is what hides the jump back to undrawn, so it never visibly rewinds. */
+.draw {
+    fill: none;
+    stroke: #ffffff;
+    stroke-opacity: 0.93;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 50 150;
+    stroke-dashoffset: 50.5;
+    animation: draw 2.8s infinite;
+}
+
+@keyframes draw {
+    0%   { stroke-dashoffset: 50.5; opacity: 1; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+    46%  { stroke-dashoffset: 0;    opacity: 1; }
+    72%  { stroke-dashoffset: 0;    opacity: 1; animation-timing-function: ease-in; }
+    90%  { stroke-dashoffset: 0;    opacity: 0; }
+    100% { stroke-dashoffset: 0;    opacity: 0; }
+}
+
+/* THE DISC: the house's stat disc (the hint capsule's), holding the bay's own icon —
+   `garage` from html/js/glyphs.js, the roller door the bay's E prompt wears. A metre
+   across and the icon filling most of it, because from a driver's seat the ground is
+   seen at a grazing angle and anything smaller flattens into a dot. */
+.disc {
+    fill: #0a0c12;
+    fill-opacity: 0.92;
+    stroke: #ffffff;
+    stroke-opacity: 0.93;
+    stroke-width: 5;
+}
+
+.glyph { fill: #ffffff; fill-opacity: 0.93; }
+
+/* PARKED — THE CHOSEN CARD. Signal Blue's wash inside the white ring, at rest: the
+   circuit is complete. The car hides the middle, so what the driver sees is the
+   ring and a band of blue round the car — which is the point. */
+.wash {
+    fill: #60a5fa;
+    fill-opacity: 0.2;
+}
+
+.ring {
+    fill: none;
+    stroke: #ffffff;
+    stroke-opacity: 0.93;
+    stroke-width: 6;
+}
+
+/* The disc lit: white, the icon cut out of it in the glass's ink — as a stat gauge
+   fills white when it is full. Mostly under the car; seen as the car rolls in. */
+.disc-on {
+    fill: #ffffff;
+    fill-opacity: 0.93;
+    stroke: #ffffff;
+    stroke-opacity: 0.93;
+    stroke-width: 5;
+}
+
+.glyph-on { fill: #0a0c12; }
+</style>
+</head>
+<body>
+
+<!-- BAY APPROACHING: the slab, its hairline, the ring drawing on from both ends. -->
+<div class="cell approaching">
+    <svg viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg">
+        <rect class="slab" x="10" y="10" width="236" height="492" rx="22"></rect>
+        <rect class="edge" x="10" y="10" width="236" height="492" rx="22"></rect>
+        <path class="draw" pathLength="100" d="M128 10 H224 A22 22 0 0 1 246 32 V480 A22 22 0 0 1 224 502 H32 A22 22 0 0 1 10 480 V32 A22 22 0 0 1 32 10 Z"></path>
+        <path class="draw" pathLength="100" d="M128 502 H32 A22 22 0 0 1 10 480 V32 A22 22 0 0 1 32 10 H224 A22 22 0 0 1 246 32 V480 A22 22 0 0 1 224 502 Z"></path>
+    </svg>
+</div>
+
+<!-- BAY PARKED: the chosen card — slab, blue wash, the whole ring. -->
+<div class="cell parked">
+    <svg viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg">
+        <rect class="slab" x="10" y="10" width="236" height="492" rx="22"></rect>
+        <rect class="wash" x="10" y="10" width="236" height="492" rx="22"></rect>
+        <rect class="ring" x="10" y="10" width="236" height="492" rx="22"></rect>
+    </svg>
+</div>
+
+<!-- ICON APPROACHING: the dark disc, the garage in white. Its top is the side away from the camera. -->
+<div class="icon approaching">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <circle class="disc" cx="64" cy="64" r="52"></circle>
+        <g class="glyph" transform="translate(28 27.7) scale(3)">
+            <path d="M2.6 20V9.2L12 4.2l9.4 5V20h-3.6v-7.6H6.2V20Z"></path>
+            <path d="M6.2 14.4h11.6v1.4H6.2Z"></path>
+            <path d="M6.2 17.2h11.6v1.4H6.2Z"></path>
+        </g>
+    </svg>
+</div>
+
+<!-- ICON PARKED: the disc lit white, the garage cut out of it. -->
+<div class="icon parked">
+    <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <circle class="disc-on" cx="64" cy="64" r="52"></circle>
+        <g class="glyph-on" transform="translate(28 27.7) scale(3)">
+            <path d="M2.6 20V9.2L12 4.2l9.4 5V20h-3.6v-7.6H6.2V20Z"></path>
+            <path d="M6.2 14.4h11.6v1.4H6.2Z"></path>
+            <path d="M6.2 17.2h11.6v1.4H6.2Z"></path>
+        </g>
+    </svg>
+</div>
+
+</body>
+</html>

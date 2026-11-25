@@ -1,0 +1,236 @@
+/* ========================================
+   SPAWN PICKER — css/spawnselect.css (js/map3d/spawnselect.js builds the markup in #spawnsel)
+
+   After a character is chosen: the 3D map comes down over the game with the camera's pan, through a tall soft gradient
+   from the game to the map, and the list of places to arrive at sits on the left, in the name strip's language
+   (css/characters.css): each place an icon and its name in the display face, the chosen one white (no stroke or dot
+   under it: Josh, 1 Nov), Spawn as the white pill.
+
+   Every per-frame change is a transform (the map's edge): nothing here lays out or repaints while it moves. Authored at
+   1440p and scaled with transform: scale(var(--ui-scale)), never zoom (CEF 103 hit-tests zoomed boxes in the wrong
+   place). 2022-safe CSS only (CEF is Chromium 103).
+   ======================================== */
+
+.ss {
+    --ss-fade: 400px;                 /* the edge's gradient: set by spawnselect.js from the screen (tuning.fade) */
+    --ss-s: var(--ui-scale, 1);
+    position: fixed;
+    inset: 0;
+    z-index: 9450;                    /* over the HUD and the pause menu (9400), under #curtain (9500) */
+    overflow: hidden;
+    pointer-events: none;
+    font-family: var(--ui-font, 'Barlow', 'Segoe UI', sans-serif);
+    color: var(--ui-text, rgba(255, 255, 255, 0.93));
+}
+
+.ss[hidden] { display: none; }
+
+/* ---- the map, and its edge over the game ----
+
+   The map's box: its bottom is the map's edge (moved by transform, locked to the game's pan), the map inside it held
+   still by the opposite transform. The box is masked: solid down to --ss-fade above its bottom, then fading to nothing
+   along an eased curve, so the game shows through the gradient with no line anywhere. The mask moves with the box, so
+   it is a transform too. */
+.ss-mapclip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: calc(100% + var(--ss-fade));
+    overflow: hidden;
+    will-change: transform;
+    -webkit-mask-image: linear-gradient(to bottom,
+        #000 0,
+        #000 calc(100% - var(--ss-fade)),
+        rgba(0, 0, 0, 0.94) calc(100% - var(--ss-fade) * 0.875),
+        rgba(0, 0, 0, 0.8) calc(100% - var(--ss-fade) * 0.75),
+        rgba(0, 0, 0, 0.6) calc(100% - var(--ss-fade) * 0.625),
+        rgba(0, 0, 0, 0.4) calc(100% - var(--ss-fade) * 0.5),
+        rgba(0, 0, 0, 0.21) calc(100% - var(--ss-fade) * 0.375),
+        rgba(0, 0, 0, 0.08) calc(100% - var(--ss-fade) * 0.25),
+        rgba(0, 0, 0, 0.02) calc(100% - var(--ss-fade) * 0.125),
+        transparent 100%);
+}
+
+.ss-mapin {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: calc(100% - var(--ss-fade));
+    will-change: transform;
+}
+
+/* the dark behind the list, so its type reads over any part of the map */
+.ss-scrim {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 56%;
+    background: linear-gradient(to right,
+        rgba(10, 12, 18, 0.9) 0%,
+        rgba(10, 12, 18, 0.72) 40%,
+        rgba(10, 12, 18, 0.25) 75%,
+        rgba(10, 12, 18, 0) 100%);
+    opacity: 0;
+    transition: opacity 0.5s var(--ui-ease, ease);
+}
+
+.ss-list-in .ss-scrim { opacity: 1; }
+.ss-going .ss-scrim, .ss-leaving .ss-scrim { opacity: 0; }
+
+/* ---- the list ---- */
+
+.ss-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translate3d(-48px, 0, 0);
+    transition: transform 0.5s var(--ui-ease, ease), opacity 0.35s var(--ui-ease, ease);
+    pointer-events: none;
+}
+
+.ss-list-in .ss-panel { opacity: 1; transform: none; }
+.ss-going .ss-panel, .ss-leaving .ss-panel { opacity: 0; transform: translate3d(-48px, 0, 0); }
+
+/* 1440p inside: the strip's margins (170 px in, 122 px up), so Spawn sits where Play was */
+.ss-scale {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: calc(100% / var(--ss-s));
+    height: calc(100% / var(--ss-s));
+    transform: scale(var(--ss-s));
+    transform-origin: bottom left;
+    box-sizing: border-box;
+    padding: 150px 0 122px 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.ss-list {
+    position: relative;               /* the rows' offsetTop is from here (spawnselect.js keeps the chosen one in view) */
+    flex: 0 1 auto;
+    min-height: 0;
+    max-width: 760px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 0 40px 0 20px;
+    margin-left: -20px;
+    pointer-events: auto;
+}
+
+.ss-list::-webkit-scrollbar { width: 0; }
+
+/* more places than fit: the list scrolls, its ends fading so it reads as more to come (spawnselect.js sets the class) */
+.ss-list.ss-scroll {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 44px, #000 calc(100% - 44px), transparent 100%);
+}
+
+/* a place: its icon and its name */
+.ss-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    padding: 6px 0 2px;
+    border: 0;
+    background: none;
+    color: rgba(255, 255, 255, 0.36);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: color 0.18s var(--ui-ease, ease), transform 0.22s var(--ui-ease, ease), opacity 0.3s var(--ui-ease, ease);
+}
+
+.ss-row:hover { color: rgba(255, 255, 255, 0.62); }
+.ss-row:focus-visible { outline: 3px solid var(--ui-accent, #60a5fa); outline-offset: 6px; border-radius: 8px; }
+.ss-row.selected { color: #fff; transform: translateX(7px); }
+
+/* level with the name's letters (its box is taller: the room under it) */
+.ss-ico { flex: 0 0 auto; width: 36px; height: 36px; margin-top: 6px; }
+.ss-ico svg { display: block; width: 100%; height: 100%; }
+
+/* the name; the room under it (where the stroke was) kept, so the rows sit where they did */
+.ss-label {
+    position: relative;
+    min-width: 0;
+    padding-bottom: 0.4em;
+    font-family: var(--ui-font-display, 'Bricolage Grotesque', sans-serif);
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: visible;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* ---- Spawn ---- */
+
+.ss-foot {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.ss-go {
+    position: relative;
+    overflow: hidden;
+    height: 75px;
+    padding: 0 45px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ui-pill, rgba(255, 255, 255, 0.93));
+    color: var(--ui-pill-ink, rgb(10, 12, 18));
+    display: flex;
+    align-items: center;
+    font-family: var(--ui-font-display, 'Bricolage Grotesque', sans-serif);
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55), 0 10px 32px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease, ease), transform 0.16s var(--ui-ease, ease), color 0.16s var(--ui-ease, ease);
+}
+
+.ss-go:hover { background: #fff; transform: translateY(-2px); }
+.ss-go:focus-visible { outline: 3px solid var(--ui-accent, #60a5fa); outline-offset: 4px; }
+
+/* ---- chosen: the load runs behind the map ---- */
+
+.ss-chosen .ss-row:not(.selected) { opacity: 0; }
+.ss-chosen .ss-row, .ss-chosen .ss-go { pointer-events: none; }
+
+/* the pill goes quiet and a light runs along it while the game loads */
+.ss-chosen .ss-go {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.35);
+}
+
+.ss-chosen .ss-go::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -40%;
+    width: 40%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+    animation: ss-run 1.3s ease-in-out infinite;
+}
+
+@keyframes ss-run {
+    from { transform: translateX(0); }
+    to   { transform: translateX(350%); }
+}

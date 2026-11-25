@@ -1,0 +1,23 @@
+# Only the spur_ resources and the files named below are part of the repository.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/NOTICE.md
+!/recipe.yaml
+!/server.cfg.example
+!/txadmin/
+!/spur_chat/
+!/spur_core/
+!/spur_gunny/
+!/spur_loadingscreen/
+!/spur_phone/
+!/spur_rope/
+!/spur_test/
+!/spur_voice/
+
+__pycache__/
+*.pyc
+*.zip
+*.log
+*.bak*

@@ -1,0 +1,476 @@
+/* ========================================
+   WHIP BASE — the design-token foundation
+   ========================================
+
+   EVERY visual decision the framework repeats lives here as a custom property. Feature
+   stylesheets consume tokens; they do not restate values. This file is also the THEME
+   CONTRACT: a theme resource (see Config.Theme in config.lua and html/js/theme.js)
+   overrides these tokens from a <link> injected after every stylesheet, and because
+   custom properties resolve at computed-value time, the override wins everywhere at
+   equal specificity — that is the entire skinning mechanism.
+
+   2022-SAFE ONLY. FiveM's CEF is Chromium 103: no :has(), no native nesting, no
+   color-mix(), no container queries, no @layer. Derived tints are therefore declared as
+   explicit alpha tokens beside their parent color, not computed.
+
+   FONTS ARE VENDORED (html/fonts/, declared below). The old Google Fonts @import meant a
+   player who could not reach Google silently fell back to system fonts — same server,
+   different look. A theme brings its own faces by overriding --ui-font/--ui-mono and
+   shipping @font-face + font files in its own resource (cfx-nui URLs work cross-resource).
+*/
+/* Typefaces: declared in css/fonts.css, which index.html loads before this file. */
+
+/* ---------------------------------------- */
+/* Tokens                                   */
+/* ---------------------------------------- */
+:root {
+    /* Resolution scaling — set by utils.js: the 2560 x 1440 design fitted to the window's height, or to its
+       width on a screen narrower than 16:9; not themeable. --hud-scale is the height alone (the gauges under
+       the minimap, which follow the map's box). */
+    --ui-scale: 1;
+    --hud-scale: 1;
+
+    /* A select's chevron (js/ui-icons.js's down, in the muted text colour): every sheet's select uses this one. */
+    --ui-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a9b6' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+
+    /* The inventory draws at this multiple of --ui-scale, and so do its popovers (the right-click
+       menu, the tooltip, the split panel) so their text matches the panels they open from. Tune
+       with care: the inventory shell's 1880px width is calibrated against it (see .inv-wrapper in
+       inventory.css) and a bigger number clips the shell at 1080p. */
+    --ui-zoom-inventory: 1.32;
+
+    /* ---- Surfaces: the chat/drawtext ground ---- */
+    --ui-surface:        rgba(10, 12, 18, 0.75);
+    --ui-surface-raised: rgba(10, 12, 18, 0.9);    /* popovers: tooltip, context menu, split */
+    --ui-surface-solid:  rgb(10, 12, 18);          /* fully opaque — panels that must not
+                                                      let the world bleed through (/w menu) */
+    --ui-surface-hover:  rgba(255, 255, 255, 0.05);   /* a bare row or chip under the pointer */
+    /* The hover step for a control that already has a wash at rest (a button, a tab, a wizard step,
+       the close disc): one step past its own fill, so the pointer still shows. */
+    --ui-surface-hover-strong: rgba(255, 255, 255, 0.10);
+    --ui-surface-subtle: rgba(255, 255, 255, 0.02);
+    --ui-surface-light:  rgba(255, 255, 255, 0.03);
+    --ui-surface-medium: rgba(255, 255, 255, 0.04);
+
+    /* ---- Borders ---- */
+    --ui-border:       rgba(255, 255, 255, 0.08);
+    --ui-border-hover: rgba(255, 255, 255, 0.12);
+
+    /* ---- Shadows ---- */
+    --ui-shadow:       0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --ui-shadow-lg:    0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --ui-shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
+    --ui-shadow-text:  0 1px 6px rgba(0, 0, 0, 0.8);
+    --ui-rim:          0 0 3px rgba(0, 0, 0, 0.9);   /* dark rim for world-facing text */
+
+    /* ---- Radius ladder ----
+       panel/pop/slot carry the documented language (20/12/8). sm/xs/pill formalise the
+       small-control ladder that existed as raw 2..6px across every file.
+       ROW (11px) is the step for things you PICK: list rows, tabs, chips, and the inventory
+       slot tiles. SLOT (8px) stays the step for things you TYPE into — fields — so the two read as
+       different kinds of object (see .wp-field). */
+    --ui-radius-panel: 20px;
+    --ui-radius-pop:   12px;
+    --ui-radius-row:   11px;
+    --ui-radius-slot:  8px;
+    --ui-radius-sm:    6px;
+    --ui-radius-xs:    4px;
+    --ui-radius-pill:  3px;
+    --ui-radius-hair:  2px;      /* bars, tracks, strokes, the scrollbar thumb */
+    --ui-radius-capsule: 38px;   /* the capsule shape: the HUD capsule, /me bubbles, an NPC's dialog */
+
+    /* ---- Text ---- */
+    --ui-text:      rgba(255, 255, 255, 0.93);
+    --ui-text-mid:  rgba(255, 255, 255, 0.5);
+    --ui-text-dim:  rgba(255, 255, 255, 0.25);
+    /* Functional labels — the words that say WHAT a value is (field labels, info-grid
+       labels, table headers). These carried --ui-text-dim, which at 0.25 alpha over the
+       glass is ~2.2:1 — decoration-grade contrast on words that do a job. Dim stays for
+       genuinely tertiary text; labels get their own step. */
+    --ui-text-label: rgba(255, 255, 255, 0.48);
+
+    /* ---- Semantic colors + their alpha companions (explicit, not color-mix — CEF 103) ---- */
+    --ui-accent:         #60a5fa;
+    --ui-accent-glow:    rgba(96, 165, 250, 0.2);
+    --ui-accent-subtle:  rgba(96, 165, 250, 0.07);
+    --ui-accent-light:   rgba(96, 165, 250, 0.15);
+    --ui-accent-medium:  rgba(96, 165, 250, 0.3);
+    --ui-on-accent:      #fff;                        /* text ON an accent fill (primary buttons) */
+    --ui-success:        #4ade80;
+    --ui-success-subtle: rgba(74, 222, 128, 0.08);
+    --ui-success-light:  rgba(74, 222, 128, 0.12);
+    --ui-success-medium: rgba(74, 222, 128, 0.5);     /* a "yes" edge: a shop slot that is for sale */
+    --ui-error:          #f87171;
+    --ui-error-subtle:   rgba(248, 113, 113, 0.08);
+    --ui-error-light:    rgba(248, 113, 113, 0.12);
+    --ui-warning:        #fbbf24;
+    --ui-warning-light:  rgba(251, 191, 36, 0.15);
+    --ui-info:           #60a5fa;
+
+    /* ---- The death screen (death.css) ----
+       curtain: the deep red rising from the bottom edge behind its words, fading out upward so
+       the world shows above it — an edge curtain like the inventory's, the one kind of gradient
+       the glass allows. A theme can set it to `none`. track: the empty part of its bar. */
+    --ui-death-curtain: linear-gradient(to top, rgba(112, 14, 20, 0.86) 0%, rgba(112, 14, 20, 0.58) 40%, rgba(112, 14, 20, 0) 100%);
+    --ui-death-track:   rgba(255, 255, 255, 0.16);
+
+    /* ---- The skill check ring (ui.css §6) ----
+       WHIP'S BLUE, AND EASY TO SEE. Tokens, so a theme can make it anything.
+       target: the lit part waiting for the dot, solid Signal Blue (--ui-accent) and glowing, the one
+       thing the player looks for. fill: the part as it starts filling; it turns toward full as it
+       fills (ui.js blends the two — CEF 103 has no color-mix()). done: a completed part's flash.
+       Every piece wears the dark edge so the ring holds up over a white sky. The dot is the
+       selection pill. */
+    --ui-skill-target:    #60a5fa;
+    --ui-skill-fill:      #bfdbfe;
+    --ui-skill-full:      #ffffff;
+    --ui-skill-done:      #e2efff;
+    --ui-skill-edge:      rgba(10, 12, 18, 0.6);
+    --ui-skill-outline:   rgba(255, 255, 255, 0.5);   /* the unlit ring's inner circle */
+    --ui-skill-clock:     rgba(255, 255, 255, 0.85);  /* the outer circle: the time left (red at the end) */
+
+    /* ---- The Slot — "a thing lives here": inventory grids, the accessory rail ----
+       A TILE, NOT AN OUTLINE: thirty outlines on a screen holding nine items make the scaffolding
+       louder than the contents. As a tile:
+
+           empty    a faint white wash, no edge            — present, quiet
+           filled   a brighter wash + a quiet edge + lift  — what you carry reads first
+           hover    one step brighter (filled slots only — an empty one does nothing)
+
+       FILLED IS LIGHTER THAN EMPTY, and all three are white-alpha, so a theme that recolours
+       --ui-surface* carries the slots with it. */
+    --ui-slot-bg:          rgba(255, 255, 255, 0.03);
+    --ui-slot-bg-filled:   rgba(255, 255, 255, 0.07);
+    --ui-slot-bg-hover:    rgba(255, 255, 255, 0.10);
+    /* A HAIRLINE, as the creator's cards wear: a heavy edge reads as a picture mat, louder than
+       the items. */
+    --ui-slot-line-w:      1px;
+    /* The carried grid's edge: its slots are exactly twice the right column's, so its edge is too,
+       and both read the same weight. */
+    --ui-slot-line-w-lg:   2px;
+    /* "This one" on a card (the creator's chosen card; a controller's slot): a blue wash inside a
+       white ring. The ring is the creator's 0.65 white. */
+    --ui-slot-bg-chosen:   var(--ui-accent-light);
+    --ui-ring:             rgba(255, 255, 255, 0.65);
+    --ui-slot-line:        transparent;                 /* empty: the fill says it; no edge */
+    --ui-slot-line-filled: rgba(255, 255, 255, 0.14);
+    --ui-slot-line-hover:  rgba(255, 255, 255, 0.28);
+    --ui-slot-line-focus:  #fff;                        /* a focused slot's edge (the --inv-* alias reads it) */
+    --ui-slot-lift:        inset 0 1px 0 rgba(255, 255, 255, 0.06);   /* a filled tile's top edge */
+    --ui-slot-glow:        0 0 12px rgba(255, 255, 255, 0.22);        /* focus only */
+
+    /* ---- The hotbar (inventory.css HOTBAR): its discs, keys and counts, times a stat disc's ---- */
+    --ui-hotbar-scale:     1.5;
+
+    /* ---- The selection pill — whip's strongest statement: "this one" ----
+       Near-white with dark ink. The admin panel's selected tab and row, and the inventory's drop
+       target, all wear it. */
+    --ui-pill:          rgba(255, 255, 255, 0.93);
+    --ui-pill-ink:      rgb(10, 12, 18);
+    --ui-pill-ink-mid:  rgba(10, 12, 18, 0.62);
+    --ui-pill-hover:    #fff;                      /* the pill under the pointer (a primary button) */
+
+    /* ---- Scrim — the dim a full-screen surface draws over the game behind it ----
+       The inventory's wash. Client Lua sends the live value (INVENTORY_WASH in
+       client/inventory.lua); this is what shows if it does not. */
+    --ui-scrim: rgba(10, 12, 18, 0.78);
+
+    /* ---- Item art — the shadow that lifts an item picture off its slot ---- */
+    --ui-item-shadow:        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+    --ui-item-shadow-lifted: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));   /* in your hand (dragging) */
+
+    /* ---- The Director's canvas (css/director.css) ----
+       THE ONE OPAQUE FIELD whip draws edge to edge: a scenario's cards need a calm ground, not a
+       moving street. Night blue, a fine grid every
+       16 world units and a stronger one every 128, both scaling with the zoom. Card headers carry the
+       card's KIND as a quiet top strip (the palette groups); these are not states, so none of them is
+       a semantic colour. Wires are white; the one you picked is Signal Blue. */
+    --dr-canvas:        rgb(8, 14, 26);
+    --dr-grid-minor:    rgba(120, 160, 230, 0.05);
+    --dr-grid-major:    rgba(120, 160, 230, 0.11);
+    --dr-card:          rgba(16, 22, 34, 0.96);
+    --dr-wire:          rgba(255, 255, 255, 0.62);
+    --dr-wire-dim:      rgba(255, 255, 255, 0.3);
+    --dr-kind-events:   rgb(196, 78, 78);
+    --dr-kind-events-tint:   rgba(196, 78, 78, 0.14);
+    --dr-kind-goals:    rgb(206, 176, 70);       /* GTA's objective yellow, muted */
+    --dr-kind-goals-tint:    rgba(206, 176, 70, 0.14);
+    --dr-kind-flow:     rgb(138, 148, 168);
+    --dr-kind-flow-tint:     rgba(138, 148, 168, 0.12);
+    --dr-kind-dialog:   rgb(52, 168, 156);
+    --dr-kind-dialog-tint:   rgba(52, 168, 156, 0.14);
+    --dr-kind-world:    rgb(204, 128, 58);
+    --dr-kind-world-tint:    rgba(204, 128, 58, 0.14);
+    --dr-kind-player:   rgb(150, 112, 214);
+    --dr-kind-player-tint:   rgba(150, 112, 214, 0.14);
+    --dr-kind-scenario: rgb(98, 120, 178);
+    --dr-kind-scenario-tint: rgba(98, 120, 178, 0.14);
+    /* The colours another resource's Director cards may ask for (Whip.card's `color`, by name). */
+    --dr-tint-blue:     rgb(84, 140, 230);
+    --dr-tint-blue-bg:       rgba(84, 140, 230, 0.14);
+    --dr-tint-teal:     rgb(46, 170, 170);
+    --dr-tint-teal-bg:       rgba(46, 170, 170, 0.14);
+    --dr-tint-green:    rgb(92, 176, 104);
+    --dr-tint-green-bg:      rgba(92, 176, 104, 0.14);
+    --dr-tint-amber:    rgb(214, 160, 60);
+    --dr-tint-amber-bg:      rgba(214, 160, 60, 0.14);
+    --dr-tint-red:      rgb(206, 86, 86);
+    --dr-tint-red-bg:        rgba(206, 86, 86, 0.14);
+    --dr-tint-violet:   rgb(160, 110, 220);
+    --dr-tint-violet-bg:     rgba(160, 110, 220, 0.14);
+    --dr-tint-slate:    rgb(128, 140, 160);
+    --dr-tint-slate-bg:      rgba(128, 140, 160, 0.12);
+    /* The Board card style (each builder's pick: director.css .dr-board): a card's head painted solid in its kind's
+       colour under dark ink (each solid paired with the kind above), its wires in the same colour, cards in the
+       classic cards' navy (--dr-card: closer to the canvas than a grey) on a hard shadow, and a quiet dot grid in
+       the canvas's own navy. */
+    --dr-board-dot:      rgb(33, 47, 72);
+    --dr-board-card:     rgba(16, 22, 34, 0.96);
+    --dr-board-lift:     6px 6px 0 rgba(0, 0, 0, 0.55);
+    --dr-board-lift-hi:  9px 9px 0 rgba(0, 0, 0, 0.6);
+    --dr-solid-events:   rgb(255, 123, 107);
+    --dr-solid-goals:    rgb(255, 210, 63);
+    --dr-solid-flow:     rgb(178, 188, 206);
+    --dr-solid-dialog:   rgb(79, 209, 197);
+    --dr-solid-world:    rgb(255, 166, 77);
+    --dr-solid-player:   rgb(190, 156, 255);
+    --dr-solid-scenario: rgb(157, 180, 255);
+    --dr-solid-blue:     rgb(110, 170, 255);
+    --dr-solid-teal:     rgb(72, 214, 214);
+    --dr-solid-green:    rgb(126, 214, 134);
+    --dr-solid-amber:    rgb(255, 190, 82);
+    --dr-solid-red:      rgb(255, 93, 115);
+    --dr-solid-violet:   rgb(196, 152, 255);
+    --dr-solid-slate:    rgb(170, 182, 204);
+
+    /* ---- The Systems Creator's screen (css/systems.css): the Director's canvas, in RED ----
+       Its own menu, with a red theme instead of blue. The red is the screen's
+       identity (its ground, its grid, the column's glow, focus and hover): a deep red, never a state.
+       Because red is whip's error colour, on this screen ERRORS move to a vivid orange and WARNINGS to
+       yellow, each with its glyph (✕, !), and a picked card or wire is the white selection pill, so
+       nothing picked or broken ever looks like the theme. Value wires and pins wear their TYPE's
+       colour (six a builder sees, plan §8), clear of red, green (what ran) and the warning colours. */
+    --sy-accent:          #dc2626;
+    --sy-accent-glow:     rgba(220, 38, 38, 0.24);
+    --sy-accent-subtle:   rgba(220, 38, 38, 0.09);
+    --sy-accent-light:    rgba(220, 38, 38, 0.16);
+    --sy-accent-medium:   rgba(220, 38, 38, 0.38);
+    --sy-error:           #ff8a3d;
+    --sy-error-subtle:    rgba(255, 138, 61, 0.09);
+    --sy-error-light:     rgba(255, 138, 61, 0.15);
+    --sy-warning:         #facc15;
+    --sy-warning-light:   rgba(250, 204, 21, 0.14);
+    --sy-canvas:          rgb(20, 9, 11);
+    --sy-grid-minor:      rgba(235, 120, 120, 0.05);
+    --sy-grid-major:      rgba(235, 120, 120, 0.11);
+    --sy-card:            rgba(34, 18, 21, 0.96);
+    --sy-t-number:        #22d3ee;   /* cyan */
+    --sy-t-text:          #e879f9;   /* orchid */
+    --sy-t-bool:          #a78bfa;   /* violet */
+    --sy-t-place:         #d9b27c;   /* tan */
+    --sy-t-person:        #60a5fa;   /* blue */
+    --sy-t-thing:         #cbd5e1;   /* silver */
+    --sy-t-any:           #8b93a3;   /* grey */
+    --sy-kind-when:       rgb(214, 96, 86);
+    --sy-kind-when-tint:      rgba(214, 96, 86, 0.15);
+    --sy-kind-maths:      rgb(64, 168, 196);
+    --sy-kind-maths-tint:     rgba(64, 168, 196, 0.13);
+    --sy-kind-text:       rgb(184, 104, 196);
+    --sy-kind-text-tint:      rgba(184, 104, 196, 0.13);
+    --sy-kind-variables:  rgb(140, 116, 214);
+    --sy-kind-variables-tint: rgba(140, 116, 214, 0.13);
+    --sy-kind-players:    rgb(84, 168, 232);   /* sky, beside the cars' indigo */
+    --sy-kind-players-tint:   rgba(84, 168, 232, 0.13);
+    --sy-kind-cars:       rgb(112, 124, 204);   /* indigo: clear of this screen's error orange */
+    --sy-kind-cars-tint:      rgba(112, 124, 204, 0.14);
+    --sy-kind-items:      rgb(186, 162, 84);
+    --sy-kind-items-tint:     rgba(186, 162, 84, 0.13);
+    --sy-kind-money:      rgb(96, 176, 132);
+    --sy-kind-money-tint:     rgba(96, 176, 132, 0.13);
+    --sy-kind-jobs:       rgb(64, 184, 176);    /* teal */
+    --sy-kind-jobs-tint:      rgba(64, 184, 176, 0.13);
+    --sy-kind-world:      rgb(150, 162, 178);   /* steel */
+    --sy-kind-world-tint:     rgba(150, 162, 178, 0.13);
+    --sy-kind-missions:   rgb(214, 128, 168);   /* rose */
+    --sy-kind-missions-tint:  rgba(214, 128, 168, 0.13);
+    --sy-kind-npcs:       rgb(150, 190, 80);    /* lime */
+    --sy-kind-npcs-tint:      rgba(150, 190, 80, 0.13);
+
+    /* ---- Type ---- */
+    /* Text, data and labels: Barlow (css/fonts.css), every weight 400-800 real. Segoe UI behind it covers
+       what Barlow lacks (Cyrillic, Greek). */
+    --ui-font: 'Barlow', 'Segoe UI', sans-serif;
+    /* The face for figures and names to compare (ids, paths, coordinates): whip's own font; a rule using it also sets font-variant-numeric: tabular-nums, so digits keep even widths.
+       Kept as its own token so a theme can still give figures a face of their own. */
+    --ui-mono: var(--ui-font);
+    /* THE HOUSE LOOK'S TITLES (the pause menu, creator, Director, emote menu, furnisher, inventory):
+       Bricolage Grotesque (css/fonts.css). Every title rule reads this token. */
+    --ui-font-display: 'Bricolage Grotesque', var(--ui-font);
+    --ui-fw-display: 800;
+    /* A house panel's ground: solid night glass with a faint blue glow in its top-left corner. A theme that
+       wants plain glass sets the glow to `none`. */
+    --ui-panel-glow: radial-gradient(120% 60% at 0% 0%, var(--ui-accent-subtle), transparent 60%);
+    /* Size/weight scales: for NEW code and themes. Existing panels still carry granular
+       px values — converting ~330 declarations was judged churn without payoff; a skin
+       retunes color, font and shape, not per-label sizes. */
+    --ui-fs-xs: 9px;  --ui-fs-sm: 11px;  --ui-fs-md: 13px;  --ui-fs-lg: 16px;  --ui-fs-xl: 20px;
+    --ui-fs-caption: 12px;   /* the line under a row, help text */
+    --ui-fs-body-lg: 14px;   /* a notice, a line that leads a panel */
+    --ui-fs-display: 26px;   /* a house screen's title: the inventory's name, the creator's menu words */
+    --ui-fw-regular: 400;  --ui-fw-medium: 500;  --ui-fw-semibold: 600;  --ui-fw-bold: 700;
+
+    /* ---- Motion ---- */
+    --ui-ease:        cubic-bezier(0.16, 1, 0.3, 1);
+    --ui-ease-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+    /* ---- Spacing scale (for new code and themes; see the type-scale note) ----
+       sp-7/sp-8 are the GENEROUS end, added when the admin panel's layout pass found the
+       scale topped out at 14px — every interval read the same and the panes had no
+       cadence. Tight grouping needs a loose counterpart to mean anything. */
+    --ui-sp-1: 2px;  --ui-sp-2: 4px;  --ui-sp-3: 6px;  --ui-sp-4: 8px;  --ui-sp-5: 10px;  --ui-sp-6: 14px;
+    --ui-sp-7: 20px;  --ui-sp-8: 28px;
+
+    /* ---- Scrollbars (one look, defined once — see the universal rule below) ---- */
+    --ui-scrollbar-w:           3px;
+    --ui-scrollbar-thumb:       rgba(255, 255, 255, 0.08);
+    --ui-scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
+    /* The REACH bar: for a box where the scrollbar is how you get to content you cannot see at
+       all (a third of the bag, the panels below the fold) rather than a hint that it scrolls. */
+    --ui-scrollbar-w-reach:           6px;
+    --ui-scrollbar-thumb-reach:       rgba(255, 255, 255, 0.16);
+    --ui-scrollbar-thumb-reach-hover: rgba(255, 255, 255, 0.28);
+
+    /* ---- Native form controls (CEF renders <option> on its own ground) ---- */
+    --ui-select-option-bg: #111;
+    --ui-select-option-fg: #ccc;
+
+    /* ---- LOCKED — mirrored as millisecond constants in JS. A theme changing these
+       desyncs element teardown from its fade and prompts blink out instead of fading.
+       Mirrors: --ui-fade ~ ui.js RADIAL_FADE_MS, --it-fade ~ interact.js FADE_DURATION.
+       Excluded from the theme contract. ---- */
+    --ui-fade: 0.18s;
+    --it-fade: 0.25s;
+
+    /* ---- Legacy aliases ----
+       The --inv-* names resolve to the --ui-* values, so a theme override of --ui-* reskins
+       everything. whip's own CSS reads --ui-* only; these stay for themes and custom renderers
+       written against the --inv-* names. Do not add new --inv-* uses. */
+    --inv-surface:         var(--ui-surface);
+    --inv-surface-raised:  var(--ui-surface-raised);
+    --inv-border:          var(--ui-border);
+    --inv-shadow:          var(--ui-shadow);
+    --inv-shadow-lg:       var(--ui-shadow-lg);
+    --inv-shadow-text:     var(--ui-shadow-text);
+    --inv-text:            var(--ui-text);
+    --inv-text-mid:        var(--ui-text-mid);
+    --inv-text-dim:        var(--ui-text-dim);
+    --inv-font:            var(--ui-font);
+    --inv-accent:          var(--ui-accent);
+    --inv-danger:          var(--ui-error);
+    --inv-ease:            var(--ui-ease);
+    --inv-radius-panel:    var(--ui-radius-panel);
+    --inv-radius-pop:      var(--ui-radius-pop);
+    --inv-radius-slot:     var(--ui-radius-row);   /* the inventory's slots were 11px, set in inventory.css */
+    --inv-slot-line-w:     var(--ui-slot-line-w);
+    --inv-slot-line:       var(--ui-slot-line);
+    --inv-slot-line-filled: var(--ui-slot-line-filled);
+    --inv-slot-line-hover: var(--ui-slot-line-hover);
+    --inv-slot-line-focus: var(--ui-slot-line-focus);
+    --inv-slot-glow:       var(--ui-slot-glow);
+    --inv-slot-glow-strong: var(--ui-slot-glow);
+}
+
+/* ---------------------------------------- */
+/* Base element rules                       */
+/* ---------------------------------------- */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    background: transparent;   /* the game world IS the background */
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    /* Nothing on the screen is picked up as text by a stray drag or Ctrl+A: what is typed (fields, boxes) still
+       is, and a block meant to be copied says so (.dr-code). */
+    user-select: none;
+}
+input, textarea, [contenteditable="true"] { user-select: text; }
+
+/* One scrollbar for the whole NUI. 23 hand-copied rule sets across 18 files unified onto
+   the tokens above (widths had drifted 2/3/4px between panels — drift, not design; the
+   two panels that HIDE their scrollbar keep local width:0 overrides). */
+*::-webkit-scrollbar { width: var(--ui-scrollbar-w); height: var(--ui-scrollbar-w); }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--ui-scrollbar-thumb); border-radius: 2px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--ui-scrollbar-thumb-hover); }
+
+/* CEF paints <option> popups on its own ground — without this they render as black
+   text on near-black. */
+select option { background: var(--ui-select-option-bg); color: var(--ui-select-option-fg); }
+
+/* EVERY SELECT AND NUMBER BOX IS WHIP'S (js/ui-controls.js): a select keeps its screen's closed look with whip's
+   chevron instead of the browser's arrow (its list is whip's), and a number box loses the browser's spin arrows for
+   whip's stepper. Longhands at (0,1,1), so a screen's `background` shorthand keeps its colour and the chevron stays;
+   a screen that draws its own sets background-image itself. */
+select:not([multiple]) {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: var(--ui-chevron);
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 12px 12px;
+    padding-right: 30px;
+}
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* The one stepper (ui-controls.js): a minus and a plus, a square each, at the right edge of the number box it serves.
+   Placed and sized there in screen pixels; its icons are 1em of the size it sets. Faded in and out (opacity only). */
+.ui-step {
+    position: fixed;
+    left: -1000px;
+    top: -1000px;
+    z-index: 9590;
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--ui-radius-slot);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1px var(--ui-border);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s var(--ui-ease);
+}
+.ui-step.on { opacity: 1; pointer-events: auto; }
+.ui-step button {
+    flex: 1 1 0;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ui-text-mid);
+    font-size: inherit;
+    cursor: pointer;
+    transition: background 0.12s var(--ui-ease), color 0.12s var(--ui-ease);
+}
+.ui-step button + button { box-shadow: inset 1px 0 0 var(--ui-border); }
+.ui-step button:hover { background: rgba(255, 255, 255, 0.08); color: var(--ui-text); }
+.ui-step button:active { background: rgba(255, 255, 255, 0.14); }
+
+/* js/ui-icons.js: back, close, up, down, the tick. As big as the text beside them (1em), in its colour. */
+.ui-ic {
+    flex: none;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

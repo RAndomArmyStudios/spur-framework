@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>debug cards</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   THE DEBUG CARDS — stats over nearby players and whip cars
+
+   A DUI texture (tools/debug_cards.lua), one card per cell of a grid, the same idea as the /me
+   bubbles' atlas. Lua draws each cell as a screen sprite at the player's or car's root, so it
+   shows through walls; this page only paints the cards. Grid size comes from Lua in the URL.
+
+   The debug panel's look (css/debug-panel.css): solid night glass under the corner glow, the
+   title in the display face, a bar per stat in its HUD colour. CEF 103: no :has, no color-mix.
+   ============================================================================ */
+
+:root {
+    /* whip's tokens (html/css/base.css), copied: a DUI page cannot load that file's cascade. */
+    --ui-surface-solid: rgb(10, 12, 18);
+    --ui-panel-glow: radial-gradient(120% 60% at 0% 0%, rgba(96, 165, 250, 0.07), transparent 60%);
+    --ui-border: rgba(255, 255, 255, 0.08);
+    --ui-text: rgba(255, 255, 255, 0.93);
+    --ui-text-mid: rgba(255, 255, 255, 0.5);
+    --ui-text-dim: rgba(255, 255, 255, 0.25);
+    --ui-text-label: rgba(255, 255, 255, 0.48);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    color: var(--ui-text);
+}
+
+#atlas { position: relative; }
+
+/* A cell: the card in its middle, so the sprite Lua centres on the anchor is centred on the card. */
+.cell {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card {
+    width: 440px;
+    padding: 20px 22px 18px;
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 2px solid var(--ui-border);
+    border-radius: 24px;
+}
+
+.card[hidden] { display: none; }
+
+.head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Bricolage Grotesque', 'Barlow', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+}
+
+.sub {
+    flex: none;
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-mid);
+}
+
+.row {
+    --c: rgba(255, 255, 255, 0.75);
+    display: grid;
+    grid-template-columns: 136px 1fr 96px;
+    align-items: center;
+    column-gap: 12px;
+    padding: 4px 0;
+}
+
+.name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.name::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 9px;
+    border-radius: 50%;
+    background: var(--c);
+    vertical-align: 1px;
+}
+
+.bar {
+    height: 9px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    border-radius: 5px;
+    background: var(--c);
+}
+
+.val {
+    text-align: right;
+    font-size: 17px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text-mid);
+}
+
+.row.dim .name, .row.dim .val { color: var(--ui-text-dim); }
+.row.dim .name::before { background: rgba(255, 255, 255, 0.2); }
+
+.note {
+    padding-top: 2px;
+    font-size: 17px;
+    color: var(--ui-text-dim);
+}
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var CELL_W = Number(q.get('w')) || 512;
+    var CELL_H = Number(q.get('h')) || 512;
+    var COLS = Number(q.get('cols')) || 2;
+    var CELLS = Number(q.get('cells')) || 8;
+
+    var atlas = document.getElementById('atlas');
+    atlas.style.width = (CELL_W * COLS) + 'px';
+    atlas.style.height = (CELL_H * Math.ceil(CELLS / COLS)) + 'px';
+
+    var cells = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.style.left = ((i % COLS) * CELL_W) + 'px';
+        cell.style.top = (Math.floor(i / COLS) * CELL_H) + 'px';
+        cell.style.width = CELL_W + 'px';
+        cell.style.height = CELL_H + 'px';
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.hidden = true;
+        cell.appendChild(card);
+        atlas.appendChild(cell);
+        cells.push(card);
+    }
+
+    function el(tag, cls, text) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text !== undefined) e.textContent = text;   // text, never markup: names are players' own
+        return e;
+    }
+
+    /* { title, sub, rows: [{ n, p, v, c, d }], note } */
+    function paint(card, d) {
+        card.textContent = '';
+        var head = el('div', 'head');
+        head.appendChild(el('div', 'title', String(d.title || '')));
+        if (d.sub) head.appendChild(el('div', 'sub', String(d.sub)));
+        card.appendChild(head);
+        var rows = Array.isArray(d.rows) ? d.rows : [];
+        for (var i = 0; i < rows.length && i < 12; i++) {
+            var r = rows[i];
+            var row = el('div', 'row' + (r.d ? ' dim' : ''));
+            if (typeof r.c === 'string' && /^#[0-9a-fA-F]{6}$/.test(r.c)) row.style.setProperty('--c', r.c);
+            row.appendChild(el('div', 'name', String(r.n || '')));
+            var bar = el('div', 'bar');
+            var fill = el('div', 'fill');
+            fill.style.width = Math.max(0, Math.min(100, Number(r.p) || 0)) + '%';
+            bar.appendChild(fill);
+            row.appendChild(bar);
+            row.appendChild(el('div', 'val', String(r.v || '')));
+            card.appendChild(row);
+        }
+        if (d.note) card.appendChild(el('div', 'note', String(d.note)));
+        card.hidden = false;
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.cell !== 'number') return;
+        var card = cells[d.cell];
+        if (!card) return;
+        if (d.clear) { card.hidden = true; card.textContent = ''; return; }
+        if (d.card) paint(card, d.card);
+    });
+})();
+</script>
+</body>
+</html>

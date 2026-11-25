@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>take line</title>
+<style>
+/* ============================================================================
+   A TAKE'S LINE, as the world builder lays it on the ground (client/director_preview.lua).
+
+   This document IS a texture, rendered offscreen by CreateDui and sampled by DrawTexturedPoly: one tile of the
+   line, the line's width across and twice that along. Lua lays tile after tile down the car's drive, the top of
+   each tile the way the car went, so the chevrons point where it is going.
+
+   The same family as the world builder's marks (marks.html): white, with the hard black edge that reads on
+   any ground, over a faint dark band. Both edges run straight through the tile and the chevrons sit wholly
+   inside it, so the tiles meet without a seam. Painted once.
+   ============================================================================ */
+html, body { margin: 0; background: transparent; overflow: hidden; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var W = parseInt(q.get('w'), 10) || 256;      // across the line
+    var H = parseInt(q.get('h'), 10) || 512;      // along it
+    var N = parseInt(q.get('n'), 10) || 3;        // chevrons in a tile
+    var cv = document.getElementById('c');
+    cv.width = W;
+    cv.height = H;
+    var g = cv.getContext('2d');
+
+    var WHITE = 'rgba(255, 255, 255, 0.96)';
+    var EDGE = 'rgba(0, 0, 0, 0.88)';
+    var inset = Math.round(W * 0.06);             // the edge lines, in from each side
+    var line = Math.max(3, Math.round(W * 0.025));
+    var rim = Math.max(2, Math.round(W * 0.018)); // the black edge round every white stroke
+    var thick = Math.round(W * 0.15);             // a chevron's stroke
+    var period = H / N;
+    var rise = Math.min(period * 0.62, W * 0.42); // tip to the ends of its arms
+
+    // The band between the edges, faintly dark, so the white reads on bright ground too.
+    g.fillStyle = 'rgba(10, 12, 18, 0.24)';
+    g.fillRect(inset, 0, W - inset * 2, H);
+
+    // The chevrons, pointing up (the way the car went): their arms run out to the edge lines and stop there.
+    g.save();
+    g.beginPath();
+    g.rect(inset, 0, W - inset * 2, H);
+    g.clip();
+    g.lineJoin = 'miter';
+    g.miterLimit = 10;
+    g.lineCap = 'butt';
+    for (var i = 0; i < N; i++) {
+        var top = i * period + (period - rise) / 2 + thick * 0.35;
+        var path = function () {
+            g.beginPath();
+            g.moveTo(inset - thick, top + rise + thick * 0.6);
+            g.lineTo(W / 2, top);
+            g.lineTo(W - inset + thick, top + rise + thick * 0.6);
+        };
+        path();
+        g.lineWidth = thick + rim * 2;
+        g.strokeStyle = EDGE;
+        g.stroke();
+        path();
+        g.lineWidth = thick;
+        g.strokeStyle = WHITE;
+        g.stroke();
+    }
+    g.restore();
+
+    // The edge lines, the full length of the tile.
+    [inset, W - inset].forEach(function (x) {
+        g.fillStyle = EDGE;
+        g.fillRect(x - line / 2 - rim, 0, line + rim * 2, H);
+        g.fillStyle = WHITE;
+        g.fillRect(x - line / 2, 0, line, H);
+    });
+})();
+</script>
+</body>
+</html>

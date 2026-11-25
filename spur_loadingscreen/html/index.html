@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>spur — loading</title>
+<link rel="stylesheet" href="css/loading.css">
+</head>
+<body>
+
+<!-- RedM (spur_loadingscreen, 23 Nov 2026): the backdrop, the black it fades in from, and the logo over both.
+     whip_loadingscreen drew a three.js blueprint here; this copy draws an 1899 backdrop in CSS instead (css/loading.css):
+     a lamp-lit sepia ground, film grain, and a printer's double rule round the edge. No WebGL, no pictures. -->
+<div id="backdrop" aria-hidden="true">
+  <div class="grain"></div>
+  <div class="frame"></div>
+</div>
+<div id="curtain"></div>
+
+<!--
+  THE SPUR WORDMARK, drawn as shapes (not a picture) so the four circles in the bar under it can light
+  one at a time: the loading indicator (js/logo.js). The same shapes as spur_core's landing page
+  (spur_core/html/js/logo-light.js, logoMarkup), so the logo is where the landing page shows it next.
+
+  RedM (spur_loadingscreen, 23 Nov 2026): in place of WHIP's logo (a fork may not use WHIP's name or mark).
+
+  The lit circles are a disc (r 20.5) in a ring (r 26.5); an unlit one is the dark silhouette alone (r 20).
+  Each circle wears one of the interaction icons while it is lit — a random one each time (js/icons.js,
+  js/logo.js) — in the .icon slot, cut to the disc's circle.
+-->
+<div id="logo" role="img" aria-label="spur">
+  <svg viewBox="52 40 1024 329" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <clipPath id="dot-clip-0"><circle cx="468" cy="332" r="20.5"/></clipPath>
+      <clipPath id="dot-clip-1"><circle cx="532" cy="332" r="20.5"/></clipPath>
+      <clipPath id="dot-clip-2"><circle cx="596" cy="332" r="20.5"/></clipPath>
+      <clipPath id="dot-clip-3"><circle cx="660" cy="332" r="20.5"/></clipPath>
+    </defs>
+    <g class="letters">
+      <!-- S -->
+      <path d="M292 50 V96 H124 V140.5 H252 A40 40 0 0 1 292 180.5 V237 A40 40 0 0 1 252 277 H62 V231 H230 V186.5 H102 A40 40 0 0 1 62 146.5 V90 A40 40 0 0 1 102 50 Z"/>
+      <!-- P -->
+      <path fill-rule="evenodd" d="M320 50 H510 A40 40 0 0 1 550 90 V160 A40 40 0 0 1 510 200 H382 V277 H320 Z M382 96 V154 H488 V96 Z"/>
+      <!-- U -->
+      <path d="M578 50 H640 V178 A53 53 0 0 0 746 178 V50 H808 V162 A115 115 0 0 1 578 162 Z"/>
+      <!-- R -->
+      <path fill-rule="evenodd" d="M836 50 H1026 A40 40 0 0 1 1066 90 V160 A40 40 0 0 1 1026 200 L1066 277 H1000 L960 200 H898 V277 H836 Z M898 96 V154 H1004 V96 Z"/>
+      <!-- the bar the light runs along -->
+      <rect x="422" y="305" width="284" height="54" rx="27"/>
+    </g>
+    <!-- The bar's four, left to right: the loading indicator. -->
+    <g class="dot"><circle class="hole" cx="468" cy="332" r="20"/><g class="light"><circle class="ring" cx="468" cy="332" r="26.5"/><circle class="disc" cx="468" cy="332" r="20.5"/><g class="icon" clip-path="url(#dot-clip-0)"></g></g></g>
+    <g class="dot"><circle class="hole" cx="532" cy="332" r="20"/><g class="light"><circle class="ring" cx="532" cy="332" r="26.5"/><circle class="disc" cx="532" cy="332" r="20.5"/><g class="icon" clip-path="url(#dot-clip-1)"></g></g></g>
+    <g class="dot"><circle class="hole" cx="596" cy="332" r="20"/><g class="light"><circle class="ring" cx="596" cy="332" r="26.5"/><circle class="disc" cx="596" cy="332" r="20.5"/><g class="icon" clip-path="url(#dot-clip-2)"></g></g></g>
+    <g class="dot"><circle class="hole" cx="660" cy="332" r="20"/><g class="light"><circle class="ring" cx="660" cy="332" r="26.5"/><circle class="disc" cx="660" cy="332" r="20.5"/><g class="icon" clip-path="url(#dot-clip-3)"></g></g></g>
+  </svg>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/logo.js"></script>
+</body>
+</html>

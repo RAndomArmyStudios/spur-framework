@@ -1,0 +1,199 @@
+/* ========================================
+   PAD KEYBOARD — typing on a controller (js/pad-keyboard.js)
+
+   A dim over the screen and the keyboard low in the middle, above the hint strip, which lists its
+   buttons. The box is the surface root and wears --ui-scale (One-Zoom Rule); the dim is not zoomed.
+   Keys are whip's slot tiles; the highlighted one is the white selection pill, Done is the one blue
+   key (the Signal Rule: what this screen is for), Caps lit white while it is on. Over the keys, the
+   words that finish the one being typed; over a held letter, its accents.
+   ======================================== */
+
+.pk-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9580;            /* over the Director (9550), its menus (9560), the Systems Creator (9565); under the hint strip (9590) */
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--ui-scrim);
+    animation: pk-fade 0.18s var(--ui-ease);
+}
+
+@keyframes pk-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* No dim (openPadKeyboard's dim: false): chat, whose messages stay readable while a reply is typed. */
+.pk-root.pk-nodim { background: transparent; }
+
+/* What the right stick moves (pad-keyboard.js placeBox): unzoomed, so its offset is in screen pixels. */
+.pk-move { will-change: transform; }
+
+.pk-box {
+    position: relative;       /* the accents' row is placed in its pixels */
+    zoom: var(--ui-scale);
+    width: 860px;
+    margin-bottom: 128px;     /* clear of the hint strip under it */
+    padding: 22px 24px 24px;
+    display: grid;
+    gap: 14px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-modal);
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+}
+
+/* A number pad: three keys across, so a narrower box. */
+.pk-numeric .pk-box { width: 420px; }
+
+.pk-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.pk-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.pk-count {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--ui-text-mid);
+}
+
+/* The text: an input's look, the caret always at its end. */
+.pk-text {
+    min-height: 26px;
+    max-height: 110px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border-hover);
+    border-radius: var(--ui-radius-sm);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.pk-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 1px;
+    vertical-align: -0.15em;
+    background: var(--ui-accent);
+    animation: pk-blink 1s steps(1) infinite;
+}
+
+@keyframes pk-blink { 50% { opacity: 0; } }
+
+/* What goes here, while nothing is typed (an input's placeholder: text-mid). */
+.pk-placeholder { color: var(--ui-text-mid); }
+
+.pk-keys {
+    display: grid;
+    gap: 8px;
+}
+
+.pk-key {
+    height: 58px;
+    padding: 0;
+    font: inherit;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--ui-text);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), color 0.1s var(--ui-ease), transform 0.1s var(--ui-ease);
+}
+
+.pk-key:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+
+.pk-named { font-size: 16px; color: var(--ui-text-mid); }
+
+.pk-key.on { background: rgba(255, 255, 255, 0.16); color: var(--ui-text); }
+
+.pk-done { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+
+/* The highlight: whip's selection pill. Over Done it stays blue, ringed white. */
+.pk-key.focus {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    transform: scale(1.04);
+}
+
+.pk-done.focus {
+    background: var(--ui-accent);
+    color: var(--ui-on-accent);
+    box-shadow: 0 0 0 3px var(--ui-pill);
+}
+
+/* The language key: its code, smaller (it is one column). */
+.pk-lang { font-size: 14px; letter-spacing: 0.4px; }
+
+/* ---- the words: up to three ways to finish the one being typed (js/keyboard-words.js) ----
+   A row of its own between the text and the keys, always its height (the keys never jump as words come and
+   go). Quieter than the keys: no tile until there is a word in it. The first is what RT takes. */
+.pk-sugs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    height: 44px;
+}
+
+.pk-sug {
+    height: 44px;
+    padding: 0 12px;
+    font-size: 18px;
+    font-weight: 500;
+    background: transparent;
+    border-color: var(--ui-border);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pk-sug-first { border-color: var(--ui-border-hover); font-weight: 600; }
+
+/* ---- the accents: A held on a letter that has them; a row of keys over it ---- */
+.pk-accents {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border-hover);
+    border-radius: var(--ui-radius-sm);
+    box-shadow: var(--ui-shadow-modal);
+}
+
+.pk-acc {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    font: inherit;
+    font-size: 21px;
+    font-weight: 600;
+    color: var(--ui-text);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    cursor: pointer;
+}
+
+.pk-acc.focus {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}

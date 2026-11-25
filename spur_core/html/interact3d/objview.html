@@ -1,0 +1,401 @@
+<!doctype html>
+<html data-input="kbm">
+<head>
+<meta charset="utf-8">
+<title>object viewer atlas</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   THE OBJECT VIEWER'S ATLAS — tools/objectviewer.lua: never hidden behind objects, always facing you,
+   with a minimum size.
+
+   A texture, as camgizmo.html and badge.html are: rendered offscreen, transparent, fixed pixels, no
+   --ui-scale. Lua cuts a cell out of it with DrawSpriteUv and draws it flat on the screen at the entity's
+   projected point, sized by its distance — so it faces you, shrinks as it goes, stops at a minimum, and
+   nothing in the world covers it. The look is the house card the NUI one had (css/object-viewer.css, kept
+   as it was), at 1.5 px for each of its CSS pixels.
+
+     40 TAG CELLS, 512 x 56, two across and twenty down from the top left (cell n: column (n-1) % 2,
+     row (n-1) // 2): the kind's dot on the entity's point, the name on night glass beside it.
+
+         • prop_gas_pump_1a                     the dot's middle at (12, 28) — Lua puts it on the point
+
+     THE CARD, 560 x 448 at (0, 1120): the one you look at, opened — the disc (its kind's glyph, ringed in
+     its colour), the name as the title, the readings, the options key (G); its dot at (12, 56), level with the
+     disc's middle (measured in the preview: the card is at most about 390 x 410 of it). Copied: the ring goes green round a tick and the key's words say so, for 1.4 s.
+
+   tools/objectviewer.lua's ATLAS_* / TAG_* / CARD_* constants say the same; change both together.
+
+   Messages (SendDuiMessage, JSON), any of these keys in one:
+     tags   = { { cell, name, kind }, ... }   the whole set: a cell not named is emptied
+     card   = { name, kind, rows = { { k, v } }, pic = { url, box, head } | false }   (pic: in the disc's place)
+     pad    = true | false                    which options key shows: D-pad left, or G
+     copied = true
+   DUI is one-way: nothing here can answer, and a message sent before this page has loaded is lost, so
+   Lua sends the whole state again a few times after the browser is made.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 1024px;
+    height: 1568px;
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Barlow', 'Segoe UI', sans-serif;
+    color: rgba(255, 255, 255, 0.93);
+}
+
+/* ---- Kind colours: the dot, the disc's ring and the open card's edge (blue, green, red) ---- */
+.cell           { --k: #60a5fa; --kf: rgba(96, 165, 250, 0.45); }
+.cell.k-ped     { --k: #4ade80; --kf: rgba(74, 222, 128, 0.45); }
+.cell.k-vehicle { --k: #f87171; --kf: rgba(248, 113, 113, 0.45); }
+
+.cell { position: absolute; overflow: hidden; }
+.cell.empty { display: none; }
+
+/* ---- The anchor dot, its middle on the entity's point; a dark rim so it survives a white wall ---- */
+.dot {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    margin: -5.5px 0 0 -5.5px;
+    border-radius: 50%;
+    background: var(--k);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.9), inset 0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+/* ---- A tag: the name on night glass, 18 px right of the dot, its middle level with it ---- */
+.tag { width: 512px; height: 56px; }
+.tag .dot { left: 12px; top: 28px; }
+.pill {
+    position: absolute;
+    left: 30px;
+    top: 6px;
+    height: 44px;
+    max-width: 476px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    /* Nearly solid (Josh, 28 Oct: the 75% ground was too see-through to read on a busy street). */
+    background: rgba(10, 12, 18, 0.94);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 21px;
+    /* Small enough to stay inside the cell: a shadow cut by its edge would draw a hard line. */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1.5px 0 rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+}
+.pill .name {
+    font-size: 18.75px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- The card ---- */
+.card-cell { left: 0; top: 1120px; width: 560px; height: 448px; }
+.card-cell .dot {
+    left: 12px;
+    top: 56px;
+    width: 15px;
+    height: 15px;
+    margin: -7.5px 0 0 -7.5px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.9), inset 0 0 3px rgba(0, 0, 0, 0.9), 0 0 14px var(--k);
+}
+.card {
+    position: absolute;
+    left: 30px;
+    top: 4px;
+    max-width: 522px;
+    padding: 21px 22.5px 18px 21px;
+    background: radial-gradient(120% 60% at 0% 0%, rgba(96, 165, 250, 0.07), transparent 60%), rgba(10, 12, 18, 0.94);
+    border: 1.5px solid var(--kf);
+    border-radius: 30px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), inset 0 1.5px 0 rgba(255, 255, 255, 0.05);
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+/* The head: the disc and the name. The disc's middle is 1.5 + 21 + 30 = 52.5 px into the card: 56 in the cell. */
+.head { display: flex; align-items: center; gap: 18px; }
+.disc {
+    flex: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3.75px solid var(--k);
+    box-shadow: 0 0 0 4.5px rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.disc svg { width: 30px; height: 30px; display: block; }
+
+/* THE THING'S PICTURE, when a media pack has one (a car, an NPC, a prop): in the disc's place, as the Director shows a
+   placed thing (its world list), edged in the kind's colour. What is drawn in the picture fills the box (its bounds from
+   picture-bounds.js, sent by Lua), an NPC's head and shoulders. As tall as the disc, so the head, and the dot level
+   with it, stay where they were measured. */
+.pic {
+    flex: none;
+    position: relative;
+    width: 84px;
+    height: 60px;
+    border-radius: 15px;
+    border: 3.75px solid var(--k);
+    box-shadow: 0 0 0 4.5px rgba(0, 0, 0, 0.9);
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.pic img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; }
+.card:not(.has-pic) .pic, .card.has-pic .disc { display: none; }
+.card.copied.has-pic .disc { display: flex; }
+.card.copied .pic { display: none; }
+.title {
+    min-width: 0;
+    max-width: 420px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.readings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4.5px 27px;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+.rl {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.48);
+    align-self: center;
+}
+.rv {
+    font-size: 18.75px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.act {
+    display: flex;
+    align-items: center;
+    gap: 13.5px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+    font-size: 16.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+}
+.keys { flex: none; display: flex; align-items: center; }
+/* A white keycap, the Director's and the furnisher's: the ink on white, a darker lip at the bottom. */
+.key {
+    min-width: 31.5px;
+    height: 31.5px;
+    padding: 0 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7.5px;
+    background: #fff;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.22);
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #0b0d12;
+}
+.padimg { display: block; height: 33px; width: auto; }
+
+/* Which key shows: the device in hand (Lua says which). */
+.k-pad { display: none; }
+html[data-input="pad"] .k-pad { display: flex; }
+html[data-input="pad"] .k-kbm { display: none; }
+
+/* Copied: green ring round a tick, the key's words say so. */
+.card.copied { border-color: rgba(74, 222, 128, 0.45); }
+.card.copied .disc { border-color: #4ade80; color: #4ade80; }
+.card.copied .act { color: #4ade80; }
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+
+<!-- The kinds' glyphs and the copied tick: whip's one icon table. -->
+<script src="../js/glyphs.js"></script>
+<script>
+(function () {
+    var TAG_W = 512, TAG_H = 56, COLS = 2, CELLS = 40;
+    var KIND_GLYPH = { object: 'object', ped: 'ped', vehicle: 'car' };
+    // G opens the options (tools/ov_panel.lua); Copy details is the first of them.
+    var COPY_TEXT = 'Options', COPIED_MS = 1400;
+    var atlas = document.getElementById('atlas');
+
+    function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined && text !== null) n.textContent = String(text);   // a model name is game data
+        return n;
+    }
+    function glyph(name) {
+        var g = window.WhipGlyphs && window.WhipGlyphs.glyphs;
+        return (g && g[name]) || '';
+    }
+    function kindClass(kind) { return KIND_GLYPH[kind] ? ' k-' + kind : ''; }
+
+    // ---- the tag cells ----
+    var tags = [];
+    for (var i = 0; i < CELLS; i++) {
+        var cell = el('div', 'cell tag empty');
+        cell.style.left = ((i % COLS) * TAG_W) + 'px';
+        cell.style.top = (Math.floor(i / COLS) * TAG_H) + 'px';
+        var pill = el('div', 'pill');
+        var name = el('span', 'name');
+        pill.appendChild(name);
+        cell.appendChild(el('div', 'dot'));
+        cell.appendChild(pill);
+        atlas.appendChild(cell);
+        tags.push({ cell: cell, name: name });
+    }
+
+    // ---- the card ----
+    var cardCell = el('div', 'cell card-cell empty');
+    var card = el('div', 'card');
+    var head = el('div', 'head');
+    var disc = el('div', 'disc');
+    var pic = el('div', 'pic');
+    var picImg = document.createElement('img');
+    picImg.alt = '';
+    pic.appendChild(picImg);
+    var title = el('div', 'title');
+    head.appendChild(disc);
+    head.appendChild(pic);
+    head.appendChild(title);
+    var readings = el('div', 'readings');
+    var act = el('div', 'act');
+    var kbm = el('span', 'keys k-kbm');
+    kbm.appendChild(el('span', 'key', 'G'));
+    var pad = el('span', 'keys k-pad');
+    var img = document.createElement('img');
+    img.className = 'padimg';
+    img.src = '../img/pad/dpad_left.svg';
+    img.alt = 'D-LEFT';
+    pad.appendChild(img);
+    var actText = el('span', null, COPY_TEXT);
+    act.appendChild(kbm);
+    act.appendChild(pad);
+    act.appendChild(actText);
+    card.appendChild(head);
+    card.appendChild(readings);
+    card.appendChild(act);
+    cardCell.appendChild(el('div', 'dot'));
+    cardCell.appendChild(card);
+    atlas.appendChild(cardCell);
+
+    var cardKind = 'object', copiedTimer = 0;
+
+    // The picture's box inside its edge (84 x 60 less 3.75 a side), and what is drawn in the picture fitted to it: the
+    // Director's maths (js/utils.js fitPicture), with the bounds Lua sends from picture-bounds.js.
+    var PIC_W = 76.5, PIC_H = 52.5;
+    var picFor = '';
+    picImg.addEventListener('error', function () { card.classList.remove('has-pic'); });
+    picImg.addEventListener('load', function () { fitPic(); });
+    var picBox = null, picHead = false;
+
+    function fitPic() {
+        picImg.style.transform = '';
+        picImg.style.transformOrigin = '';
+        var b = picBox, nw = picImg.naturalWidth, nh = picImg.naturalHeight;
+        if (!b || !nw || !nh) return;
+        var x0 = b[0] / 1000 * nw, y0 = b[1] / 1000 * nh, x1 = b[2] / 1000 * nw, y1 = b[3] / 1000 * nh;
+        if (picHead) {   // a ped's head and shoulders: the top quarter of the figure, as wide as the box is
+            var hh = (y1 - y0) * 0.24, mx = (x0 + x1) / 2, hw = hh * (PIC_W / PIC_H);
+            x0 = mx - hw / 2; x1 = mx + hw / 2; y1 = y0 + hh; y0 -= hh * 0.06;
+        }
+        var c = Math.min(PIC_W / nw, PIC_H / nh), ox = (PIC_W - nw * c) / 2, oy = (PIC_H - nh * c) / 2, pad = 0.92;
+        var rx = ox + x0 * c, ry = oy + y0 * c, rw = (x1 - x0) * c, rh = (y1 - y0) * c;
+        var k = Math.min(4, PIC_W * pad / rw, PIC_H * pad / rh);
+        if (!(k > 1.02)) return;
+        var cx = rx + rw / 2, cy = ry + rh / 2;
+        picImg.style.transformOrigin = cx + 'px ' + cy + 'px';
+        picImg.style.transform = 'translate(' + (PIC_W / 2 - cx) + 'px, ' + (PIC_H / 2 - cy) + 'px) scale(' + k + ')';
+    }
+
+    /** { url, box, head } or nothing: the disc's glyph then. */
+    function paintPic(p) {
+        if (!p || typeof p.url !== 'string') { card.classList.remove('has-pic'); picFor = ''; return; }
+        picBox = Array.isArray(p.box) ? p.box : null;
+        picHead = p.head === true;
+        card.classList.add('has-pic');
+        if (picFor === p.url) { fitPic(); return; }
+        picFor = p.url;
+        picImg.src = p.url;
+    }
+
+    function paintTags(list) {
+        var named = {};
+        for (var j = 0; j < list.length; j++) {
+            var d = list[j];
+            var t = d && tags[(d.cell | 0) - 1];
+            if (!t) continue;
+            named[d.cell - 1] = true;
+            t.cell.className = 'cell tag' + kindClass(d.kind);
+            t.name.textContent = d.name || '';
+        }
+        for (var n = 0; n < CELLS; n++) {
+            if (!named[n]) tags[n].cell.className = 'cell tag empty';
+        }
+    }
+
+    function unCopy() {
+        clearTimeout(copiedTimer);
+        card.classList.remove('copied');
+        disc.innerHTML = glyph(KIND_GLYPH[cardKind] || 'object');
+        actText.textContent = COPY_TEXT;
+    }
+
+    function paintCard(c) {
+        cardKind = KIND_GLYPH[c.kind] ? c.kind : 'object';
+        cardCell.className = 'cell card-cell' + kindClass(cardKind);
+        title.textContent = c.name || '';
+        readings.textContent = '';
+        var rows = Array.isArray(c.rows) ? c.rows : [];
+        for (var r = 0; r < rows.length; r++) {
+            readings.appendChild(el('span', 'rl', rows[r].k));
+            readings.appendChild(el('span', 'rv', rows[r].v));
+        }
+        paintPic(c.pic);
+        unCopy();
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d !== 'object') return;
+        // An empty Lua table encodes as {} as well as []: either is no tags.
+        if (d.tags !== undefined) paintTags(Array.isArray(d.tags) ? d.tags : []);
+        if (d.card && typeof d.card === 'object') paintCard(d.card);
+        if (d.card === false) cardCell.className = 'cell card-cell empty';
+        if (d.pad !== undefined) document.documentElement.dataset.input = d.pad ? 'pad' : 'kbm';
+        if (d.copied) {
+            card.classList.add('copied');
+            disc.innerHTML = glyph('success');
+            actText.textContent = 'Copied';
+            clearTimeout(copiedTimer);
+            copiedTimer = setTimeout(unCopy, COPIED_MS);
+        }
+    });
+})();
+</script>
+</body>
+</html>

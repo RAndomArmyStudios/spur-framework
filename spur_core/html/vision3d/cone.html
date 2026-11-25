@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>guard cone</title>
+<link rel="stylesheet" href="../css/fonts.css"> <!-- whip's typefaces: a DUI is its own document -->
+<style>
+/* ============================================================================
+   A GUARD'S CONE, as the world builder lays it on the ground (client/vision.lua's VisionCone).
+
+   One square texture: its middle is the guard, its top is the way it faces, its edge is the guard's range.
+   Lua lays it over the ground in patches, each at the ground's own height, and turns it as the guard turns;
+   this page paints only what the guard's Sees players says, again whenever a field of it changes:
+     the cone       filled warm near the guard, fading out to its range: it spots you quicker up close
+     right beside   the small ring round the guard: it notices you there whichever way it faces
+     sneaking       the dashed arc at half its range: as far as it sees someone sneaking
+     the times      how long it takes to spot you, seen the whole time, up close and at its range
+   ============================================================================ */
+html, body { margin: 0; background: transparent; overflow: hidden; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function () {
+    var q = new URLSearchParams(location.search);
+    var S = parseInt(q.get('s'), 10) || 1024;
+    var cv = document.getElementById('c');
+    cv.width = S;
+    cv.height = S;
+    var g = cv.getContext('2d');
+
+    var AMBER = '251, 191, 36';     // --ui-warning, as the guards' marks
+    var last = null;
+
+    function secs(n) { n = Number(n) || 0; return (Math.round(n * 10) / 10) + ' s'; }
+
+    function label(text, x, y, px) {
+        g.font = '600 ' + px + 'px Barlow, "Segoe UI", sans-serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.lineJoin = 'round';
+        g.lineWidth = Math.max(3, px * 0.22);
+        g.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+        g.strokeText(text, x, y);
+        g.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        g.fillText(text, x, y);
+    }
+
+    function paint(d) {
+        last = d;
+        var range = Math.max(1, Number(d.range) || 20);
+        var cone = Math.max(1, Math.min(360, Number(d.cone) || 100));
+        var near = Math.max(0, Number(d.near) || 2.5);
+        var cx = S / 2, cy = S / 2;
+        var R = S / 2 - 6;                        // (room for the edge's line)
+        var pxPerM = R / range;
+        var line = Math.max(3, Math.min(10, 0.07 * pxPerM));
+        var font = Math.max(24, Math.min(64, 0.9 * pxPerM));
+        var full = cone >= 360;
+        // The way it faces is up: canvas angles turn clockwise from +x, so up is -90 degrees.
+        var a0 = -Math.PI / 2 - (cone / 2) * Math.PI / 180;
+        var a1 = -Math.PI / 2 + (cone / 2) * Math.PI / 180;
+
+        g.clearRect(0, 0, S, S);
+
+        // The cone: warm at the guard, fading to its range.
+        var grad = g.createRadialGradient(cx, cy, 0, cx, cy, R);
+        grad.addColorStop(0, 'rgba(' + AMBER + ', 0.46)');
+        grad.addColorStop(0.55, 'rgba(' + AMBER + ', 0.22)');
+        grad.addColorStop(1, 'rgba(' + AMBER + ', 0.07)');
+        g.beginPath();
+        if (full) { g.arc(cx, cy, R, 0, Math.PI * 2); }
+        else { g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a1); g.closePath(); }
+        g.fillStyle = grad;
+        g.fill();
+        g.lineWidth = line;
+        g.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        g.stroke();
+
+        // Sneaking: half its range.
+        if (d.sneak !== false) {
+            g.beginPath();
+            if (full) g.arc(cx, cy, R / 2, 0, Math.PI * 2); else g.arc(cx, cy, R / 2, a0, a1);
+            g.setLineDash([line * 3, line * 2.5]);
+            g.lineWidth = line * 0.8;
+            g.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+            g.stroke();
+            g.setLineDash([]);
+        }
+
+        // Right beside it, whichever way it faces.
+        var nr = Math.min(R, near * pxPerM);
+        g.beginPath();
+        g.arc(cx, cy, nr, 0, Math.PI * 2);
+        g.fillStyle = 'rgba(' + AMBER + ', 0.30)';
+        g.fill();
+        g.setLineDash([line * 2, line * 1.6]);
+        g.lineWidth = line * 0.8;
+        g.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        g.stroke();
+        g.setLineDash([]);
+
+        // What it says: the times at each end, the distances.
+        label(secs(d.spotS) + ' up close', cx, cy - nr - font * 0.9, font);
+        if (d.sneak !== false && R / 2 - nr > font * 2.2) label('Sneaking ' + Math.round(range / 2) + ' m', cx, cy - R / 2 + font * 0.85, font * 0.8);
+        label(Math.round(range) + ' m · ' + secs(d.farS), cx, cy - R + font * 1.1, font);
+    }
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d || typeof d.range !== 'number') return;
+        paint(d);
+    });
+    // The fonts arrive after the first paint: paint again with them.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (last) paint(last); });
+})();
+</script>
+</body>
+</html>

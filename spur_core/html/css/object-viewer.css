@@ -1,0 +1,285 @@
+/* ========================================
+   OBJECT VIEWER (dev tool) — html/js/object-viewer.js, tools/objectviewer.lua
+
+   THE HOUSE LOOK. One element per entity: a quiet tag when idle, and the one you look at opens into the house card — the editor card's
+   family (css/editor-hud.css, css/dev-menu.css), sized for the world:
+
+       •  prop_gas_pump_1a                       idle: the kind's dot on the entity, the name on night glass
+
+       • (box)  prop_gas_pump_1a                 focused: the disc (its kind's glyph, ringed in its colour —
+                                                 all that says what kind it is) and the name as the title,
+          HASH      0x1A2B3C4D                   the readings,
+          POSITION  -360.92, 51.44, 54.40
+          [G] / (D-left)  Copy name, hash, spot  and the copy key — a keycap, or the pad's button
+                                                 (html[data-input], controller.js). Copied: a green tick.
+
+   ONE ZOOM PER SURFACE ROOT (DESIGN.md): each card is a root, zoomed itself; the layer and the tags are
+   placed in window pixels from Lua's projection, so nothing above the card may be zoomed.
+
+   z-index sits in the 9000s with the other dev tools (dev menu 9800, coords 9700) rather than with the
+   player-facing overlays in the 500s. A dev tool that hides behind gameplay UI is useless, but it must
+   not cover the menu that turns it off.
+   ======================================== */
+
+#ov-layer {
+    --ov-fade: 0.22s;
+
+    /* Fallback only. Every tag carries a kind class that overrides these — see below. */
+    --ov-kind: var(--ui-accent);
+    --ov-kind-faded: rgba(96, 165, 250, 0.45);
+
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9600;
+    display: none;
+    overflow: hidden;
+}
+
+/* ---- One element per entity: the tag's own position IS the entity's projected point ----
+
+   No translate. The dot and the card are positioned off that anchor, not laid out in a row: a row centred
+   with translate(-50%,-50%) moves the dot off the point as soon as the card changes width. Anchored, the
+   dot marks the entity exactly and stays put while the card opens beside it. */
+.ov-tag {
+    position: absolute;
+    opacity: 0;
+    transition: opacity var(--ov-fade) var(--ui-ease, ease);
+    will-change: opacity;
+}
+
+.ov-tag.visible  { opacity: 0.6; }
+/* Above the other tags, so a neighbour's name never crosses the open card. */
+.ov-tag.focused  { opacity: 1; z-index: 2; }
+
+/* Off screen or behind the camera. Hidden rather than removed, so the element — and the detail rows
+   already in it — survive a glance away. */
+.ov-tag.offscreen { opacity: 0; }
+
+/* ---- Kind colours ----
+
+   One set per kind, read by the dot, the disc's ring and the open card's edge, so a kind is added by
+   naming its colours here and nowhere else. The palette's blue, green and red: with the disc's glyph,
+   the colour IS the kind (no chip saying it). Each is given twice — full, and a hand-faded 45% for the edge — because color-mix()
+   is Chromium 111 and FiveM's CEF is 103: a derived colour is silently dropped. */
+.ov-tag.ov-kind-object  { --ov-kind: var(--ui-accent);  --ov-kind-faded: rgba(96, 165, 250, 0.45); }
+.ov-tag.ov-kind-ped     { --ov-kind: var(--ui-success); --ov-kind-faded: rgba(74, 222, 128, 0.45); }
+.ov-tag.ov-kind-vehicle { --ov-kind: var(--ui-error);   --ov-kind-faded: rgba(248, 113, 113, 0.45); }
+
+/* ---- The anchor dot, on the entity's origin ---- */
+.ov-dot {
+    position: absolute;
+    left: -3.5px;
+    top: -3.5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    /* Coloured by kind at all times — that the things around you are three cars and a bin is the point. */
+    background: var(--ov-kind);
+    /* A dark rim, so the dot survives a white wall behind it (the aim target ring's trick). */
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.9), inset 0 0 2px rgba(0, 0, 0, 0.9);
+    transition: transform var(--ov-fade) ease, box-shadow var(--ov-fade) ease;
+}
+
+.ov-tag.focused .ov-dot {
+    transform: scale(1.4);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.9), inset 0 0 2px rgba(0, 0, 0, 0.9), 0 0 10px var(--ov-kind);
+}
+
+/* ---- The card: a tag when idle, the house card when focused ----
+
+   The house's night glass at 75% (--ui-surface; the ground only, the words stay solid), the corner glow, the panel radius and the large lift when
+   open. Beside the dot, its head level with it either way: the idle pill's middle, and the open card's disc. */
+.ov-card {
+    position: absolute;
+    left: 12px;
+    top: -13px;
+    box-sizing: border-box;
+    padding: 5px 11px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 14px;
+    box-shadow: var(--ui-shadow);
+    color: var(--ui-text);
+    line-height: 1.35;
+    white-space: nowrap;
+    /* The HUD layer's size (#status-hud: --ui-scale x 1.25): it is read at a glance in the world too. */
+    zoom: calc(var(--ui-scale, 1) * 1.25);
+    transition: top var(--ov-fade) var(--ui-ease, ease), padding var(--ov-fade) var(--ui-ease, ease),
+                border-radius var(--ov-fade) ease, border-color var(--ov-fade) ease;
+}
+
+/* -35: the head is the disc (40 px, the name beside it is shorter), so the disc's middle is the border, the
+   padding and 20 px down. Measured level with the dot (±1 px) in the preview; re-measure if the head changes. */
+.ov-tag.focused .ov-card {
+    top: -35px;
+    padding: 14px 15px 12px 14px;
+    background: var(--ui-panel-glow), var(--ui-surface);
+    border-color: var(--ov-kind-faded);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+}
+
+/* ---- The head: the disc and the name ---- */
+
+.ov-head {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    transition: gap var(--ov-fade) var(--ui-ease, ease);
+}
+
+.ov-tag.focused .ov-head { gap: 12px; }
+
+/* The house disc, ringed in the kind's colour, with the black outline every disc wears; nothing when idle. */
+.ov-disc {
+    flex: 0 0 auto;
+    width: 0;
+    height: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    opacity: 0;
+    border-radius: 50%;
+    border: 0 solid var(--ov-kind);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text);
+    transition: width var(--ov-fade) var(--ui-ease, ease), height var(--ov-fade) var(--ui-ease, ease),
+                opacity var(--ov-fade) ease, border-color var(--ov-fade) ease, color var(--ov-fade) ease;
+}
+
+.ov-tag.focused .ov-disc {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    border-width: 2.5px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+.ov-disc svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.ov-head-text { min-width: 0; }
+
+/* The name: a model name is an identifier, so the steady figures at rest; the house title when open. */
+.ov-name {
+    font-family: var(--ui-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* NO WHITE STROKE under it, as on the hint capsule; and no kind chip after it: the disc's glyph and
+   colour say that. */
+.ov-tag.focused .ov-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+}
+
+/* ---- What opens: the readings and the copy key ----
+
+   A max-height ceiling, not the grid 0fr->1fr trick (that needs one wrapper child and a newer CEF than
+   FiveM ships). The rows are built per entity in Lua and vary — a whip vehicle has one more than a map
+   prop. Measured worst case is about 190px; 320 leaves room. Re-measure if rows are added: a clipped
+   card fails silently. */
+/* NO WIDTH EITHER while shut: the card is as wide as what is in it, and the readings and the copy key are
+   wider than most names — every idle tag stood a pill twice its name's width. */
+.ov-more {
+    max-height: 0;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height var(--ov-fade) var(--ui-ease, ease), max-width var(--ov-fade) var(--ui-ease, ease),
+                opacity var(--ov-fade) ease;
+}
+
+.ov-tag.focused .ov-more {
+    max-height: 320px;
+    max-width: 480px;
+    opacity: 1;
+}
+
+.ov-readings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 18px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+}
+
+.ov-r-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-text-label);
+    align-self: center;
+}
+
+.ov-r-value {
+    font-family: var(--ui-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.ov-act {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--ui-text-mid);
+}
+
+.ov-keys {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+}
+
+.ov-key {
+    min-width: 21px;
+    height: 21px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ui-radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: var(--ui-fs-sm);
+    font-weight: 700;
+    color: var(--ui-text);
+}
+
+.ov-pad {
+    display: block;
+    height: 22px;
+    width: auto;
+}
+
+/* Which shows: the device in hand (controller.js sets data-input; keyboard by default). */
+.ov-k-pad { display: none; }
+html[data-input="pad"] .ov-k-pad { display: flex; }
+html[data-input="pad"] .ov-k-kbm { display: none; }
+
+/* ---- Copied: the ring goes green round a tick, and the key's words say so (as the coords readout) ---- */
+.ov-tag.copied .ov-card  { border-color: rgba(74, 222, 128, 0.45); }
+.ov-tag.copied .ov-disc  { border-color: var(--ui-success); color: var(--ui-success); }
+.ov-tag.copied .ov-act   { color: var(--ui-success); }

@@ -1,0 +1,118 @@
+{
+  "format": 2,
+  "id": "vault",
+  "rev": 1,
+  "name": "The Vault",
+  "description": "Example B: the planner has a vault for you. Hack the keypad (a miss sets the guards on you, and you can try again), the vault door opens, drill the safe, open it, take the cash and all of you get out of the building. Forty minutes. Before testing it, place in the World tab: the planner, the two guards, the keypad and the safe spots, the safe itself, the bank (where you get away from), and pick the vault door by aiming at it. Use a door that is not a property's entrance.",
+  "settings": {
+    "start": { "mode": "interaction", "world": "planner", "label": "Talk" },
+    "maxConcurrentRuns": 1,
+    "teamSize": 4,
+    "maxRunSec": 2700
+  },
+  "vars": [],
+  "world": [
+    { "id": "planner", "kind": "npc", "layer": "standing", "label": "The planner",
+      "def": { "model": "a_m_m_valcriminals_01", "coords": "spot", "behaviour": "stand",
+               "conditions": { "invincible": true, "canMove": false } } },
+    { "id": "guard", "kind": "npc", "layer": "run", "label": "Bank guard",
+      "def": { "model": "s_m_m_valbankguards_01", "coords": "spot", "behaviour": "guard", "weapon": "WEAPON_REVOLVER_CATTLEMAN",
+               "armour": 25, "fightBack": true } },
+    { "id": "guard2", "kind": "npc", "layer": "run", "label": "Bank guard 2",
+      "def": { "model": "s_m_m_valbankguards_01", "coords": "spot", "behaviour": "guard", "weapon": "WEAPON_REVOLVER_CATTLEMAN",
+               "armour": 25, "fightBack": true } },
+    { "id": "keypad", "kind": "spot", "layer": "run", "label": "Keypad",
+      "def": { "coords": "spot" } },
+    { "id": "vault", "kind": "door", "layer": "run", "label": "Vault door",
+      "def": { "coords": "spot" } },
+    { "id": "safespot", "kind": "spot", "layer": "run", "label": "Safe (where you drill)",
+      "def": { "coords": "spot" } },
+    { "id": "safe", "kind": "container", "layer": "run", "label": "Safe",
+      "def": { "coords": "spot", "slots": 6, "maxWeight": 50 } },
+    { "id": "bank", "kind": "spot", "layer": "run", "label": "The bank",
+      "def": { "coords": "spot" } }
+  ],
+  "nodes": [
+    { "id": "start", "type": "scenario.started", "v": 1, "x": -672, "y": 0, "props": {} },
+    { "id": "d1", "type": "dialog.line", "v": 1, "x": -336, "y": 0, "props": {
+        "npc": "planner", "speaker": "The planner",
+        "line": "There's a vault downtown with a lot of cash behind a keypad. Two guards. You in?",
+        "opt1": "I'm in.", "opt2": "Not today." } },
+    { "id": "team", "type": "dialog.team", "v": 1, "x": 0, "y": 0, "props": {
+        "npc": "planner", "speaker": "The planner", "line": "Who's coming with you?" } },
+    { "id": "begin", "type": "scenario.begin", "v": 1, "x": 336, "y": 0, "props": {} },
+    { "id": "no", "type": "scenario.calloff", "v": 1, "x": 672, "y": 240, "props": { "reason": "Not interested" } },
+    { "id": "go", "type": "flow.sequence", "v": 1, "x": 672, "y": 0, "props": {} },
+    { "id": "guards", "type": "npc.spawn", "v": 1, "x": 1008, "y": -128, "props": {
+        "npcs": ["guard", "guard2"], "together": true, "hostile": false, "range": 30 } },
+    { "id": "noSetup", "type": "scenario.fail", "v": 1, "x": 1344, "y": 48, "props": { "reason": "The job could not be set up" } },
+    { "id": "find", "type": "player.objective", "v": 1, "x": 1344, "y": -192, "props": {
+        "text": "Get to the vault and hack the keypad." } },
+    { "id": "markBank", "type": "map.blip", "v": 1, "x": 1680, "y": -192, "props": {
+        "at": "bank", "label": "The bank", "color": "red", "route": true } },
+    { "id": "keypadPress", "type": "point.press", "v": 1, "x": 2016, "y": -192, "props": {
+        "at": "keypad", "label": "Hack the keypad", "reach": 2 } },
+    { "id": "hack", "type": "player.skillCheck", "v": 1, "x": 2352, "y": -192, "props": {
+        "difficulty": "hard", "at": "keypad", "range": 3 } },
+    { "id": "alarm", "type": "npc.hostile", "v": 1, "x": 2688, "y": 160, "props": { "npc": "guard", "hostile": true } },
+    { "id": "alarmMsg", "type": "player.message", "v": 1, "x": 3024, "y": 160, "props": {
+        "text": "Alarm! The guards are onto you. Try the keypad again.", "kind": "warning", "who": "everyone in the run" } },
+    { "id": "open", "type": "door.set", "v": 1, "x": 2688, "y": -192, "props": {
+        "door": "vault", "action": "unlock", "who": "the run's players" } },
+    { "id": "noDoor", "type": "scenario.fail", "v": 1, "x": 3024, "y": -16, "props": { "reason": "The vault door could not be used" } },
+    { "id": "drillObj", "type": "player.objective", "v": 1, "x": 3024, "y": -192, "props": {
+        "text": "The vault is open. Drill the safe." } },
+    { "id": "safePress", "type": "point.press", "v": 1, "x": 3360, "y": -192, "props": {
+        "at": "safespot", "label": "Drill the safe", "reach": 2 } },
+    { "id": "drill", "type": "player.progress", "v": 1, "x": 3696, "y": -192, "props": {
+        "label": "Drilling the safe...", "seconds": 20, "at": "safespot", "range": 3, "emote": "hammer", "canCancel": true } },
+    { "id": "money", "type": "container.create", "v": 1, "x": 4032, "y": -192, "props": {
+        "container": "safe", "loot": [ { "slot": 1, "item": "cash", "min": 25000, "max": 25000, "chance": 100 } ] } },
+    { "id": "grab", "type": "player.objective", "v": 1, "x": 4368, "y": -192, "props": {
+        "text": "Grab the cash and get out of the bank." } },
+    { "id": "away", "type": "area.left", "v": 1, "x": 4032, "y": 384, "props": {
+        "at": "bank", "radius": 40, "who": "all" } },
+    { "id": "clear", "type": "player.clearObjective", "v": 1, "x": 4368, "y": 384, "props": {} },
+    { "id": "done", "type": "scenario.succeed", "v": 1, "x": 4704, "y": 384, "props": { "reason": "Got away" } },
+    { "id": "clock", "type": "flow.wait", "v": 1, "x": 1008, "y": 128, "props": { "seconds": 2400 } },
+    { "id": "late", "type": "scenario.fail", "v": 1, "x": 1344, "y": 224, "props": { "reason": "Too slow" } },
+    { "id": "opened", "type": "container.opened", "v": 1, "x": 3360, "y": 384, "props": { "container": "safe" } },
+    { "id": "openedMsg", "type": "player.message", "v": 1, "x": 3696, "y": 384, "props": {
+        "text": "Take what you can carry.", "kind": "info", "who": "this player" } }
+  ],
+  "links": [
+    { "id": "l1", "from": { "node": "start", "pin": "out" }, "to": { "node": "d1", "pin": "in" } },
+    { "id": "l2", "from": { "node": "d1", "pin": "opt1" }, "to": { "node": "team", "pin": "in" } },
+    { "id": "lt1", "from": { "node": "team", "pin": "ready" }, "to": { "node": "begin", "pin": "in" } },
+    { "id": "lb1", "from": { "node": "begin", "pin": "started" }, "to": { "node": "go", "pin": "in" } },
+    { "id": "lt2", "from": { "node": "team", "pin": "left" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "lt3", "from": { "node": "team", "pin": "timeout" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "l3", "from": { "node": "d1", "pin": "opt2" }, "to": { "node": "no", "pin": "in" } },
+    { "id": "l6", "from": { "node": "go", "pin": "then1" }, "to": { "node": "guards", "pin": "in" } },
+    { "id": "l7", "from": { "node": "go", "pin": "then2" }, "to": { "node": "clock", "pin": "in" } },
+    { "id": "l8", "from": { "node": "guards", "pin": "out" }, "to": { "node": "find", "pin": "in" } },
+    { "id": "l9", "from": { "node": "guards", "pin": "failed" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l10", "from": { "node": "find", "pin": "out" }, "to": { "node": "markBank", "pin": "in" } },
+    { "id": "l11", "from": { "node": "markBank", "pin": "out" }, "to": { "node": "keypadPress", "pin": "in" } },
+    { "id": "l12", "from": { "node": "keypadPress", "pin": "used" }, "to": { "node": "hack", "pin": "in" } },
+    { "id": "l13", "from": { "node": "hack", "pin": "passed" }, "to": { "node": "open", "pin": "in" } },
+    { "id": "l14", "from": { "node": "hack", "pin": "failed" }, "to": { "node": "alarm", "pin": "in" } },
+    { "id": "l16", "from": { "node": "alarm", "pin": "out" }, "to": { "node": "alarmMsg", "pin": "in" } },
+    { "id": "l17", "from": { "node": "alarmMsg", "pin": "out" }, "to": { "node": "keypadPress", "pin": "in" } },
+    { "id": "l18", "from": { "node": "open", "pin": "out" }, "to": { "node": "drillObj", "pin": "in" } },
+    { "id": "l19", "from": { "node": "open", "pin": "failed" }, "to": { "node": "noDoor", "pin": "in" } },
+    { "id": "l20", "from": { "node": "drillObj", "pin": "out" }, "to": { "node": "safePress", "pin": "in" } },
+    { "id": "l21", "from": { "node": "safePress", "pin": "used" }, "to": { "node": "drill", "pin": "in" } },
+    { "id": "l22", "from": { "node": "drill", "pin": "done" }, "to": { "node": "money", "pin": "in" } },
+    { "id": "l23", "from": { "node": "drill", "pin": "stopped" }, "to": { "node": "safePress", "pin": "in" } },
+    { "id": "l24", "from": { "node": "drill", "pin": "timeout" }, "to": { "node": "safePress", "pin": "in" } },
+    { "id": "l25", "from": { "node": "money", "pin": "made" }, "to": { "node": "grab", "pin": "in" } },
+    { "id": "l26", "from": { "node": "money", "pin": "failed" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l27", "from": { "node": "money", "pin": "timeout" }, "to": { "node": "noSetup", "pin": "in" } },
+    { "id": "l29", "from": { "node": "away", "pin": "left" }, "to": { "node": "clear", "pin": "in" } },
+    { "id": "l30", "from": { "node": "clear", "pin": "out" }, "to": { "node": "done", "pin": "in" } },
+    { "id": "l31", "from": { "node": "clock", "pin": "done" }, "to": { "node": "late", "pin": "in" } },
+    { "id": "l32", "from": { "node": "opened", "pin": "out" }, "to": { "node": "openedMsg", "pin": "in" } },
+    { "id": "l33", "from": { "node": "openedMsg", "pin": "out" }, "to": { "node": "away", "pin": "in" } }
+  ]
+}

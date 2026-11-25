@@ -1,0 +1,1895 @@
+/* ========================================
+   INVENTORY UI
+
+   THE HOUSE LOOK: the inventory wears what the pause menu, creator and Director wear — solid panels
+   with the faint blue corner glow, ExtraBold titles, the creator's cards for slots, one white primary
+   button.
+
+     panels   solid night glass + the corner glow (--ui-panel-glow), hairline, 20px corner, large lift
+     titles   --ui-font-display at 800, no stroke under them
+     slots    TILES from base.css's Slot tokens (--ui-slot-*): a faint wash when empty, a
+              brighter wash + a hairline + top highlight when filled. Carried-grid slots are
+              exactly twice the right column's, so their edge is too (--ui-slot-line-w-lg).
+              A filled slot NAMES its item (bottom left, carried grid) and counts it (bottom right);
+              slots 1-5 carry their key as a keycap. An item with no picture shows a quiet glyph and
+              its name instead of the old "?" picture.
+     select   the white pill (--ui-pill) marks where a dragged item will land; a red edge
+              (--ui-error) marks a slot that will refuse it. A controller's slot is the creator's
+              chosen card: blue wash, white ring.
+     weight   a gauge beside the name: blue, amber from 85%, red when full
+     type     base.css's scale only (--ui-fs-*), one typeface; counts and numerals are readings,
+              sized for the tile they sit on
+     popovers the right-click menu, tooltip and split panel are scaled WITH the inventory and
+              sit on the same solid glass; the primary button is the white pill
+     motion   the grid lands first, the flanks follow 0.07s behind; closing is instant
+
+   RETHEMING: override base.css's tokens (docs/nui-theming.md). Nothing in this file restates a
+   token's value, so a theme reaches every part of the inventory. The slot tile's values are
+   base.css's Slot tokens (--ui-slot-*), shared with the accessory rail.
+
+   The old --inv-* tokens are ALIASES of --ui-* in base.css; do not add new --inv-* uses.
+   ONE TYPEFACE throughout: there is deliberately no --inv-mono token.
+   ======================================== */
+:root {
+    /* ---- Motion ----
+       THE INVENTORY ANIMATES ON THE WAY IN ONLY; closing is instant. Everything about the
+       entrance is on the .visible rules; the resting rules carry no transition at all.
+
+       The flanking columns' travel. One number so the rail and the right-hand block are
+       always mirror images of each other; the sign is applied where it is used. */
+    --inv-enter-shift: 30px;
+}
+
+/* ---- Keyframes ---- */
+@keyframes invPanelIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes invFadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   OVERLAY + LAYOUT
+   ======================================== */
+
+#inv-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 9000;
+    opacity: 0;
+    /* NO TRANSITION ON THE RESTING STATE — this is what makes the close instant. A transition
+       belongs to the state being ENTERED, so leaving it off here and putting it on .visible
+       below gives an animated open and an immediate close from one pair of rules. */
+}
+
+/* TWO CLASSES, TWO JOBS: `open` puts the overlay in the layout; `visible`, added a frame later,
+   fades it in. Style only one of them and the inventory either never appears or never animates. */
+#inv-overlay.open {
+    display: flex;
+}
+
+#inv-overlay.visible {
+    opacity: 1;
+    transition: opacity 0.3s var(--ui-ease);
+}
+
+/* THE DIM BEHIND THE INVENTORY, drawn by the page (a per-frame DrawRect would cost every frame).
+   z-index -1 puts it at the very BACK of the page: under every whip panel and HUD element, in
+   front of the game. The colour arrives from INVENTORY_WASH in client/inventory.lua, the one
+   place to tune it; the value here is only the fallback. Fades in with the overlay, gone the
+   instant it closes. */
+#inv-wash {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--ui-scrim);
+    opacity: 0;
+}
+
+#inv-wash.on {
+    opacity: 1;
+    transition: opacity 0.3s var(--ui-ease);
+}
+
+/* ============================================================================
+   THE ENTRANCE, IN ONE PLACE SO THE THREE COLUMNS CAN BE READ TOGETHER.
+
+   The layout assembles around the grid. The carried grid is the subject, so it
+   arrives first, rising with no sideways movement. The accessory rail and the
+   Nearby block come in 0.07s later from the edges they live on. 0.35s to open;
+   closing is instant.
+
+   Each column: the resting (closed) state on the base rule with NO transition,
+   the open state and the entrance timing on the .visible rule. Put a transition
+   on a base rule here and the close starts animating.
+   ============================================================================ */
+
+.inv-container {
+    display: flex;
+    flex-direction: column;
+    /* Scaling here rather than resizing columns and slots grows panels, slots, type and gaps
+       together and leaves the layout maths untouched. */
+    zoom: calc(var(--ui-scale) * var(--ui-zoom-inventory));
+
+    /* Only the fade lives here: each column enters on its own vector. KEEP IT TRANSFORM-FREE —
+       a transform here multiplies into every column's own. */
+    opacity: 0;
+}
+
+/* A close animation would have a hard deadline: hideOverlay (js/inventory.js) removes `visible`,
+   waits 250ms, then sets display:none. Keep any exit under 0.22s or move the timeout. */
+#inv-overlay.visible .inv-container {
+    opacity: 1;
+    transition: opacity 0.35s var(--ui-ease);
+}
+
+/* THE SHELL'S WIDTH: 1880 at zoom 1.32 fills a 16:9 screen with ~39px each side; 1080p lands at
+   ~1861 of 1920, full-width without clipping. A narrower screen (16:10, 4:3) gets the same: --ui-scale
+   follows its width there (utils.js), so the shell never runs off the sides.
+
+   1880 = 118 rail + 20 gap + 1202 centre + 20 gap + 520 right block.
+
+   The carried grid shows FOUR rows (a 5:4 landscape box) so a wide shell costs little height:
+   0.8px taller per 1px wider. Past roughly 2000 the grid's max-height engages and the fourth row
+   is clipped. Six rows on screen would be a portrait grid that cannot fit a 16:9 screen.
+
+   Stated in px, not %: a percentage would be multiplied by the zoom. --ui-scale divides it back
+   down on smaller screens. */
+.inv-wrapper {
+    display: flex;
+    gap: var(--ui-sp-7);
+    /* STRETCH, NOT flex-start: the right-hand column needs a DEFINITE height before
+       `overflow-y: auto` engages inside it. Stretch hands it the carried grid's height, so the
+       stack scrolls at exactly the height of the thing beside it. (.inv-accessory-panel sets its
+       own `align-self`; .inv-col-left is zero-width.) */
+    align-items: stretch;
+    width: 1880px;
+    max-width: 100%;
+    /* Where the pad's carried tile is placed (.inv-pad-carried): over every grid, inside none of their
+       scroll boxes. */
+    position: relative;
+}
+
+/* ============================================================================
+   LEFT TO RIGHT: a narrow accessory rail, the carried grid, and a fixed block on
+   the right for whatever is in reach — 6% / 64% / 28%.
+
+   .inv-col-left (the pause-menu ped's column, Config.MenuPedEnabled) is kept at
+   ZERO WIDTH: index.html and client/inventory.lua still write to it.
+   ============================================================================ */
+.inv-col-left {
+    width: 0;
+    height: 100%;
+    flex: 0 0 0;
+    /* The wrapper's gap would otherwise still apply on both sides of a
+       zero-width box, leaving a 40px hole. */
+    margin-right: calc(var(--ui-sp-7) * -1);
+}
+
+/* THE CARRIED GRID. It flexes, taking everything the accessory rail and the right-hand block do
+   not (1202px at the current numbers), so it has NO SIZE OF ITS OWN TO EDIT: resize it from
+   .inv-wrapper, .inv-col-right or .inv-accessory-slot, never from here. A pixel of width is 0.8px
+   of height (a 5:4 box). */
+.inv-col-center {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-7);
+    flex: 1;
+    min-width: 0;
+    position: relative;
+
+    /* THE SUBJECT, SO IT ARRIVES FIRST AND STRAIGHT: it rises 18px from 0.985 (more reads as the
+       grid lunging at the camera). No transition in the resting state: closing is instant. */
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+}
+
+#inv-overlay.visible .inv-col-center {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: transform 0.35s var(--ui-ease), opacity 0.35s var(--ui-ease);
+}
+
+/* THE BLOCK ON THE RIGHT. Fixed, and narrower than the carried grid: what is in reach is a short
+   list. A fixed width also means the carried grid's size does not change when a container opens
+   beside it. */
+.inv-col-right {
+    display: flex;
+    flex-direction: column;
+    /* 520 of 1880 (~28%), ~686px of screen at zoom 1.32: Nearby's slots land at ~87px beside
+       the carried grid's 224. ALSO PART OF THE CARRIED GRID'S HEIGHT: every pixel taken here
+       comes back as 0.8px off the Player grid. Read the note on .inv-col-center .inv-slots-grid
+       before changing this. */
+    width: 520px;
+    flex-shrink: 0;
+
+    /* IN FROM THE RIGHT EDGE IT LIVES ON, 0.07s behind the grid: the accessory rail's mirror.
+       No transition in the resting state: closing is instant. */
+    opacity: 0;
+    transform: translateX(var(--inv-enter-shift));
+    /* Spacing BETWEEN visible panels, owned by the column: flex gap only exists between
+       displayed children (the panels themselves live in #inv-panel-stack, which has the same). */
+    gap: var(--ui-sp-7);
+
+    /* The positioning context for #inv-panel-stack below. Nothing else needs it. */
+    position: relative;
+}
+
+/* THE SCROLL ZONE. Every open panel lives here — Nearby, a boot, a wallet, an ignition.
+
+   ABSOLUTELY POSITIONED, AND THAT IS THE WHOLE TRICK: an in-flow stack would grow the shell off
+   the bottom of the screen instead of scrolling. Out of flow, the column takes its height from
+   the carried grid beside it (the wrapper's `align-items: stretch`), and this box fills that.
+
+   `inset: 0` rather than a height, so it tracks the column automatically. */
+#inv-panel-stack {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-7);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* THE BAR SITS INSIDE THE COLUMN, NOT ON THE SCREEN EDGE: the padding moves it beside the
+       panels, the negative margin gives that room back so only the bar is inset. */
+    padding-right: 16px;
+    margin-right: -16px;
+
+    /* ROOM FOR THE PANELS' SHADOW: a scrolling box clips at its padding edge, so the same
+       self-cancelling padding gives --ui-shadow-lg room — 24px above (the screen's gutter), 20px
+       left (the gap to the carried grid), 14px below (the gap to the legend). */
+    padding-top: 24px;
+    margin-top: -24px;
+    padding-left: var(--ui-sp-7);
+    margin-left: calc(var(--ui-sp-7) * -1);
+    padding-bottom: var(--ui-sp-6);
+    margin-bottom: calc(var(--ui-sp-6) * -1);
+}
+
+#inv-overlay.visible .inv-col-right {
+    opacity: 1;
+    transform: translateX(0);
+    transition: transform 0.35s var(--ui-ease) 0.07s, opacity 0.35s var(--ui-ease) 0.07s;
+}
+
+/* THE SHORTCUTS, SAID ONCE: a house capsule at the foot of the right-hand column, where it costs no
+   slot room; the panel stack stops above it. ON A PAD, EVERY BUTTON THE INVENTORY READS, in two rows: moving (LS, D-pad, RS) with B, then doing (A,
+   RB + A, X). It is the pad's one place for them — the bottom hint strip (controller.js) stays empty
+   in the inventory — so A, X and B change their words while an item is carried, and the whole capsule
+   dims while an item menu (which says its own buttons) is up. padLegendDraw in inventory.js. */
+.inv-legend {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 48px;
+    box-sizing: border-box;
+    padding: 0 var(--ui-sp-7);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+    transition: opacity 0.16s var(--ui-ease);
+}
+
+.inv-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-3);
+}
+
+/* A line that does not apply now (RB + A while carrying): its place is kept, so nothing shifts. */
+.inv-legend-item.off {
+    visibility: hidden;
+}
+
+/* An item menu is up and says its own buttons at its foot. */
+.inv-legend.inv-legend-muted {
+    opacity: 0.4;
+}
+
+/* The keycap the slots' numerals wear, at text size. */
+.inv-key {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 var(--ui-sp-3);
+    border: 1px solid var(--ui-slot-line-hover);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-medium);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+
+/* The button pictures, at the keycaps' height. */
+.inv-legend-glyph {
+    height: 22px;
+    width: auto;
+}
+
+/* One set at a time: the keys on a keyboard, the buttons on a pad (data-input, controller.js). */
+.inv-legend-pad,
+html[data-input="pad"] .inv-legend-kbm {
+    display: none;
+}
+
+/* Two rows on four columns, so the second row's buttons sit under the first's. */
+html[data-input="pad"] .inv-legend-pad {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ui-sp-5) var(--ui-sp-6);
+    width: 100%;
+}
+
+html[data-input="pad"] .inv-legend {
+    height: 84px;
+}
+
+#inv-panel-stack {
+    bottom: calc(48px + var(--ui-sp-6));
+}
+
+html[data-input="pad"] #inv-panel-stack {
+    bottom: calc(84px + var(--ui-sp-6));
+}
+
+/* ========================================
+   PANELS
+   ======================================== */
+
+/* An opaque card at /whip's panel radius: a raised slot needs something to be raised OFF, and
+   a moving street showing through behind item art competes with it. */
+.inv-panel {
+    display: flex;
+    flex-direction: column;
+    /* The house ground: the glow in the top-left corner, over the solid glass. */
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    padding: var(--ui-sp-7);
+    /* whip's major-panel lift; its inset top highlight is the one "shine" a pane gets (DESIGN.md,
+       the Flat-Glass Rule). */
+    box-shadow: var(--ui-shadow-lg);
+    /* No entrance animation here: the COLUMN carries it. */
+}
+
+/* A panel swapped in live — the right column changing hands because the player got into or out
+   of a vehicle with the inventory open. Re-entry (invPanelIn) is the cue, and the only
+   panel-level motion in the inventory. DESCENDANT, NOT CHILD: the panels live inside
+   #inv-panel-stack. */
+#inv-overlay .inv-col-right .inv-panel.inv-panel-swapped {
+    animation: invPanelIn 0.35s var(--ui-ease) both;
+}
+
+/* Header height tracks its metadata lines, so the grids in different panels start at slightly
+   different heights. Deliberate: panels' TOP edges align; the grids ride their headers (a
+   reserved min-height read worse). */
+.inv-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ui-sp-6);
+    position: relative;
+}
+
+/* No stroke under the header, wherever whip has one. */
+
+/* THE HOUSE TITLE: the display face at 800, tracked TIGHT. The carried grid's title is the screen's
+   subject and a size up; the right column's stay at xl so they do not compete with it. */
+.inv-panel-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    color: var(--ui-text);
+    /* No text-shadow: on an opaque surface a rim reads as a smudge. */
+}
+
+.inv-col-center .inv-panel-title {
+    font-size: var(--ui-fs-display);
+}
+
+.inv-panel-subtitle {
+    margin-top: var(--ui-sp-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    letter-spacing: normal;
+    line-height: 1.45;
+    /* -mid, not -dim: the weight line is the one number a player checks constantly. */
+    color: var(--ui-text-mid);
+    font-variant-numeric: tabular-nums;
+}
+
+/* THE WEIGHT GAUGE: what decides every move, read as an instrument rather than a
+   caption — the figure over a bar, beside the name. Blue (a live gauge, DESIGN.md's Signal Rule),
+   amber from 85% (`near`), red when full (`full`); inventory.js renderWeights sets both. */
+.inv-weight {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--ui-sp-3);
+}
+
+.inv-weight .inv-panel-subtitle {
+    margin: 0;
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+
+.inv-weight-bar {
+    width: 240px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--ui-border);
+    overflow: hidden;
+}
+
+/* Filled by scaleX, not width (renderWeights): a transform moves without asking the page to lay out
+   again. */
+.inv-weight-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--ui-accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.25s var(--ui-ease), background-color 0.25s var(--ui-ease);
+}
+
+.inv-weight.near .inv-weight-fill { background: var(--ui-warning); }
+.inv-weight.near .inv-panel-subtitle { color: var(--ui-warning); }
+.inv-weight.full .inv-weight-fill { background: var(--ui-error); }
+.inv-weight.full .inv-panel-subtitle { color: var(--ui-error); }
+
+/* A panel's weight line sits UNDER its grid (the template puts it there), so it needs air
+   above rather than the 2px a subtitle gets under a title. */
+.inv-external-weight-info {
+    margin-top: var(--ui-sp-5);
+}
+
+/* READ ONLY — a panel you can look into but not change. The badge is the admin panel's pill
+   (.wp-pill) at the same size, shown by the .inv-external-readonly class the JS toggles. */
+.inv-readonly-badge {
+    display: none;
+    padding: var(--ui-sp-1) var(--ui-sp-3);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-medium);
+    color: var(--ui-text-mid);
+    font-size: var(--ui-fs-xs);
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.inv-external-readonly .inv-readonly-badge {
+    display: inline-block;
+}
+
+/* ========================================
+   SLOTS — the .interact-key square
+   ======================================== */
+
+/* THE HERMANN GRID ILLUSION — grey blobs at the corners between slots, which a regular lattice
+   of bright bands on a dark ground produces. Kept below notice by low contrast on empty slots
+   (the uniform-lattice worst case) and channels wide enough to read as separate objects. */
+.inv-slots-grid {
+    display: grid;
+    /* minmax(0, 1fr), NOT 1fr: a bare `1fr` has a min-content floor, so the columns refuse to
+       shrink and the 5th overflows a narrower panel (Nearby) and is clipped. */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--ui-sp-5);
+}
+
+/* THE CARRIED GRID: the FIVE columns .inv-slots-grid sets above (one number, all grids), FOUR
+   ROWS showing (224px slots on a 1202px column), and it scrolls down for the rest, so the bag
+   (Config.ContainerSlots.player) can be any size. Four visible rows keep the grid landscape
+   (5:4); six square rows would be a portrait grid that cannot fit a 16:9 screen. */
+.inv-col-center .inv-slots-grid {
+    /* FOUR ROWS, EXPRESSED AS A RATIO SO IT NEVER NEEDS RECOMPUTING. Five square columns with
+       four rows showing is 5:4 — the gaps are 4 x 10 across against 3 x 10 down, so the ratio
+       is off by 2px, and that 2px shows as a sliver of row five: a free "there is more below"
+       cue rather than a defect.
+
+       Not a literal height: the grid flexes, so a fixed height would show 3.6 or 4.4 rows as
+       its width moves.
+
+       min-height: 0 because this is a column flex item and `min-height: auto` would let all
+       six rows of content push past the ratio. A scroll container already resolves that auto
+       to zero, but the rule should not depend on knowing that. */
+    aspect-ratio: 5 / 4;
+    min-height: 0;
+
+    /* A SCREEN CEILING, AND A SECOND MECHANISM ON PURPOSE. The ratio sizes the grid to its
+       width; this stops a very wide shell turning that into a panel taller than the display.
+       They compose — the height is the smaller of the two — and at today's 1160px grid the
+       ratio's 928 wins, so this is dormant until someone widens the centre column past ~1200. */
+    max-height: 960px;
+
+    /* overflow-x MUST be stated. Setting only one axis makes the other compute to `auto`
+       rather than `visible`, which quietly makes this a scroll container on both axes and
+       clips the outer column's slots against its edge. */
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* ROOM FOR THE SCROLLBAR beside the slots, not flush against them. THE NEGATIVE MARGIN
+       PROTECTS THE SLOT SIZE: padding alone would come out of the grid's width, and 224 is
+       twice the right-hand column's 112 (a 2x2 block of Nearby slots = one carried slot). */
+    padding-right: 16px;
+    margin-right: -16px;
+
+    /* 3px OF ROOM ABOVE AND LEFT, cancelled the same way, for the pad's chosen-slot ring (2px, drawn
+       outside the slot), which the scroll box would clip off the top row and the left column. */
+    padding-top: 3px;
+    margin-top: -3px;
+    padding-left: 3px;
+    margin-left: -3px;
+
+    /* THE SCROLLBAR IS DELIBERATELY VISIBLE HERE: a third of the bag is below the fold. */
+}
+
+/* ============================================================================
+   THE INVENTORY SCROLLBAR — ONE TREATMENT, TWO SURFACES.
+
+   base.css's REACH scrollbar tokens: a heavier bar than the 3px default, because both bars
+   below are how a player REACHES content that is otherwise off screen. One selector list, so
+   the two bars on one screen cannot disagree.
+   ============================================================================ */
+.inv-col-center .inv-slots-grid::-webkit-scrollbar,
+#inv-panel-stack::-webkit-scrollbar {
+    width: var(--ui-scrollbar-w-reach);
+    height: var(--ui-scrollbar-w-reach);
+}
+
+.inv-col-center .inv-slots-grid::-webkit-scrollbar-track,
+#inv-panel-stack::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.inv-col-center .inv-slots-grid::-webkit-scrollbar-thumb,
+#inv-panel-stack::-webkit-scrollbar-thumb {
+    background: var(--ui-scrollbar-thumb-reach);
+    border-radius: var(--ui-radius-pill);
+}
+
+.inv-col-center .inv-slots-grid::-webkit-scrollbar-thumb:hover,
+#inv-panel-stack::-webkit-scrollbar-thumb:hover {
+    background: var(--ui-scrollbar-thumb-reach-hover);
+}
+
+/* THE RIGHT COLUMN: FOUR ACROSS, so a 2x2 block of its slots is one carried slot:
+
+       right column 520 - 2 border - 40 padding  = 478px of grid
+       four columns, three 10px gaps             = (478 - 30) / 4 = 112px  (half of 224)
+
+   If .inv-col-right's width changes, check this still lands on half the carried slot. The whole
+   column, not just Nearby: panels swapping in must not change the slot size. */
+.inv-col-right .inv-slots-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.inv-slot {
+    aspect-ratio: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--ui-slot-bg);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line);
+    border-radius: var(--ui-radius-row);
+
+    cursor: default;
+    /* NO ENTRANCE ANIMATION: renderInventory() rebuilds every slot on open, on every drop and
+       again when the server confirms, so one would replay on every move.
+       0.1s: DESIGN.md's hover answer — "hovers answer instantly". */
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), box-shadow 0.1s var(--ui-ease);
+}
+
+/* A HEAVIER EDGE ON THE CARRIED GRID, because its slots are twice the size (--ui-slot-line-w-lg).
+   ON EVERY SLOT, not only filled ones (an empty slot's border is transparent): the width never
+   changes on pickup or drop, so nothing reflows. Only the colour changes state. */
+.inv-col-center .inv-slot {
+    border-width: var(--ui-slot-line-w-lg);
+}
+
+/* A slot holding something LIFTS: the brighter wash, a quiet edge, and the top highlight — the
+   same inset line a whip pane carries, at slot scale. Empty slots stay a flat faint wash, so
+   what you are carrying reads at a glance. */
+.inv-slot.has-item {
+    background: var(--ui-slot-bg-filled);
+    border-color: var(--ui-slot-line-filled);
+    box-shadow: var(--ui-slot-lift);
+    cursor: grab;
+}
+
+.inv-slot.has-item:active {
+    cursor: grabbing;
+}
+
+/* HOVER IS FOR THINGS YOU CAN PICK UP. An empty slot answers a DRAG instead (the pill below),
+   the only time it is a target. */
+.inv-slot.has-item:hover {
+    background: var(--ui-slot-bg-hover);
+    border-color: var(--ui-slot-line-hover);
+}
+
+/* THE DROP TARGET IS THE WHITE PILL: the square an item is about to land in.
+
+   #inv-overlay IN FRONT, AND IT IS LOAD-BEARING: :hover is live on the target while you drag,
+   and .inv-slot.has-item:hover would outrank a bare .inv-slot.drag-over on an occupied slot. */
+#inv-overlay .inv-slot.drag-over,
+#inv-overlay .inv-accessory-slot.drag-over {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    box-shadow: none;
+}
+
+/* The numerals invert with it, or they vanish into the pill they are sitting on. */
+#inv-overlay .drag-over .inv-slot-number,
+#inv-overlay .drag-over .inv-slot-amount,
+#inv-overlay .drag-over .inv-slot-name {
+    color: var(--ui-pill-ink-mid);
+    text-shadow: none;
+}
+
+#inv-overlay .drag-over .inv-slot-number {
+    border-color: var(--ui-pill-ink-mid);
+    background: none;
+}
+
+/* THE SLOT THAT WILL SAY NO: onDragMove (inventory.js) asks the same rules the drop will (a typed
+   accessory slot, a read-only panel, a key into an occupied ignition), and a refusing slot shows
+   a red edge instead of the pill — before you let go rather than after. */
+#inv-overlay .inv-slot.drag-refuse,
+#inv-overlay .inv-accessory-slot.drag-refuse {
+    background: var(--ui-error-subtle);
+    border-color: var(--ui-error);
+    /* A ring outside the hairline: a 1px red line alone is too thin to say "no" across a 222px
+       tile. */
+    box-shadow: 0 0 0 1px var(--ui-error);
+}
+
+/* THE ITEM being dragged, not the slot — startDrag() puts `dragging` on the .inv-item.
+   Hollowed rather than hidden, so the square it came from still reads as its origin while
+   the ghost is in flight. */
+.inv-item.dragging {
+    opacity: 0.2;
+}
+
+/* THE CONTROLLER'S HIGHLIGHT (inventory.js "CONTROLLER"): the creator's chosen card — the blue wash
+   inside a white ring, doubled outside the edge, readable from a sofa. Only on a pad (data-input,
+   controller.js). Over a slot that will refuse the carried item, the edge stays the refuse red. */
+html[data-input="pad"] #inv-overlay .inv-slot.pad-focus {
+    background: var(--ui-slot-bg-chosen);
+    border-color: var(--ui-pill);
+    box-shadow: 0 0 0 2px var(--ui-pill), var(--ui-slot-lift);
+}
+
+html[data-input="pad"] #inv-overlay .inv-slot.pad-focus.drag-refuse {
+    background: var(--ui-error-subtle);
+    border-color: var(--ui-error);
+    box-shadow: 0 0 0 2px var(--ui-error);
+}
+
+/* Over the drop pill a controller's ring would vanish into it: the pill says "here" on its own. */
+html[data-input="pad"] #inv-overlay .inv-slot.pad-focus.drag-over {
+    background: var(--ui-pill);
+    box-shadow: 0 0 0 2px var(--ui-pill);
+}
+
+/* CARRIED WITH THE D-PAD (inventory.js padCarryDraw): the item sits on the highlighted slot on a tile
+   of its own, lifted a little up and to the left, covering what is in the slot; the drop pill under it
+   shows at its lower right. The floating copy a mouse drags (the ghost) hides meanwhile; with the
+   circle up it is back, riding the circle.
+
+   THE TILE LIVES IN .inv-wrapper, NOT IN THE SLOT: a slot is inside a scroll box (the carried grid, a
+   side panel's), which cut the lifted tile off along the top row and the left column. padCarryDraw
+   lays it over the slot (left, top, width, height) and moves it when a list scrolls. */
+body.inv-pad-carry .inv-drag-ghost {
+    visibility: hidden;
+}
+
+/* What is in the slot under it stays under it: its count would peek out beside the tile's own. */
+.inv-slot.pad-carry-host .inv-slot-amount {
+    visibility: hidden;
+}
+
+/* THE PILL GOES AT ONCE. The tile leaves a slot in one frame, and with the slots' 0.1s fade the slot it
+   left showed still white beside its item, a flash on every step. */
+body.inv-pad-carry #inv-overlay .inv-slot,
+body.inv-pad-carry #inv-overlay .inv-accessory-slot {
+    transition: none;
+}
+
+.inv-pad-carried {
+    position: absolute;
+    z-index: 4;   /* over the columns */
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-7%, -7%);
+    background: linear-gradient(var(--ui-slot-bg-filled), var(--ui-slot-bg-filled)), var(--ui-surface-solid);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift), 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* Over a carried-grid slot: its heavier edge. */
+.inv-pad-carried.wide {
+    border-width: var(--ui-slot-line-w-lg);
+}
+
+.inv-pad-carried img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    filter: var(--ui-item-shadow-lifted);
+}
+
+/* THE PAD'S HELP IN THE CARD AND THE ITEM MENU (inventory.js padHintRow): a row of button pictures and
+   words at the foot — the card's "X Actions · A Select", the menu's for what it shows. On a pad only. */
+.inv-pad-hints {
+    display: none;
+}
+
+html[data-input="pad"] .inv-pad-hints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-sp-2) var(--ui-sp-5);
+    margin-top: var(--ui-sp-3);
+    padding-top: var(--ui-sp-3);
+    border-top: 1px solid var(--ui-border);
+}
+
+html[data-input="pad"] .inv-pad-hints:empty {
+    display: none;
+}
+
+.inv-pad-hint {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-2);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+}
+
+.inv-pad-hint-glyph {
+    height: 20px;
+    width: auto;
+}
+
+/* A help line that does not apply here (RB + A where a quick move does nothing: padQuickMoves). */
+.inv-pad-hint.off {
+    display: none;
+}
+
+/* ON A PAD THE ITEM MENU IS A QUARTER BIGGER: read from the sofa, not the desk. */
+html[data-input="pad"] .inv-context-menu .inv-pop {
+    zoom: calc(var(--ui-scale) * var(--ui-zoom-inventory) * 1.25);
+}
+
+/* (The shop's buttons take the same ring: css/shops.css, `.inv-pad-btn.pad-focus`.) */
+
+/* THE CIRCLE — the left stick's cursor, Destiny 2's menu circle (inventory.js padFrame). A ring with
+   a dot, moved by transform only; it tightens and fills faintly over something it can pick, so the
+   slot under it is never in doubt. Never takes a hit test: the slot under it must answer. */
+#inv-pad-cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: 10002;          /* over the carried item (10001) and the menus */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s var(--ui-ease);
+}
+
+#inv-pad-cursor.on {
+    opacity: 1;
+}
+
+html:not([data-input="pad"]) #inv-pad-cursor {
+    display: none;
+}
+
+/* THE PAD OR THE MOUSE, NEVER BOTH (inventory.js padShield). While a pad drives the inventory, a clear
+   sheet lies over the whole screen, so a mouse left resting over a slot hovers the sheet, not the slot:
+   no hover wash on a slot the pad is not on. The mouse's own events are dropped too (padOwnsInput). */
+#inv-pad-shield {
+    position: fixed;
+    inset: 0;
+    z-index: 10003;   /* over the menus (10000), the dragged copy (10001) and the circle (10002) */
+    display: none;
+}
+
+html[data-input="pad"] #inv-pad-shield.on {
+    display: block;
+}
+
+/* 42px on a 1080p screen, in step with the screen's height (3.9vh) so it keeps its size beside the
+   slots at 1440p and 4K. */
+#inv-pad-cursor .inv-pad-ring {
+    position: absolute;
+    left: -1.95vh;
+    top: -1.95vh;
+    width: 3.9vh;
+    height: 3.9vh;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--ui-pill);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 12px rgba(0, 0, 0, 0.45);
+    transition: transform 0.12s var(--ui-ease), background 0.12s var(--ui-ease);
+}
+
+#inv-pad-cursor .inv-pad-ring::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    border-radius: 50%;
+    background: var(--ui-pill);
+}
+
+#inv-pad-cursor.over .inv-pad-ring {
+    transform: scale(0.78);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Hotbar hint numerals on player slots 1-5 — the only on-screen teaching that key 1 uses
+   slot 1. The label step is what DESIGN.md gives words that say what something is. */
+.inv-slot-number {
+    position: absolute;
+    top: var(--ui-sp-2);
+    left: var(--ui-sp-3);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;   /* over the item (.inv-item is 2): an edge-to-edge picture hid it */
+}
+
+/* A KEYCAP: the key that uses the slot, drawn as a key, so row one reads as the hotbar. The
+   pockets only: the basket
+   numbers its places with the same class (shops.js), and those are not keys. */
+#inv-player-grid .inv-slot-number {
+    top: 12px;
+    left: 12px;
+    min-width: 24px;
+    height: 24px;
+    box-sizing: border-box;
+    padding: 0 var(--ui-sp-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui-slot-line-hover);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-medium);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    color: var(--ui-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* THE STACK COUNT — a reading the player scans constantly, so it is the strongest text in the
+   slot: full white, semibold, tabular, with the dark rim DESIGN.md gives text drawn over
+   something it cannot predict (here, the item art under the corner).
+   No chip behind it — a dark pill would be the only solid shape in the grid. */
+.inv-slot-amount {
+    position: absolute;
+    right: var(--ui-sp-3);
+    bottom: var(--ui-sp-2);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+    text-shadow: var(--ui-rim);
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;   /* over the item (.inv-item is 2), as the rim always meant */
+}
+
+/* SIZED FOR THE TILE IT SITS ON: the carried grid's slots are twice the right column's (and so is the
+   pad's carried tile over one). A dim "×" before it, except on money (inventory.js marks it), which
+   reads $7,920. */
+.inv-col-center .inv-slot-amount,
+.inv-pad-carried.wide .inv-slot-amount {
+    right: 14px;
+    bottom: 11px;
+    font-size: var(--ui-fs-lg);
+}
+
+.inv-col-center .inv-slot-amount:not(.money)::before,
+.inv-pad-carried.wide .inv-slot-amount:not(.money)::before {
+    content: '×';
+    margin-right: 1px;
+    color: var(--ui-text-mid);
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* THE ITEM'S NAME: the carried grid's slots say what they hold, bottom left, so a
+   player reads their pockets instead of hovering each one. The right column's slots are half the size
+   and keep to the picture — their name shows only when there is no picture (.no-art, below). */
+.inv-slot-name {
+    position: absolute;
+    left: 14px;
+    bottom: 13px;
+    max-width: calc(100% - 82px);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1.2;
+    color: var(--ui-text);
+    opacity: 0.8;
+    text-shadow: var(--ui-rim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    user-select: none;
+    z-index: 3;
+}
+
+.inv-col-right .inv-slot-name,
+.inv-accessory-slot .inv-slot-name {
+    display: none;
+}
+
+/* The carried grid's picture stands a little higher, clear of the name and count under it. */
+.inv-col-center .inv-slot .inv-item {
+    margin-bottom: 12%;
+}
+
+/* NO PICTURE: the picture hides, a quiet outline glyph takes its place (a mask, so it is a text
+   token's colour), and the slot's name says what it is —
+   centred in the small slots, where the name is otherwise not shown. inventory.js marks .no-art when
+   the picture has fallen all the way back to img/items/missing.png. */
+.inv-slot.no-art .inv-item-img {
+    visibility: hidden;
+}
+
+.inv-slot.no-art .inv-item {
+    background: var(--ui-text-dim);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='34' height='34' rx='9'/%3E%3Cpath d='M19.5 19.6a4.6 4.6 0 1 1 6.4 4.2c-1.2.6-1.9 1.4-1.9 2.7v1.3'/%3E%3Cpath d='M24 33.4h.01'/%3E%3C/svg%3E") center / 36% no-repeat;
+}
+
+.inv-slot.no-art .inv-slot-name {
+    opacity: 0.6;
+}
+
+.inv-col-right .inv-slot.no-art .inv-item,
+.inv-accessory-slot.no-art .inv-item {
+    visibility: hidden;
+}
+
+.inv-col-right .inv-slot.no-art .inv-slot-name,
+.inv-accessory-slot.no-art .inv-slot-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    bottom: auto;
+    max-width: none;
+    transform: translateY(-50%);
+    font-size: var(--ui-fs-sm);
+    text-align: center;
+    white-space: normal;
+}
+
+/* ART BY ITS SHAPE: item pictures arrive square, wide or tall, and a wide one boxed
+   like a square draws a third the height of the rest. inventory.js tags each picture when it loads. */
+.inv-item.art-wide {
+    width: 90%;
+    height: 66%;
+}
+
+.inv-item.art-tall {
+    width: 62%;
+    height: 86%;
+}
+
+.inv-col-center .inv-slot .inv-item.art-tall {
+    height: 76%;
+}
+
+/* ---- The item inside a slot ----
+   RELATIVE AND SIZED IN %, not absolute-with-percentage-padding: the drag ghost is a clone of
+   this element switched to `position:fixed`, where percentage padding resolves against the
+   VIEWPORT and the ghost comes out enormous. */
+.inv-item {
+    width: 80%;
+    height: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+    position: relative;
+}
+
+.inv-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    filter: var(--ui-item-shadow);
+}
+
+/* Follows the cursor while dragging: a plain box at the cursor (inventory.js startDrag) holding a
+   copy of the .inv-item. THE GHOST IS JUST THE ICON: no border or fill, only where it sits and a
+   shadow to lift it off the page. */
+.inv-drag-ghost {
+    position: fixed;
+    transform: translate(-50%, -50%);   /* centred on the cursor, not hanging off its corner */
+    pointer-events: none;
+    z-index: 10001;
+    opacity: 0.85;
+    filter: var(--ui-item-shadow-lifted);
+}
+
+/* THE COPY FOLLOWS THE SCREEN'S SIZE. It lives in <body>, outside the inventory's zoom, so it
+   carries --ui-scale itself. The zoom is on the copy,
+   not the positioned box: CEF 103's zoom scales a zoomed box's left/top too, which would put the
+   box away from the cursor (the popovers' rule below). */
+.inv-drag-ghost-item {
+    zoom: var(--ui-scale);
+}
+
+/* ---- Shop stock states (.out-of-stock, .stock-for-sale): in shops.css ---- */
+
+/* ========================================
+   PANEL VARIANTS + SCROLL AREAS
+   ======================================== */
+
+/* NATURAL HEIGHT, NOT `flex: 1`: each panel is as tall as its own contents and #inv-panel-stack
+   scrolls past them (an equal share would stretch two wallets down empty card). */
+.inv-ground-panel,
+.inv-container-panel,
+.inv-player-inv-panel {
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+.inv-ground-scroll,
+.inv-container-scroll,
+.inv-player-inv-scroll {
+    /* NOT A SCROLL BOX: #inv-panel-stack scrolls (nested scroll boxes fight the wheel). The
+       element stays because it owns the gutter below, and the markup, the shop's scroll boxes
+       and renderGroundGrid address it.
+
+       `overflow-x: hidden` stays explicit: setting only one axis makes the other compute to
+       `auto`, a scroll container on both axes that clips the rightmost column's outline. */
+    overflow-x: hidden;
+    /* Negative margin cancels the padding, so the grid lines up with the other panels while the
+       slot glow (and the pad's 2px ring, the 3px above and below) has room inside the clip. */
+    margin: -3px calc(var(--ui-sp-5) * -1);
+    padding: 3px var(--ui-sp-5);
+    /* Dormant: should a cap ever go back on one panel, its bar stays hidden. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* The webkit half of the hide above (CEF only honours this). The stack's own bar is not hidden:
+   it is what tells a player there are more panels below. */
+.inv-player-inv-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+
+/* ---- Ignition + external panels (satellite-driven) ----
+   No margin of their own: inter-panel spacing is the column's flex gap. No grid rule either:
+   every right-column grid carries .inv-slots-grid, so .inv-col-right .inv-slots-grid sizes a
+   cloned panel (#inv-panel-template in index.html) with no code of its own. */
+
+.inv-ignition-slot-wrapper,
+.inv-external-slot-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-3);
+}
+
+/* A read-only panel shows the header badge (.inv-readonly-badge) and the red refuse edge a drag
+   into it gets. */
+
+/* ========================================
+   ACCESSORY PANEL — left edge, vertical
+   ======================================== */
+
+/* The first of the three columns, on the shared slot tokens (base.css), with the container's
+   zoom like every other column. */
+.inv-accessory-panel {
+    flex: 0 0 auto;
+    /* TOP, NOT CENTRE: panels' TOP edges align. */
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    /* The same window as the other panels, lift included; its grid brings its own padding. */
+    background: var(--ui-panel-glow), var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: var(--ui-shadow-lg);
+
+    /* IN FROM THE LEFT EDGE IT LIVES ON, 0.07s behind the grid — the mirror of .inv-col-right.
+       No transition in the resting state: closing is instant. */
+    opacity: 0;
+    transform: translateX(calc(var(--inv-enter-shift) * -1));
+}
+
+#inv-overlay.visible .inv-accessory-panel {
+    opacity: 1;
+    transform: translateX(0);
+    transition: transform 0.35s var(--ui-ease) 0.07s, opacity 0.35s var(--ui-ease) 0.07s;
+}
+
+/* A server without the strip (Config.AccessoryStrip off) sends no slots, and the column is not drawn. */
+.inv-accessory-panel.is-off {
+    display: none;
+}
+
+.inv-accessory-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-4);
+    padding: var(--ui-sp-4);
+}
+
+/* 100px: the rail's ENTIRE width (slot + 16px grid padding + 2px border = the 118px column);
+   whatever it gives up goes to the carried grid. The floor is the ICON (75% of the slot): much
+   below 90 and a helmet stops being recognisable at a glance.
+
+   The SIZE is deliberately not a shared token; the LOOK is base.css's Slot. The edge is the right column's (--ui-slot-line-w):
+   a 100px rail slot is the size of a 112px Nearby slot. */
+.inv-accessory-slot {
+    width: 100px;
+    height: 100px;
+    background: var(--ui-slot-bg);
+    border: var(--ui-slot-line-w) solid var(--ui-slot-line);
+    border-radius: var(--ui-radius-row);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), box-shadow 0.1s var(--ui-ease);
+}
+
+/* The rail arrives as one object: no per-slot stagger inside a box that is itself moving.
+   (renderAccessoryGrid does not rebuild on every drop, so an entrance animation is allowed on
+   these slots, unlike .inv-slot.) */
+
+/* The drop-target pill and the refuse edge are shared with the grid — see .inv-slot.drag-over. */
+
+/* Accessory slots lift when full, exactly as the grid's do, and only a filled one answers the
+   cursor (an empty one does nothing on click). */
+.inv-accessory-slot.has-item {
+    background: var(--ui-slot-bg-filled);
+    border-color: var(--ui-slot-line-filled);
+    box-shadow: var(--ui-slot-lift);
+    cursor: grab;
+}
+
+.inv-accessory-slot.has-item:hover {
+    background: var(--ui-slot-bg-hover);
+    border-color: var(--ui-slot-line-hover);
+}
+
+.inv-accessory-slot.has-item:active {
+    cursor: grabbing;
+}
+
+/* The placeholder SVG shown when the slot is empty — what goes here, drawn faintly. The SVGs
+   stroke with currentColor, so the colour is a text token a theme reaches; the opacity keeps it
+   at ~12%. 46% of the slot, in fixed px (an SVG with its own stroke weight): if the slot size
+   moves, move this with it. */
+.inv-accessory-placeholder {
+    width: 46px;
+    height: 46px;
+    color: var(--ui-text-dim);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.inv-accessory-slot.has-item .inv-accessory-placeholder {
+    display: none;
+}
+
+/* A slot that takes one item with no icon of its own: that item's picture, greyed */
+.inv-accessory-placeholder.is-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: grayscale(1);
+}
+
+.inv-accessory-slot .inv-item {
+    width: 75%;
+    height: 75%;
+}
+
+/* ========================================
+   HOTBAR — pocket slots 1-5, in the player capsule's look
+   ========================================
+
+   A CAPSULE OF DISCS on the player capsule's row, bottom centre: .sh-capsule (status-hud.css) holding five
+   discs drawn as the stat gauges are (the white ring, the black outline, the dark core), each with its
+   item's picture, its key as a keycap and its count. The same zoom as #status-hud and the hint capsule
+   (--ui-scale × 1.25), with every part times --ui-hotbar-scale (base.css, 1.5): half again a stat disc.
+
+   ONE CAPSULE AT THE BOTTOM, NOT TWO. The hint capsule (ui.css §9, a bar or a mode) sits on the same spot.
+   While one is up at the bottom, js/hotbar.js moves #hotbar-seg into it: the discs join its right end
+   behind a hairline and the capsule opens (and grows to their height) to take them, then closes when
+   the hotbar goes.
+
+   Two classes where .sh-capsule's own rules would win: status-hud.css loads after this file. */
+
+#hotbar {
+    position: fixed;
+    inset: 0;
+    z-index: 8999;
+    pointer-events: none;
+    zoom: calc(var(--ui-scale) * 1.25);
+}
+
+.sh-capsule.hb-cap {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    opacity: 0;
+    transform: translate(-50%, 8px);
+    transition: opacity 0.3s var(--ui-ease), transform 0.3s var(--ui-ease), bottom 0.25s var(--ui-ease);
+}
+
+#hotbar.visible .hb-cap {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* Moving into the hint capsule: it goes at once, or its empty glass would fade over the merged one. */
+#hotbar.instant .hb-cap {
+    transition: none;
+}
+
+html[data-input="pad"].pad-hints-up #hotbar .hb-cap {
+    bottom: 64px;
+}
+
+/* Its own capsule's padding, at the discs' size. */
+.sh-capsule.hb-cap {
+    padding: calc(var(--sh-capsule-pad-y) * var(--ui-hotbar-scale)) calc(var(--sh-capsule-pad-x) * var(--ui-hotbar-scale));
+}
+
+.hb-seg {
+    display: flex;
+    align-items: center;
+    gap: calc(4px * var(--ui-hotbar-scale));
+}
+
+.hb-div {
+    display: none;
+}
+
+/* ---- merged: the segment at the hint capsule's right end ----
+   It opens from nothing (max-width, max-height), so the capsule widens, and grows to the discs' height,
+   smoothly instead of jumping; the padding on all sides keeps the discs' black outlines inside the clip,
+   and the negative margin gives it back. The hint capsule's own part keeps its size, centred. */
+#ui-drawtext .hb-seg {
+    overflow: hidden;
+    max-width: 0;
+    max-height: 0;
+    opacity: 0;
+    margin: -7px 0;
+    padding: 7px 7px 7px 0;
+    transition: max-width 0.3s var(--ui-ease), max-height 0.3s var(--ui-ease), opacity 0.2s var(--ui-ease);
+}
+
+#ui-drawtext .hb-seg.open {
+    max-width: 700px;
+    max-height: 200px;
+    opacity: 1;
+}
+
+#ui-drawtext .hb-div {
+    display: block;
+    flex: none;
+    width: 1px;
+    height: 44px;
+    margin: 0 8px 0 20px;
+    background: var(--ui-border-hover);
+}
+
+/* The hint capsule's text keeps its room on the right only while it ends the capsule. */
+.sh-capsule.dt-cap.hb-merged {
+    padding-right: 1px;
+}
+
+/* ---- the disc ---- */
+
+/* A stat disc's parts, each times --ui-hotbar-scale (base.css): the hotbar's discs are bigger than the
+   gauges', as one knob. */
+.hb-slot {
+    position: relative;
+    flex: none;
+    width: calc(var(--sh-ring-size) * var(--ui-hotbar-scale));
+    height: calc(var(--sh-ring-size) * var(--ui-hotbar-scale));
+}
+
+/* The ring and its black outline: the stat disc's (.sh-stat::after). */
+.hb-slot::after {
+    content: '';
+    position: absolute;
+    inset: calc(4px * var(--ui-hotbar-scale));
+    border-radius: 50%;
+    border: calc(4px * var(--ui-hotbar-scale)) solid var(--sh-disc-ring);
+    box-shadow: var(--sh-disc-outline);
+    z-index: 2;
+    pointer-events: none;
+    transition: border-color 0.15s var(--ui-ease);
+}
+
+.hb-slot.empty::after {
+    border-color: var(--ui-text-dim);
+}
+
+/* The slot just used: the chosen card's blue wash inside a near-white ring. */
+.hb-slot.active::after {
+    border-color: var(--ui-pill);
+}
+
+.hb-core {
+    position: absolute;
+    inset: calc(6.5px * var(--ui-hotbar-scale));
+    border-radius: 50%;
+    background: var(--sh-disc-core);
+    box-shadow: inset 0 0 0 calc(3px * var(--ui-hotbar-scale)) rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hb-slot.active .hb-core::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ui-slot-bg-chosen);
+}
+
+.hb-img {
+    position: relative;
+    max-width: calc(41px * var(--ui-hotbar-scale));
+    max-height: calc(35px * var(--ui-hotbar-scale));
+    object-fit: contain;
+    filter: var(--ui-item-shadow);
+}
+
+/* NO PICTURE: the inventory's quiet outline glyph (.inv-slot.no-art) in the core instead. */
+.hb-slot.no-art .hb-img {
+    visibility: hidden;
+}
+
+.hb-slot.no-art .hb-core::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ui-text-dim);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='34' height='34' rx='9'/%3E%3Cpath d='M19.5 19.6a4.6 4.6 0 1 1 6.4 4.2c-1.2.6-1.9 1.4-1.9 2.7v1.3'/%3E%3Cpath d='M24 33.4h.01'/%3E%3C/svg%3E") center / 62% no-repeat;
+    pointer-events: none;
+}
+
+/* The key to press, as a keycap over the ring's lower left: what teaches "4 uses the bandage". Solid, so it
+   reads over the ring; dim when the slot is empty (pressing it does nothing); the pill when just used. */
+.hb-key {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 4;
+    min-width: calc(22px * var(--ui-hotbar-scale));
+    height: calc(22px * var(--ui-hotbar-scale));
+    box-sizing: border-box;
+    padding: 0 calc(var(--ui-sp-2) * var(--ui-hotbar-scale));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui-slot-line-hover);
+    border-radius: calc(var(--ui-radius-sm) * var(--ui-hotbar-scale));
+    background: var(--ui-surface-solid);
+    font-size: calc(var(--ui-fs-md) * var(--ui-hotbar-scale));
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    color: var(--ui-text);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+
+.hb-slot.empty .hb-key {
+    color: var(--ui-text-label);
+}
+
+.hb-slot.active .hb-key {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+
+/* How many are left, over the ring's upper right (clear of the next disc's keycap, low left), with the
+   inventory's dim "×" (money reads "$7,920"). */
+.hb-count {
+    position: absolute;
+    right: calc(-3px * var(--ui-hotbar-scale));
+    top: calc(1px * var(--ui-hotbar-scale));
+    z-index: 4;
+    height: calc(19px * var(--ui-hotbar-scale));
+    padding: 0 calc(var(--ui-sp-3) * var(--ui-hotbar-scale));
+    display: flex;
+    align-items: center;
+    border-radius: var(--ui-radius-capsule);
+    background: var(--ui-surface-solid);
+    font-size: calc(var(--ui-fs-caption) * var(--ui-hotbar-scale));
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    color: var(--ui-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.hb-count:not(.money)::before {
+    content: '×';
+    margin-right: 1px;
+    color: var(--ui-text-mid);
+    font-weight: var(--ui-fw-semibold);
+}
+
+/* ========================================
+   POPOVERS — the right-click menu, the tooltip, the split and confirm panels
+   ======================================== */
+
+/* TWO BOXES EACH. The popovers live outside the inventory's zoomed container, so they carry its
+   zoom themselves, on the solid glass.
+
+   The outer box (.inv-context-menu / .inv-tooltip) only POSITIONS: fixed, left/top from the
+   cursor, no zoom and no surface. The inner .inv-pop carries the surface and the zoom. Keeping
+   the zoom off the positioned box is deliberate — how a zoomed element's left/top are scaled
+   differs between CEF 103's legacy zoom and newer Chromium, and this way the cursor maths
+   never meets it. The outer box still sizes to the zoomed inner one, so the edge clamping in
+   inventory.js reads the true on-screen size. One zoom per surface root still holds: these are
+   roots of their own. */
+.inv-context-menu,
+.inv-tooltip {
+    display: none;              /* shown by .visible — hideContextMenu() / hideTooltip() remove it */
+    position: fixed;
+    z-index: 10000;
+}
+
+.inv-tooltip {
+    pointer-events: none;
+}
+
+.inv-context-menu.visible,
+.inv-tooltip.visible {
+    display: block;
+    animation: invFadeUp 0.14s var(--ui-ease) both;
+}
+
+/* SOLID, like the panels they open from — the raised 0.9 glass let a slot's art bleed through
+   "Give" and "Place". The admin panel's own dialogs and pickers are solid for the same reason. */
+.inv-pop {
+    zoom: calc(var(--ui-scale) * var(--ui-zoom-inventory));
+    background: var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: var(--ui-shadow-lg);
+}
+
+.inv-context-menu .inv-pop {
+    min-width: 200px;
+    padding: var(--ui-sp-3);
+}
+
+/* Options are words alone: the contextOptions API ignores its `icon` field. */
+
+/* WHAT THE MENU IS ABOUT. A list of verbs with no subject — "Destroy" without saying what — is
+   the one place the inventory asked the player to remember which slot they had clicked. */
+.inv-ctx-title {
+    max-width: 260px;
+    padding: var(--ui-sp-2) var(--ui-sp-5) var(--ui-sp-3);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#inv-ctx-custom {
+    display: contents;   /* satellite-added options sit in the same list, not a nested box */
+}
+
+/* Destroy stands apart from the verbs that keep the item. Hidden by the JS when Destroy is the
+   only option. */
+.inv-ctx-divider {
+    height: 1px;
+    margin: var(--ui-sp-2) var(--ui-sp-3);
+    background: var(--ui-border);
+}
+
+/* The corner is --ui-radius-sm so it is concentric with the pop's: 12px outside, 6px of padding,
+   6px inside. */
+.inv-context-option {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    padding: var(--ui-sp-4) var(--ui-sp-5);
+    border-radius: var(--ui-radius-sm);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), color 0.1s var(--ui-ease);
+}
+
+.inv-context-option:hover {
+    background: var(--ui-surface-hover);
+}
+
+/* The menu row a controller is on (inventory.js padMenuFocus): the pill — whip's "this one". */
+html[data-input="pad"] .inv-context-option.pad-focus {
+    background: var(--ui-pill);
+    color: var(--ui-pill-ink);
+}
+
+html[data-input="pad"] .inv-context-option.destroy.pad-focus {
+    background: var(--ui-error);
+    color: var(--ui-pill-ink);
+}
+
+.inv-context-option.destroy {
+    color: var(--ui-error);
+}
+
+.inv-context-option.destroy:hover {
+    background: var(--ui-error-subtle);
+}
+
+/* ========================================
+   TOOLTIP (the positioning box is with the menu's, above)
+   ======================================== */
+
+.inv-tooltip .inv-pop {
+    max-width: 300px;
+    padding: var(--ui-sp-5) var(--ui-sp-6);
+}
+
+/* DESIGN.md's Headline step, tracked tight like every bold title, in the house title face: the
+   card is about this one item. */
+.inv-tooltip-name {
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    color: var(--ui-text);
+}
+
+.inv-tooltip-desc {
+    margin-top: var(--ui-sp-2);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.45;
+    color: var(--ui-text-mid);
+}
+
+.inv-tooltip-desc:empty {
+    display: none;
+}
+
+/* The rows, one list with no line across it: the item's own (metaFields: a serial, a plate, an ammo
+   type) first, then its weight and stack. The meta box is `contents`, so its rows take the list's gap. */
+.inv-tooltip-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-sp-2);
+    margin-top: var(--ui-sp-5);
+}
+
+.inv-tooltip-meta {
+    display: contents;
+}
+
+/* LABEL AND VALUE, both rows alike: the label says what it is (the label step), the value is the
+   reading (full text). Both sat at 25% white, and an item's own metadata — a key's plate — was
+   dimmer than the generic Weight below it. */
+.inv-tooltip-meta-row,
+.inv-tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ui-sp-6);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+}
+
+.inv-tooltip-meta-row span:last-child,
+.inv-tooltip-stat span:last-child {
+    color: var(--ui-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   GIVE / SPLIT PANEL, AND THE DESTROY CONFIRM
+   ======================================== */
+
+/* NESTED INSIDE THE CONTEXT MENU — each replaces the option list in place when you pick Give,
+   Split or Destroy; none is a dialog of its own. So NO fixed positioning, no own background and
+   no shadow: they already sit on the menu's surface, and a second one would draw a panel inside
+   a panel. Visibility is inline `style.display` from the JS, so these must not declare
+   `display` at all. */
+#inv-split-panel,
+#inv-confirm-panel {
+    min-width: 240px;
+    padding: var(--ui-sp-3) var(--ui-sp-4) var(--ui-sp-4);
+}
+
+/* THE AMOUNT PANEL IS ONE BIG NUMBER (Josh, 25 Oct 2026: "60/120" filling the card, the max
+   dimmed, the slider the panel's width, the buttons centred). A set width, so inventory.js
+   (splitAmountShow) can size the number to it. */
+#inv-split-panel {
+    width: 300px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: var(--ui-sp-4) var(--ui-sp-5) var(--ui-sp-5);
+}
+
+.inv-split-header {
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    margin-bottom: var(--ui-sp-6);
+}
+
+/* No header on the amount panel: its button says what it does. (Destroy's question keeps its.) */
+#inv-split-panel .inv-split-header {
+    display: none;
+}
+
+/* The number's row. Its font-size is set by inventory.js (72px, smaller for a long max); the box,
+   the slash and the max are 1em of it. */
+.inv-split-input-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--ui-sp-5) 0 var(--ui-sp-7);
+    font-size: 72px;
+    white-space: nowrap;
+}
+
+/* The amount, typed into or set by the slider: no box, just the number. As wide as its digits
+   (inventory.js splitBoxFit), right-aligned so it meets the slash. Form controls do not inherit
+   the page font, so the family is stated. */
+#inv-split-value {
+    box-sizing: content-box;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: var(--ui-text);
+    caret-color: var(--ui-accent);
+    font-family: var(--ui-font);
+    font-size: 1em;
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    outline: none;
+}
+
+#inv-split-value::-webkit-inner-spin-button,
+#inv-split-value::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* "/120", dimmed: the amount being picked reads first. Proportional digits: a tabular "1" leaves a
+   gap after the slash. */
+.inv-split-max {
+    font-size: 1em;
+    font-weight: var(--ui-fw-semibold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: proportional-nums;
+    color: var(--ui-text-label);
+}
+
+.inv-split-slash {
+    margin: 0 0.04em;
+}
+
+/* inventory.js measures "max/max" in this to size the number; never seen. */
+.inv-split-probe {
+    position: absolute;
+    visibility: hidden;
+    font-size: 72px;
+    font-weight: var(--ui-fw-semibold);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ON A PAD, AN ARROW ABOVE AND BELOW THE AMOUNT: D-pad up / down step it, faster held
+   (inventory.js splitStep). The pressed one lights; one at its end dims. */
+.inv-split-pick {
+    position: relative;
+    display: inline-flex;
+}
+
+.inv-split-arrow {
+    display: none;
+    position: absolute;
+    left: 50%;
+    width: 0.36em;
+    height: 0.21em;
+    transform: translateX(-50%);
+    color: var(--ui-text-label);
+    transition: color 0.1s var(--ui-ease), opacity 0.1s var(--ui-ease);
+}
+
+.inv-split-arrow.up { bottom: calc(100% + 0.14em); }
+.inv-split-arrow.down { top: calc(100% + 0.14em); }
+
+.inv-split-arrow svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.inv-split-arrow.on { color: var(--ui-text); }
+.inv-split-arrow.end { opacity: 0.2; }
+
+html[data-input="pad"] .inv-split-arrow { display: block; }
+html[data-input="pad"] #inv-split-panel .inv-split-input-row { padding-block: 0.46em; }
+
+#inv-split-slider {
+    display: block;
+    width: 100%;
+    height: 4px;
+    margin: 0;
+    appearance: none;
+    background: var(--ui-border-hover);
+    border-radius: var(--ui-radius-pill);
+    outline: none;
+    cursor: pointer;
+}
+
+#inv-split-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--ui-text);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Keyboard focus on the slider shows on its thumb — the one part of it a player looks at. */
+#inv-split-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px var(--ui-accent-medium);
+}
+
+.inv-split-actions {
+    display: flex;
+    gap: var(--ui-sp-5);
+    margin-top: var(--ui-sp-6);
+}
+
+/* THE ADMIN PANEL'S BUTTONS (.wp-btn and its primary / danger / ghost), at the body size because
+   these are the only actions in the popover. */
+.inv-split-btn {
+    flex: 1;
+    padding: var(--ui-sp-4) var(--ui-sp-6);
+    background: var(--ui-surface-hover);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    cursor: pointer;
+    transition: background 0.1s var(--ui-ease), border-color 0.1s var(--ui-ease), color 0.1s var(--ui-ease), opacity 0.1s var(--ui-ease);
+}
+
+.inv-split-btn:focus-visible {
+    outline: 2px solid var(--ui-accent-medium);
+    outline-offset: 1px;
+}
+
+/* Primary — Give / Split. THE HOUSE BUTTON: the white pill with dark ink, as the pause menu,
+   creator and Director draw their one primary action. */
+.inv-split-btn.give {
+    background: var(--ui-pill);
+    border-color: var(--ui-pill);
+    color: var(--ui-pill-ink);
+    font-weight: var(--ui-fw-bold);
+}
+
+.inv-split-btn.give:hover {
+    opacity: 0.88;
+}
+
+/* Danger — the Destroy confirm. An outlined warning, not a solid alarm (DESIGN.md). */
+.inv-split-btn.danger {
+    background: var(--ui-error-light);
+    border-color: var(--ui-error);
+    color: var(--ui-error);
+}
+
+.inv-split-btn.danger:hover {
+    background: var(--ui-error-subtle);
+}
+
+/* Cancel — the house's dark bordered button beside the white one. */
+.inv-split-btn.cancel {
+    background: none;
+    border-color: var(--ui-border-hover);
+    color: var(--ui-text);
+}
+
+.inv-split-btn.cancel:hover {
+    background: var(--ui-surface-hover);
+    color: var(--ui-text);
+}
+
+/* The amount panel's two buttons, centred and the same width: the white pill, and Cancel as a
+   plain word beside it (a fill on hover). */
+#inv-split-panel .inv-split-actions {
+    justify-content: center;
+}
+
+#inv-split-panel .inv-split-btn {
+    flex: 0 0 auto;
+    min-width: 116px;
+}
+
+#inv-split-panel .inv-split-btn.cancel {
+    border-color: transparent;
+}
+
+/* The character's name and id live in hidden #inv-name / #inv-charid. */
+

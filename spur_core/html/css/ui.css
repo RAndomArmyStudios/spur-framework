@@ -1,0 +1,1660 @@
+/* ============================================================================
+   UI LIBRARY — Component Styles
+   ============================================================================
+
+   THE HOUSE STYLE'S COMPONENTS. The values are css/base.css's --ui-* tokens, where a theme
+   overrides them: components reach for --ui-* rather than restating values.
+   ============================================================================ */
+
+/* ---- Keyframe Animations ---- */
+
+@keyframes uiShake {
+    0%, 100% { transform: translateX(0); }
+    12%  { transform: translateX(-8px); }
+    28%  { transform: translateX(6px); }
+    44%  { transform: translateX(-4px); }
+    60%  { transform: translateX(3px); }
+    76%  { transform: translateX(-1px); }
+}
+
+@keyframes uiItemFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   UI LAYER — root container
+   ======================================== */
+
+#ui-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 900;
+}
+
+#ui-layer > * {
+    pointer-events: auto;
+}
+
+/* ========================================
+   1. NOTIFICATIONS
+   ======================================== */
+
+/* ----------------------------------------------------------------------------
+   TWICE THE SIZE, VIA zoom, FOR THE SAME REASON status-hud.css DOES IT.
+
+   Every number below this block is the size it already was. The stack is scaled as one
+   object instead, which is how #status-hud gets its 1.25, and it is what keeps a
+   notification's padding, icon, radius, border width and type in the proportions they
+   were designed in. Doubling eleven declarations by hand is eleven chances to get one
+   wrong, and the next person to tune the padding would be working in a scale nothing
+   else in this file uses.
+
+   THE OFFSETS ARE HALVED TO COMPENSATE. top/right live inside the zoomed coordinate
+   space, so 24px at zoom 2 would sit 48px off the corner. 12px puts it back where it has
+   always been: the stack got bigger, it did not move.
+
+   STILL MULTIPLIED BY --ui-scale. That token is the theme contract and the player's own
+   HUD scale still applies on top of this; doubling is a decision inside it, not a
+   replacement for it.
+   ---------------------------------------------------------------------------- */
+
+#ui-notifications {
+    position: fixed;
+    /* Under the objective cards while a job has any (§10; ui.js sets --obj-n): one card is 85px at the
+       cards' scale (×1.25), 53px at this one (×2), and the rest is air. And under the debug panel while
+       it is up (--dbg-h, its height in SCREEN pixels, debug-panel.js): divided by this zoom to be the
+       same distance on screen. */
+    top: calc(12px + var(--obj-n, 0) * 55px + var(--dbg-h, 0px) / (var(--ui-scale) * 2));
+    transition: top 0.3s var(--ui-ease);
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 950;
+    pointer-events: none;
+
+    /* Halved with the offsets, so the RENDERED width stays the 380px it always was
+       rather than becoming 760px and spanning a third of the screen. */
+    max-width: 190px;
+
+    zoom: calc(var(--ui-scale) * 2);
+}
+
+.ui-notif {
+    display: flex;
+    /* CENTRED, NOT TOP-ALIGNED. With the icon a filled block rather than a floating chip,
+       a single-line notification with the glyph pinned to the top reads as misaligned.
+       Multi-line text still grows downward from a centred icon, which is what the eye
+       expects of a badge-and-label pair. */
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: var(--ui-radius-pop);
+    font-family: var(--ui-font);
+    font-size: 13.5px;
+    font-weight: var(--ui-fw-medium);
+    line-height: 1.45;
+    color: var(--ui-text);
+    /* Flat: the house style is one colour and an opacity, and the inset highlight in --ui-shadow
+       gives the top edge its lift. */
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow);
+    pointer-events: auto;
+    will-change: transform, opacity;
+
+    /* entrance start state */
+    opacity: 0;
+    transform: translateX(50px) scale(0.96);
+    transition: opacity 0.35s var(--ui-ease),
+                transform 0.35s var(--ui-ease),
+                box-shadow 0.35s ease;
+}
+
+.ui-notif.visible {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.ui-notif.exiting {
+    opacity: 0;
+    transform: translateX(40px) scale(0.97);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ----------------------------------------------------------------------------
+   THE ICON IS A FILLED BLOCK, NOT A TINTED CHIP: a solid block of the type colour, dark glyph on
+   top, hard corners (an instrument face, against the rounded surface). State lives in a filled
+   element, as on the status HUD and the dev menu, not in an edge stripe. A filled green square
+   and a filled red one tell apart at any distance; two 12% washes do not.
+   ---------------------------------------------------------------------------- */
+
+.ui-notif-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: var(--ui-fw-bold);
+    flex-shrink: 0;
+
+    /* HARD. See the note above — this is the instrument face against the soft panel. */
+    border-radius: 0;
+
+    /* The dark whip ground, the same value the old gear box put under the white pill, so
+       a glyph on a filled block is the same colour everywhere it appears. */
+    color: rgb(10, 12, 18);
+}
+
+/* A drawn mark (the error's `fail` cross, js/glyphs.js) in place of a character: about the character's size. */
+.ui-notif-icon svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+}
+
+.ui-notif-text {
+    flex: 1;
+    /* Optically centred against a 30px icon rather than nudged with a magic number. The
+       old `padding-top: 4px` was tuned for a 14px line inside a 30px chip and stopped
+       being right the moment either changed. */
+    align-self: center;
+    padding-top: 0;
+}
+
+/* ---- Type variants ----
+
+   ONE DECLARATION EACH NOW. The surface, border and shadow are the shared .ui-notif
+   ground and no variant overrides them — the type is carried entirely by the icon,
+   which is the point of the block above. A variant that only sets a colour cannot
+   drift from the others. */
+
+.ui-notif-success .ui-notif-icon { background: var(--ui-success); }
+.ui-notif-error   .ui-notif-icon { background: var(--ui-error); }
+.ui-notif-info    .ui-notif-icon { background: var(--ui-info); }
+.ui-notif-warning .ui-notif-icon { background: var(--ui-warning); }
+
+/* ========================================
+   2. PROGRESS BAR — see the DRAWTEXT section
+   ========================================
+
+   The progress bar draws into the drawtext band: one box, one fill, one set of rules. The
+   cancel hint rides in the label text.
+*/
+
+/* ========================================
+   4. INPUT DIALOG + 7/8. ALERT/CONFIRM
+   ======================================== */
+
+#ui-input-overlay,
+#ui-alert-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 930;
+}
+
+/* The shell behind Input, Alert and Confirm — one rule, three components. */
+.ui-modal {
+    /* Flat, and no accent glint across the top edge. Blue is the accent, and the accent means
+       "this is the thing you are interacting with"; spending it on decoration at the top of
+       every dialog leaves nothing to say it with. */
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    width: 440px;
+    max-height: 80vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-shadow: var(--ui-shadow-lg);
+    zoom: var(--ui-scale);
+    animation: uiItemFade 0.25s var(--ui-ease) both;
+}
+
+.ui-modal-sm {
+    width: 380px;
+}
+
+
+.ui-modal-title {
+    font-family: var(--ui-font);
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    padding: 22px 26px 0;
+    letter-spacing: -0.2px;
+}
+
+.ui-modal-body {
+    padding: 18px 26px;
+}
+
+.ui-modal-message {
+    font-family: var(--ui-font);
+    font-size: 14px;
+    color: var(--ui-text-mid);
+    line-height: 1.6;
+}
+
+.ui-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 26px 22px;
+}
+
+/* ---- Input fields ---- */
+
+.ui-input-field {
+    margin-bottom: 16px;
+}
+
+.ui-input-field:last-child {
+    margin-bottom: 0;
+}
+
+.ui-input-label {
+    display: block;
+    font-family: var(--ui-font);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ui-text-label);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.ui-input-el {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.ui-input-el:hover {
+    border-color: var(--ui-border-hover);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ui-input-el:focus {
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ui-input-el::placeholder {
+    color: var(--ui-text-mid);
+}
+
+/* A field Submit found a problem with — required, or outside its min/max */
+.ui-input-el.ui-input-invalid {
+    border-color: var(--ui-error);
+}
+
+.ui-input-problem {
+    font-family: var(--ui-font);
+    font-size: 12px;
+    color: var(--ui-error);
+    margin-top: 6px;
+}
+
+.ui-input-problem:empty {
+    display: none;
+}
+
+/* On a controller: the ring on the field or button A works (ui.js inputPadNav). Only on a pad. */
+html[data-input="pad"] #ui-input-overlay .pad-focus {
+    outline: 2px solid var(--ui-pill);
+    outline-offset: 2px;
+}
+
+/* Select dropdown */
+select.ui-input-el {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 36px;
+    background-image: var(--ui-chevron);   /* whip's chevron (base.css select) */
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px 12px;
+}
+
+/* Textarea */
+textarea.ui-input-el {
+    resize: vertical;
+    min-height: 64px;
+    line-height: 1.5;
+}
+
+/* Color picker */
+input[type="color"].ui-input-el {
+    padding: 4px 6px;
+    height: 44px;
+    cursor: pointer;
+}
+
+/* Checkbox */
+.ui-input-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ui-input-checkbox {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 20px !important;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ui-input-checkbox:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ui-input-checkbox:checked {
+    background: var(--ui-accent);
+    border-color: var(--ui-accent);
+}
+
+.ui-input-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 6px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-right: none;
+    transform: translate(-50%, -60%) rotate(-45deg);
+}
+
+.ui-input-check-text {
+    font-family: var(--ui-font);
+    font-size: 13px;
+    color: var(--ui-text-mid);
+}
+
+/* ---- Buttons ---- */
+
+.ui-btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.ui-btn:active {
+    transform: scale(0.97);
+}
+
+.ui-btn-confirm {
+    background: var(--ui-accent);
+    color: #fff;
+    box-shadow: 0 2px 10px var(--ui-accent-glow);
+}
+
+.ui-btn-confirm:hover {
+    background: #6db3ff;
+    box-shadow: 0 4px 16px var(--ui-accent-medium);
+}
+
+.ui-btn-cancel {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ui-text-mid);
+}
+
+.ui-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--ui-text);
+}
+
+/* ========================================
+   6. SKILL CHECK — the ring
+   ========================================
+
+   A faint ring, the part to reach lit in glowing blue, a white dot
+   in the middle wearing the hand's glyph. The lit part fills pale blue under the dot, growing more
+   solid and turning white as it fills (--sk-fill, 0-1, and --sk-fill-colour, both written by ui.js
+   each frame it changes), flashes pale with a glow when it completes, then the next, smaller part
+   appears in the normal colours. A miss marks where the dot touched and shakes. How it plays is in
+   ui.js §4. */
+
+#ui-skillcheck {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 925;
+}
+
+.ui-skill-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-sp-5);
+    zoom: var(--ui-scale);
+    animation: skIn 0.18s var(--ui-ease);
+}
+
+@keyframes skIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* Twice SK_BOX in ui.js, so one unit of the drawing is one pixel: change the two together. */
+.ui-skill-svg {
+    width: 168px;
+    height: 168px;
+    overflow: visible;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+}
+
+.sk-edge {
+    fill: none;
+    stroke: var(--ui-skill-outline);
+    stroke-width: 1.25;
+}
+
+.sk-edge-rim {
+    fill: none;
+    stroke: var(--ui-skill-edge);
+    stroke-opacity: 0.35;
+    stroke-width: 3;
+}
+
+/* The clock: the outer line, running back to the top as time goes (ui.js writes the dash), and red
+   for the last of it. Its dark rim stays whole underneath, so the empty part still reads as a track. */
+.sk-timer {
+    stroke: var(--ui-skill-clock);
+    stroke-width: 2;
+}
+.sk-late .sk-timer { stroke: var(--ui-error); }
+
+.sk-arc,
+.sk-fill,
+.sk-miss-mark {
+    stroke: var(--ui-skill-edge);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+/* Glowing, so the eye finds it at once. */
+.sk-arc {
+    fill: var(--ui-skill-target);
+    filter: url(#ui-skill-glow);
+    transition: opacity 0.12s ease;
+}
+
+/* Between rounds: the ring does not count until the dot comes back toward the middle. */
+.sk-wait .sk-arc { opacity: 0.4; }
+
+/* --sk-fill-colour is --ui-skill-fill turning into --ui-skill-full as the part fills (ui.js). */
+.sk-fill {
+    fill: var(--sk-fill-colour, var(--ui-skill-fill));
+    opacity: calc(0.55 + var(--sk-fill, 0) * 0.45);
+}
+
+.sk-miss-mark { fill: var(--ui-error); }
+
+.sk-knob-disc {
+    fill: var(--ui-pill);
+    stroke: var(--ui-skill-edge);
+    stroke-width: 1.5;
+}
+
+.sk-knob-tint {
+    fill: var(--sk-fill-colour, var(--ui-skill-fill));
+    opacity: calc(var(--sk-fill, 0) * 0.85);
+}
+
+.sk-glyph {
+    display: none;
+    fill: var(--ui-pill-ink);
+    font-family: var(--ui-font);
+    font-size: 21px;
+    font-weight: var(--ui-fw-bold);
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.sk-glyph-mouse {
+    fill: none;
+    stroke: var(--ui-pill-ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.sk-dev-pad .sk-glyph-pad,
+.sk-dev-mouse .sk-glyph-mouse { display: inline; }
+
+.sk-arrow { fill: var(--ui-pill-ink); }
+
+/* A part filled, with more to come: it glows pale where it was and fades, while the next part is
+   already lit (ui.js restarts this each time). */
+.sk-done-arc {
+    fill: var(--ui-skill-done);
+    opacity: 0;
+    filter: url(#ui-skill-glow);
+    pointer-events: none;
+}
+.sk-done-arc.sk-glow { animation: skGlow 0.3s ease-out forwards; }
+
+@keyframes skGlow {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+/* The last part filled: the whole ring pale and glowing, for SK_FLASH_MS. (An SVG filter, not
+   drop-shadow(): CEF 103 does not reliably run CSS filter functions on elements inside an <svg>.) */
+.sk-done .sk-arc,
+.sk-done .sk-fill {
+    fill: var(--ui-skill-done);
+    opacity: 1;
+    filter: url(#ui-skill-glow);
+}
+.sk-done .sk-knob-tint {
+    fill: var(--ui-skill-done);
+    opacity: 1;
+}
+.sk-done .sk-arrow { visibility: hidden; }
+
+/* A miss. */
+.sk-miss { animation: uiShake 0.35s ease-out; }
+.sk-miss .sk-miss-mark { filter: url(#ui-skill-glow); }
+.sk-miss .sk-knob-disc { fill: var(--ui-error); }
+.sk-miss .sk-knob-tint { opacity: 0; }
+
+/* What to do, for the mouse. A pad's R on the dot says it. */
+.ui-skill-hint {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    font-family: var(--ui-font);
+    font-size: 14px;
+    font-weight: var(--ui-fw-semibold);
+    /* Straight over the world with no pane behind it: full-strength text on the hard dark rim. */
+    color: var(--ui-text);
+    text-shadow: var(--ui-rim), var(--ui-shadow-text);
+}
+
+.ui-skill-hint > span {
+    display: none;
+    align-items: center;
+    gap: var(--ui-sp-2);
+}
+
+.sk-dev-mouse .sk-hint-mouse { display: inline-flex; }
+
+/* ========================================
+   9. DRAWTEXT — the hint capsule
+   ========================================
+
+   THE PLAYER CAPSULE'S TWIN. UI.ShowText and the progress bar draw a second
+   capsule, built of the player capsule's own parts so it IS that object: .sh-capsule (status-hud.css:
+   the glass, the 38px ends, the hairline, the lift, the top highlight) and, on its left, an .sh-stat
+   disc as the notification bubble is (the white ring, the badge's black outline, the glyph that flips
+   where the white fill crosses it). Same scale too: --ui-scale × 1.25, as #status-hud. A theme that
+   restyles the player capsule restyles this one; the HUD's black skin keeps to #status-hud.
+
+   The disc shows what is being done (ui.js dtDisc: the caller's icon, else the first control's key).
+   Beside it the card's layout: the first control as the title in the display face, the rest in a
+   row under it. A bar fills the disc white from the bottom — a stat gauge's own way of showing an
+   amount — and a track under the title. --dt-p (0-1) drives both, scaled on the compositor; ui.js
+   sets it, per frame while a bar runs. A bar done with an item shows its picture in the disc instead
+   (.dt-item, below), and only the track fills.
+
+   ON THE PLAYER CAPSULE'S ROW, bottom centre (#statusHudWrapper's 10px). It lifts above the pad's hint
+   strip while that is up (.pad-hints-up, controller.js), which shares the bottom centre. */
+#ui-drawtext {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 910;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    zoom: calc(var(--ui-scale) * 1.25);
+}
+
+/* Two classes: status-hud.css loads after this file, and .sh-capsule's own gap and padding would win. */
+.sh-capsule.dt-cap {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    gap: 0;
+    padding-right: 26px;
+    white-space: nowrap;
+
+    /* entrance start */
+    opacity: 0;
+    transform: translate(-50%, 8px);
+    /* border-color and box-shadow: the failure's red outline fades in (.dt-fail, below). padding-right: the
+       hotbar joining its end (inventory.css HOTBAR, .hb-merged). */
+    transition: opacity 0.3s var(--ui-ease), transform 0.3s var(--ui-ease), bottom 0.25s var(--ui-ease),
+        border-color 0.25s ease, box-shadow 0.25s ease, padding-right 0.3s var(--ui-ease);
+}
+
+.ui-drawtext-top .dt-cap {
+    top: 36px;
+    bottom: auto;
+    transform: translate(-50%, -8px);
+}
+
+.ui-drawtext.visible .dt-cap {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+html[data-input="pad"].pad-hints-up .ui-drawtext-bottom .dt-cap {
+    bottom: 64px;
+}
+
+/* ---- the disc: an .sh-stat, as the bubble is (here, on the objective cards of §10, and on the
+   coords readout, css/coords.css) ---- */
+
+/* It comes with the capsule: none of .sh-stat's own reveal. */
+:is(.dt-cap, .ob-card, .co-card) .sh-stat.dt-disc {
+    flex: 0 0 auto;
+    animation: none;
+    opacity: 1;
+    transform: none;
+}
+
+/* The ring: white, a pad button's colour when the disc shows one, amber when it cannot be done here. */
+:is(.dt-cap, .ob-card, .co-card) .sh-stat.dt-disc::after {
+    border-color: var(--dt-ring, var(--sh-disc-ring));
+}
+
+/* The fill rises with --dt-p. Scaled rather than sized: a bar moves it every frame. */
+:is(.dt-cap, .ob-card, .co-card) .dt-disc .sh-fill {
+    height: 100%;
+    transform: scaleY(var(--dt-p, 0));
+    transform-origin: 50% 100%;
+    transition: transform 0.08s linear;
+}
+
+/* An icon a little larger than a stat's: here it is the message, as the bubble's is. */
+:is(.dt-cap, .ob-card, .co-card) .dt-disc .sh-icon {
+    width: 31px;
+    height: 31px;
+}
+
+/* A key letter: the bubble's (composer.css .cap-bubble-glyph). */
+:is(.dt-cap, .ob-card) .dt-disc .sh-icon.dt-letter {
+    width: 55%;
+    height: 55%;
+}
+
+:is(.dt-cap, .ob-card) .dt-warn .sh-icon {
+    opacity: 0.8;
+}
+
+/* A bar done with an item (ui.js dtItemPicture): the item's picture in the disc, sized as the hotbar's disc holds
+   one (inventory.css .hb-img, at the stat disc's size), and no fill: the track under the words shows how far along it
+   is. Its glyph is for an item with no picture. */
+.dt-cap .dt-item .dt-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 41px;
+    max-height: 35px;
+    object-fit: contain;
+    filter: var(--ui-item-shadow);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.dt-cap .dt-item .sh-icon,
+.dt-cap .dt-item.dt-no-art .dt-img {
+    display: none;
+}
+
+.dt-cap .dt-item.dt-no-art .sh-icon {
+    display: block;
+}
+
+/* ---- failed: stopped by something the player did not choose (ui.js showFailure) ----
+   The error notification's look, on the card: a red outline round it, and its disc the capsule bubble's
+   error disc — filled red, a dark ✗ on it (flat ink on a tinted disc, as #capsuleBubble does it) — with a
+   red glow round the ring. The why is the title, in the card's usual white. */
+.sh-capsule.dt-cap.dt-fail {
+    border-color: var(--ui-error);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        0 0 0 1px var(--ui-error),
+        0 0 18px rgba(248, 113, 113, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dt-cap.dt-fail .sh-stat.dt-disc::after {
+    border-color: var(--ui-error);
+    box-shadow: var(--sh-disc-outline), 0 0 10px rgba(248, 113, 113, 0.65), 0 0 22px rgba(248, 113, 113, 0.3);
+}
+
+.dt-cap.dt-fail .dt-disc .sh-fill {
+    transform: scaleY(1);
+    background: var(--ui-error);
+}
+
+.dt-cap.dt-fail .dt-disc .sh-icon {
+    mix-blend-mode: normal;
+    color: rgb(10, 12, 18);
+}
+
+/* THE SWAP TO THE ERROR STATE, ANIMATED.
+   In one beat, about half a second: the card gives a short "no" shake and its red outline fades in; red rises
+   in the disc from where the bar had got to (--dt-from, ui.js showFailure; 0 for a mode); the ✗ pops in on
+   top of it with a little overshoot; the ring flashes a brighter red and settles to its glow; the why slides
+   up into the title. ui.js redraws the card's inside for the failure, so each part plays from the start, and
+   it takes .dt-fail off and back on to play the shake again for a second failure. (The outline's fade is the
+   card's own transition, at the top of this section.) */
+
+/* The card is placed by its transform (translate(-50%) to centre it), so the shake carries that with it. */
+.ui-drawtext.visible .sh-capsule.dt-cap.dt-fail {
+    animation: dtFailShake 0.42s var(--ui-ease);
+}
+
+@keyframes dtFailShake {
+    0%   { transform: translate(-50%, 0); }
+    16%  { transform: translate(calc(-50% - 8px), 0); }
+    33%  { transform: translate(calc(-50% + 7px), 0); }
+    50%  { transform: translate(calc(-50% - 5px), 0); }
+    67%  { transform: translate(calc(-50% + 3px), 0); }
+    84%  { transform: translate(calc(-50% - 1px), 0); }
+    100% { transform: translate(-50%, 0); }
+}
+
+.dt-cap.dt-fail .dt-disc .sh-fill {
+    animation: dtFailFill 0.32s var(--ui-ease) both;
+}
+
+@keyframes dtFailFill {
+    from { transform: scaleY(var(--dt-from, 0)); background: var(--sh-disc-fill); }
+    to   { transform: scaleY(1); background: var(--ui-error); }
+}
+
+/* The cross itself (the `fail` glyph's svg), not its box: .sh-icon is centred by its own transform, and the svg
+   fills that box, so it turns and grows about the disc's exact middle. */
+.dt-cap.dt-fail .dt-disc .sh-icon svg {
+    transform-origin: 50% 50%;
+    animation: dtFailMark 0.36s var(--ui-ease-bounce, var(--ui-ease)) 0.14s both;
+}
+
+@keyframes dtFailMark {
+    0%   { transform: scale(0.2) rotate(-60deg); opacity: 0; }
+    65%  { transform: scale(1.2) rotate(6deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.dt-cap.dt-fail .sh-stat.dt-disc::after {
+    animation: dtFailRing 0.7s ease-out 0.1s both;
+}
+
+@keyframes dtFailRing {
+    0%   { box-shadow: var(--sh-disc-outline); }
+    35%  { box-shadow: var(--sh-disc-outline), 0 0 16px rgba(248, 113, 113, 0.95), 0 0 34px rgba(248, 113, 113, 0.5); }
+    100% { box-shadow: var(--sh-disc-outline), 0 0 10px rgba(248, 113, 113, 0.65), 0 0 22px rgba(248, 113, 113, 0.3); }
+}
+
+.dt-cap.dt-fail .dt-body {
+    animation: dtFailBody 0.3s var(--ui-ease) 0.06s both;
+}
+
+@keyframes dtFailBody {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ---- the card's layout beside it ---- */
+
+.dt-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    margin-left: 14px;
+    min-width: 150px;
+}
+
+.dt-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: var(--ui-fw-display);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: var(--ui-text);
+    text-shadow: var(--ui-shadow-text);
+}
+
+/* A bar's track, under the title: only while a bar runs (ui.js dtInside). */
+.dt-bar {
+    position: relative;
+    align-self: stretch;
+    height: 3px;
+    margin-top: 6px;
+    border-radius: 2px;
+    background: var(--ui-slot-line-filled);
+}
+
+.dt-bar span {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: var(--ui-text);
+    transform: scaleX(var(--dt-p, 0));
+    transform-origin: 0 50%;
+    transition: transform 0.08s linear;
+}
+
+.dt-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+    line-height: 1.2;   /* its own: the layer's would stand the row a third taller than its keycaps */
+    font-size: var(--ui-fs-md);
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text-mid);
+}
+
+.dt-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* A [Key] in the text: the inventory's keycap (.inv-key), at the row's size; larger in the title. */
+.dt-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 21px;
+    height: 21px;
+    box-sizing: border-box;
+    padding: 0 5px;
+    border: 1px solid var(--ui-slot-line-hover);
+    border-radius: var(--ui-radius-sm);
+    background: var(--ui-surface-medium);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-bold);
+    line-height: 1;
+    color: var(--ui-text);
+    text-shadow: none;
+}
+
+.dt-title .dt-key {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    font-size: var(--ui-fs-md);
+}
+
+/* A button's picture in the text: a {pad:a} marker (ui.js dtPart), at the keycaps' height. Two
+   together (LT RT) sit as a pair. */
+.ui-padglyph {
+    display: block;
+    height: 21px;
+    width: auto;
+}
+
+.dt-title .ui-padglyph {
+    height: 24px;
+}
+
+.ui-padglyph + .ui-padglyph {
+    margin-left: -2px;
+}
+
+/* ========================================
+   10. OBJECTIVES — the tracker at the top right
+   ========================================
+
+   A JOB'S OBJECTIVE ON A CARD OF ITS OWN, apart from the notifications: the Director's runs, through PlayerText.objective (server/player_text.lua). The hint
+   capsule at the bottom is what the player is doing this moment; this is what the job wants, and both
+   show at once. The same capsule (.sh-capsule, the .sh-stat disc, the §9 body) at the same scale: the
+   disc holds the objective's flag and drains as the clock runs (--dt-p, ui.js §10), the objective is
+   the title, the job's name and the clock are the row. One card per job, the newest on top, a column
+   in the top-right corner; the notification stack moves down under them (--obj-n). A changed
+   objective lights the ring Signal Blue for a moment (.fresh): it needs you. */
+#ui-objectives {
+    position: fixed;
+    /* Under the debug panel while it is up (--dbg-h, screen pixels; divided by this zoom). */
+    top: calc(12px + var(--dbg-h, 0px) / (var(--ui-scale) * 1.25));
+    transition: top 0.3s var(--ui-ease);
+    right: 16px;
+    z-index: 940;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    font-family: var(--ui-font);
+    zoom: calc(var(--ui-scale) * 1.25);
+}
+
+/* Two classes: status-hud.css loads after this file (as .dt-cap). */
+.sh-capsule.ob-card {
+    position: relative;
+    gap: 0;
+    padding-right: 26px;
+    white-space: nowrap;
+
+    /* entrance start: in from the edge it sits on */
+    opacity: 0;
+    transform: translateX(28px);
+    transition: opacity 0.35s var(--ui-ease), transform 0.35s var(--ui-ease);
+}
+
+.sh-capsule.ob-card.visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* A clock drains a second at a time: the fill eases between them rather than stepping. */
+.ob-card .dt-disc .sh-fill {
+    transition: transform 0.3s linear;
+}
+
+.ob-card.fresh .sh-stat.dt-disc::after {
+    border-color: var(--ui-accent);
+}
+
+.ob-card.no-row .dt-row {
+    display: none;
+}
+
+.ob-clock {
+    color: var(--ui-text);
+    font-weight: var(--ui-fw-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-name:empty,
+.ob-clock:empty {
+    display: none;
+}
+
+/* ========================================
+   PAD HINT STRIP — the menu's buttons, on a controller (controller.js)
+   ========================================
+
+   Bottom centre: between the status HUD (bottom left) and the vehicle HUD (bottom right), under
+   the text band (80px up). Shown only while the input is a pad, so a keyboard never sees it. */
+#pad-hints {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translate(-50%, 6px);
+    /* Over the inventory's panels (9000), the Director (9550, its menus 9560), the Systems Creator (9565)
+       and the pad keyboard (9580); under the status HUD (9600), the editor HUDs (9700) and the
+       inventory's popovers (10000+). It was 9500, under the Director, so its hints never showed there. */
+    z-index: 9590;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 18px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: 20px;
+    box-shadow: var(--ui-shadow);
+    font-family: var(--ui-font);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ui-text);
+    zoom: var(--ui-scale);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s var(--ui-ease), transform 0.2s var(--ui-ease);
+}
+
+html[data-input="pad"] #pad-hints.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.pad-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pad-hint-glyph {
+    height: 24px;
+    width: auto;
+}
+
+/* THE BARE LOOK: Whiplash's hints (whip_autos/html/js/view.js drawHints), for a screen whose scope asks for it
+   (padHintsLook 'bare': the character screen, the spawn picker; Josh, 1 Nov). No pill: faint words under the screen's
+   own column at its left margin (the name strip's 170 px, in 1440p px like everything zoomed by --ui-scale), the
+   button a little taller than the words, a middle dot between hints. */
+#pad-hints.pad-hints-bare {
+    left: 170px;
+    bottom: 58px;
+    transform: translate(0, 6px);
+    gap: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.36);
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+html[data-input="pad"] #pad-hints.pad-hints-bare.visible { transform: translate(0, 0); }
+#pad-hints.pad-hints-bare .pad-hint { gap: 6px; }
+#pad-hints.pad-hints-bare .pad-hint-glyph { height: 34px; }
+#pad-hints.pad-hints-bare .pad-hint + .pad-hint::before {
+    content: '·';
+    margin: 0 15px;
+}
+
+/* ========================================
+   5. RADIAL MENU — "Slab"
+   ========================================
+
+   Thick glass slabs in a ring, each with its icon and name always showing. The one you aim at lifts
+   out of the ring and turns white, and a beam of light joins it to the centre. The centre is the
+   status HUD's stat disc (css/status-hud.css), drawn big: its ring turns accent blue when something
+   is chosen, the disc fills white from the bottom, and the chosen icon sits in it as the hero —
+   white on the dark core, flipped dark by mix-blend difference as the white rises behind it.
+
+   NEUTRAL — nothing aimed at — is a state of its own: the disc shows how to choose with the
+   device in your hands, a stick being pushed around on a pad or a mouse swaying on a keyboard, and
+   the pill under the wheel says "Choose an action". html[data-input] (js/controller.js) picks which,
+   so a device change needs no redraw.
+
+   DRAWN AT 1440p, scaled by --ui-scale × 1.25 (RAD.big in ui.js) on a zero-size anchor at the
+   screen's centre. The wheel's centre is the
+   screen's centre, which is where Lua puts the cursor when it opens (client/radial.lua) — so the
+   mouse starts neutral, and ui.js aims from innerWidth/2, innerHeight/2 without reading a zoomed
+   element's box.
+
+   TWO WHEELS ON A PAD: opened with the pad, the actions wheel moves left and the
+   hotkeys wheel (pocket slots 1-5) sits as far right — see "Two wheels" at the end of this part.
+
+   Geometry (the 560 box, in design px): slabs from radius 126 to 258, the label's centre on 194,
+   1.4 degrees between slabs, the chosen one lifted 14 out; the beam from 92 to 123; the disc 176
+   across in the middle. ui.js builds the paths from the same numbers (RAD in ui.js). */
+
+#ui-radial {
+    --rad-fade: var(--ui-fade);
+
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 935;
+
+    /* No scrim. The wheel sits over live gameplay — you are steering a car — so blacking the
+       world out is the wrong trade. */
+    opacity: 0;
+    transition: opacity var(--rad-fade) var(--ui-ease);
+    font-family: var(--ui-font);
+    user-select: none;
+}
+
+/* While it is up the whole screen is the wheel's: a click anywhere uses what is aimed at, a
+   right-click anywhere closes. Not while fading out, so a late click lands on nothing. */
+#ui-radial.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.rad {
+    position: relative;
+    width: 0;
+    height: 0;
+    zoom: calc(var(--ui-scale) * 1.25);
+}
+
+.rad-wheel {
+    position: absolute;
+    left: -280px;
+    top: -280px;
+    width: 560px;
+    height: 560px;
+    filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.5));
+    transform: scale(0.94);
+    transition: transform 0.28s var(--ui-ease);
+}
+
+#ui-radial.visible .rad-wheel {
+    transform: scale(1);
+}
+
+.rad-wheel > svg,
+.rad-slab > svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: visible;
+}
+
+/* ---- The beam: from the disc's edge to the chosen slab ---- */
+.rad-beam {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.rad.chosen .rad-beam {
+    opacity: 1;
+}
+
+/* ---- The slabs ---- */
+.rad-slab {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 560px;
+    height: 560px;
+    transition: transform 0.22s var(--ui-ease);
+}
+
+.rad-slab.on {
+    transform: translate(var(--lx), var(--ly));
+}
+
+/* The slab's own shape — by class: a rule on `.rad-slab path` would beat the fill="none" of every
+   glyph path inside it too, and fill the icons solid. */
+.rad-shape {
+    fill: rgba(10, 12, 18, 0.84);
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    stroke-linejoin: round;
+    transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.rad-slab.on .rad-shape {
+    fill: rgba(255, 255, 255, 0.95);
+    stroke: rgba(255, 255, 255, 0.95);
+}
+
+.rad-face {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+}
+
+.rad-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--rad-icon, 34px);
+    height: var(--rad-icon, 34px);
+    color: var(--ui-text);
+    transition: color 0.15s ease;
+}
+
+.rad-icon svg {
+    position: static;
+    width: 100%;
+    height: 100%;
+}
+
+/* No glyph by that name: its text (a key letter) or the label's first letter. */
+.rad-icon-text {
+    font-size: calc(var(--rad-icon, 34px) * 0.7);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.rad-label {
+    max-width: var(--rad-label-w, 120px);
+    font-size: var(--rad-label-fs, 12px);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.15s ease;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.rad-slab.on .rad-icon  { color: var(--ui-pill-ink); }
+.rad-slab.on .rad-label { color: rgba(10, 12, 18, 0.8); }
+
+/* The "nothing here" ring: one empty slab all the way round, and nothing to aim at. */
+.rad-slab.empty .rad-shape {
+    fill: rgba(10, 12, 18, 0.6);
+}
+
+/* ---- The centre: the stat disc ---- */
+.rad-disc {
+    position: absolute;
+    left: 192px;
+    top: 192px;
+    width: 176px;
+    height: 176px;
+    isolation: isolate;
+}
+
+.rad-disc-clip {
+    position: absolute;
+    inset: 17px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.rad-disc-core {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(12, 14, 20, 0.96);
+    box-shadow: inset 0 0 0 8px rgba(0, 0, 0, 0.55);
+}
+
+.rad-disc-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    background: var(--ui-text);
+    transition: height 0.25s ease;
+}
+
+.rad.chosen .rad-disc-fill.full {
+    height: 100%;
+    transition: height 0.5s var(--ui-ease);
+}
+
+.rad-disc-ring {
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 10px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 0, 0, 0.85);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.rad.chosen .rad-disc-ring {
+    border-color: var(--ui-accent);
+    box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(96, 165, 250, 0.35),
+                0 0 42px rgba(96, 165, 250, 0.15);
+}
+
+.rad-hero {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    transform: translate(-50%, -50%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    mix-blend-mode: difference;
+}
+
+.rad.chosen .rad-hero {
+    display: flex;
+}
+
+.rad-hero svg {
+    position: static;
+    width: 100%;
+    height: 100%;
+}
+
+.rad-hero .rad-icon-text {
+    font-size: 44px;
+}
+
+/* ---- Neutral: how to choose, for the device in your hands ---- */
+.rad-hint {
+    position: absolute;
+    inset: 0;
+    display: none;
+    animation: radHintIn 0.25s var(--ui-ease);
+}
+
+.rad:not(.chosen):not(.empty) .rad-hint-mouse { display: block; }
+html[data-input="pad"] .rad:not(.chosen):not(.empty) .rad-hint-mouse { display: none; }
+html[data-input="pad"] .rad:not(.chosen):not(.empty) .rad-hint-stick { display: block; }
+
+.rad-stick-well {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    box-sizing: border-box;
+}
+
+.rad-stick-cap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--ui-text);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ui-pill-ink);
+    animation: radStickCap 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.rad-mouse {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 50px;
+    height: 50px;
+    color: var(--ui-text);
+    transform-origin: 50% 85%;
+    animation: radMouseSway 2.4s ease-in-out infinite;
+}
+
+.rad-mouse svg {
+    position: static;
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes radStickCap {
+    0%, 12%, 100% { transform: translate(-50%, -50%); }
+    25%  { transform: translate(-50%, calc(-50% - 9px)); }
+    37%  { transform: translate(-50%, -50%); }
+    50%  { transform: translate(calc(-50% + 9px), -50%); }
+    62%  { transform: translate(-50%, -50%); }
+    75%  { transform: translate(-50%, calc(-50% + 9px)); }
+    87%  { transform: translate(calc(-50% - 9px), -50%); }
+}
+
+@keyframes radMouseSway {
+    0%, 100% { transform: translate(-50%, -50%) rotate(-8deg); }
+    50%      { transform: translate(-50%, -50%) rotate(8deg); }
+}
+
+@keyframes radHintIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---- The pill: the name, and what it does ---- */
+.rad-pill {
+    position: absolute;
+    left: 0;
+    top: 294px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow);
+    white-space: nowrap;
+}
+
+.rad-pill-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.rad.chosen .rad-pill-name {
+    color: var(--ui-text);
+}
+
+.rad-pill-desc,
+.rad-pill-how {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.rad-pill-desc:empty {
+    display: none;
+}
+
+/* Neutral's second line, for the device in your hands. */
+.rad-pill-how { display: none; }
+.rad:not(.chosen):not(.empty) .rad-pill-how-mouse { display: inline; }
+html[data-input="pad"] .rad:not(.chosen):not(.empty) .rad-pill-how-mouse { display: none; }
+html[data-input="pad"] .rad:not(.chosen):not(.empty) .rad-pill-how-stick { display: inline; }
+.rad:not(.chosen):not(.empty) .rad-pill-desc { display: none; }
+
+/* ---- Two wheels on a pad ----
+   The actions wheel (left stick) and the hotkeys wheel (right stick, pocket slots 1-5), their centres
+   330 design px either side of the screen's (RAD.duoX in ui.js). That leaves the screen's middle,
+   where the cursor starts, on neither wheel. Each is its own .rad, so each has its own aim, disc and
+   pill; ui.js lets only one of them have an aim at a time. A page (Seats) takes the screen: the
+   hotkeys go and the page stands in the middle. */
+.rad.rad-left  { left: -330px; }
+.rad.rad-right { left: 330px; }
+.rad.gone      { display: none; }
+
+/* A hotkey slot's face: the item's picture alone, sized to stay clear of the slab's edges (ui.js
+   RAD_HK_PIC). Its name is in the pill under the wheel. */
+.rad-art {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.rad-slab.on .rad-art {
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+}
+
+/* An empty slot: a dashed box where the picture would be, its words dimmed. It can still be aimed
+   at; the disc stays empty, as there is nothing to use. */
+.rad-none {
+    box-sizing: border-box;
+    border: 2px dashed rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+}
+
+.rad-slot-empty .rad-label { color: rgba(255, 255, 255, 0.32); }
+.rad-slab.on.rad-slot-empty .rad-none  { border-color: rgba(10, 12, 18, 0.25); }
+.rad-slab.on.rad-slot-empty .rad-label { color: rgba(10, 12, 18, 0.5); }
+.rad.chosen.aim-empty .rad-disc-fill.full { height: 0; }
+
+/* No picture (it fell all the way back to missing.png): the inventory's quiet outline glyph
+   (inventory.css .no-art) in the text's colour, rather than a "?" picture. */
+.rad-icon.no-art img,
+.rad-hero.no-art img {
+    visibility: hidden;
+}
+
+.rad-icon.no-art,
+.rad-hero.no-art {
+    background: currentColor;
+    opacity: 0.6;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='7' width='34' height='34' rx='9'/%3E%3Cpath d='M19.5 19.6a4.6 4.6 0 1 1 6.4 4.2c-1.2.6-1.9 1.4-1.9 2.7v1.3'/%3E%3Cpath d='M24 33.4h.01'/%3E%3C/svg%3E") center / 100% no-repeat;
+}
+
+/* The aimed item is the hero in its own colours: a picture, not a glyph to flip by blending. The
+   hotkeys' disc stays dark (ui.js hkSelect does not fill it): only the aimed slab lights. */
+.rad-items .rad-hero {
+    width: 96px;
+    height: 96px;
+    mix-blend-mode: normal;
+    color: var(--ui-pill-ink);
+}
+
+.rad-items .rad-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ---- A second page: Seats, inside the wheel ----
+   Picking Seats keeps the wheel up: the ring gives way to the vehicle's seats, laid out like the car
+   round the disc (ui.js builds them: 212 x 74 slabs, two to a row 214 either side of the centre, the
+   front at the top; one behind another on a bike; 56 tall past four rows). The aimed seat lifts away
+   from the disc with the beam joined to it, and a free one turns white, as a ring slab does. The disc
+   fills only for a free seat: the pill says what the others are. */
+.rad-seat {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px 0 12px;
+    border-radius: 18px;
+    background: rgba(10, 12, 18, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.22s var(--ui-ease), background 0.15s ease, border-color 0.15s ease;
+    /* backwards, not both: a filled-forward transform would beat .on's lift for good. */
+    animation: radSeatIn 0.24s var(--ui-ease) backwards;
+}
+
+.rad-seat.on {
+    transform: translate(var(--lx), var(--ly));
+}
+
+.rad-seat-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--ui-text);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rad-seat-icon svg {
+    position: static;
+    width: 28px;
+    height: 28px;
+}
+
+.rad-seat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.rad-seat-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ui-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+}
+
+.rad-seat-state {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.rad-seat.free .rad-seat-state { color: var(--ui-success); }
+
+.rad-seat.you { border-color: var(--ui-accent-medium); }
+.rad-seat.you .rad-seat-icon { background: var(--ui-accent-light); color: var(--ui-accent); }
+.rad-seat.you .rad-seat-state { color: var(--ui-accent); }
+
+.rad-seat.occupied { background: rgba(10, 12, 18, 0.6); border-color: rgba(255, 255, 255, 0.05); }
+.rad-seat.occupied .rad-seat-name { color: rgba(255, 255, 255, 0.55); }
+.rad-seat.occupied .rad-seat-state { color: rgba(255, 255, 255, 0.42); }
+.rad-seat.occupied .rad-seat-icon { background: rgba(255, 255, 255, 0.03); color: rgba(255, 255, 255, 0.35); }
+
+/* Aimed. A free seat is the thing to do, so it turns white; yours and a taken one only lift. */
+.rad-seat.free.on { background: rgba(255, 255, 255, 0.95); border-color: rgba(255, 255, 255, 0.95); }
+.rad-seat.free.on .rad-seat-name { color: var(--ui-pill-ink); }
+.rad-seat.free.on .rad-seat-state { color: var(--ui-pill-ink-mid); }
+.rad-seat.free.on .rad-seat-icon { background: rgba(10, 12, 18, 0.08); color: var(--ui-pill-ink); }
+.rad-seat.you.on { border-color: var(--ui-accent); }
+.rad-seat.occupied.on { border-color: rgba(255, 255, 255, 0.16); }
+
+/* Aimed at a seat that is not free: the ring stays white, the disc stays dark, the beam dims. */
+.rad.paged.chosen:not(.aim-free) .rad-disc-ring {
+    border-color: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 0, 0, 0.85);
+}
+
+.rad.paged.chosen:not(.aim-free) .rad-disc-fill.full { height: 0; }
+.rad.paged.chosen:not(.aim-free) .rad-beam { opacity: 0.35; }
+
+@keyframes radSeatIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---- A clean screen (client/clean_screen.lua): for a recording, nothing of whip's on the picture ----
+   Every layer hidden, but the Camera Creator's (its play mode is what holds it, and draws its own capsule)
+   and the blackout: the curtain and its loading logo are the picture's own black, not whip's interface (a
+   load holds the clean screen while the curtain is down; hiding the curtain would show what it hides). The
+   spawn picker's map (#spawnsel, js/spawn-pick.js) is the same: a load from it runs behind the map, and the
+   map hands over to the arrival itself. The camera item's viewfinder (#viewfinder) holds it to be the only thing
+   over the picture.
+   Visibility, not display: the layers keep their size and their state, and come back as they were. */
+html.whip-clean body > *:not(#cam-editor):not(#curtain):not(#loadLogo):not(#spawnsel):not(#viewfinder) { visibility: hidden !important; }
+/* An objective card put up for the recording itself (ShowObjective's `film`, ui.js §10) is part of the
+   picture: it shows through its hidden column (a child's visibility wins over its parent's). */
+html.whip-clean #ui-objectives > .ob-card.ob-film { visibility: visible !important; }
+/* and the others take no room meanwhile, so the shot has no gap above them */
+html.whip-clean #ui-objectives > .ob-card:not(.ob-film) { display: none; }
+
+/* ---- The mouse turning a camera on Enhanced (client/focus.lua Focus.mouseLook) ----
+   The focus is left alone there (taking it again dropped the held button), so the page stops taking the
+   mouse and hides its cursor until the button comes up.
+   A SEE-THROUGH CURSOR, NOT `cursor: none`: none reaches FiveM as no cursor at all, and it puts its own
+   arrow up for that (client/focus.lua). A 1×1 picture with nothing in it is a real cursor that shows
+   nothing. `none` stays as the fallback. */
+html.whip-mouse-look body { pointer-events: none !important; }
+html.whip-mouse-look, html.whip-mouse-look * {
+    cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=") 0 0, none !important;
+}

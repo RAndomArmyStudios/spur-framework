@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Exists ONLY so `node --check` parses these files as ES modules during development. Deliberately NOT declared in fxmanifest files{} — FiveM never serves it; the browser learns module-ness from the <script type=\"module\"> tag instead."
+}

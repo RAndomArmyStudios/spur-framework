@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>interact preview</title>
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<style>
+/* ============================================================================
+   THE PREVIEW — one picture, not an atlas.
+
+   The badge and label pages are atlases because what they draw is small, repeated and shared:
+   every prompt in the world picks a cell out of the same texture. A vehicle photo is none of
+   those things — it is 512x288, it belongs to exactly one highlighted row, and there is only
+   ever ONE of them on screen because only one prompt can be focused.
+
+   So this page holds a single image and is told which one. A selection change is a keypress,
+   not a frame, so the repaint cost is paid when the player acts and never otherwise.
+
+   Same rules as the other two: this document IS the texture, the background is transparent,
+   and there is no --ui-scale because apparent size is the quad's size in metres.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 512px;
+    height: 288px;
+    background: transparent;
+    overflow: hidden;
+}
+
+#wrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#img {
+    max-width: 100%;
+    max-height: 100%;
+    /* contain, so a picture that is not 16:9 is letterboxed rather than stretched. The vehicle
+       snapshots all are, but this page does not get to assume its caller only ever sends those. */
+    object-fit: contain;
+    display: block;
+
+    /* READABLE AGAINST ANY SKY OR WALL. The photos are transparent-background cutouts, so with
+       nothing behind them a pale car over pale ground disappears at the edges. A soft dark halo
+       does what the black outline does for the badge and the label — it is the same problem and
+       deserves the same answer rather than a panel behind the image, which would read as UI. */
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.85))
+            drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
+
+/* An image that failed to load leaves nothing behind rather than a broken-image glyph. */
+#img.hide { display: none; }
+</style>
+</head>
+<body>
+<div id="wrap"><img id="img" class="hide" alt=""></div>
+
+<!-- Which media pack holds each picture: the index, then its asking (whipAssetUrl). -->
+<script src="../js/assets-index.js"></script>
+<script src="../js/assets.js"></script>
+<script>
+(function () {
+    var img = document.getElementById('img');
+
+    img.addEventListener('error', function () { img.classList.add('hide'); });
+    img.addEventListener('load',  function () { img.classList.remove('hide'); });
+
+    window.addEventListener('message', function (e) {
+        var d = e.data;
+        // SendDuiMessage takes a JSON string; whether it arrives parsed is not worth assuming.
+        if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+        if (!d) return;
+
+        // An empty path means "show nothing" — the prompt lost focus, or its selected option has
+        // no picture. Clearing the src rather than leaving the last one up matters: the texture is
+        // live, so a stale image would keep being drawn on whatever quad comes next.
+        if (!d.image) {
+            img.classList.add('hide');
+            img.removeAttribute('src');
+            return;
+        }
+
+        img.src = resolve(d.image);
+    });
+
+    // Paths are relative to html/, the same root the main UI uses, so a caller writes
+    // 'img/vehicles/tulip.webp' and neither side needs to know where this page happens to sit.
+    //
+    // EXCEPT THE PICTURES THAT MOVED. Vehicle and furniture pictures live in the media
+    // packs now (img/vehicles/, img/props/), so those two folders are looked up there under
+    // the same names (whipAssetUrl says which one) — and every caller that already writes
+    // 'img/vehicles/tulip.webp' keeps working. A full URL (nui://… or https://cfx-nui-…) is used as it is.
+    function resolve(path) {
+        var p = String(path).replace(/^\/+/, '');
+        if (/^[a-z][a-z0-9+.-]*:\/\//i.test(p)) return p;
+        if (/^img\/(vehicles|props)\//.test(p)) return whipAssetUrl(p) || '';
+        return '../' + p;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>zone marker atlas</title>
+<script src="../js/caps.js"></script> <!-- what this browser can do: window.WhipCaps, caps-* classes on <html> -->
+<script src="../js/glyphs.js"></script> <!-- a garage bay's own symbol: window.WhipGlyphs -->
+<style>
+/* ============================================================================
+   THE ZONE ATLAS — a Director spot's circle or square marker on the ground
+   (client/director_spots.lua).
+
+   A texture, like garagebay.html: rendered offscreen, sampled by DrawTexturedPoly. Transparent,
+   fixed pixel size. It wears the garage bay's look, so a circle and a square read as the same
+   family: a glass slab, a hairline edge and a white ring drawing itself on while waiting; a blue
+   wash inside the whole ring once it is set off (the house's chosen card).
+
+   SIX SLOTS, ONE BROWSER. A 512x1536 page: slot k is the row at top 256k, its idle cell on the
+   left (u 0-0.5) and its lit cell on the right (u 0.5-1). Lua mirrors the cells (ZONE_* in
+   client/director_spots.lua) and gives each spot shape on screen a slot; a slot is repainted
+   only when the shape it holds changes ({ slot, look, w, l }).
+
+   A SLOT CAN HOLD A SYMBOL instead ({ slot, look = 'icon', icon }): a garage bay marker's own,
+   picked on the spot's page, drawn by the garage helper in its middle. The bay's disc
+   (garagebay.html) at twice the size: dark with the icon in white, and lit white with it cut out.
+
+   DRAWN IN METRES. Each cell's SVG has viewBox "0 0 w l" stretched to its square cell
+   (preserveAspectRatio none), and the quad is laid w x l metres, which undoes the stretch: a
+   stroke of 0.2 is 20 cm in the world along both sides, whatever the zone's size. The ring is
+   about 1.2% of the longest side (6 cm at least), so it stays a few pixels wide however big.
+   The top of a cell is the spot's FRONT, the way it faces.
+
+   CHROMIUM 103. No :has(), no nesting, no color-mix(). Plain SVG 1.1.
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 512px;
+    height: 1536px;
+    background: transparent;
+    overflow: hidden;
+}
+
+.cell { position: absolute; width: 256px; height: 256px; }
+.cell > svg { display: block; width: 256px; height: 256px; }
+
+/* A symbol's disc (garagebay.html's .disc / .disc-on, twice the size). */
+.disc { fill: #0a0c12; fill-opacity: 0.92; stroke: #ffffff; stroke-opacity: 0.93; stroke-width: 10; }
+.disc-on { fill: #ffffff; fill-opacity: 0.93; stroke: #ffffff; stroke-opacity: 0.93; stroke-width: 10; }
+
+/* Night glass on the ground, light enough that the ground shows through (the bay's slab). */
+.slab { fill: #0a0c12; fill-opacity: 0.3; }
+
+/* The hairline edge, so the shape reads before the ring has drawn. */
+.edge { fill: none; stroke: #ffffff; stroke-opacity: 0.22; }
+
+/* The ring drawing itself on from both ends at once, as the bay's does: each half of the way round,
+   from hidden to drawn, a moment held, then a fade hides the jump back. */
+.draw {
+    fill: none;
+    stroke: #ffffff;
+    stroke-opacity: 0.93;
+    stroke-linecap: round;
+    stroke-dasharray: 50 150;
+    stroke-dashoffset: 50.5;
+    animation: draw 2.8s infinite;
+}
+
+@keyframes draw {
+    0%   { stroke-dashoffset: 50.5; opacity: 1; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+    46%  { stroke-dashoffset: 0;    opacity: 1; }
+    72%  { stroke-dashoffset: 0;    opacity: 1; animation-timing-function: ease-in; }
+    90%  { stroke-dashoffset: 0;    opacity: 0; }
+    100% { stroke-dashoffset: 0;    opacity: 0; }
+}
+
+/* Set off: Signal Blue's wash inside the whole white ring. */
+.wash { fill: #60a5fa; fill-opacity: 0.2; }
+.ring { fill: none; stroke: #ffffff; stroke-opacity: 0.93; }
+</style>
+</head>
+<body>
+<div id="atlas"></div>
+<script>
+(function () {
+    var SLOTS = 6, NS = 'http://www.w3.org/2000/svg';
+    var atlas = document.getElementById('atlas');
+    var cells = [];
+
+    function make(tag, attrs) {
+        var e = document.createElementNS(NS, tag);
+        for (var k in attrs) e.setAttribute(k, attrs[k]);
+        return e;
+    }
+
+    for (var k = 0; k < SLOTS; k++) {
+        var row = [];
+        for (var c = 0; c < 2; c++) {
+            var div = document.createElement('div');
+            div.className = 'cell';
+            div.style.left = (c * 256) + 'px';
+            div.style.top = (k * 256) + 'px';
+            atlas.appendChild(div);
+            row.push(div);
+        }
+        cells.push(row);
+    }
+
+    // The outline as a path from the middle of one end, all the way round (pathLength 100): `fromBack` starts at
+    // the back end, so the two halves meet at the sides.
+    function circlePath(w, l, inset, fromBack) {
+        var cx = w / 2, cy = l / 2, rx = w / 2 - inset, ry = l / 2 - inset;
+        var top = cy - ry, bottom = cy + ry;
+        return fromBack
+            ? 'M' + cx + ' ' + bottom + ' A' + rx + ' ' + ry + ' 0 0 1 ' + cx + ' ' + top + ' A' + rx + ' ' + ry + ' 0 0 1 ' + cx + ' ' + bottom + ' Z'
+            : 'M' + cx + ' ' + top + ' A' + rx + ' ' + ry + ' 0 0 1 ' + cx + ' ' + bottom + ' A' + rx + ' ' + ry + ' 0 0 1 ' + cx + ' ' + top + ' Z';
+    }
+
+    function squarePath(w, l, inset, r, fromBack) {
+        var x0 = inset, y0 = inset, x1 = w - inset, y1 = l - inset, cx = w / 2;
+        function arc(x, y) { return ' A' + r + ' ' + r + ' 0 0 1 ' + x + ' ' + y; }
+        if (!fromBack) {
+            return 'M' + cx + ' ' + y0 + ' H' + (x1 - r) + arc(x1, y0 + r) + ' V' + (y1 - r) + arc(x1 - r, y1)
+                + ' H' + (x0 + r) + arc(x0, y1 - r) + ' V' + (y0 + r) + arc(x0 + r, y0) + ' Z';
+        }
+        return 'M' + cx + ' ' + y1 + ' H' + (x0 + r) + arc(x0, y1 - r) + ' V' + (y0 + r) + arc(x0 + r, y0)
+            + ' H' + (x1 - r) + arc(x1, y0 + r) + ' V' + (y1 - r) + arc(x1 - r, y1) + ' Z';
+    }
+
+    function shape(look, w, l, inset, r, cls, sw) {
+        var e = look === 'circle'
+            ? make('ellipse', { cx: w / 2, cy: l / 2, rx: w / 2 - inset, ry: l / 2 - inset })
+            : make('rect', { x: inset, y: inset, width: w - 2 * inset, height: l - 2 * inset, rx: r, ry: r });
+        e.setAttribute('class', cls);
+        if (sw) e.setAttribute('stroke-width', sw);
+        return e;
+    }
+
+    function paint(slot, look, w, l) {
+        var sw = Math.max(0.06, Math.max(w, l) * 0.012);   // the ring, in metres
+        var inset = sw * 1.5;                                // off the cell's edge: nothing bleeds into the next cell
+        var r = Math.min(w, l) * 0.08;                       // a square's corners
+        var view = '0 0 ' + w + ' ' + l;
+        // Idle: slab, hairline, the ring drawing on from both ends.
+        var idle = make('svg', { viewBox: view, preserveAspectRatio: 'none' });
+        idle.appendChild(shape(look, w, l, inset, r, 'slab'));
+        idle.appendChild(shape(look, w, l, inset, r, 'edge', sw * 0.5));
+        for (var b = 0; b < 2; b++) {
+            var d = look === 'circle' ? circlePath(w, l, inset, b === 1) : squarePath(w, l, inset, r, b === 1);
+            idle.appendChild(make('path', { 'class': 'draw', pathLength: 100, d: d, 'stroke-width': sw }));
+        }
+        // Lit: slab, the blue wash, the whole ring.
+        var lit = make('svg', { viewBox: view, preserveAspectRatio: 'none' });
+        lit.appendChild(shape(look, w, l, inset, r, 'slab'));
+        lit.appendChild(shape(look, w, l, inset, r, 'wash'));
+        lit.appendChild(shape(look, w, l, inset, r, 'ring', sw));
+        cells[slot][0].innerHTML = '';
+        cells[slot][0].appendChild(idle);
+        cells[slot][1].innerHTML = '';
+        cells[slot][1].appendChild(lit);
+    }
+
+    // A symbol: the disc, the 24x24 glyph (currentColor) 144 px across in its middle.
+    function paintIcon(slot, svg) {
+        var inner = svg.replace('<svg ', '<svg x="56" y="55.4" width="144" height="144" ');
+        cells[slot][0].innerHTML = '<svg viewBox="0 0 256 256" xmlns="' + NS + '"><circle class="disc" cx="128" cy="128" r="104"></circle>'
+            + '<g style="color:#ffffff">' + inner + '</g></svg>';
+        cells[slot][1].innerHTML = '<svg viewBox="0 0 256 256" xmlns="' + NS + '"><circle class="disc-on" cx="128" cy="128" r="104"></circle>'
+            + '<g style="color:#0a0c12">' + inner + '</g></svg>';
+    }
+
+    window.addEventListener('message', function (e) {
+        var m = e.data;
+        if (typeof m === 'string') { try { m = JSON.parse(m); } catch (err) { return; } }
+        if (!m || typeof m !== 'object') return;
+        var slot = Math.floor(Number(m.slot));
+        if (m.look === 'icon') {
+            var table = (window.WhipGlyphs && window.WhipGlyphs.glyphs) || {};
+            // One no longer in the table: the garage's own.
+            var svg = typeof m.icon === 'string' && Object.prototype.hasOwnProperty.call(table, m.icon) ? table[m.icon] : table.garage;
+            if (slot >= 0 && slot < SLOTS && svg) paintIcon(slot, svg);
+            return;
+        }
+        var w = Number(m.w), l = Number(m.l);
+        if (!(slot >= 0 && slot < SLOTS) || !(w >= 1 && w <= 30) || !(l >= 1 && l <= 30)) return;
+        if (m.look !== 'circle' && m.look !== 'square') return;
+        paint(slot, m.look, w, l);
+    });
+})();
+</script>
+</body>
+</html>

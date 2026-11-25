@@ -1,0 +1,1762 @@
+/* ========================================
+   THE FURNISHER — housing's in-world furniture editor
+
+   ONE BAR ALONG THE TOP, AND THE ROOM UNDER IT. The room is the subject, so the controls take as
+   little of it as they can at the sizes they already had: one bar holds the session, the switches
+   and the way out; the catalog is a single column under the bar's left end, shown only while asked
+   for; what is selected says so beside the thing itself; one line bottom left says what the mouse
+   does right now. Each key rides on the button it presses (R, G, X, Backspace) rather than being
+   listed in a legend.
+
+   TOKENS FOR COLOUR AND TYPE, literals for the surfaces this screen is made of. --ui-* carries the
+   palette, so a theme resource reskins this along with everything else.
+
+   2022-SAFE: FiveM's CEF is Chromium 103. No :has(), no native nesting, no color-mix(), no
+   container queries, no @layer.
+
+   ONE MODAL STATE. Everything is lit and clickable for the whole session, because the cursor is
+   there for the whole session. The only modal state is .fz-looking, which Lua adds while the right
+   mouse button is down: the room is being turned, the cursor has been put away, and this page goes
+   inert so a pointer travelling over a marker cannot edit anything on its way.
+
+   THE SHELL TAKES CLICKS ONLY ON ITS CONTROLS. Everywhere else a click falls through
+   to #fz-gizmo underneath, which is the room: a click there on a marker drags it, anywhere else it
+   selects what is under the pointer (js/furnisher-gizmo.js).
+
+   Structure (index.html):
+     #furnisher              fixed full-screen, .fz-open to show; .fz-catalog-open while the catalog is
+       #fz-gizmo             the markers: an SVG in real screen pixels, taking the room's clicks
+       .fz-scale             the transform-scaled box
+         .fz-bar             along the top: the session, the switches, Exit and Save
+         .fz-columns         the catalog, under the bar's left end (only while it shows)
+         .fz-footer          the hint line, bottom left
+       #fz-sel               the selection, beside the thing (real pixels, scaled on its own)
+       .fz-notice            notices (a save among them): the inventory header's row, top middle
+   ======================================== */
+
+#furnisher {
+    position: fixed;
+    inset: 0;
+    display: none;
+    /* The root is inert and stays inert. A full-screen transparent div still hit-tests, so without
+       this the overlay would swallow every click on the game the moment it opened — the bar, the
+       catalog and the selection are the boxes that take them back. */
+    pointer-events: none;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    z-index: 40;
+
+    /* One knob for the whole screen's size. --ui-scale normalises for resolution; the multiplier
+       is the deliberate "make it bigger" factor, and it is the creator's. */
+    --fz-zoom: calc(var(--ui-scale, 1) * 1.5);
+
+    /* WHERE THINGS SIT, STATED. Sizes are before the screen's scale (x1.125 at 1080p). */
+    --fz-edge:    34px;    /* from the screen's left edge, for the bar, the catalog and the hint line */
+    --fz-top:     30px;    /* the bar from the top */
+    --fz-bar-h:   73px;
+    --fz-cat-w:   394px;
+    --fz-foot:    28px;    /* the hint line from the bottom */
+
+    /* The white and the ink on it, for the one chosen word or button. Stated once here so the rail,
+       the tabs and the buttons cannot drift apart. */
+    --fz-ink:     rgb(10, 12, 18);
+    --fz-bright:  rgba(255, 255, 255, 0.93);
+
+    /* THE MARKERS' COLOURS: X red, Y green, Z blue, the convention every 3D editor shares, so
+       nobody has to learn which is which. Literals, like the surfaces above: they are this screen. */
+    --fz-axis-x:  #f25f5c;
+    --fz-axis-y:  #5ccf7f;
+    --fz-axis-z:  #5b8def;
+    --fz-axis-hot: #ffd84a;
+    /* What is selected: the room's outline colour (client/highlight.lua), and the shape through several. */
+    --fz-picked:  rgb(96, 165, 250);
+}
+
+#furnisher.fz-open { display: block; }
+
+/* THE OBJECT VIEWER'S MOVE (js/ov-panel.js) borrows the markers while the furnisher is closed: the SVG alone, over the
+   game, and none of the furnisher's own screen. */
+#furnisher.fz-solo { display: block; }
+#furnisher.fz-solo > :not(#fz-gizmo) { display: none !important; }
+
+/* ---- the markers ---- */
+
+/* THE ROOM'S CLICKS LAND HERE. Full screen and under the shell, so every pixel the shell does not
+   claim is a click on the room: a marker, or whatever is under the pointer. Real screen pixels, not
+   the shell's scale — the markers are drawn where the game puts the object. */
+#fz-gizmo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: auto;
+    overflow: visible;
+}
+#furnisher.fz-looking #fz-gizmo { pointer-events: none; }
+#fz-gizmo:not(.fz-gz-on) > :not(.fz-gz-box) { display: none; }
+
+/* Two strokes each: a dark one under the colour, so a marker reads on a white wall and a black
+   floor alike. */
+.fz-gz-under {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.55);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.fz-gz-shaft, .fz-gz-ring {
+    fill: none;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.fz-gz-head { stroke: rgba(0, 0, 0, 0.55); stroke-width: 1.5; stroke-linejoin: round; }
+.fz-gz-label {
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: var(--ui-fw-bold);
+    text-anchor: middle;
+    dominant-baseline: central;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.6);
+    stroke-width: 3px;
+}
+.fz-gz-x.fz-gz-shaft, .fz-gz-x.fz-gz-ring { stroke: var(--fz-axis-x); }
+.fz-gz-y.fz-gz-shaft, .fz-gz-y.fz-gz-ring { stroke: var(--fz-axis-y); }
+.fz-gz-z.fz-gz-shaft, .fz-gz-z.fz-gz-ring { stroke: var(--fz-axis-z); }
+.fz-gz-x.fz-gz-head, .fz-gz-x.fz-gz-label { fill: var(--fz-axis-x); }
+.fz-gz-y.fz-gz-head, .fz-gz-y.fz-gz-label { fill: var(--fz-axis-y); }
+.fz-gz-z.fz-gz-head, .fz-gz-z.fz-gz-label { fill: var(--fz-axis-z); }
+
+/* Under the pointer, or being dragged: lit, and a little heavier. */
+.fz-gz-shaft.hot, .fz-gz-ring.hot { stroke: var(--fz-axis-hot); stroke-width: 5; }
+.fz-gz-head.hot, .fz-gz-label.hot { fill: var(--fz-axis-hot); }
+/* Dragged against the edge of the property: the move is being refused. */
+.fz-gz-shaft.blocked, .fz-gz-ring.blocked { stroke: var(--ui-error); }
+.fz-gz-head.blocked, .fz-gz-label.blocked { fill: var(--ui-error); }
+
+.fz-gz-dot {
+    fill: rgba(255, 255, 255, 0.92);
+    stroke: rgba(0, 0, 0, 0.55);
+    stroke-width: 2;
+}
+/* The dot is a handle too: dragged, the thing follows the pointer over the world. */
+.fz-gz-dot.hot { stroke: rgba(255, 255, 255, 0.4); stroke-width: 7; }
+.fz-gz-dot.blocked { fill: var(--ui-error); }
+
+/* SEVERAL SELECTED: the shape through them (two: a line; three: a triangle; more: their outline, point by point), the
+   markers in its middle. Drawn only, never grabbed: a click on it reaches the room. */
+.fz-gz-shape, .fz-gz-shape-under, .fz-gz-corner { pointer-events: none; }
+.fz-gz-shape-under { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; stroke-linejoin: round; }
+.fz-gz-shape {
+    fill: rgba(96, 165, 250, 0.1);
+    stroke: var(--fz-picked);
+    stroke-width: 2;
+    stroke-dasharray: 8 5;
+    stroke-linejoin: round;
+}
+.fz-gz-corner { fill: var(--fz-picked); stroke: rgba(0, 0, 0, 0.55); stroke-width: 1.5; }
+
+/* GRID LOCK (L): the world grid at the snap step on the floor under the selection, fading out from it. Drawn only. */
+.fz-gz-grid { pointer-events: none; }
+.fz-gz-grid line { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1; }
+
+/* A drag on the room: the box everything inside is selected by. */
+.fz-gz-box {
+    pointer-events: none;
+    fill: rgba(96, 165, 250, 0.12);
+    stroke: var(--fz-picked);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 4;
+}
+
+/* TRANSFORM, NOT `zoom`. On CEF (Chromium 103) `zoom` scales what is PAINTED without scaling what
+   is CLICKED: only the top-left 1/zoom of the screen answers the mouse, and getBoundingClientRect
+   reports the unzoomed box while pointer events carry real viewport pixels. A transform has
+   neither problem — Chromium maps pointer events back through the matrix and the rect is the
+   VISUAL one. The wrapper is sized at 1/scale and scaled up, so it covers the viewport exactly and
+   everything inside lives in ONE coordinate space. See creator.css for the full account. */
+.fz-scale {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--fz-zoom));
+    height: calc(100% / var(--fz-zoom));
+    transform: scale(var(--fz-zoom));
+    transform-origin: top left;
+    z-index: 2;
+    /* NOT the shell: its controls. The box covers the whole screen, and taking every click on it
+       would leave the room — the markers, and clicking a chair to select it — unreachable. */
+    pointer-events: none;
+}
+.fz-bar,
+#furnisher.fz-catalog-open .fz-columns,
+.fz-sel.show,
+.fz-cfg.show,
+.fz-bp.show { pointer-events: auto; }
+
+/* INERT WHILE THE ROOM TURNS. Every piece that takes the pointer is listed, because pointer-events
+   on a parent does not reach a child that sets its own. It also takes the wheel out of the
+   equation: with nothing under the pointer accepting events, the catalog cannot scroll while the
+   game is reading the wheel. */
+#furnisher.fz-looking .fz-bar,
+#furnisher.fz-looking .fz-columns,
+#furnisher.fz-looking .fz-sel,
+#furnisher.fz-looking .fz-cfg,
+#furnisher.fz-looking .fz-bp { pointer-events: none; }
+
+/* THE BUBBLE IS SEEN THROUGH WHILE SOMETHING IS DRAGGED OR CARRIED (fz-dragging: furnisher-gizmo.js). It follows the
+   thing, and near the top of the screen it swaps to under it, which can put it under the pointer: it took the moves
+   from the room there, and the drag stopped. Its buttons are back the moment the thing is let go. */
+#furnisher.fz-dragging .fz-sel { pointer-events: none; }
+
+/* The Director's world builder only: Configure, the Blueprint switch (on a pad too: the ring reaches their pages,
+   js/furnisher.js PAD_SELECTOR). */
+.fz-dir-only { display: none; }
+#furnisher.fz-director .fz-dir-only { display: inline-flex; align-items: center; }
+/* (Duplicate and Change model, on the kinds each takes: js/furnisher.js renderSel.) */
+#furnisher.fz-director .fz-dir-only[hidden] { display: none; }
+/* Dungeon Mode's world builder only: the bubble's Options (client/director_live.lua). */
+.fz-live-only { display: none; }
+#furnisher.fz-live .fz-live-only { display: inline-flex; align-items: center; }
+/* Ctrl+click Add: Dungeon Mode selects one thing at a time */
+#furnisher.fz-live .fz-multi-hint { display: none; }
+/* (The ring inside a panel or the window that scrolls: drawn inside its control's edge, or the list would clip it.) */
+html[data-input="pad"] #furnisher #fz-cfg-body .pad-focus,
+html[data-input="pad"] #furnisher #fz-bp .pad-focus { outline-offset: -2px; }
+
+@keyframes fz-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ---- the bar ----
+   THE MAIN MENU'S LOOK (the pause menu, creator and Director's): the solid near-black panel with the
+   faint blue glow in its corner, an edge line and a deep shadow, a round corner because it floats. In
+   it the display-face title with the count and Unsaved under it; a rule; the catalog's switch white
+   while it shows, Move / Rotate, the snap step while snap is on; a rule; the session's own buttons,
+   Exit and Save. As wide as what is in it and no wider: no empty run before Exit. */
+.fz-bar {
+    position: absolute;
+    left: var(--fz-edge);
+    top: var(--fz-top);
+    box-sizing: border-box;
+    width: max-content;
+    max-width: calc(100% - 2 * var(--fz-edge));
+    height: var(--fz-bar-h);
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background:
+        radial-gradient(120% 70% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: 0 16px 43px rgba(0, 0, 0, 0.45);
+    animation: fz-rise 0.4s var(--ui-ease);
+}
+
+.fz-bar-titles {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.fz-title-name {
+    max-width: 280px;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-xl);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    /* A property can be called anything; one long name must not push the switches off the bar. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fz-card-sub {
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    color: var(--ui-text-mid);
+    white-space: nowrap;
+}
+.fz-card-count { font-family: var(--ui-mono); font-variant-numeric: tabular-nums; }
+.fz-card-count.warn { color: var(--ui-warning); }
+
+/* THE UNSAVED MARKER, after the count. Warning rather than error: nothing has gone wrong, there is
+   just something to lose — and the amber is the same one every other "you should know this" in whip
+   uses. */
+.fz-dirty {
+    color: var(--ui-warning);
+    font-weight: var(--ui-fw-bold);
+}
+.fz-dirty::before {
+    content: '·';
+    margin: 0 5px;
+    color: var(--ui-text-mid);
+    font-weight: var(--ui-fw-medium);
+}
+
+.fz-bar-rule {
+    flex: 0 0 1px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Move | Rotate: two halves of one switch, the lit one being what the markers do. Its key, R, rides
+   at its end. */
+.fz-seg {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 3px;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--ui-radius-row);
+}
+.fz-seg > .fz-key { margin: 0 5px 0 3px; }
+.fz-seg-btn {
+    height: 28px;
+    padding: 0 12px;
+    font-family: var(--ui-font);
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    color: rgba(255, 255, 255, 0.6);
+    background: transparent;
+    border: none;
+    border-radius: var(--ui-radius-slot);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.fz-seg-btn:hover { color: var(--ui-text); }
+.fz-seg-btn.on {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--ui-text);
+}
+
+/* ---- the snap chip: the step, while snap is on ----
+   G turns snap on and steps it, then off; the chip is there only while it is on (.fz-snap-on), and
+   always on a pad, which nudges by the step. Pressed, it goes round as G does. */
+
+/* The creator's secondary button, holding a number: mono, so the steps don't shift as they change. */
+#fz-stepchip { display: none; }
+#furnisher.fz-snap-on #fz-stepchip,
+html[data-input="pad"] #furnisher #fz-stepchip { display: inline-flex; }
+.fz-chip {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 11px;
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    color: rgba(255, 255, 255, 0.8);
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;   /* one line, always: "0.05 m · 15°" broke over two when the row was full */
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-chip:hover { color: var(--ui-text); background: var(--ui-surface-hover); border-color: var(--ui-border-hover); }
+
+/* ---- keys ----
+   A KEY IS A WHITE KEYCAP on the button it presses, or in the hint line: the ink on white, a darker
+   lip at the bottom. On a controller the pad's own button pictures stand in (.fz-pad-key), so these
+   go. */
+.fz-key {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--ui-radius-sm);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--fz-ink);
+    font-family: var(--ui-font);
+    font-size: 9.3px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0;
+    line-height: 1;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+}
+html[data-input="pad"] #furnisher .fz-key { display: none; }
+
+/* ---- buttons ---- */
+
+/* The creator's buttons: dark raised glass with an edge, the first choice white. */
+.fz-btn {
+    flex: 0 0 auto;
+    height: 35px;
+    box-sizing: border-box;
+    padding: 0 20px;
+    font-family: var(--ui-font);
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-row);
+    color: var(--ui-text);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-btn:hover {
+    background: linear-gradient(var(--ui-surface-hover), var(--ui-surface-hover)), var(--ui-surface-raised);
+    border-color: var(--ui-border-hover);
+}
+
+/* A button with its key at its end (Remove and X): the key sits inside the button's own edge, nearer
+   to it than the words are to the start. */
+.fz-btn-keyed {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding-right: 8px;
+}
+html[data-input="pad"] #furnisher .fz-btn-keyed { padding-right: 20px; }
+html[data-input="pad"] #furnisher .fz-btn-sm.fz-btn-keyed { padding-right: 13px; }
+
+/* The smaller buttons: a size down, on the panel's own ground. */
+.fz-btn-sm {
+    height: 32px;
+    padding: 0 13px;
+    background: rgba(255, 255, 255, 0.05);
+}
+.fz-btn-sm:hover { background: rgba(255, 255, 255, 0.1); }
+.fz-btn-sm.fz-btn-keyed { padding-right: 7px; }
+/* The catalog's switch: dark until the catalog shows, then white. */
+#fz-catalog-btn {
+    height: 34px;
+    padding: 0 14px;
+}
+#fz-catalog-btn.on,
+#fz-catalog-btn.on:hover,
+.fz-btn.on {
+    background: var(--fz-bright);
+    border-color: transparent;
+    color: var(--fz-ink);
+}
+#fz-catalog-btn.on:hover { background: #fff; }
+
+.fz-btn-primary,
+.fz-btn-primary:hover {
+    background: var(--fz-bright);
+    border-color: transparent;
+    color: var(--fz-ink);
+    box-shadow: var(--ui-shadow);
+}
+.fz-btn-primary:hover { background: #fff; }
+
+.fz-btn-danger,
+.fz-btn-danger:hover {
+    color: var(--ui-error);
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+}
+.fz-btn-danger:hover { background: rgba(248, 113, 113, 0.18); }
+
+/* Armed Exit — the two-step discard confirmation, the creator's Cancel in the same clothes. */
+.fz-btn.armed,
+.fz-btn.armed:hover {
+    background: var(--ui-error);
+    border-color: transparent;
+    color: var(--fz-ink);
+}
+
+/* The session's own buttons (a hero shot's "Use this view"), before Exit. */
+.fz-extra {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+}
+.fz-extra:empty { display: none; }
+
+.fz-cluster:focus-visible,
+.fz-rail-chip:focus-visible,
+.fz-subtab:focus-visible,
+.fz-tile:focus-visible,
+.fz-row:focus-visible,
+.fz-chip:focus-visible,
+.fz-btn:focus-visible,
+.fz-byname-btn:focus-visible,
+.fz-search:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 2px;
+}
+
+/* ---- the catalog ----
+   HIDDEN until the bar's switch shows it. One column under the bar's left end, as tall as the screen
+   allows above the hint line: the tabs, the search, the groups and their categories, then the grid,
+   which takes what is left and scrolls. */
+.fz-columns { display: none; }
+#furnisher.fz-catalog-open .fz-columns {
+    display: flex;
+    animation: fz-rise 0.3s var(--ui-ease);
+}
+
+.fz-columns {
+    position: absolute;
+    left: var(--fz-edge);
+    top: calc(var(--fz-top) + var(--fz-bar-h) + 11px);
+    /* Clear of the hint line: its height, its gap from the edge, and a gap. */
+    bottom: calc(var(--fz-foot) + 62px);
+    width: var(--fz-cat-w);
+    box-sizing: border-box;
+    flex-direction: column;
+    min-height: 0;
+    padding: 20px;
+    background:
+        radial-gradient(120% 50% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel);
+    box-shadow: 0 16px 43px rgba(0, 0, 0, 0.45);
+}
+
+/* THE DIRECTOR'S WORLD BUILDER: Place is a full panel, flush to the left edge, top to bottom, as Configure is on
+   the right (and the Director's own column): a hard edge, the shadow onto the world, sliding in from the left.
+   The bar and the hint line move over to the middle of the world between the two while it shows (below). */
+#furnisher.fz-director .fz-columns {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    padding: 30px 20px 20px 28px;
+    background:
+        radial-gradient(120% 60% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border: 0;
+    border-right: 1px solid var(--ui-border);
+    border-radius: 0;
+    box-shadow: 18px 0 48px rgba(0, 0, 0, 0.45);
+}
+#furnisher.fz-director.fz-catalog-open .fz-columns { animation: fz-cols-in 0.3s var(--ui-ease); }
+@keyframes fz-cols-in {
+    from { transform: translateX(-32px); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+}
+
+/* ...and with it open, the hint line sits in the middle of what is left of the world: between Place and Exit / Save
+   (which stand at the right edge, or beside Configure while it shows). Both insets set and the width its own, the
+   auto margins centre it. (--fz-dir-* below.) */
+#furnisher.fz-director.fz-catalog-open .fz-footer {
+    --fz-dir-acts: calc(2 * var(--fz-dir-btn-w) + var(--fz-dir-gap) + 16px);   /* Exit and Save, and a gap */
+    left: var(--fz-cat-w);
+    right: calc(var(--fz-edge) + var(--fz-dir-acts));
+    width: max-content;
+    max-width: calc(100% - var(--fz-cat-w) - var(--fz-edge) - var(--fz-dir-acts));
+    margin-left: auto;
+    margin-right: auto;
+}
+#furnisher.fz-director.fz-catalog-open.fz-cfg-open .fz-footer {
+    right: calc(var(--fz-dir-in) + var(--fz-dir-acts));
+    max-width: calc(100% - var(--fz-cat-w) - var(--fz-dir-in) - var(--fz-dir-acts));
+}
+
+/* NO BAR IN THE DIRECTOR'S WORLD BUILDER: its buttons stand on their own, in the corners of the world. Place,
+   Blueprint, Map and Test in a row top left (beside Place's panel while it shows), and on a pad the snap step after
+   them; Exit and Save bottom right (beside Configure while it shows); Move / Rotate, and the snap step with a mouse,
+   are the hint line's (R, G). The bar keeps its buttons in the page, so every press, key and state of theirs is as
+   it was: it only stops being a box (display: contents), and each of them is put in its place, BY HAND: a button
+   added to the bar with no place here lands in the top left corner on its own. Each the same width, so they sit
+   side by side. */
+#furnisher.fz-director {
+    --fz-dir-btn-w: 108px;
+    --fz-dir-gap:   8px;
+    --fz-dir-in:    calc(var(--fz-cat-w) + 20px);   /* from the edge, past a full panel */
+}
+#furnisher.fz-director .fz-bar { display: contents; }
+#furnisher.fz-director .fz-bar-titles,
+#furnisher.fz-director .fz-bar-rule,
+#furnisher.fz-director .fz-bar > .fz-seg,
+#furnisher.fz-director #fz-stepchip,
+#furnisher.fz-director #fz-grid-btn,
+#furnisher.fz-director #fz-extra,
+#furnisher.fz-director .fz-bar > .fz-pad-key { display: none; }
+/* The snap step on a pad, which nudges by it (a mouse has G in the hint line). */
+html[data-input="pad"] #furnisher.fz-director #fz-stepchip { display: inline-flex; }
+#furnisher.fz-director #fz-catalog-btn,
+#furnisher.fz-director #fz-bp-btn,
+#furnisher.fz-director #fz-map-btn,
+#furnisher.fz-director #fz-test-btn,
+#furnisher.fz-director #fz-exit,
+#furnisher.fz-director #fz-save {
+    position: absolute;
+    width: var(--fz-dir-btn-w);
+    height: 40px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+    animation: fz-rise 0.4s var(--ui-ease);
+}
+/* The snap step: the chip made one of the row's buttons, as wide as its words ("Snap 0.05 m · 15°"). Its display is
+   the pad's rule above. */
+#furnisher.fz-director #fz-stepchip {
+    position: absolute;
+    min-width: var(--fz-dir-btn-w);
+    height: 40px;
+    padding: 0 14px;
+    justify-content: center;
+    font-family: var(--ui-font);
+    font-size: 12px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+    animation: fz-rise 0.4s var(--ui-ease);
+}
+#furnisher.fz-director #fz-catalog-btn:not(.on),
+#furnisher.fz-director #fz-bp-btn:not(.on),
+#furnisher.fz-director #fz-map-btn:not(.on),
+#furnisher.fz-director #fz-test-btn,
+#furnisher.fz-director #fz-stepchip,
+#furnisher.fz-director #fz-exit:not(.armed) {
+    background: var(--ui-surface-solid);
+}
+#furnisher.fz-director #fz-catalog-btn:not(.on):hover,
+#furnisher.fz-director #fz-bp-btn:not(.on):hover,
+#furnisher.fz-director #fz-map-btn:not(.on):hover,
+#furnisher.fz-director #fz-test-btn:hover,
+#furnisher.fz-director #fz-stepchip:hover,
+#furnisher.fz-director #fz-exit:not(.armed):hover {
+    background: linear-gradient(var(--ui-surface-hover-strong), var(--ui-surface-hover-strong)), var(--ui-surface-solid);
+}
+#furnisher.fz-director #fz-catalog-btn { left: var(--fz-edge); top: var(--fz-top); }
+#furnisher.fz-director #fz-bp-btn      { left: calc(var(--fz-edge) + var(--fz-dir-btn-w) + var(--fz-dir-gap)); top: var(--fz-top); }
+#furnisher.fz-director #fz-map-btn     { left: calc(var(--fz-edge) + 2 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); top: var(--fz-top); }
+#furnisher.fz-director #fz-test-btn    { left: calc(var(--fz-edge) + 3 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); top: var(--fz-top); }
+#furnisher.fz-director #fz-stepchip    { left: calc(var(--fz-edge) + 4 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); top: var(--fz-top); }
+#furnisher.fz-director #fz-save        { right: var(--fz-edge); bottom: var(--fz-foot); }
+#furnisher.fz-director #fz-exit        { right: calc(var(--fz-edge) + var(--fz-dir-btn-w) + var(--fz-dir-gap)); bottom: var(--fz-foot); }
+#furnisher.fz-director.fz-catalog-open #fz-catalog-btn { left: var(--fz-dir-in); }
+#furnisher.fz-director.fz-catalog-open #fz-bp-btn      { left: calc(var(--fz-dir-in) + var(--fz-dir-btn-w) + var(--fz-dir-gap)); }
+#furnisher.fz-director.fz-catalog-open #fz-map-btn     { left: calc(var(--fz-dir-in) + 2 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); }
+#furnisher.fz-director.fz-catalog-open #fz-test-btn    { left: calc(var(--fz-dir-in) + 3 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); }
+#furnisher.fz-director.fz-catalog-open #fz-stepchip    { left: calc(var(--fz-dir-in) + 4 * (var(--fz-dir-btn-w) + var(--fz-dir-gap))); }
+#furnisher.fz-director.fz-cfg-open #fz-save            { right: var(--fz-dir-in); }
+#furnisher.fz-director.fz-cfg-open #fz-exit            { right: calc(var(--fz-dir-in) + var(--fz-dir-btn-w) + var(--fz-dir-gap)); }
+/* Move / Rotate, as a hint (R): only here, where the bar's switch has gone. */
+.fz-hint.fz-dir-hint { display: none; }
+#furnisher.fz-director .fz-hint.fz-dir-hint { display: flex; }
+
+/* ---- the tabs over the column ---- */
+
+/* The Director's tabs over a line: dim words, the one open white with the rounded underline. */
+#fz-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+    column-gap: 16px;
+    row-gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.fz-subtab {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 0 0 9px;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-lg);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.5);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.18s var(--ui-ease);
+}
+.fz-subtab:hover { color: rgba(255, 255, 255, 0.75); }
+.fz-subtab.active { color: var(--fz-bright); }
+.fz-subtab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--fz-bright);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.28s var(--ui-ease);
+}
+.fz-subtab.active::after { transform: scaleX(1); }
+
+/* How many objects are in the room, on the tab that lists them. It is the one number worth
+   carrying on a tab: it says whether there is anything over there to look at. */
+.fz-subtab-n {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    letter-spacing: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The emote menu's search: a field with an edge and the magnifier drawn in its own ground. */
+.fz-search {
+    flex: 0 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    height: 34px;
+    margin-bottom: 11px;
+    padding: 0 12px 0 33px;
+    background: rgba(255, 255, 255, 0.05)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E")
+        no-repeat 12px center / 12px 12px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-slot);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 11.5px;
+    outline: none;
+    transition: background-color 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-search:focus { background-color: rgba(255, 255, 255, 0.08); border-color: var(--ui-border-hover); }
+.fz-search::placeholder { color: var(--ui-text-mid); }
+
+/* THE WORLD BUILDER'S "BY NAME": the search's own text, offered as a model to place when it reads as
+   one (letters, digits and _), on a tab that places a model. Only in the builder (furnisher.js sets
+   .show). Over it, when nothing in the list matches, a line that says so. */
+.fz-byname {
+    display: none;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 11px;
+}
+#furnisher.fz-builder .fz-byname.show { display: flex; }
+.fz-byname-none {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-mid);
+}
+.fz-byname-none:empty { display: none; }
+/* (Picking a new model for the selection: a model of the list, never one by name.) */
+#furnisher.fz-remodeling .fz-byname.show { display: none; }
+
+/* CHANGE MODEL: over the list while a tile pressed is the selection's new model (js/furnisher.js startRemodel). */
+.fz-remodel {
+    display: none;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 11px;
+    padding: 8px 8px 8px 12px;
+    background: var(--ui-accent-light);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: var(--ui-radius-row);
+}
+.fz-remodel.show { display: flex; }
+.fz-remodel-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+}
+.fz-byname-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 37px;
+    padding: 0 8px 0 12px;
+    font-family: var(--ui-font);
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    text-align: left;
+    color: var(--ui-text);
+    background: var(--ui-accent-light);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: var(--ui-radius-row);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease);
+}
+.fz-byname-btn:hover { background: rgba(96, 165, 250, 0.24); }
+.fz-byname-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fz-byname-model { font-family: var(--ui-mono); font-weight: var(--ui-fw-medium); }
+
+/* ---- the groups and their categories ---- */
+
+/* The groups in one row, their categories under them as chips. Neither scrolls: the grid below is
+   the one thing in the column that does. */
+#fz-rail {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    gap: 8px;
+    margin-bottom: 11px;
+    min-width: 0;
+}
+
+/* The groups: the creator's cards, four across (flex-wrap, not a grid: the creator's rule, below),
+   the one open blue with a white ring. */
+.fz-clusters {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+    gap: 7px;
+}
+.fz-clusters:empty { display: none; }
+
+.fz-cluster {
+    position: relative;
+    flex: 0 0 calc((100% - 21px) / 4);
+    min-width: 0;
+    box-sizing: border-box;
+    height: 75px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 4px;
+    font-family: var(--ui-font);
+    color: var(--ui-text);
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-cluster:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+.fz-cluster.active,
+.fz-cluster.active:hover {
+    background: var(--ui-accent-light);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), var(--ui-slot-lift);
+}
+
+.fz-cluster-art { width: 22px; height: 22px; color: rgba(255, 255, 255, 0.75); }
+.fz-cluster-art svg { width: 100%; height: 100%; }
+
+/* A group shown by one of its own (its `model`, furnisher.js clusterArt): the thing as big as the card allows over
+   its name (fitPicture), the glyph standing in when the picture fails. */
+.fz-cluster-pic {
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.fz-cluster-img { width: 100%; height: 100%; object-fit: contain; }
+.fz-cluster-pic .fz-cluster-fallback { display: none; }
+.fz-cluster-pic.fz-noimg .fz-cluster-img { display: none; }
+.fz-cluster-pic.fz-noimg .fz-cluster-fallback { display: block; }
+
+/* Two lines at most ("Story Mode Characters", "Lore characters" beside it on the NPCs' four). */
+.fz-cluster-label {
+    font-size: 10.7px;
+    font-weight: var(--ui-fw-bold);
+    max-width: 100%;
+    overflow: hidden;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* The categories: chips that wrap, the one shown white. */
+.fz-rail-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.fz-rail-chip {
+    flex: 0 0 auto;
+    height: 32px;
+    font-family: var(--ui-font);
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-bold);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 8px;
+    padding: 0 12px;
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.fz-rail-chip:hover { background: rgba(255, 255, 255, 0.1); color: var(--ui-text); }
+.fz-rail-chip.active {
+    background: var(--fz-bright);
+    color: var(--fz-ink);
+}
+
+/* THE OBJECT LIST TAKES THE RAIL'S SPACE. The groups and categories describe what can be placed,
+   not what has been — over a list of the room they would be filters that do nothing. */
+.fz-columns.fz-list #fz-rail { display: none; }
+
+/* A picture that may not exist yet (a vehicle, an NPC): its glyph stands in when it fails to load. */
+.fz-tile .fz-tile-fallback, .fz-row .fz-row-fallback, .fz-sel-pic .fz-sel-fallback { display: none; }
+.fz-tile.fz-noimg .fz-tile-img, .fz-row-pic.fz-noimg .fz-row-img, .fz-sel-pic.fz-noimg .fz-sel-img { display: none; }
+.fz-tile.fz-noimg .fz-tile-fallback, .fz-row-pic.fz-noimg .fz-row-fallback, .fz-sel-pic.fz-noimg .fz-sel-fallback { display: block; }
+
+/* THE NPCs' PICTURES (whip_media_previews/img/peds) are full-length 2:3 shots, the ped a narrow figure in
+   the middle. Shown by its figure (fitPicture: the room either side of it is left out), the whole
+   ped, head to feet, three to a row and taller than it was two to a row: every picture the same
+   height whether the name below it takes one line or two. */
+.fz-tile[data-kind="npc"] { flex-basis: calc((100% - 16px) / 3); height: 232px; justify-content: flex-start; padding-top: 8px; }
+.fz-tile[data-kind="npc"] .fz-tile-img,
+.fz-tile[data-kind="npc"] .fz-tile-fallback {
+    flex: 0 0 180px;
+    height: 180px;
+}
+.fz-tile[data-kind="npc"] .fz-tile-fallback { width: 40px; }
+/* Their names are words, not models ("North Yankton Getaway Driver Male #1"): two lines, not cut. */
+.fz-tile[data-kind="npc"] .fz-tile-name {
+    flex: 0 0 auto;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: 1.3;
+}
+
+/* The world builder's list says what kind each thing is (Prop, NPC, Car, Spot...). */
+.fz-row-kind {
+    flex: 0 0 auto;
+    font-size: var(--ui-fs-sm);
+    letter-spacing: 0.3px;
+    color: var(--ui-text-label);
+    text-transform: uppercase;
+}
+
+/* FLEX-WRAP, NOT CSS GRID, and that is deliberate: in the creator, track resolution inside a
+   scaled, scrolling grid container left only the leftmost column of cards answering the mouse,
+   hover included, while everything else on the screen hit-tested correctly. The layout states its
+   own tile size instead and leaves `1fr` out of it.
+
+   `flex: 1 1 0` pins the list to the space actually available so it SCROLLS rather than being
+   compressed — the creator's other collapse, where the more cards a category had the harder the
+   flex algorithm squeezed them. */
+#fz-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 2px 8px 2px 2px;
+}
+
+#fz-grid::-webkit-scrollbar { width: var(--ui-scrollbar-w); }
+#fz-grid::-webkit-scrollbar-thumb {
+    background: var(--ui-scrollbar-thumb);
+    border-radius: var(--ui-radius-pill);
+}
+
+.fz-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    /* Two across: the container's width less the one gap, halved. */
+    flex: 0 0 calc((100% - 8px) / 2);
+    box-sizing: border-box;
+    height: 128px;
+    padding: 8px 8px 9px;
+    /* The creator's card. */
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    box-shadow: var(--ui-slot-lift);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-tile:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+
+/* The thing itself fills it: fitPicture (utils.js) leaves out the empty room round it in its picture, so a
+   wide bed or a car is as big as the box's width allows, a chair as its height does. */
+.fz-tile-img {
+    width: 100%;
+    /* Fixed, so a tile whose picture failed to load does not collapse the row it is in. */
+    height: 84px;
+    object-fit: contain;
+}
+
+/* NO IMAGE YET is a normal state, not an error: a prop added with /prop add has no picture until
+   one is added to a media pack. Its CATEGORY's glyph stands in, which says more than a broken-image icon
+   and exactly as much as a generic box would. */
+.fz-tile-art {
+    width: 34px;
+    height: 84px;
+    display: block;
+    color: rgba(255, 255, 255, 0.32);
+    transition: color 0.16s var(--ui-ease);
+}
+.fz-tile-art svg { width: 100%; height: 100%; }
+.fz-tile:hover .fz-tile-art { color: rgba(255, 255, 255, 0.55); }
+
+.fz-tile-name {
+    width: 100%;
+    font-size: 11px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    text-align: center;
+    text-shadow: var(--ui-rim);
+    /* Model names are long and uniform-ish; truncating beats wrapping to three lines and making
+       every tile a different height. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fz-empty {
+    flex: 1 1 100%;
+    padding: 40px 18px;
+    text-align: center;
+    color: var(--ui-text-label);
+    font-size: 11.5px;
+    line-height: 1.6;
+}
+.fz-empty:empty { display: none; }
+
+/* ---- the object list ---- */
+/* ROWS, NOT TILES, and the grid becomes a column to hold them. A catalog is browsed by picture —
+   you are choosing a shape — and a room's contents are read by name, because you already know what
+   a sofa looks like and are trying to find WHICH one. */
+
+#fz-grid.fz-grid-rows {
+    flex-wrap: nowrap;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.fz-row {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 42px;
+    padding: 7px 12px 7px 8px;
+    background: var(--ui-slot-bg-filled);
+    border: 1px solid var(--ui-slot-line-filled);
+    border-radius: var(--ui-radius-row);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), border-color 0.16s var(--ui-ease);
+}
+.fz-row:hover { background: var(--ui-slot-bg-hover); border-color: var(--ui-slot-line-hover); }
+
+/* The creator's chosen card: the blue fill and the white ring. The same blue the outline puts round
+   the object itself in the room — one colour meaning "this is the one whip means", wherever you are
+   looking when it says so. */
+.fz-row.selected,
+.fz-row.selected:hover {
+    background: var(--ui-accent-light);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+/* The row's picture box: what spills past it is cut (an NPC's body under its head), as .fz-sel-pic does. */
+.fz-row-pic {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.fz-row-img {
+    width: 34px;
+    height: 26px;
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+
+.fz-row-art {
+    width: 34px;
+    height: 26px;
+    flex: 0 0 auto;
+    display: block;
+    color: rgba(255, 255, 255, 0.34);
+}
+.fz-row-art svg { width: 100%; height: 100%; }
+.fz-row.selected .fz-row-art { color: var(--ui-text); }
+
+.fz-row-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11.5px;
+    font-weight: var(--ui-fw-bold);
+    color: rgba(255, 255, 255, 0.82);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fz-row.selected .fz-row-name { color: var(--ui-text); }
+
+/* The index, which is the only thing that tells nine identical chairs apart — and the same number
+   Lua addresses the object by, so a row and a bug report can name the same thing. */
+.fz-row-num {
+    flex: 0 0 auto;
+    font-family: var(--ui-mono);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-label);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- the selection, beside the thing ----
+   WHAT IS SELECTED, WHERE IT IS, and Remove. Placed by js/furnisher.js (placeSel) over the selected
+   thing's markers, or under them when the bar is in the way, its tail pointing at the thing; tucked
+   under the bar's right end, tail-less, when the thing is off the screen. In real pixels (outside
+   .fz-scale, as the markers are), so it is scaled here by the same factor. */
+.fz-sel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: none;
+    flex-direction: column;
+    gap: 9px;
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 220px;
+    max-width: 640px;   /* (room for another resource's buttons on the head's line: Whiplash on a car) */
+    padding: 12px 14px 11px;
+    background: var(--ui-surface-solid);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    transform: scale(var(--fz-zoom));
+    transform-origin: top left;
+    z-index: 4;
+}
+.fz-sel.show { display: flex; }
+/* Until it has been placed once, nowhere to be seen (it is measured where it stands). */
+.fz-sel.unplaced { visibility: hidden; }
+
+.fz-sel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+/* Other resources' buttons for this kind of thing: on the head's line, between Configure and Remove, there only when
+   it has some (furnisher.js renderSel: .has). */
+.fz-sel-tools { display: none; flex: none; gap: 10px; }
+#furnisher.fz-director .fz-sel-tools.has { display: flex; }
+.fz-sel-tools .fz-btn svg { width: 14px; height: 14px; flex: none; margin-right: 6px; }
+/* Its picture, on nothing: the thing itself as big as the space allows (fitPicture), a ped's head and shoulders
+   only. The space clips what spills (a ped's body under its head). */
+.fz-sel-pic {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.75);
+    overflow: hidden;
+}
+.fz-sel-img { width: 64px; height: 64px; object-fit: contain; }
+.fz-sel-art { width: 32px; height: 32px; }
+.fz-sel-art svg { width: 100%; height: 100%; }
+/* A lore character's face, in the selection and the Placed list (furnisher.js loreFaceHtml): round, framed as /whip
+   frames it. */
+.fz-sel-face, .fz-row-face { display: block; flex: none; border-radius: 50%; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+.fz-sel-face { width: 56px; height: 56px; }
+.fz-row-face { width: 30px; height: 30px; }
+.fz-sel-face-img, .fz-row-face-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fz-sel-pic.fz-noimg .fz-sel-face, .fz-row-pic.fz-noimg .fz-row-face { display: none; }
+/* Its name alone, in the middle of the row: the picture says what it is. It keeps some room beside the buttons (cut
+   short past it), and the buttons keep their words. */
+.fz-sel-head > .fz-btn { flex: none; }
+.fz-sel-info {
+    flex: 1 1 auto;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.fz-sel-name {
+    min-width: 0;
+    font-size: 18px;
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Go to: only while it is tucked under the bar, the thing off the screen. Beside it, you are there. */
+.fz-sel-goto { display: none; }
+.fz-sel.docked .fz-sel-goto { display: block; }
+
+/* The tail: a triangle of the bubble's own ground, pointing down at the thing (or up, from under it). */
+.fz-sel-tail {
+    position: absolute;
+    top: 100%;
+    left: var(--fz-tail-x, 50%);
+    width: 0;
+    height: 0;
+    margin-left: -9px;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 10px solid var(--ui-surface-solid);
+}
+.fz-sel.below .fz-sel-tail {
+    top: auto;
+    bottom: 100%;
+    border-top: none;
+    border-bottom: 10px solid var(--ui-surface-solid);
+}
+.fz-sel.docked .fz-sel-tail { display: none; }
+
+/* The world builder's warning before a thing a card uses goes: what uses it, Remove, Keep. */
+.fz-confirm {
+    display: none;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--ui-error-light);
+}
+.fz-confirm.show { display: flex; }
+.fz-confirm-text {
+    flex: 1 1 100%;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ui-text);
+}
+
+/* SEVERAL SELECTED: what they are under "5 selected", and a count on the primary's picture. */
+.fz-sel-sub {
+    font-size: 12px;
+    color: var(--ui-text-muted, rgba(255, 255, 255, 0.6));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fz-sel-sub:empty { display: none; }
+.fz-sel-pic { position: relative; }
+.fz-sel-count {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--fz-picked);
+    color: var(--fz-ink);
+    font-size: 12px;
+    font-weight: var(--ui-fw-bold);
+    text-align: center;
+}
+
+/* Add to group: the name, Add and Cancel on a line, the scenario's groups under them to pick from. */
+.fz-group {
+    display: none;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(96, 165, 250, 0.12);
+}
+.fz-group.show { display: flex; }
+.fz-group-input {
+    flex: 1 1 140px;
+    min-width: 0;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--ui-text);
+    font: inherit;
+    font-size: 13px;
+}
+.fz-group-input:focus { outline: none; border-color: var(--fz-picked); }
+.fz-group-chips { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 6px; }
+.fz-group-chips:empty { display: none; }
+.fz-group-chip {
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ui-text);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+.fz-group-chip:hover, .fz-group-chip.on { border-color: var(--fz-picked); background: rgba(96, 165, 250, 0.2); }
+
+/* ---- the Director's page, on the right ----
+   THE DIRECTOR'S COLUMN, ON THE OTHER SIDE (director.css .dr-col): flush to the right edge, top to bottom, the
+   faint blue light in its top corner, a hard edge and a deep shadow onto the world, its title in the display
+   face. Its body is the Director's own page (director/app.js builder.page): its fields are styled by
+   director.css, and read the four of the Director column's own settings stated here. Scrolls inside; the
+   item picker's list scrolls under its search (.split), as it does in the column. */
+.fz-cfg {
+    --dr-pad: 28px;
+    --dr-display: var(--ui-font-display);
+    --dr-menu-off: rgba(255, 255, 255, 0.34);
+    --dr-row-off: rgba(255, 255, 255, 0.62);
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--fz-cat-w);
+    box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    background:
+        radial-gradient(120% 60% at 100% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-left: 1px solid var(--ui-border);
+    box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    user-select: none;
+}
+.fz-cfg.show {
+    display: flex;
+    animation: fz-cfg-in 0.3s var(--ui-ease);
+}
+@keyframes fz-cfg-in {
+    from { transform: translateX(32px); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+}
+.fz-cfg-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 30px 20px 14px var(--dr-pad);
+}
+.fz-cfg-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--ui-font-display);
+    font-size: var(--ui-fs-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    color: var(--fz-bright);
+}
+.fz-cfg-x, .fz-bp-x {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--ui-text-mid);
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease), color 0.16s var(--ui-ease);
+}
+.fz-cfg-x:hover, .fz-bp-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--ui-text); }
+
+/* INPUT PED NAME (index.html #fz-pedname): the bubble's surface, a third of the way down the middle. Centred by its
+   left, not a transform, which fz-rise animates. */
+.fz-pedname {
+    position: absolute;
+    left: calc(50% - 160px);
+    top: 30%;
+    width: 320px;
+    box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--ui-surface-solid);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--ui-radius-pop);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+}
+.fz-pedname.show { display: flex; pointer-events: auto; animation: fz-rise 0.2s var(--ui-ease); }
+/* (The selection's bubble is drawn over the scaled panels: out of the way while a new ped is being named.) */
+#furnisher.fz-pednaming #fz-sel { visibility: hidden; }
+#furnisher.fz-looking .fz-pedname { pointer-events: none; }
+.fz-pedname-head { display: flex; align-items: center; gap: 10px; }
+.fz-pedname-title { flex: 1 1 auto; font-size: 14.5px; font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.fz-pedname-input { margin-bottom: 0; padding-left: 12px; background-image: none; font-family: var(--ui-mono); }
+.fz-pedname-why { font-size: 11.5px; line-height: 1.45; color: var(--ui-error); }
+.fz-pedname-why:empty { display: none; }
+.fz-pedname-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.fz-pedname.busy .fz-pedname-btns { opacity: 0.6; pointer-events: none; }
+/* Its tile, first in each of the NPCs' groups: dashed, the keyboard glyph. */
+.fz-tile.fz-tile-input { justify-content: center; border-style: dashed; }
+.fz-tile-input .fz-tile-art { width: 56px; height: 56px; color: rgba(255, 255, 255, 0.55); }
+/* A lore character's own picture: round, framed as /whip frames it; dimmed when they have no ped yet. */
+.fz-tile-face { flex: 0 0 84px; width: 84px; height: 84px; margin: 48px 0; border-radius: 50%; overflow: hidden;
+                background: rgba(255, 255, 255, 0.06); }
+.fz-tile-face-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fz-tile.fz-noimg .fz-tile-face { display: none; }
+.fz-tile.fz-tile-off { opacity: 0.55; }
+.fz-cfg-x svg, .fz-bp-x svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+.fz-cfg-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px var(--dr-pad) var(--dr-pad);
+    border-top: 1px solid var(--ui-border);
+}
+.fz-cfg-body.split { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.fz-cfg-body::-webkit-scrollbar { width: var(--ui-scrollbar-w); }
+.fz-cfg-body::-webkit-scrollbar-thumb { background: var(--ui-scrollbar-thumb); border-radius: var(--ui-radius-pill); }
+
+/* ---- the Blueprint window ----
+   THE SKETCH: a rounded window, its head a bar of the panels' own ground with the title in the display
+   face and X on the right, a flat line under it, and under that the scenario's grid filling the rest,
+   its corners rounded with the window's. In REAL pixels, outside .fz-scale: the grid's mouse maths read
+   the window's box as it is on the screen, and a scale over them would be a second one. Sizes are the
+   screen's own, times --fz-zoom, so it matches the bar. Placed and sized by js/furnisher.js (drag the
+   head, the edges and the bottom corners). */
+.fz-bp {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 600px;
+    height: 400px;
+    display: none;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: calc(14px * var(--fz-zoom));
+    background: var(--dr-canvas);
+    box-shadow: 0 16px 43px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    z-index: 3;
+}
+.fz-bp.show { display: block; }
+.fz-bp-head {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: calc(40px * var(--fz-zoom));
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: calc(10px * var(--fz-zoom));
+    padding: 0 calc(8px * var(--fz-zoom)) 0 calc(16px * var(--fz-zoom));
+    background:
+        radial-gradient(120% 140% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-bottom: 1px solid var(--ui-border);
+    cursor: grab;
+    user-select: none;
+}
+.fz-bp.moving .fz-bp-head { cursor: grabbing; }
+.fz-bp-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--ui-font-display);
+    font-size: calc(15px * var(--fz-zoom));
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--fz-bright);
+    white-space: nowrap;
+}
+.fz-bp-x { width: calc(28px * var(--fz-zoom)); height: calc(28px * var(--fz-zoom)); border-radius: calc(8px * var(--fz-zoom)); }
+.fz-bp-x svg { width: calc(16px * var(--fz-zoom)); height: calc(16px * var(--fz-zoom)); }
+/* Cards: the card list on the right. The bar's small button, at the window's own scale; white while the
+   list is what the panel shows. */
+.fz-bp-cards {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: calc(5px * var(--fz-zoom));
+    height: calc(26px * var(--fz-zoom));
+    padding: 0 calc(10px * var(--fz-zoom)) 0 calc(7px * var(--fz-zoom));
+    font-family: var(--ui-font);
+    font-size: calc(10.5px * var(--fz-zoom));
+    font-weight: var(--ui-fw-bold);
+    color: var(--ui-text);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ui-border);
+    border-radius: calc(8px * var(--fz-zoom));
+    cursor: pointer;
+    transition: background 0.16s var(--ui-ease);
+}
+.fz-bp-cards:hover { background: rgba(255, 255, 255, 0.12); }
+.fz-bp-cards.on, .fz-bp-cards.on:hover { background: var(--fz-bright); border-color: transparent; color: var(--fz-ink); }
+.fz-bp-cards svg {
+    width: calc(12px * var(--fz-zoom));
+    height: calc(12px * var(--fz-zoom));
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+}
+/* The grid: the Director's canvas (absolute, filling this) moved in. Beside the card list while it shows. */
+.fz-bp-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(40px * var(--fz-zoom));
+    bottom: 0;
+    overflow: hidden;
+}
+.fz-bp.pal .fz-bp-body { left: calc(250px * var(--fz-zoom)); }
+/* THE CARD LIST, in the window (Cards): the Director's own column's list (its search, the kinds' chips, a card a
+   line, what the card under the pointer does), down the window's left side on the panels' ground. Drawn at the
+   column's own sizes and scaled up as one, as .fz-scale is (a transform: the mouse answers where it is drawn). */
+.fz-bp-pal {
+    position: absolute;
+    left: 0;
+    top: calc(40px * var(--fz-zoom));
+    bottom: 0;
+    width: calc(250px * var(--fz-zoom));
+    display: none;
+    overflow: hidden;
+    background:
+        radial-gradient(120% 50% at 0% 0%, var(--ui-accent-subtle), transparent 60%),
+        var(--ui-surface-solid);
+    border-right: 1px solid var(--ui-border);
+}
+.fz-bp.pal .fz-bp-pal { display: block; }
+.fz-bp-pal-body {
+    --dr-pad: 14px;
+    --dr-display: var(--ui-font-display);
+    --dr-menu-off: rgba(255, 255, 255, 0.34);
+    --dr-row-off: rgba(255, 255, 255, 0.62);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% / var(--fz-zoom));
+    height: calc(100% / var(--fz-zoom));
+    transform: scale(var(--fz-zoom));
+    transform-origin: top left;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 var(--dr-pad);
+    user-select: none;
+}
+.fz-bp-pal-body .dr-search-box { margin-top: 10px; }
+/* A window is short: the kinds' chips wrap as the editor's column wraps them (on one sideways line, most of them were
+   out of reach), and what the card under the pointer does sits in a tighter strip, two lines kept for it so the
+   list's edge does not jump, three at most. */
+.fz-bp-pal-body .dr-chip { flex: none; }
+.fz-bp-pal-body .dr-pal-strip { padding: 8px var(--dr-pad) 10px; }
+.fz-bp-pal-body .dr-pal-strip b { font-size: var(--ui-fs-md); }
+.fz-bp-pal-body .dr-pal-strip p { height: calc(3 * 1.45em); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+/* The edges and the bottom corners size it: thin strips over the window's own edge. */
+.fz-bp-grip { position: absolute; z-index: 2; }
+.fz-bp-grip-l, .fz-bp-grip-r { top: calc(40px * var(--fz-zoom)); bottom: 14px; width: 7px; cursor: ew-resize; }
+.fz-bp-grip-l { left: 0; }
+.fz-bp-grip-r { right: 0; }
+.fz-bp-grip-b { left: 14px; right: 14px; bottom: 0; height: 7px; cursor: ns-resize; }
+.fz-bp-grip-lb, .fz-bp-grip-rb { bottom: 0; width: 14px; height: 14px; }
+.fz-bp-grip-lb { left: 0; cursor: nesw-resize; }
+.fz-bp-grip-rb { right: 0; cursor: nwse-resize; }
+
+/* ---- the Map window ----
+   The Blueprint window's kind (.fz-bp: its head, its X, its grips), with whip's map in its body (WP.placeArea, as
+   /whip's Open map draws it). Its + and -, and a mark's card, at the bar's size (--fz-zoom), not /whip's. */
+.fz-map { background: var(--ui-surface-solid); }
+.fz-map-body .wp-place-big-map { position: absolute; inset: 0; }
+.fz-map-body .wp-place-zoom { zoom: var(--fz-zoom); right: 10px; bottom: 10px; }
+.fz-map-body .wp-place-info {
+    top: 10px;
+    right: 10px;
+    width: calc(280px * var(--fz-zoom));
+    max-height: calc(100% - 20px);
+    border-radius: calc(var(--ui-radius-row) * var(--fz-zoom));
+}
+.fz-map-body .wp-place-info-in { zoom: var(--fz-zoom); }
+/* A mark's card's Go to and Configure, under its name. */
+.fz-map-body .wd-pc-acts { padding: 0; }
+/* Nothing placed yet: said over the map. */
+.fz-map-body.fz-map-empty::after {
+    content: 'Nothing is placed yet: Place puts the first thing down.';
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    z-index: 3;
+    padding: calc(6px * var(--fz-zoom)) calc(12px * var(--fz-zoom));
+    border-radius: calc(8px * var(--fz-zoom));
+    background: var(--ui-surface-solid);
+    color: var(--ui-text-mid);
+    font-size: calc(11px * var(--fz-zoom));
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---- the hint line, bottom left ----
+   ONE LINE, AND ONLY WHAT WORKS RIGHT NOW: the room (Click, Right-drag, fly), looking round with the
+   right button held (the keys that fly), or a door pick waiting. The rest rides on its buttons. */
+
+.fz-footer {
+    position: absolute;
+    left: var(--fz-edge);
+    bottom: var(--fz-foot);
+}
+
+.fz-hints {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 9px 16px 9px 12px;
+    background: var(--ui-surface-raised);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-pop);
+    font-size: var(--ui-fs-sm);
+    font-weight: var(--ui-fw-medium);
+    letter-spacing: 0.2px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+}
+.fz-mouse-hints .fz-hint-row { display: none; align-items: center; gap: 15px; }
+#furnisher:not(.fz-looking):not(.fz-picking):not(.fz-hand) .fz-hints-room,
+#furnisher.fz-looking .fz-hints-look,
+#furnisher.fz-picking:not(.fz-looking) .fz-hints-door,
+#furnisher.fz-hand:not(.fz-looking):not(.fz-picking) .fz-hints-carry { display: flex; }
+/* (Esc takes back out only a pick just made: the Place marker's carry has no Cancel.) */
+#furnisher.fz-hand:not(.fz-hand-new) .fz-hint-esc { display: none; }
+
+.fz-hint { display: flex; align-items: center; gap: 6px; }
+.fz-hint .fz-key + .fz-key,
+.fz-hint .fz-plus + .fz-key,
+.fz-hint .fz-key + .fz-plus { margin-left: -3px; }
+.fz-hint b {
+    font-weight: var(--ui-fw-semibold);
+    color: var(--ui-text);
+}
+
+/* ---- on a controller ----
+   The pad's buttons where the mouse's line was (js/furnisher.js padLegend), the white ring on what
+   the D-pad has lit in the menu, and the dot in the middle of the room that A selects with. A mouse
+   never sees any of it: html[data-input="pad"] only. */
+.fz-pad-hints { display: none; }
+html[data-input="pad"] #furnisher .fz-mouse-hints { display: none; }
+html[data-input="pad"] #furnisher .fz-pad-hints { display: flex; }
+.fz-pad-glyph { display: block; flex: none; width: auto; height: 17px; }
+
+/* The pad button beside the controls it presses directly: Y the catalog, RB Move / Rotate, ⧉ Exit,
+   ☰ Save (js/furnisher.js padKeys). In the bar's row, so it takes the bar's own gap. */
+.fz-pad-key { display: none; }
+html[data-input="pad"] #furnisher .fz-pad-key { display: flex; align-items: center; pointer-events: none; }
+html[data-input="pad"] #furnisher .fz-pad-key .fz-pad-glyph { height: 22px; }
+
+html[data-input="pad"] #furnisher .pad-focus {
+    outline: 2px solid var(--ui-pill);
+    outline-offset: 2px;
+}
+/* (Inside its own edge: the grid scrolls, and would clip a ring drawn outside a tile.) */
+html[data-input="pad"] #furnisher .fz-tile.pad-focus,
+html[data-input="pad"] #furnisher .fz-row.pad-focus { outline-offset: -2px; }
+
+.fz-dot {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.9), inset 0 0 2px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 2;
+}
+html[data-input="pad"] #furnisher.fz-open:not(.fz-padmenu) .fz-dot { display: block; }
+/* Something rides it: filled, the selection's blue. */
+#furnisher.fz-carrying .fz-dot {
+    background: rgb(96, 165, 250);
+    border-color: #fff;
+}
+
+/* ---- the mouse, as a key ----
+   A keycap like G's with the mouse drawn on it in the keycap's ink, the button to press filled in
+   (index.html's #fz-mouse-l, -r, -r-drag). The symbols' own sheet takes no room. */
+.fz-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.fz-key-mouse { padding: 0 4px; }
+.fz-key-mouse svg { display: block; height: 13px; width: 10px; }
+.fz-key-mouse.wide svg { width: 20px; }
+.fz-mi-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.fz-mi-on { fill: currentColor; }
+/* "Hold right + W A S D": the plus between the two, quieter than either. */
+.fz-plus { margin: 0 1px; color: var(--ui-text-mid); }
+
+/* ---- notices: a save, an autosave, and every other notice while it is open ---- */
+
+/* The inventory header's notice row (css/shops.css .inv-notice, js/inv-notice.js), at the top of the screen in
+   the middle: a band the row centres itself in (its words may be as wide as the band). OUTSIDE .fz-scale, so in
+   real pixels, as the inventory's is. */
+.fz-notice {
+    position: absolute;
+    left: 50%;
+    top: 28px;
+    width: min(1100px, 60vw);
+    height: var(--talk-h);
+    margin: 0;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 5;
+}
