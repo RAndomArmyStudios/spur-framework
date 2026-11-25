@@ -58,7 +58,7 @@ txAdmin is the web panel that comes with FXServer. It can set SPUR up for you fr
 
 The recipe makes you the admin (the txAdmin master account). It was run from start to end in txAdmin 8.1.2 on a
 Pterodactyl host on 25 Nov 2026: every step passed, the eight resources started and spur_core made its tables in an
-empty database. Joining that server in the game has not been tried yet. If a step fails for you, please open an
+empty database. Joining it in the game worked too: landing screen, a new character, and a spawn in the world. If a step fails for you, please open an
 issue with the step's name.
 
 ### By hand
