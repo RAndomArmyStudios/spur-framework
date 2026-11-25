@@ -392,6 +392,10 @@ Whip.register(function()
         if not id then return false, 'Could not send that' end
         local now = os.time()
         if to ~= me and not blocked then deliver(to, { id = id, number = me, text = text, time = now }) end
+        -- RedM (spur_phone, 25 Nov 2026): the sender lets a pigeon go (client/pigeon.lua, Config.Pigeon)
+        if Config.Pigeon ~= false and not (type(Config.Pigeon) == 'table' and Config.Pigeon.enabled == false) then
+            TriggerClientEvent('spur_phone:client:pigeon', source)
+        end
         return { id = id, time = now }
     end)
 

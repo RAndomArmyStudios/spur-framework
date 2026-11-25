@@ -37,7 +37,9 @@ from it, and it credits Whippy and WLVF. It isn't WHIP and doesn't come from WHI
   picked up off a body is taken away (`Config.Guard`).
 - **Drawing.** **Equip** puts the weapon straight into your hands, with no draw animation. Putting it away plays the
   game's own holster.
-- **No item pictures.** whip_gunny's pictures are GTA's guns, so this copy ships none. Put your own in
+- **Pictures by kind, not by model.** whip_gunny's pictures are GTA's guns, so none of them ship. Each item shows
+  the picture of its kind instead (`html/img/items/class/`: a revolver, a repeater, a box of cartridges...; the five
+  guns are public-domain photographs from The Met's Open Access collection). For one per model, put your own in
   `html/img/items/`, named after each item (`gunny_cattleman.webp`, say).
 - **spur_core's weapon guard** knows only GTA's weapons, so spur_gunny looks after RDR2's itself.
 

@@ -1569,7 +1569,7 @@ exports('HoldVehicleEngine', function(vehicleId, key, reason)
     local id = ('%d:%s'):format(vehicleId, tostring(key or 'hold'))
     local ok, why = holdReg:add(owner, id, {
         id = id, vehicleId = vehicleId,
-        reason = (type(reason) == 'string' and reason ~= '') and reason:sub(1, 80) or 'The engine will not start',
+        reason = (type(reason) == 'string' and reason ~= '') and reason:sub(1, 80) or 'The brake will not come off',
     })
     if not ok then return false, why --[[@as string]] end
     if (VehicleStats.get(vehicleId, 'engine') or 0) > 0 then VehicleStats.set(vehicleId, 'engine', 0, 'held') end

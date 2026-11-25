@@ -195,8 +195,8 @@ Config.Items = {
         },
     },
     vehicle_key = {
-        name     = 'Vehicle Key',
-        desc     = 'The key to a specific wagon or coach.',
+        name     = 'Wagon Brake Key',   -- RedM (spur_core, 25 Nov 2026): a wagon has no engine or ignition; its key is the brake lock's
+        desc     = 'The key to one wagon or coach. It goes in the brake lock, and the brake comes off.',
         weight   = 0.1,
         type     = 'key',
         stack    = false,
@@ -206,8 +206,8 @@ Config.Items = {
         prop     = 'p_keys01x',
         -- Reads the model and plate off the key itself.
         metaFields = {
-            { key = 'model', label = 'Vehicle', format = 'uppercase' },
-            { key = 'plate', label = 'Plate' },
+            { key = 'model', label = 'Wagon', format = 'uppercase' },
+            { key = 'plate', label = 'Number' },
         },
         -- Looks like its car maker's key (html/img/items/keys/pegassi.webp); a maker with no picture shows the plain key.
         images = {
@@ -239,8 +239,8 @@ Config.Items = {
         prop     = 'p_camera01x',
     },
     hacked_vehicle_key = {
-        name     = 'Copied Vehicle Key',
-        desc     = 'A key filed down to fit a vehicle it was never cut for...',
+        name     = 'Filed Brake Key',   -- RedM (spur_core, 25 Nov 2026): a wagon has no engine or ignition; its key is the brake lock's
+        desc     = 'A key filed down to fit a brake lock it was never cut for...',
         weight   = 0.1,
         type     = 'key',
         stack    = false,
@@ -250,8 +250,8 @@ Config.Items = {
         -- Another key model, so a copied key does not look like a real one on the ground.
         prop     = 'p_key02x',
         metaFields = {
-            { key = 'model',  label = 'Vehicle', format = 'uppercase' },
-            { key = 'plate',  label = 'Plate' },
+            { key = 'model',  label = 'Wagon', format = 'uppercase' },
+            { key = 'plate',  label = 'Number' },
             { key = 'status', label = 'Status' },
         },
     },

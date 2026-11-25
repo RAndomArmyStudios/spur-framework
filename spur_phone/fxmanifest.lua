@@ -24,6 +24,7 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
+    'client/pigeon.lua',              -- RedM (spur_phone, 25 Nov 2026): a pigeon goes up when a telegram is sent
 }
 
 server_scripts {

@@ -1655,7 +1655,7 @@ end, false)
 
 RegisterCommand('-whip_togglelock', function() end, false)
 
-RegisterKeyMapping('+whip_togglelock', 'Lock/Unlock Vehicle', 'keyboard', 'l')
+RegisterKeyMapping('+whip_togglelock', 'Lock/Unlock Wagon', 'keyboard', 'l')
 
 -- NPC vehicle lock: every non-whip vehicle stays locked; players must lockpick. Runs on the client, which already
 -- knows the cars around it, and rides the 200 ms lock-key thread below (GetClosestVehicle, no pool scan).
@@ -2458,7 +2458,7 @@ function RequestIgnition(want)   -- the local declared with the ignition state a
             TriggerServerEvent('spur_core:server:attemptHackIgnition', vId)
         elseif not ignitionNotified then
             ignitionNotified = true
-            UI.Notify('No key in ignition!', 'error')
+            UI.Notify('No key in the brake lock!', 'error')   -- RedM (spur_core, 25 Nov 2026): was "ignition"
         end
         return padLog('refused: no key in the ignition')
     end
@@ -2488,17 +2488,17 @@ end
 
 RegisterCommand('+whip_ignition_on', function() RequestIgnition('on') end, false)
 RegisterCommand('-whip_ignition_on', function() end, false)
-RegisterKeyMapping('+whip_ignition_on', 'Vehicle: Engine On', 'MOUSE_WHEEL', 'IOM_WHEEL_UP')
+RegisterKeyMapping('+whip_ignition_on', 'Wagon: Release the Brake', 'MOUSE_WHEEL', 'IOM_WHEEL_UP')
 
 RegisterCommand('+whip_ignition_off', function() RequestIgnition('off') end, false)
 RegisterCommand('-whip_ignition_off', function() end, false)
-RegisterKeyMapping('+whip_ignition_off', 'Vehicle: Engine Off', 'MOUSE_WHEEL', 'IOM_WHEEL_DOWN')
+RegisterKeyMapping('+whip_ignition_off', 'Wagon: Set the Brake', 'MOUSE_WHEEL', 'IOM_WHEEL_DOWN')
 
 --- The toggle. On a pad it is D-pad left, read by client/pad.lua's reader, which runs this command.
 --- Unbound on keyboard (Arrow Left is 189 too); a player can bind a key in Settings.
 RegisterCommand('+whip_ignition_toggle', function() RequestIgnition('toggle') end, false)
 RegisterCommand('-whip_ignition_toggle', function() end, false)
-RegisterKeyMapping('+whip_ignition_toggle', 'Vehicle: Engine Toggle', 'keyboard', '')
+RegisterKeyMapping('+whip_ignition_toggle', 'Wagon: Brake On/Off', 'keyboard', '')
 
 -- To block the radio, call SetVehicleRadioEnabled(veh, false) once on entry, never a per-frame DisableControlAction.
 
@@ -3110,13 +3110,13 @@ local function RadialToggleEngine()
     end
 
     if TakePlayer.on(veh) then
-        UI.Notify('The Scripted Driving Event has the engine until it is over', 'info')
+        UI.Notify('The Scripted Driving Event has the reins until it is over', 'info')
         return
     end
 
     local vId = Vehicles.idByEntity(veh)
     if vId and not ignitionHasKey[vId] then
-        UI.Notify('No key in ignition!', 'error')
+        UI.Notify('No key in the brake lock!', 'error')   -- RedM (spur_core, 25 Nov 2026): was "ignition"
         return
     end
 
@@ -3144,9 +3144,9 @@ local function RegisterVehicleRadialOptions()
     end
 
     WhipRadialAddOption({
-        label = 'Engine',
+        label = 'Brake',   -- RedM (spur_core, 25 Nov 2026): was "Engine"
         icon = 'power',
-        description = 'Start or stop the engine',
+        description = "Release or set the wagon's brake",
         group = 'vehicle',
         -- Not on a bicycle: it has none (isBicycle).
         condition = function()
@@ -3200,9 +3200,9 @@ local function RegisterVehicleRadialOptions()
     })
 
     WhipRadialAddOption({
-        label = 'Boot',
+        label = 'Wagon bed',
         icon = 'trunk_lid',
-        description = 'Open or shut the boot',
+        description = 'Open or shut the back of the wagon',
         group = 'vehicle',
         condition = inVehicle,
         callback = function()

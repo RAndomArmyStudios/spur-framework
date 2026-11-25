@@ -1,7 +1,7 @@
 # spur_phone
 
 A pocket notebook for spur_core on RedM (Red Dead Redemption 2). Players send telegrams from a telegraph office,
-place telephone calls from a telephone, keep a bank passbook and a business ledger. Every page is a module: leave out
+keep their contacts, a bank passbook and a business ledger. Telephone calls are off unless a server turns them on. Every page is a module: leave out
 the ones you don't want, or add your own from another resource.
 
 spur_phone is a port of whip_phone 1.1.0 to RedM, made with its author's permission on two conditions: no one makes
@@ -14,7 +14,9 @@ come from WHIP's author. `NOTICE.md` lists what changed.
   of the screen. Paper, ink and a leather cover, drawn flat: no 3D, nothing to download.
 - **Telegrams.** Write one anywhere and read them anywhere. It is sent only from a telegraph office: away from one,
   the page says where the nearest office is and keeps your telegram until you get there.
-- **Telephone calls.** Placed only from a telephone. A call ringing in can be answered anywhere (see
+- **Telephone calls are off by default** (25 Nov 2026, `Config.Calls = false`): a notebook is for telegrams. The
+  Telephone page is then a **Contacts** page (names and telegraph addresses, Telegram, Block), nobody can place a
+  call, and a lore character's call comes as a telegram. With `Config.Calls = true`: placed only from a telephone. A call ringing in can be answered anywhere (see
   [On RedM](#on-redm)). Players talk with their usual key, over the server's voice system.
 - **Telegraph address cards.** An address (the number people wire and telephone) lives on its card. Put a card in any
   notebook and you send and call as that address, with its contacts and telegrams. Its owner can lock an address so
@@ -40,7 +42,7 @@ The notebook's core has no pages of its own. Each is a module, and these come wi
 
 | Page | Module id | What it does |
 | --- | --- | --- |
-| Telephone | `phone` | Recents, contacts, the number to ask for and the call screen |
+| Contacts (Telephone with `Config.Calls`) | `phone` | Contacts; with calls on, also Recents, the number to ask for and the call screen |
 | Telegrams | `messages` | Telegram conversations |
 | Passbook | `bank` | Accounts and their activity, transfers, opening savings and shared accounts, and sharing one |
 | Ledger | `business` | Your jobs and duty and, for ranks that may, hiring, firing and ranks |
@@ -74,6 +76,10 @@ a bank counter).
   page says the lines are down (`Config.VoiceDownText`); telegrams, the Passbook and the Ledger still work.
 - **Lore calls.** A lore character's call with a recording needs a voice bot. Without one (spur_voice has none), the
   character sends the call's **Telegram instead** text, or a line saying they telephoned and could not get through.
+- **A pigeon goes up with a telegram** (25 Nov 2026, `Config.Pigeon`, `client/pigeon.lua`). RDR2 has no animation
+  of letting a bird go, so it is built from parts: the sender takes the bird from the satchel (the Naturalist's
+  herb clip), a real pigeon sits in the hands, then flies off and is removed. Players near see it. It is skipped on a
+  horse, in a wagon and in the water. Other resources can call `exports.spur_phone:ReleasePigeon()`.
 - **No prop, no animation.** whip_phone held a GTA phone. No RDR2 notebook animation has been tried in game yet, so
   `Config.Emotes` holds nothing: name a spur_core emote there once one has been.
 
@@ -134,6 +140,8 @@ while the notebook is out.
 | Settings | What they control |
 | --- | --- |
 | `OpenKey`, `AnswerKey`, `DeclineKey` | The default keys |
+| `Calls` | Telephone calls on or off (off: telegrams only, the default) |
+| `Pigeon` | The pigeon let go when a telegram is sent: on or off, and which bird |
 | `PhoneSize` | The closed notebook's height, as a share of the screen |
 | `Modules`, `DeveloperApps` | Which pages load, for everyone and for developers |
 | `Defaults` | A fresh notebook's cover, sounds and volume |

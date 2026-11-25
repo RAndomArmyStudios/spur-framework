@@ -37,16 +37,16 @@ end
 
 Whip.register(function()
     local ok, why = exports.spur_core:RegisterItem(PHONE, {
-        name = 'Pocket Notebook', desc = 'Telegrams, telephone calls, your passbook and ledger. Keeps a telegraph address card.',
+        name = 'Pocket Notebook', desc = 'Telegrams, contacts, your passbook and ledger. Keeps a telegraph address card.',   -- RedM (spur_phone, 25 Nov 2026): no telephone calls
         weight = 0.2, type = 'electronics', stack = false, usable = true, image = 'html/img/items/phone.webp',
         contextOptions = { { action = 'phone_sim_tray', label = 'Address card pocket' } },
     })
     if not ok then print('[spur_phone] could not register the notebook item: ' .. tostring(why)) end
 
     ok, why = exports.spur_core:RegisterItem(CARD, {
-        name = 'Telegraph Address Card', desc = 'Your telegraph and telephone number. Keep it in a notebook.', weight = 0.01,
+        name = 'Telegraph Address Card', desc = 'Your telegraph address. Keep it in a notebook.', weight = 0.01,
         type = 'electronics', stack = false, image = 'html/img/items/sim_card.webp',
-        metaFields = { { key = 'phoneNumber', label = 'Number', format = 'phone' } },
+        metaFields = { { key = 'phoneNumber', label = 'Address', format = 'phone' } },
     })
     if not ok then print('[spur_phone] could not register the address card item: ' .. tostring(why)) end
 

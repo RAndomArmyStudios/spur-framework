@@ -50,8 +50,10 @@ export function boot({ mock = null, dev = null } = {}) {
   });
   for (const h of Object.values(os.hosts)) Object.assign(h.style, { visibility: 'hidden', opacity: '0', pointerEvents: 'none' });
 
+  let callsOn = false;   // RedM (spur_phone, 25 Nov 2026): config.lua's Config.Calls, known before the pages load
   window.WhipPhone = Object.freeze({
     version: VERSION,
+    get calls() { return callsOn; },
     /** a module's script calls this once: WhipPhone.module({ id, name, icon, render, ... }) (see whip_phone's docs/MODULES.md) */
     module: (def) => os.register(def, expected.get(def && def.id) || {}),
     kit, icons: I,
@@ -115,6 +117,7 @@ export function boot({ mock = null, dev = null } = {}) {
     if (typeof cfg.phoneScale === 'number') { duo.phoneScale = cfg.phoneScale; duo.relayout(); }
     if (cfg.defaults) os.applySettings(cfg.defaults);
     if (cfg.clock === 'real') os.setClock(null);
+    callsOn = cfg.calls === true;   // RedM (spur_phone, 25 Nov 2026): config.lua's Config.Calls, set before the pages load
   }
 
   bridge.on((msg) => {

@@ -118,7 +118,8 @@ end)
 local function voiceState()
     local v = Whip.voiceSystem()
     local f = v and type(v.features) == 'table' and v.features or {}
-    nui({ type = 'status', voiceDown = not v, voiceDownText = Config.VoiceDownText,
+    -- RedM (spur_phone, 25 Nov 2026): with no calls (Config.Calls) the page is Contacts and needs no voice system
+    nui({ type = 'status', voiceDown = Config.Calls == true and not v, voiceDownText = Config.VoiceDownText,
           voice = { lines = f.lines == true, speaker = f.speaker == true, pickup = f.pickup == true } })
 end
 AddEventHandler('spur_core:voice:systemChanged', voiceState)
@@ -517,8 +518,10 @@ local function callKey(which)
 end
 RegisterCommand('spur_phone_answer', function() callKey('answer') end, false)
 RegisterCommand('spur_phone_decline', function() callKey('decline') end, false)
-RegisterKeyMapping('spur_phone_answer', 'Notebook: answer a call', 'keyboard', Config.AnswerKey or 'Y')
-RegisterKeyMapping('spur_phone_decline', 'Notebook: decline a call', 'keyboard', Config.DeclineKey or 'U')
+if Config.Calls == true then   -- RedM (spur_phone, 25 Nov 2026): no calls, no keys for them in the game's settings
+    RegisterKeyMapping('spur_phone_answer', 'Notebook: answer a call', 'keyboard', Config.AnswerKey or 'Y')
+    RegisterKeyMapping('spur_phone_decline', 'Notebook: decline a call', 'keyboard', Config.DeclineKey or 'U')
+end
 
 -- ON THE F1 WHEEL (7 Oct 2026), for a player carrying a phone. Opening asks the server as the key does
 -- (no phone: "You need a phone").
@@ -542,6 +545,7 @@ RegisterNUICallback('ready', function(data, cb)
     devOn = Whip.core:HasDevTools() == true                     -- (spur_phone started with developer mode on)
     SendNUIMessage({ type = 'init', modules = moduleList(), config = {
         phoneScale = Config.PhoneSize, defaults = Config.Defaults, clock = Config.GameClock and 'game' or 'real',
+        calls = Config.Calls == true,   -- RedM (spur_phone, 25 Nov 2026)
     } })
     for _, m in ipairs(queue) do SendNUIMessage(m) end
     queue = {}

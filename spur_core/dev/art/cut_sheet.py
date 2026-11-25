@@ -2,12 +2,14 @@
 
 An image model painted nine objects on one see-through sheet, three by three. This cuts each object out by its own
 outline (one may lean out of its cell), drops the soft glow round it and saves it as a square 256 px PNG.
-Needs Pillow.   usage: python cut_sheet.py sheet.png outdir name1,...,name9   (names in reading order)
+Needs Pillow.   usage: python cut_sheet.py sheet.png outdir name1,...,name9 [columns]   (names in reading order)
 """
 import sys
 from collections import deque
 from PIL import Image, ImageFilter
 src, out, names = sys.argv[1], sys.argv[2], sys.argv[3].split(',')
+COLS = int(sys.argv[4]) if len(sys.argv) > 4 else 3      # objects in a row (3 by 3 unless said)
+ROWS = -(-len(names) // COLS)
 im = Image.open(src).convert('RGBA')
 W, H = im.size
 LO, HI = 150, 235          # the glow round each object is half see-through: drop it, keep the object solid
@@ -35,9 +37,9 @@ cell = {}
 for n, cnt, cx, cy in comps:
     if cnt < w * h * 0.0015:
         continue
-    cell.setdefault((int(cy * 3 / h), int(cx * 3 / w)), set()).add(n)
+    cell.setdefault((int(cy * ROWS / h), int(cx * COLS / w)), set()).add(n)
 for i, name in enumerate(names):
-    ids = cell.get(divmod(i, 3))
+    ids = cell.get(divmod(i, COLS))
     assert ids, name
     m = Image.new('L', (w, h), 0)
     mp = m.load()

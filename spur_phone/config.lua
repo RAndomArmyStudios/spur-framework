@@ -15,10 +15,16 @@ Config.DeclineKey = 'U'
 -- The closed notebook's height as a share of the screen height (the open spread sizes itself to the screen).
 Config.PhoneSize = 0.5
 
+-- RedM (spur_phone, 25 Nov 2026): telephone calls. false (the default) = a notebook is for telegrams: its Telephone page is a
+-- Contacts page (names and telegraph addresses), nobody can place a call, and a lore character's call comes as a
+-- telegram. true = whip_phone's calls as ported on 24 Nov 2026: placed from a telephone (Config.Telephones), answered
+-- anywhere. Needs a restart of spur_phone.
+Config.Calls = false
+
 -- Built-in pages (modules), in html/modules/<id>/module.js. A module whose folder is deleted is simply skipped, and
 -- with no modules at all the notebook still opens, empty. A new one also needs its own line in fxmanifest.lua's
 -- files { } or players never receive it. Other resources add pages with exports.spur_phone:RegisterModule.
---   phone     Telephone       messages  Telegrams       bank      Passbook
+--   phone     Contacts (Telephone with Config.Calls)   messages  Telegrams       bank      Passbook
 --   business  Ledger          settings  Settings        skillcheck  the skill check games (hidden)
 Config.Modules = { 'phone', 'messages', 'bank', 'business', 'settings', 'skillcheck' }
 
@@ -70,6 +76,18 @@ Config.Defaults = {
 -- each one against the player's position; the page names the nearest one.
 -- false lets everything be done anywhere (testing).
 Config.PlaceChecks = true
+
+-- RedM (spur_phone, 25 Nov 2026): a telegram that goes off sends a pigeon up with it (client/pigeon.lua). The sender
+-- takes the bird from the satchel and lets it go; players near see it. It is only for show: the telegram is sent
+-- the same with it off, and it is skipped on a horse, in a wagon or in the water.
+--   enabled  false turns it off (so does Config.Pigeon = false)
+--   model    the bird: a_c_pigeon, or any small bird the game has (a_c_bluejay_01, a_c_crow_01, ...)
+-- With Config.PlaceChecks on, that happens at the telegraph office. Turn PlaceChecks off for a server where the
+-- pigeon carries the message from anywhere.
+Config.Pigeon = {
+    enabled = true,
+    model   = 'a_c_pigeon',
+}
 
 -- Each place: label (what players read), coords, radius in metres.
 -- RedM (spur_phone, 24 Nov 2026): each telegraph office is where a player stands at the telegraph window, taken in

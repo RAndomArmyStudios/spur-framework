@@ -39,8 +39,8 @@
   }
   function cardPage(app) {
     const sess = app.session, d = app.state.card;
-    if (!sess.number) return K.empty({ title: 'No address card', text: 'Your card is your number\'s: put your address card in the notebook.' });
-    if (!sess.mine) return K.empty({ title: 'Not your number', text: 'Only this number\'s owner can change its card.' });
+    if (!sess.number) return K.empty({ title: 'No address card', text: 'Your card is your address\'s: put your address card in the notebook.' });
+    if (!sess.mine) return K.empty({ title: 'Not your address', text: 'Only this address\'s owner can change its card.' });
     if (!d) return '';
     const pic = K.picUrl(d.picture);
     const face = `<div class="cd-face${pic ? '' : ' none'}"${pic ? ' data-pan="cardPan"' : ''}>${K.avatar({ name: d.name || sess.name || '', size: 136, pic, frame: d.frame })}</div>`;
@@ -58,7 +58,7 @@
   /** the call volume, for the Sounds page (null: no voice system offers it, and the row stays hidden) */
   async function loadCallVol(app) { app.state.callVol = await app.callVolume(); }
   const GLYPH ='<svg viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M262.29 192.31a64 64 0 1 0 57.4 57.4a64.13 64.13 0 0 0-57.4-57.4M416.39 256a154 154 0 0 1-1.53 20.79l45.21 35.46a10.81 10.81 0 0 1 2.45 13.75l-42.77 74a10.81 10.81 0 0 1-13.14 4.59l-44.9-18.08a16.11 16.11 0 0 0-15.17 1.75A164.5 164.5 0 0 1 325 400.8a15.94 15.94 0 0 0-8.82 12.14l-6.73 47.89a11.08 11.08 0 0 1-10.68 9.17h-85.54a11.11 11.11 0 0 1-10.69-8.87l-6.72-47.82a16.07 16.07 0 0 0-9-12.22a155 155 0 0 1-21.46-12.57a16 16 0 0 0-15.11-1.71l-44.89 18.07a10.81 10.81 0 0 1-13.14-4.58l-42.77-74a10.8 10.8 0 0 1 2.45-13.75l38.21-30a16.05 16.05 0 0 0 6-14.08c-.36-4.17-.58-8.33-.58-12.5s.21-8.27.58-12.35a16 16 0 0 0-6.07-13.94l-38.19-30A10.81 10.81 0 0 1 49.48 186l42.77-74a10.81 10.81 0 0 1 13.14-4.59l44.9 18.08a16.11 16.11 0 0 0 15.17-1.75A164.5 164.5 0 0 1 187 111.2a15.94 15.94 0 0 0 8.82-12.14l6.73-47.89A11.08 11.08 0 0 1 213.23 42h85.54a11.11 11.11 0 0 1 10.69 8.87l6.72 47.82a16.07 16.07 0 0 0 9 12.22a155 155 0 0 1 21.46 12.57a16 16 0 0 0 15.11 1.71l44.89-18.07a10.81 10.81 0 0 1 13.14 4.58l42.77 74a10.8 10.8 0 0 1-2.45 13.75l-38.21 30a16.05 16.05 0 0 0-6.05 14.08c.33 4.14.55 8.3.55 12.47"/></svg>';
-  const TITLES = { card: 'My card', wallpaper: 'Cover and paper', sounds: 'Bell and chime', sim: 'Address card', blocked: 'Blocked numbers', apps: 'Pages', about: 'About',
+  const TITLES = { card: 'My card', wallpaper: 'Cover and paper', sounds: 'Bell and chime', sim: 'Address card', blocked: 'Blocked addresses', apps: 'Pages', about: 'About',
     ringtone: PICKS.ringtone.title, messageTone: PICKS.messageTone.title, notifyTone: PICKS.notifyTone.title };
   // What the SIM in this phone is doing (the session's `sim`, from the server: spur_phone/server/sim.lua).
   const SIM_TEXT = { ok: '', nosim: 'No address card', locked: 'Address card locked', blank: 'Address card not working' };
@@ -78,7 +78,8 @@
       const r = (k, icon) => K.row({ icon, label: PICKS[k].title, value: labelOf(S, PICKS[k].list, S.get(k)), act: 'page', d: { p: k }, hint: 'Choose' });
       const vol = String(S.get('soundVolume'));
       const cv = app.state.callVol;
-      return K.list([r('ringtone', I.call), r('messageTone', I.msg), r('notifyTone', I.bell)], { header: 'Bell and chime', inset: 58 }) +
+      // RedM (spur_phone, 25 Nov 2026): no telephone bell to choose without calls (Config.Calls)
+      return K.list([...(window.WhipPhone.calls ? [r('ringtone', I.call)] : []), r('messageTone', I.msg), r('notifyTone', I.bell)], { header: 'Bell and chime', inset: 58 }) +
         `<div class="list-h">Volume</div><div class="snd-vol">${K.seg([['25', '25%'], ['50', '50%'], ['75', '75%'], ['100', '100%']], vol, 'volume')}</div>` +
         `<div class="list-f">Kept on the address card: in another notebook it rings the same. Do Not Disturb silences notifications; calls still ring.</div>` +
         (cv == null ? '' :
@@ -120,8 +121,8 @@
       if (!sess.number) return K.empty({ icon: I.block, title: SIM_TEXT[sess.sim] || 'No address card', text: 'The block list is the address card\'s: put one in the notebook.' });
       const B = app.blocks;
       if (!B.loaded) return K.empty({ title: 'Loading…' });
-      const how = 'Block a number from its telegrams, or its page in Telephone. They are not told.';
-      if (!B.list.length) return K.empty({ icon: I.block, title: 'No blocked numbers', text: how });
+      const how = `Block an address from its telegrams, or its page in ${window.WhipPhone.calls ? 'Telephone' : 'Contacts'}. They are not told.`;
+      if (!B.list.length) return K.empty({ icon: I.block, title: 'No blocked addresses', text: how });
       const rows = B.list.map((b) => {
         const c = app.contacts.find(b.number);
         return K.row({ icon: I.block, label: c ? c.name : K.fmtNumber(b.number), sub: c ? K.fmtNumber(b.number) : `Blocked ${K.fmtWhen(b.time)}`,
@@ -135,7 +136,7 @@
       return K.list(mods.map((m) => K.row({ icon: I.apps, label: m.name, sub: `${m.external ? 'Module from another resource' : 'Built-in module'}${m.version ? ' · v' + m.version : ''}`, value: '' })), { header: `${mods.length} installed`, inset: 58, footer: 'Pages are modules: removing one removes the page, the notebook keeps working.' });
     }
     if (p === 'about') {
-      return K.list([['Name', myName(sess) || '—'], ['Number', simLine(sess)], ['Make', 'Pocket memoranda'], ['Edition', '1.1.0-redm.1'], ['Pages', String(app.modules().length)]]
+      return K.list([['Name', myName(sess) || '—'], ['Address', simLine(sess)], ['Make', 'Pocket memoranda'], ['Edition', '1.1.0-redm.1'], ['Pages', String(app.modules().length)]]
         .map(([a, b]) => K.row({ label: a, value: b })), { inset: 14 });
     }
     return '';
@@ -155,9 +156,9 @@
       `${K.avatar({ name: myName(sess), size: 58, pic: card.picture, frame: card.frame })}<div class="r-main"><b>${K.esc(myName(sess) || 'Your notebook')}</b>` +
       `<div class="r-sub">${K.esc(simLine(sess))}${sess.number && sess.mine ? ' · My card' : ''}</div></div>${I.chev}</button></div>` +
       K.list([r('sim', I.call, 'Address card', sess.number ? '' : (SIM_TEXT[sess.sim] || 'No address card')),
-        r('blocked', I.block, 'Blocked numbers', sess.number && app.blocks.list.length ? String(app.blocks.list.length) : '')]) +
-      K.list([r('wallpaper', I.sun, 'Cover and paper', ''), r('sounds', I.bell, 'Bell and chime', labelOf(S, 'ringtone', S.get('ringtone')))]) +
-      K.list([K.row({ icon: I.bell, label: 'Do Not Disturb', sub: 'Only calls get through', toggle: !!S.get('dnd'), act: 'dnd', chev: false, hint: 'Toggle' })]) +
+        r('blocked', I.block, 'Blocked addresses', sess.number && app.blocks.list.length ? String(app.blocks.list.length) : '')]) +
+      K.list([r('wallpaper', I.sun, 'Cover and paper', ''), r('sounds', I.bell, 'Bell and chime', window.WhipPhone.calls ? labelOf(S, 'ringtone', S.get('ringtone')) : labelOf(S, 'messageTone', S.get('messageTone')))]) +
+      K.list([K.row({ icon: I.bell, label: 'Do Not Disturb', sub: window.WhipPhone.calls ? 'Only calls get through' : 'Notices stay quiet', toggle: !!S.get('dnd'), act: 'dnd', chev: false, hint: 'Toggle' })]) +
       K.list([r('apps', I.apps, 'Pages', String(app.modules().length)), r('about', I.info, 'About', '')]));
   }
 
@@ -276,7 +277,7 @@
       async unblock(app, d) {
         if (app.state.unblocking) return;
         app.state.unblocking = true;
-        try { await app.blocks.remove(d.number); app.toast('Number unblocked'); }   // -> spur_phone:blocks:remove
+        try { await app.blocks.remove(d.number); app.toast('Address unblocked'); }   // -> spur_phone:blocks:remove
         catch (e) { app.toast(e.reason || 'Could not change that'); }
         app.state.unblocking = false;
       },

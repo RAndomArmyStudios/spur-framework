@@ -113,6 +113,7 @@ end
 --- system, no voice bot (spur_voice has none) or no recording, it goes to the player as a telegram from the
 --- character instead, and the answer is 'telegram'.
 local TELEGRAM_INSTEAD = '%s telephoned for you and could not get through. Find a telephone.'
+local TELEGRAM_NO_CALLS = '%s sent word for you. Wire them back.'   -- RedM (spur_phone, 25 Nov 2026): Config.Calls = false
 function LorePhones.call(key, name, src, audio, done, words)
     local lore = LorePhones.numberOf(key)
     if not lore then return nil, 'The lore character has no number' end
@@ -121,12 +122,12 @@ function LorePhones.call(key, name, src, audio, done, words)
     if not player or not to then return 'nophone' end
     local function byTelegram()
         local text = tostring(words or ''):gsub('^%s+', ''):gsub('%s+$', '')
-        if text == '' then text = TELEGRAM_INSTEAD:format(tostring(name)) end
+        if text == '' then text = (Config.Calls == true and TELEGRAM_INSTEAD or TELEGRAM_NO_CALLS):format(tostring(name)) end
         local res, why = LorePhones.sendText(key, src, text)
         if res == 'sent' then return 'telegram' end
         return res, why
     end
-    if type(audio) ~= 'string' or audio == '' or not Whip.voiceSystem() then return byTelegram() end
+    if Config.Calls ~= true or type(audio) ~= 'string' or audio == '' or not Whip.voiceSystem() then return byTelegram() end
     -- Down: they cannot take it (their notebook is put away), so it does not ring (audit 20, PHN-4)
     if Calls.busy(src) or player.isDead then return 'busy' end
     local botKey, d = Whip.voice('CreateVoiceBot', { name = tostring(name), audio = audio })

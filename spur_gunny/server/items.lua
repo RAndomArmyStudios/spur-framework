@@ -44,14 +44,14 @@ end
 
 -- RedM (spur_gunny, 25 Nov 2026): whip_gunny's item pictures are GTA's guns, so this copy shipped none and every
 -- gun showed spur_core's "no picture" glyph. Now each item has the picture of its class (a revolver, a repeater, a
--- box of cartridges...), drawn for this copy: html/img/items/class/<class>.svg. A picture named after the item
+-- box of cartridges...), drawn for this copy: html/img/items/class/<class>.png (painted, 25 Nov 2026; flat .svg drawings before that). A picture named after the item
 -- itself (html/img/items/<item>.webp or .png, here or in a weapon pack) still comes first.
 local CLASS_DIR = 'html/img/items/class/'
 local WEAPON_CLASS = {   -- the first whose text the weapon's game name has
     { 'THROWING_KNIVES', 'throwing_knives' }, { 'REVOLVER', 'revolver' }, { 'PISTOL', 'pistol' },
     { 'REPEATER', 'repeater' }, { 'SHOTGUN', 'shotgun' }, { 'RIFLE', 'rifle' }, { 'BOW', 'bow' },
     { 'KNIFE', 'knife' }, { 'MACHETE', 'machete' }, { 'TORCH', 'torch' }, { 'LASSO', 'lasso' },
-    { 'HATCHET', 'hatchet' }, { 'TOMAHAWK', 'hatchet' }, { 'CLEAVER', 'hatchet' }, { 'DYNAMITE', 'dynamite' },
+    { 'HATCHET', 'hatchet' }, { 'TOMAHAWK', 'tomahawk' }, { 'CLEAVER', 'cleaver' }, { 'DYNAMITE', 'dynamite' },
     { 'MOLOTOV', 'bottle_fire' }, { 'POISONBOTTLE', 'bottle_poison' }, { 'BOLAS', 'bolas' },
 }
 
@@ -65,8 +65,8 @@ local function itemImage(itemName, class)
     for _, ext in ipairs({ 'webp', 'png' }) do
         if LoadResourceFile(GetCurrentResourceName(), ('html/img/items/%s.%s'):format(itemName, ext)) then return nil end
     end
-    if class and LoadResourceFile(GetCurrentResourceName(), CLASS_DIR .. class .. '.svg') then
-        return CLASS_DIR .. class .. '.svg'
+    if class and LoadResourceFile(GetCurrentResourceName(), CLASS_DIR .. class .. '.png') then
+        return CLASS_DIR .. class .. '.png'
     end
     return nil
 end
@@ -203,7 +203,7 @@ local function registerWithCore()
             stack    = false,
             maxStack = 1,
             prop     = attData.prop,
-            -- RedM (spur_gunny, 25 Nov 2026): a part shows its kind's picture (class/scope, barrel, rifling.svg).
+            -- RedM (spur_gunny, 25 Nov 2026): a part shows its kind's picture (class/scope, barrel, rifling.png).
             image    = itemImage(itemName, attData.category),
         })
     end

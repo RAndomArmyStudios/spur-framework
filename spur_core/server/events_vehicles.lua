@@ -1636,18 +1636,18 @@ SecureEvent('spur_core:server:attemptHackIgnition', {
     end
     -- A secured car (SpawnTempVehicle opts.secure) cannot have its ignition hacked: its key is the way.
     local secured = Vehicles.getDef(vehicleId)
-    if secured and secured.secure then return false, 'This ignition can\'t be hacked' end
+    if secured and secured.secure then return false, 'This brake lock can\'t be forced' end
 
     -- Validate unhacked key is in ignition
     local hasUnhacked, _ = Vehicles.hasUnhackedKeyInIgnition(vehicleId)
     if not hasUnhacked then
-        return false, 'No hackable key in ignition'
+        return false, 'No filed key in the brake lock'
     end
 
     -- The hard check, issued and judged here, the same game as the lockpicks (LockpickSkill).
     local passed = LockpickSkill(source, 'hard')
     if not passed then
-        return false, 'Hack failed!'
+        return false, 'The lock held!'
     end
 
     -- Still in the driver's seat of the car being hacked. The check takes seconds, and the

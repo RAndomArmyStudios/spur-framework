@@ -90,7 +90,7 @@ end
 ---   where       'car' or 'foot': where it does anything, for the screen's views
 ---   slot        a resource's: the button it goes on while that has nothing on it
 local ACTIONS = {
-    engine    = { label = 'Engine on/off', command = '+whip_ignition_toggle', where = 'car' },
+    engine    = { label = 'Brake off/on', command = '+whip_ignition_toggle', where = 'car' },
     inventory = { label = 'Inventory',     command = 'whip_inventory_pad' },
     radial    = { label = 'Radial menu',   command = '+whip_radial_pad', hold = true },
     sprint    = { label = 'Jog / sprint',  where = 'foot', move = true },
@@ -648,7 +648,7 @@ local function vehicleControls(veh)
     for _, s in ipairs(SLOTS) do
         if layout[s.id] == 'engine' and not bicycle then
             local engineOn = GetIsVehicleEngineRunning(veh)
-            rows[#rows + 1] = { glyphs = slotGlyphs(s), label = (engineOn == 1 or engineOn == true) and 'Engine off' or 'Start engine' }
+            rows[#rows + 1] = { glyphs = slotGlyphs(s), label = (engineOn == 1 or engineOn == true) and 'Set the brake' or 'Release the brake' }
         end
     end
     for _, s in ipairs(SLOTS) do
@@ -689,7 +689,7 @@ local function keyboardControls(veh)
     local key = boundKey('+whip_ignition_toggle')
         or boundKey(engineOn and '+whip_ignition_off' or '+whip_ignition_on')
         or (engineOn and 'SCROLL \u{25BC}' or 'SCROLL \u{25B2}')
-    return { { keys = { key }, label = engineOn and 'Engine off' or 'Start engine' } }
+    return { { keys = { key }, label = engineOn and 'Set the brake' or 'Release the brake' } }
 end
 
 local vcUntil = 0  -- GetGameTimer() until which the column is up

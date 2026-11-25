@@ -7,11 +7,15 @@
 // BLOCKING (14 Nov 2026): a number's page (a contact's, or a Recents call's through its info button) blocks or
 // unblocks it (the shared block list, app.blocks). The server keeps a blocked number's calls from ringing here and out
 // of Recents; a lore character's number (noBlock) and the card's own get no Block.
+// RedM (spur_phone, 25 Nov 2026): NO CALLS is the default (config.lua's Config.Calls = false). The page is then CONTACTS: names and
+// telegraph addresses, a Telegram button, Block; no Recents, no number pad, no Call. It still carries spur_core's
+// yes/no invites. The call code below is whip_phone's, used only with Config.Calls = true.
 (() => {
   const { kit: K, icons: I } = window.WhipPhone;
+  const CALLS = window.WhipPhone.calls === true;
   const GLYPH = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 3.2c.6-.3 1.3-.1 1.6.5l1.5 3.1c.3.6.1 1.3-.4 1.7l-1.3 1c.9 2.1 2.6 3.8 4.7 4.7l1-1.3c.4-.5 1.1-.7 1.7-.4l3.1 1.5c.6.3.8 1 .5 1.6l-.9 1.9c-.4.8-1.3 1.3-2.2 1.2C9.9 18.3 4.5 12.9 4.1 6.3C4 5.4 4.5 4.5 5.3 4.1z"/></svg>';
   const KEYS = [['1', ''], ['2', ''], ['3', ''], ['4', ''], ['5', ''], ['6', ''], ['7', ''], ['8', ''], ['9', ''], ['*', ''], ['0', ''], ['#', '']];
-  const TABS = [['recents', 'Recents', I.recent], ['contacts', 'Contacts', I.person], ['keypad', 'Number', I.keypad]];
+  const TABS = CALLS ? [['recents', 'Recents', I.recent], ['contacts', 'Contacts', I.person], ['keypad', 'Number', I.keypad]] : [['contacts', 'Contacts', I.person]];
   // RedM (spur_phone, 24 Nov 2026): may a call be placed here (a telephone), and a line saying so
   const speakerOk = (app) => !!(app.voice && app.voice.speaker);
   function whereLine(app) {
@@ -149,6 +153,7 @@
   async function dial(app, number) {
     const s = app.state, n = digits(number);
     if (!n) return;
+    if (!CALLS) { app.toast('There are no telephone lines here. Send a telegram.'); return; }
     if (s.call) { app.toast('You are already on a call'); return; }
     if (!K.place(app, 'telephone').ok) { app.toast('Find a telephone to place a call'); return; }   // RedM (spur_phone, 24 Nov 2026)
     clearTimeout(clearer);
@@ -202,7 +207,7 @@
     const s = app.state, n = s.sheet && s.sheet.number;
     if (!n || n !== s.contact) return '';
     return K.sheet({ title: `Block ${app.contacts.name(n)}?`, close: 'closeSheet', body:
-      '<p class="ct-p">Their telegrams and calls stop reaching this address card. They are not told: to them, telegrams go and calls ring out.</p>' +
+      `<p class="ct-p">${CALLS ? 'Their telegrams and calls stop reaching this address card. They are not told: to them, telegrams go and calls ring out.' : 'Their telegrams stop reaching this address card. They are not told: to them, the telegrams go.'}</p>` +
       `<div class="ct-btns">${K.button({ label: 'Cancel', act: 'closeSheet', kind: 'gray' })}${K.button({ label: s.sheet.busy ? '…' : 'Block', act: 'block', kind: 'red', d: { number: n } })}</div>` });
   }
   async function setBlocked(app, number, on) {
@@ -212,7 +217,7 @@
     if (s.sheet) s.sheet.busy = true;
     try {
       await (on ? app.blocks.add(number) : app.blocks.remove(number));
-      app.toast(on ? 'Number blocked' : 'Number unblocked');
+      app.toast(on ? 'Address blocked' : 'Address unblocked');
       s.sheet = null;
       if (on) loadRecents(app);   // (a call of theirs ringing just now leaves Recents)
     } catch (e) { app.toast(e.reason || 'Could not change that'); if (s.sheet) s.sheet.busy = false; }
@@ -239,7 +244,7 @@
     const s = app.state, q = s.query.trim().toLowerCase();
     const list = app.contacts.sorted.filter((c) => !q || String(c.name).toLowerCase().includes(q) || digits(c.number).includes(digits(q) || '\u0000'));
     const body = list.length ? K.list(list.map((c) => K.row({ av: K.avatar({ name: c.name, size: 36, pic: c.picture, frame: c.pictureFrame }), label: c.name, sub: K.fmtNumber(c.number), act: 'contact', d: { number: c.number }, hint: 'Open' })), { inset: 62 })
-      : K.empty({ icon: I.person, title: app.contacts.loaded ? (q ? 'No matches' : 'No contacts') : 'Loading…', text: q || !app.contacts.loaded ? '' : 'Add people you call and text.', action: q ? null : { label: 'New contact', act: 'newContact' } });
+      : K.empty({ icon: I.person, title: app.contacts.loaded ? (q ? 'No matches' : 'No contacts') : 'Loading…', text: q || !app.contacts.loaded ? '' : CALLS ? 'Add people you call and wire.' : 'Add people you wire.', action: q ? null : { label: 'New contact', act: 'newContact' } });
     return K.search({ bind: 'query', value: s.query, placeholder: 'Search contacts' }) + body;
   }
   function keypad(app) {
@@ -255,15 +260,16 @@
     const act = (icon, label, a, d = {}) => `<button class="ct-act" data-act="${a}" ${K.data(d)} data-hint="${K.esc(label)}"><i>${icon}</i>${K.esc(label)}</button>`;
     // Block (or Unblock: one blocked before it became a lore character's can still come off), then Delete contact
     const lower = [
-      ...(blocked || canBlock(app, number) ? [K.row({ label: blocked ? 'Unblock this caller' : 'Block this caller', act: blocked ? 'unblock' : 'askBlock', d: { number },
+      ...(blocked || canBlock(app, number) ? [K.row({ label: blocked ? (CALLS ? 'Unblock this caller' : 'Unblock this address') : (CALLS ? 'Block this caller' : 'Block this address'), act: blocked ? 'unblock' : 'askBlock', d: { number },
         chev: false, tone: blocked ? '' : 'danger', hint: blocked ? 'Unblock' : 'Block' })] : []),
       ...(c ? [K.row({ label: 'Delete contact', act: 'deleteContact', d: { id: c.id }, chev: false, tone: 'danger', hint: 'Delete' })] : []),
     ];
     const body = `<div class="ct-head">${K.avatar({ name: c ? c.name : '', size: 92, pic: c && c.picture, frame: c && c.pictureFrame })}<b>${K.esc(name)}</b>${c ? `<span>${K.esc(K.fmtNumber(c.number))}</span>` : ''}</div>` +
-      `<div class="ct-acts">${act(GLYPH, 'Call', 'dial', { number })}${hasMsg ? act(I.msg, 'Telegram', 'message', { number }) : ''}${act(c ? I.edit : I.plus, c ? 'Edit' : 'Add', c ? 'editContact' : 'newContact', { number })}</div>` +
-      whereLine(app) +
-      K.list([K.row({ label: 'telephone', sub: K.fmtNumber(number), act: 'dial', d: { number }, chev: false, hint: 'Call' })], { inset: 14 }) +
-      (blocked ? '<div class="list-f">You blocked this number: its telegrams and calls don\'t reach this address card.</div>' : '') +
+      `<div class="ct-acts">${CALLS ? act(GLYPH, 'Call', 'dial', { number }) : ''}${hasMsg ? act(I.msg, 'Telegram', 'message', { number }) : ''}${act(c ? I.edit : I.plus, c ? 'Edit' : 'Add', c ? 'editContact' : 'newContact', { number })}</div>` +
+      (CALLS ? whereLine(app) +
+      K.list([K.row({ label: 'telephone', sub: K.fmtNumber(number), act: 'dial', d: { number }, chev: false, hint: 'Call' })], { inset: 14 })
+        : K.list([K.row({ label: 'telegraph address', sub: K.fmtNumber(number), act: hasMsg ? 'message' : 'contact', d: { number }, chev: false, hint: 'Telegram' })], { inset: 14 })) +
+      (blocked ? `<div class="list-f">You blocked this ${CALLS ? 'number: its telegrams and calls' : 'address: its telegrams'} don't reach this address card.</div>` : '') +
       (lower.length ? K.list(lower, { inset: 14 }) : '');
     if (inSplit) return K.scroll(body);
     return K.screen('ct-' + number, K.nav({ back: app.state.tab === 'recents' ? 'Recents' : 'Contacts', act: 'closeContact' }) + K.scroll(body) + blockSheet(app), { slide: true });
@@ -271,13 +277,13 @@
   function editScreen(app) {
     const e = app.state.edit;
     const nav = K.nav({ back: 'Cancel', act: 'cancelEdit', title: e.id != null ? 'Edit contact' : 'New contact', right: `<button class="nb-t" data-act="saveContact" data-hint="Save">Save</button>` });
-    const body = K.list([K.field({ label: 'Name', bind: 'editName', value: e.name, placeholder: 'Name' }), K.field({ label: 'Number', bind: 'editNumber', value: e.number, placeholder: '000-000-0000', mode: 'tel', enter: 'saveContact' })], { inset: 14 }) +
+    const body = K.list([K.field({ label: 'Name', bind: 'editName', value: e.name, placeholder: 'Name' }), K.field({ label: CALLS ? 'Number' : 'Address', bind: 'editNumber', value: e.number, placeholder: '000-000-0000', mode: 'tel', enter: 'saveContact' })], { inset: 14 }) +
       (e.error ? `<div class="list-f" style="margin-top:-10px;color:var(--red)">${K.esc(e.error)}</div>` : '');
     return K.screen('edit', nav + K.scroll(body), { slide: true });
   }
 
   WhipPhone.module({
-    id: 'phone', name: 'Telephone', version: '1.0.0', order: 10, dock: true, icon: GLYPH,
+    id: 'phone', name: CALLS ? 'Telephone' : 'Contacts', version: '1.0.0', order: 10, dock: true, icon: CALLS ? GLYPH : I.person,
     css: `
 /* ---------- phone: keypad ---------- */
 .keypad{display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;gap:8px}
@@ -365,17 +371,18 @@
     // the call capsule's Decline and End handsets turn down like the call screen's (the capsule is outside the app: not scoped)
     globalCss: '.banner[data-app="phone"] .b-act:is([data-a="decline"],[data-a="hangup"]) svg{transform:rotate(135deg)}',
     // seen: missed calls before this are read. sheet: Block's question ({ number, busy }); blocking: a block or unblock on its way
-    state: () => ({ tab: 'recents', num: '', recents: [], loaded: false, query: '', contact: null, edit: null, call: null, invite: null, seen: 0, sheet: null, blocking: false }),
+    state: () => ({ tab: CALLS ? 'recents' : 'contacts', num: '', recents: [], loaded: false, query: '', contact: null, edit: null, call: null, invite: null, seen: 0, sheet: null, blocking: false }),
 
-    session(app) { app.state.loaded = false; app.state.recents = []; app.state.sheet = null; loadRecents(app); },   // the last SIM's go (audit 16, CLI-1)
+    session(app) { app.state.loaded = false; app.state.recents = []; app.state.sheet = null; if (CALLS) loadRecents(app); },   // the last SIM's go (audit 16, CLI-1)
     open(app, args = {}) {
       const s = app.state;
-      if (!s.loaded) loadRecents(app);
+      if (CALLS && !s.loaded) loadRecents(app);
       app.contacts.load();
-      if (args.number && args.call) dial(app, args.number);
+      if (CALLS && args.number && args.call) dial(app, args.number);
       else if (args.number) { s.contact = digits(args.number); s.edit = null; }
-      else if (args.keypad) { s.tab = 'keypad'; s.contact = null; }
-      else if (args.tab) { s.tab = args.tab; s.contact = null; }
+      else if (CALLS && args.keypad) { s.tab = 'keypad'; s.contact = null; }
+      else if (CALLS && args.tab) { s.tab = args.tab; s.contact = null; }
+      if (!CALLS) s.tab = 'contacts';
       if (s.tab === 'recents') s.seen = Date.now();
     },
     route: (app) => (app.state.edit ? 'edit' : app.state.contact ? 'contact' : app.state.tab),
@@ -390,7 +397,7 @@
     },
     tab(app, dir) {
       const s = app.state;
-      if (s.edit || s.contact) return false;
+      if (s.edit || s.contact || !CALLS) return false;
       const ids = TABS.map((t) => t[0]);
       s.tab = ids[(ids.indexOf(s.tab) + dir + ids.length) % ids.length];
       if (s.tab === 'recents') s.seen = Date.now();
@@ -401,16 +408,27 @@
       if (s.call && s.call.state === 'incoming') return { label: 'Decline', run: () => this.actions.decline(app) };
       if (s.call && s.call.state !== 'ended') return { label: s.call.muted ? 'Unmute' : 'Mute', run: () => toggle(app, 'muted', 'mute') };
       if (s.invite) return { label: s.invite.no, run: () => inviteAnswer(app, false) };
+      if (!CALLS) return null;
       if (s.contact) return { label: 'Call', run: () => dial(app, s.contact) };
       if (s.tab === 'keypad' && s.num) return { label: 'Call', run: () => dial(app, s.num) };
       return null;
     },
-    badge: (app) => missed(app.state),
-    info(app) { const n = missed(app.state); return n ? `${n} missed call${n > 1 ? 's' : ''}` : app.state.call ? 'On a call' : 'No missed calls'; },
+    badge: (app) => (CALLS ? missed(app.state) : 0),
+    info(app) { if (!CALLS) { const k = app.contacts.list.length; return k ? `${k} contact${k > 1 ? 's' : ''}` : 'No contacts'; } const n = missed(app.state); return n ? `${n} missed call${n > 1 ? 's' : ''}` : app.state.call ? 'On a call' : 'No missed calls'; },
 
     render(app, v) {
       const s = app.state;
       if (s.edit) return editScreen(app);
+      if (!CALLS) {   // RedM (spur_phone, 25 Nov 2026): Contacts alone
+        if (v.size === 'tablet') {
+          const side = K.title('Contacts') + K.scroll(contactsList(app));
+          const main = s.contact ? contactScreen(app, s.contact, true)
+            : `<div class="ph-main">${K.empty({ icon: I.person, title: 'Contacts', text: 'Choose a name, or add one with +.' })}</div>`;
+          return K.screen('tab', `${K.nav({ right: K.navBtn(I.plus, 'newContact', {}, 'New contact') })}${K.split(side, main, s.contact ? 'c' + s.contact : 'none')}${blockSheet(app)}`);
+        }
+        if (s.contact) return contactScreen(app, s.contact, false);
+        return K.screen('t-contacts', `${K.nav({ right: K.navBtn(I.plus, 'newContact', {}, 'New contact') })}${K.title('Contacts')}${K.scroll(contactsList(app))}`);
+      }
       if (v.size === 'tablet') {
         const side = K.title('Telephone') + K.seg([['recents', 'Recents'], ['contacts', 'Contacts']], s.tab === 'contacts' ? 'contacts' : 'recents', 'tabSeg') +
           K.scroll(s.tab === 'contacts' ? contactsList(app) : recentsList(app));
@@ -479,7 +497,7 @@
         if (!e) return;
         const name = e.name.trim(), number = digits(e.number);
         if (!name) { e.error = 'Give the contact a name.'; return; }
-        if (number.length < 3) { e.error = 'Enter a number.'; return; }
+        if (number.length < 3) { e.error = CALLS ? 'Enter a number.' : 'Enter an address.'; return; }
         try { await app.contacts.save({ id: e.id, name, number }); app.state.edit = null; app.state.contact = number; }
         catch (err) { e.error = err.reason || 'Could not save the contact.'; }
       },
@@ -529,6 +547,7 @@
     on: {
       /** { callId, number } someone is calling */
       incoming(app, d = {}) {
+        if (!CALLS) return;
         const s = app.state;
         if (s.call && s.call.state !== 'ended') { app.notify({ title: 'Call waiting', text: app.contacts.name(d.number), kind: 'call' }); return; }
         clearTimeout(clearer);

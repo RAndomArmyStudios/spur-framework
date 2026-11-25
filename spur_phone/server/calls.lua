@@ -378,6 +378,7 @@ Whip.register(function()
     cb('spur_phone:phone:dial', WRITE, function(source, player, args)
         local me, why = Sim.numberOf(source, player)
         if not me then return false, why end
+        if Config.Calls ~= true then return false, 'There are no telephone lines here. Send a telegram.' end   -- RedM (spur_phone, 25 Nov 2026)
         local to = Numbers.clean(args.number)
         if not to then return false, 'A number is 10 digits' end
         if to == me then return false, 'You cannot call yourself' end

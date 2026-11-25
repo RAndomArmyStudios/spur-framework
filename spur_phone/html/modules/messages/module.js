@@ -89,8 +89,8 @@
     const s = app.state, n = s.sheet && s.sheet.number;
     if (!n) return '';
     const blocked = app.blocks.has(n), busy = s.sheet.busy;
-    const text = blocked ? 'Their telegrams and calls reach this address card again. What they sent while blocked stays hidden.'
-      : 'Their telegrams and calls stop reaching this address card. They are not told: to them, telegrams go and calls ring out.';
+    const text = blocked ? 'Their telegrams reach this address card again. What they sent while blocked stays hidden.'
+      : 'Their telegrams stop reaching this address card. They are not told: to them, the telegrams go.';
     return K.sheet({ title: app.contacts.name(n), close: 'closeSheet', body: `<p class="ms-p">${K.esc(text)}</p>` +
       `<div class="ms-btns">${K.button({ label: 'Cancel', act: 'closeSheet', kind: 'gray' })}` +
       `${K.button({ label: busy ? '…' : blocked ? 'Unblock' : 'Block', act: blocked ? 'unblock' : 'block', kind: blocked ? '' : 'red', d: { number: n } })}</div>` });
@@ -101,7 +101,7 @@
     s.sheet.busy = true;
     try {
       await (on ? app.blocks.add(number) : app.blocks.remove(number));
-      app.toast(on ? 'Number blocked' : 'Number unblocked');
+      app.toast(on ? 'Address blocked' : 'Address unblocked');
       s.sheet = null;
     } catch (e) { app.toast(e.reason || 'Could not change that'); if (s.sheet) s.sheet.busy = false; }
   }
@@ -123,7 +123,7 @@
   }
   function chat(app, number, withBack) {
     const s = app.state, msgs = s.msgs[number], c = app.contacts.find(number), name = app.contacts.name(number);
-    const hasPhone = app.modules().some((m) => m.id === 'phone');
+    const hasPhone = window.WhipPhone.calls === true && app.modules().some((m) => m.id === 'phone');   // RedM (spur_phone, 25 Nov 2026): no Call button without calls
     let body = '';
     if (msgs === null || msgs === undefined) body = K.empty({ title: 'Loading…' });
     else if (!msgs.length) body = K.empty({ title: 'No telegrams yet', text: `Write ${c ? c.name.split(' ')[0] : 'them'} a telegram.` });
@@ -135,7 +135,7 @@
         return sep + K.bubble({ me: !!m.me, text: m.text, fresh: !!m.fresh, failed: !!m.failed });
       }).join('') + (() => { const l = msgs[msgs.length - 1]; return l && l.me ? `<div class="read">${l.failed ? 'Not delivered' : l.pending ? 'On the wire…' : 'Delivered'}</div>` : ''; })() + '</div>';
     }
-    if (app.blocks.has(number)) body += `<div class="ms-blocked">${I.block}You blocked this number</div>`;
+    if (app.blocks.has(number)) body += `<div class="ms-blocked">${I.block}You blocked this address</div>`;
     const info = canBlock(app, number) ? `<button class="ch-info" data-act="info" data-number="${K.esc(number)}" data-hint="Info">${I.info}</button>` : '';
     const head = `<div class="chat-h${info && hasPhone ? ' two' : ''}">${withBack ? `<button class="back" data-act="closeThread" data-hint="Back">${I.back}</button>` : ''}` +
       `${K.avatar({ name: c ? name : '', size: 44, pic: c && c.picture, frame: c && c.pictureFrame })}<div class="ch-n">${K.esc(name)}</div>${hasPhone ? `<button class="ch-call" data-act="call" data-number="${K.esc(number)}" data-hint="Telephone">${CALL}</button>` : ''}${info}</div>`;
@@ -153,8 +153,8 @@
     const rows = matches.map((c) => K.row({ av: K.avatar({ name: c.name, size: 36, pic: c.picture, frame: c.pictureFrame }), label: c.name, sub: K.fmtNumber(c.number), act: 'pick', d: { number: digits(c.number) }, chev: false, hint: 'Write' }));
     if (d.length >= 7 && !matches.some((c) => digits(c.number) === d)) rows.unshift(K.row({ icon: GLYPH, label: `Wire ${K.fmtNumber(d)}`, act: 'pick', d: { number: d }, chev: false, hint: 'Write' }));
     return K.nav({ back: 'Cancel', act: 'cancelCompose', title: 'New telegram' }) +
-      K.list([K.field({ label: 'To', bind: 'to', value: to, placeholder: 'Name or number', enter: 'pickTyped' })], { inset: 14 }) +
-      (rows.length ? K.scroll(K.list(rows, { inset: 62 })) : K.empty({ title: app.contacts.loaded ? 'No matching contacts' : 'Loading…', text: 'Type a full number to wire it.' }));
+      K.list([K.field({ label: 'To', bind: 'to', value: to, placeholder: 'Name or address', enter: 'pickTyped' })], { inset: 14 }) +
+      (rows.length ? K.scroll(K.list(rows, { inset: 62 })) : K.empty({ title: app.contacts.loaded ? 'No matching contacts' : 'Loading…', text: 'Type a full address to wire it.' }));
   }
 
   WhipPhone.module({
@@ -249,7 +249,7 @@
         const c = app.contacts.sorted.find((x) => String(x.name).toLowerCase() === to.trim().toLowerCase());
         if (c) return openThread(app, c.number);
         if (d.length >= 7) return openThread(app, d);
-        app.toast('Pick a contact or type a full number');
+        app.toast('Pick a contact or type a full address');
       },
       send(app) { return send(app, app.state.draft); },
       quick(app, d) { return send(app, d.text); },

@@ -347,7 +347,7 @@ local PARTS = {
                         local doors = #back.doors > 1 and 'Back Doors' or 'Back Door'
                         return (backDoorsOpen(veh, back) and 'Close ' or 'Open ') .. doors
                     end
-                    return doorOpen(veh, 5) and 'Close Trunk' or 'Open Trunk'
+                    return doorOpen(veh, 5) and 'Close the Back' or 'Open the Back'
                 end,
                 icon = 'trunk_lid',
 
@@ -377,7 +377,7 @@ local PARTS = {
             {
                 id = 'storage',
 
-                label = 'View Trunk Inventory',
+                label = 'Look in the Wagon Bed',   -- RedM (spur_core, 25 Nov 2026): was "View Trunk Inventory"
 
                 -- Offered with the boot open (or no lid at all).
                 icon = 'trunk_open',

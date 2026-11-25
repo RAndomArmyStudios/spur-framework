@@ -70,7 +70,7 @@ files {
     -- 'html/img/items/*.webp',
     -- 'html/img/items/*.png',
     -- RedM (spur_gunny, 25 Nov 2026): one picture per class of item (server/items.lua), drawn for this copy.
-    'html/img/items/class/*.svg',
+    'html/img/items/class/*.png',   -- RedM (spur_gunny, 25 Nov 2026): painted pictures, in place of the flat .svg ones
 }
 
 -- RedM (spur_gunny, 24 Nov 2026): no ui_page (the gunsmith uses spur_core's own dialog), no data_file and no stream/:
