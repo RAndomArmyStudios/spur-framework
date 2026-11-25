@@ -1,4 +1,6 @@
 # Only the spur_ resources and the files named below are part of the repository.
+# Everything else in this folder is left out, so a new folder never goes up unless it is added to this list.
+# Custom and paid scripts live in /_custom/ and must never be added here.
 /*
 !/.gitignore
 !/.gitattributes
@@ -23,3 +25,5 @@ __pycache__/
 *.zip
 *.log
 *.bak*
+_forum_screens/
+_custom/
