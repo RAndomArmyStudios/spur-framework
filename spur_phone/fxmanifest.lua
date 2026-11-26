@@ -8,7 +8,7 @@ lua54 'yes'
 name 'spur_phone'
 description 'A pocket notebook for spur_core on RedM (F3): telegrams sent from a telegraph office, telephone calls from a telephone, a bank passbook, a business ledger. Every page is a module (html/modules or another resource).'
 author 'Whippy and WLVF (whip_phone); RedM port, non-commercial'
-version '1.1.0-redm.1'
+version '1.1.0-redm.2'
 -- RedM (spur_phone, 24 Nov 2026): no whip_updates line (it would offer WHIP's releases).
 
 shared_scripts {

@@ -17,7 +17,9 @@ export const SIZE = { phone: [390, 578], tablet: [1024, 722], tabletP: [722, 102
 const STACK = { top: 60, pitch: 66, gap: 8 }, STACK_MAX = 3, STACK_LIFE = 5000;   // notification stack (phone view px)
 // The phone's home grid is 4 x 4: a fifth row (it was 20) sat behind the page dots and the dock, which only
 // showed once a page held more than 16 apps (7 Oct 2026, when every slot became a place an app can go).
-const PER_PAGE = { phone: 16, tablet: 24 }, CONSOLE_PER_PAGE = 9, DOCK_MAX = { phone: 4, tablet: 6 };
+// RedM (spur_phone, 25 Nov 2026): the index is a contents page, one entry to a ruled line: 16 lines on the closed
+// book's page, 12 on the open book's left page
+const PER_PAGE = { phone: 16, tablet: 12 }, CONSOLE_PER_PAGE = 9, DOCK_MAX = { phone: 4, tablet: 6 };
 // An app's place on the home screen: a slot number, page * PER_PAGE + slot, for each grid (the phone's and the
 // tablet's; the controller layout follows the phone's order).
 const MAX_SLOT = 16 * 12;
@@ -1117,7 +1119,7 @@ export class PhoneOS {
       // the tiles: the phone's arrangement in reading order; a step swaps with the neighbour
       const L = this.arrange('phone'), order = [...L.at.entries()].sort((a, b) => a[0] - b[0]);
       const k = order.findIndex(([, m]) => m.def.id === id);
-      const t = k + ({ left: -1, right: 1, up: -3, down: 3 }[dir] || 0);
+      const t = k + ({ left: -1, right: 1, up: -1, down: 1 }[dir] || 0);
       if (k < 0 || t < 0 || t >= order.length || t === k) return;
       this.place('phone', id, order[t][0]);
       if (v.mode === 'phone') s.homePage = Math.floor((t + L.dock.length) / CONSOLE_PER_PAGE);   // the dock's tiles come first
@@ -1201,8 +1203,13 @@ export class PhoneOS {
     }
     const dots = n > 1 ? `<div class="dots">${Array.from({ length: n }, (_, i) => `<button class="${i === page ? 'on' : ''}" data-act="os:hpage" data-page="${i}"></button>`).join('')}</div>` : '';
     const edges = s.drag && s.drag.live ? '<div class="hedge l" data-edge="-1" data-nofocus></div><div class="hedge r" data-edge="1" data-nofocus></div>' : '';
-    return `<div class="home${moving ? ' arranging' : ''}" data-k="h-${page}"><div class="grid">${grid}</div>${dots}${edges}` +
-      `${L.dock.length ? `<div class="dock">${L.dock.map((x) => this.icon(x, false)).join('')}</div>` : ''}</div>`;
+    // RedM (spur_phone, 25 Nov 2026): a contents page: its heading, a line and a page number for every entry (the
+    // numbers run on from page to page), the pages kept at hand as index tabs, and the owner's bookplate
+    const owner = s.session && s.session.name ? esc(s.session.name) : '';
+    return `<div class="home${moving ? ' arranging' : ''}" data-k="h-${page}"><div class="idx-head"><b>Contents</b><i>page</i></div>` +
+      `<div class="grid" style="counter-reset:pg ${page * L.per}">${grid}</div>${dots}${edges}` +
+      `${L.dock.length ? `<div class="dock">${L.dock.map((x) => this.icon(x, true)).join('')}</div>` : ''}` +
+      `${owner ? `<div class="idx-plate"><span>This book is the property of</span><b>${owner}</b></div>` : ''}</div>`;
   }
   tplHomeConsole(m, apps) {
     const s = this.s, phone = m === 'phone';
@@ -1212,8 +1219,8 @@ export class PhoneOS {
     const n = phone ? Math.max(1, Math.ceil(ordered.length / CONSOLE_PER_PAGE)) : 1, page = phone ? Math.min(s.homePage, n - 1) : 0;
     const ids = phone ? ordered.slice(page * CONSOLE_PER_PAGE, (page + 1) * CONSOLE_PER_PAGE) : ordered;
     const tabs = phone && n > 1 ? `<div class="pgs">${this.glyph('lb')}${Array.from({ length: n }, (_, i) => `<button class="pg${i === page ? ' on' : ''}" data-act="os:hpage" data-page="${i}">${i + 1}</button>`).join('')}${this.glyph('rb')}</div>` : '';
-    return `<div class="home chome" data-k="ch-${page}"><div class="ch-head"><div class="ch-title">Index</div>${tabs}</div>` +
-      `<div class="tiles">${ids.map((x) => this.tile(x)).join('')}</div><div class="ch-info"></div></div>`;
+    return `<div class="home chome" data-k="ch-${page}"><div class="ch-head"><div class="ch-title">Contents</div>${tabs}</div>` +
+      `<div class="tiles" style="counter-reset:pg ${page * CONSOLE_PER_PAGE}">${ids.map((x) => this.tile(x)).join('')}</div><div class="ch-info"></div></div>`;
   }
   /** notification stack: up to 3 capsules, oldest on top, newest arriving at the bottom (st: in -> on -> out) */
   tplBanner() {
