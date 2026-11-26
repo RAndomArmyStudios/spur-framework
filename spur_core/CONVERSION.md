@@ -265,7 +265,8 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 - **Streets.** Street names are stubs.
 - **Interiors.** Portal and room queries (the property wizard's probes) are stubs, because RDR2 has no room or portal
   natives (its INTERIOR namespace has none). In game the property wizard read the interior's hash, but 0 rooms and 0
-  doorways, so draw a property's space by hand (24 Nov 2026).
+  doorways, so draw a property's space by hand (24 Nov 2026). For-sale sign posts are not offered: whip's are GTA
+  props and their printed listing is a DUI (`Config.PropertySignPosts` is empty, 25 Nov 2026).
 - **Doors not in RDR2's door list.** whip's doors lock through the game's own door hashes, taken from femga's list
   (What changed: Doors). A door with no listed door of its model within 1.5 m (a door added by a map mod, or one
   femga's list misses) registers but its locks don't hold it, and F8 says so once with its id, model and position.
@@ -386,7 +387,13 @@ All of the following need a pass on a running server. Each one says what to fix 
     (`server/director/nodes.lua`) takes the worse of the server's body and engine readings, which on RedM come
     from the game running the wagon (`spurVeh`, the relay that kept damage uses, verified), so a wagon at body 537
     reads about 46% damaged.
-  - Drawing a property's space, and the furnisher.
+  - Properties, with the real mouse and keyboard: Enter, X, R, C and the wheel while drawing a space, picking doors
+    and aiming signs in the wizard, and dragging furniture by its markers. The rest was played through the link on
+    a building in Valentine (25 Nov 2026): a property made from the wizard's own draft, bought at its sign with
+    cash, its three doors locked through RDR2's door hashes and refused to a non-owner, the space found on both
+    floors, a prop and a stash chest placed and saved in the furnisher, the stash opened, a garage bay added, the
+    admin page's list, detail and Verify, and a rectangle drawn with E at two corners. See `docs/properties.md`.
+    A wagon stored in a property's garage is not tried.
   - Drawing a holstered gun by aiming: an aim held by script (`_SET_CONTROL_NORMAL` on INPUT_AIM) aims a drawn gun
     but doesn't draw a holstered one, so try it with the real right mouse button.
 - **The Vault** (the Director's example). `/director load vault` fails its check with its spots set ("vault did not

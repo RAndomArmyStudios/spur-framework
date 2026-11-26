@@ -1163,7 +1163,13 @@ local function drawSpace()
                         EditorHud.status(('An outline has at most %d corners'):format(MAX_POINTS), 'err')
                     else
                         pts[#pts + 1] = { x = hx, y = hy, z = hz }
-                        if DRAW_NEEDS[kind] and #pts >= DRAW_NEEDS[kind] then finishShape() end
+                        if DRAW_NEEDS[kind] and #pts >= DRAW_NEEDS[kind] then
+                            finishShape()
+                            -- RedM (spur_core, 25 Nov 2026): a last corner that made no shape (too close to the
+                            -- first, or in line with it) is taken back, so the next E is that corner again. Left
+                            -- in, every later E failed the same way until X undid it (tried in game).
+                            if #pts >= DRAW_NEEDS[kind] then pts[#pts] = nil end
+                        end
                     end
                 end
                 if pressed(73, 203) then

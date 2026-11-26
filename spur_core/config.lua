@@ -1312,7 +1312,7 @@ Config.LogSecureRejections = true
 
 -- Properties
 
--- Houses and apartments. Set them up in /whip > Properties; these are the server-wide defaults.
+-- Houses and rooms. Set them up in /spur > World > Properties (docs/properties.md); these are the server-wide defaults.
 
 -- The most furniture one property may hold, unless its own settings say otherwise.
 Config.PropertyMaxObjects = 150
@@ -1334,21 +1334,16 @@ Config.PropertyFurnitureRooms = 4
 -- How far away an admin can aim a property's sign from, when placing it.
 Config.PropertySignPlaceRange = 12.0
 
--- Sign posts: the outside sign can stand on a for-sale sign post in the garden instead of floating (/whip >
--- Properties > Signs step > Put up a sign post). It shows while the property is for sale. The listing (name, garage
--- bays, rooms, price) is printed on the board's blank panel, with a "More..." control under it.
+-- Sign posts: the outside sign can stand on a for-sale sign post in the garden instead of floating (/spur >
+-- Properties > Signs step > Put up a sign post), with the listing printed on its board.
+-- RedM (spur_core, 25 Nov 2026): none are listed, so the option is not offered. whip's two posts are GTA props that
+-- RDR2 does not have, and the printed listing needs a DUI browser, which RedM does not have either. The floating
+-- sign (name, garage bays, price) is what a property for sale shows. The list is kept for a server that adds its own.
 -- Each line is a prop and its board's blank panel: where its middle is, in metres from the bottom of the prop
 -- (x right, y forward, z up), and how wide (w) and tall (h) it is. The panel's printed side must face the prop's back (-y).
---   ink, accent   the listing's colours: its words, and the line under its price
---   back = true   the board is printed on its back too
-Config.PropertySignPosts = {
-    { model = 'whip_forsale_timber',  label = 'Dynasty 8 (timber frame)',
-      panel = { x = -0.2792, y = -0.0072, z = 1.2756, w = 1.2795, h = 0.7132 },
-      ink = '#11461f', accent = '#e9b33a' },
-    { model = 'whip_forsale_hanging', label = 'Lenny Avery (hanging board)',
-      panel = { x = 0.6582, y = -0.0107, z = 1.5160, w = 1.0544, h = 0.5756 },
-      ink = '#33256e', accent = '#e39a3b', back = true },
-}
+--   { model = 'a_prop', label = 'What admins see', panel = { x = 0, y = 0, z = 1.2, w = 1.2, h = 0.7 },
+--     ink = '#11461f', accent = '#e9b33a', back = true }
+Config.PropertySignPosts = {}
 
 -- Stashes: furniture that becomes a stash of its property when placed; only the owner and keyholders can open it.
 -- Each line is   ['model'] = { label = 'what players see', slots = how many slots, weight = most kg }
