@@ -1231,7 +1231,9 @@ local CONTROL = {
     [68] = 0xD7CAFCEF, [69] = 0xF4330038, [70] = 0xF1C341BA,   -- VEH_AIM, VEH_ATTACK, VEH_ATTACK2
     [71] = 0x5B9FD4E2,  -- VEH_ACCELERATE
     [72] = 0x6E1F639B,  -- VEH_BRAKE
-    [73] = 0x4AF4D473,  -- VEH_DUCK (X)           -> FRONTEND_DELETE, Delete / X (whip: "remove")
+    -- RedM (spur_core, 25 Nov 2026): was FRONTEND_DELETE (0x4AF4D473), which on a keyboard is the Delete key only:
+    -- tried in game with the real key, X did nothing in the property tools and Delete did. FRONTEND_RS is X.
+    [73] = 0x7DA48D2A,  -- VEH_DUCK (X)           -> FRONTEND_RS, X / R3 (whip: "remove", "undo", a bar's cancel)
     [74] = 0x24978A28,  -- VEH_HEADLIGHT (H)      -> WHISTLE, H (whip: the death screen's key)
     [75] = 0xFEFAB9B4,  -- VEH_EXIT               RDR2: E / Y
     [76] = 0x65D24C98,  -- VEH_HANDBRAKE

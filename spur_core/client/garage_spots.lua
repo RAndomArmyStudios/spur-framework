@@ -194,7 +194,9 @@ end
 -- appears.
 --
 -- And on a bike's, a bicycle's and a boat's one prompt, which stand in for a car's doors.
-for _, door in ipairs({ 'door_dside_f', 'door_pside_f', 'door_dside_r', 'door_pside_r', 'bike', 'bicycle', 'boat' }) do
+-- RedM (spur_core, 25 Nov 2026): and on the boot's prompt ('trunk') and a wagon's own ('wagon', client/vehicle_prompts.lua). A wagon has no door bones, so with the
+-- doors alone a wagon parked in a bay had no Store at all (tried in game with a buggy in a house's bay).
+for _, door in ipairs({ 'door_dside_f', 'door_pside_f', 'door_dside_r', 'door_pside_r', 'bike', 'bicycle', 'boat', 'trunk', 'wagon' }) do
     local ok, why = VehiclePartOptions.add(GetCurrentResourceName(), door, {
         id    = 'store',
         icon  = 'store',

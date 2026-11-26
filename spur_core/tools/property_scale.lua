@@ -418,7 +418,8 @@ local function startStamp(form)
                 EditorHud.update(stampPatch())
             end
             local step = (s.here and s.here.tpl and #s.here.tpl.units) or 1
-            if pressed(37, 175) then
+            -- RedM (spur_core, 25 Nov 2026): Tab is FRONTEND_SELECT (217) here; see the door picker in property_wizard.lua.
+            if pressed(217, 175) then
                 s.form.start = s.form.start + step
                 EditorHud.update(stampPatch())
             elseif pressed(44, 174) then

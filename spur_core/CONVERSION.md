@@ -387,13 +387,22 @@ All of the following need a pass on a running server. Each one says what to fix 
     (`server/director/nodes.lua`) takes the worse of the server's body and engine readings, which on RedM come
     from the game running the wagon (`spurVeh`, the relay that kept damage uses, verified), so a wagon at body 537
     reads about 46% damaged.
-  - Properties, with the real mouse and keyboard: Enter, X, R, C and the wheel while drawing a space, picking doors
-    and aiming signs in the wizard, and dragging furniture by its markers. The rest was played through the link on
-    a building in Valentine (25 Nov 2026): a property made from the wizard's own draft, bought at its sign with
-    cash, its three doors locked through RDR2's door hashes and refused to a non-owner, the space found on both
-    floors, a prop and a stash chest placed and saved in the furnisher, the stash opened, a garage bay added, the
-    admin page's list, detail and Verify, and a rectangle drawn with E at two corners. See `docs/properties.md`.
-    A wagon stored in a property's garage is not tried.
+  - Properties: a player giving a key to another player at the sign inside (it lists the people within 5 m, so it
+    needs two players on the server), and an owner other than the tester (the test server has one character). The
+    rest is played (25 Nov 2026), the first pass through the link and the second with the real keyboard and mouse
+    on a building in Valentine: the whole wizard from Interior to Save (E, R, the wheel, Enter and C while drawing;
+    E, G, L, Enter in the door picker; Q/E and Enter for a sign; Q/E, the arrows, Enter and Esc for a garage bay),
+    a property bought at its sign with cash, doors locked through RDR2's door hashes, the furnisher's move arrows
+    and turn rings dragged with the mouse, a stash chest, and a buggy stored in the house's bay and taken out
+    again. As a keyholder (key given from the admin page) the door and the chest open; with the key taken back
+    both refuse. Four things were wrong and are fixed: X did nothing in the property tools, the furnisher and on
+    a progress bar (control 73 was mapped to FRONTEND_DELETE, the Delete key; it is FRONTEND_RS now), Tab did not
+    step to the next door (the wheel-menu control reports nothing while a mode holds it off; read as
+    FRONTEND_SELECT), a new vehicle could not be put into a property's garage from the admin page ("No such
+    garage: property2", the colon was stripped from the key), and a wagon parked in any bay had no Store Vehicle
+    (it was on the door prompts, and a wagon has no door or boot bones, so it had no prompt of any kind; a wagon now has one at the middle of its back with Lock/Unlock, Look in the Wagon Bed and Store Vehicle, `client/vehicle_prompts.lua`). All four were tried again with the real keys after the fix. The door
+    scan also marks a door-shaped object the game has no door hash for: "not a game door: it will not hold a
+    lock". See `docs/properties.md`.
   - Drawing a holstered gun by aiming: an aim held by script (`_SET_CONTROL_NORMAL` on INPUT_AIM) aims a drawn gun
     but doesn't draw a holstered one, so try it with the real right mouse button.
 - **The Vault** (the Director's example). `/director load vault` fails its check with its spots set ("vault did not

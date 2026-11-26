@@ -466,6 +466,39 @@ local PARTS = {
     -- A car's filler, where a pump's nozzle goes (client/vehicle_points.lua fillerSpot; Config.VehicleFillers
     -- sets the side). No options of its own, so it shows only while a resource's is on offer.
     pointPart('fuel',    { car = true },   'fuel', {}),
+    -- RedM (spur_core, 25 Nov 2026): a wagon. RDR's wagons, buggies and carts have none of GTA's door or boot
+    -- bones, so not one of the parts above lands on them and a wagon had no prompt at all (tried in game: a
+    -- buggy parked in a house's bay could not be locked, looked in or put away from the wagon itself). This is
+    -- one circle at the middle of its back (client/vehicle_points.lua's 'storage' place) with what a car's
+    -- front door and boot offer between them. `only` keeps it off a coach that does have doors.
+    (function()
+        local part = pointPart('wagon', { car = true }, 'storage', {
+            {
+                id    = 'lock',
+                icon  = function(veh) return carLocked(veh) and 'lock' or 'unlock' end,
+                label = function(veh) return carLocked(veh) and 'Unlock' or 'Lock' end,
+                can   = function(veh) return askCar(veh, 'key', Vehicles.playerHasKey) end,
+                act   = function(veh) Vehicles.toggleLock(veh) end,
+            },
+            {
+                id    = 'storage',
+                icon  = 'trunk_open',
+                label = 'Look in the Wagon Bed',
+                can   = function(veh)
+                    if not askCar(veh, 'trunkOk', Vehicles.canOpenTrunk) then return false end
+                    return askCar(veh, 'trunkHas', Vehicles.hasStorage, 'trunk')
+                end,
+                act   = function(veh) Vehicles.openTrunk(veh) end,
+                press = true,
+            },
+        }, { drop = 0.0, rise = 0.0, clearance = 0.0, range = 2.4, activeRange = 1.6, scale = 1.32 })
+        part.only = function(veh)
+            return GetEntityBoneIndexByName(veh, 'door_dside_f') == -1
+               and GetEntityBoneIndexByName(veh, 'door_pside_f') == -1
+               and GetEntityBoneIndexByName(veh, 'boot') == -1
+        end
+        return part
+    end)(),
 }
 -- `scale` multiplies how big the circle and its text are drawn, for vehicle prompts only.
 
@@ -1054,6 +1087,8 @@ local function addPrompt(part, veh)
     if not Interactions then return end
     -- A bike's prompt on bikes only, a boat's on boats.
     if part.kinds and not part.kinds[VehiclePoints.kindOf(veh)] then return end
+    -- RedM (spur_core, 25 Nov 2026): a part's own say on which vehicles it is for (the wagon's).
+    if part.only and not part.only(veh) then return end
     -- Nothing to offer: no prompt. An option added or removed hands the prompts back and the scan asks again.
     if not offersAnything(part) then return end
 

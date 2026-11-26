@@ -635,6 +635,16 @@ SecureEvent('spur_core:server:vmOpenStorage', {
     TriggerClientEvent('spur_core:client:openVehicleStorage', source, payload)
 end)
 
+-- RedM (spur_core, 25 Nov 2026): a garage's key as the page sends it. Sanitize.key drops the colon, and a
+-- property's garage is 'property:<id>': a new vehicle put into one was refused with "No such garage: property2"
+-- (tried in game). The key is still checked against the garages that exist (Vehicles.checkGarage).
+local function garageKeyOf(val)
+    if type(val) ~= 'string' then return nil end
+    val = val:gsub('[^%w_%-:]', '')
+    if #val == 0 then return nil end
+    return #val > 60 and val:sub(1, 60) or val
+end
+
 --- Create one.
 SecureEvent('spur_core:server:vmCreate', {
     ace = VM_ACE,
@@ -654,7 +664,7 @@ SecureEvent('spur_core:server:vmCreate', {
         model       = Sanitize.key(data.model, 60) or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was GTA's adder, which fails the model check
         plate       = Sanitize.string(data.plate, 8),   -- 8, as Vehicles.create allows
         state       = Sanitize.enum(data.state, { 'garaged', 'out', 'impounded' }, 'garaged'),
-        garage      = Sanitize.key(data.garage, 60),
+        garage      = garageKeyOf(data.garage),
     })
 
     if not def then
@@ -763,7 +773,7 @@ SecureCallback('spur_core:vmWizardCreate', {
     model = model:lower()
 
     local place = data.place == 'here' and 'here' or 'garage'
-    local garage = place == 'garage' and Sanitize.key(data.garage, 60) or nil
+    local garage = place == 'garage' and garageKeyOf(data.garage) or nil
     if place == 'garage' and not garage then return { ok = false, why = 'Pick the garage it goes into' } end
     -- A property's garage is its owner's and keyholders': this car's owner must be one of them.
     if garage and Garages.isPrivate(garage) and not Garages.canUse(garage, ownerCharId) then

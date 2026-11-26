@@ -292,6 +292,10 @@ local function summary()
             i = i, role = uiRole(c), key = c.role and c.key or nil, kind = c.kind, source = c.source,
             pair = c.pairWith, conflict = c.conflict, doorId = c.doorId, adopt = c.adopt,
             dist = math.sqrt(dx * dx + dy * dy + dz * dz),
+            -- RedM (spur_core, 25 Nov 2026): RDR2 locks a door through the game's own hash for it. A door-shaped
+            -- object that has none (a scan found one upstairs in Valentine) takes a role but does not hold its
+            -- lock: the page says so on its row.
+            noLock = not (c.world and RdrDoorHashes and RdrDoorHashes.find(c.model, c.world.x, c.world.y, c.world.z, 1.5)) or nil,
         }
     end
     s.doors = doors
@@ -859,7 +863,9 @@ local function pickDoors()
 
                 -- The door aimed at: the one the ray hits, else the nearest to the line of sight.
                 focus = candidateOf(aimedEnt) or aimedCandidate() or tabFocus
-                if pressed(37, 206) and #d.candidates > 0 then
+                -- RedM (spur_core, 25 Nov 2026): Tab is read as FRONTEND_SELECT (217). The wheel-menu control (37) is held
+                -- off by this mode's block, and RDR2 reports nothing for it then: tried with the real key, Tab did nothing.
+                if pressed(217, 206) and #d.candidates > 0 then
                     tabFocus = (focus or 0) % #d.candidates + 1
                     focus = tabFocus
                 end

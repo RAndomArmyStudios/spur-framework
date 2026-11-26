@@ -567,13 +567,13 @@ function renderRegister() {
     if (!reg.read) {
         body.appendChild(WP.statusRow({ label: 'Interior', status: 'err', detail: reg.why || 'Not read yet' }));
         body.appendChild(WP.el('div', 'wp-hint',
-            'Stand inside a copy of an interior whip already knows (one with a template) and press Read again.'));
+            'Stand inside a copy of an interior SPUR already knows (one with a template) and press Read again.'));
         buttons(body, [['Read again', 'prRead', 'primary']]);
         return;
     }
     if (!(reg.templates || []).length) {
         body.appendChild(WP.statusRow({ label: 'Interior', status: 'warn',
-            detail: 'hash ' + reg.hash + ': whip has no template for this interior yet' }));
+            detail: 'hash ' + reg.hash + ': SPUR has no template for this interior yet' }));
         body.appendChild(WP.el('div', 'wp-hint',
             'Set one of its homes up with New property first. Every other copy of the interior can then be registered '
             + 'from here in one go.'));
@@ -902,7 +902,7 @@ function stepInterior(body) {
 
     body.appendChild(WP.statusRow({
         label: 'Interior', status: i.yawOnly === false ? 'err' : 'ok',
-        detail: i.yawOnly === false ? 'this interior is tilted, and whip only handles interiors standing upright'
+        detail: i.yawOnly === false ? 'this interior is tilted, and SPUR only handles interiors standing upright'
             : 'hash ' + i.hash + (i.currentRoom ? '  ·  you are in "' + i.currentRoom + '"' : ''),
     }));
     info(body, [
@@ -1045,9 +1045,11 @@ function stepDoors(body) {
         const bits = [(c.kind === 'garage' ? 'garage-sized' : 'door') + (c.source === 'doorway' ? ' in a doorway'
             : c.source === 'saved' ? ', saved' : c.source === 'picked' ? ', picked by hand' : ''),
                       fixed(c.dist, 1) + ' m away'];
+        // RedM (spur_core, 25 Nov 2026): no game door hash here, so the lock would not hold.
+        if (c.noLock) bits.push('not a game door: it will not hold a lock');
         if (c.conflict) bits.push('already ' + c.conflict + '\'s');
-        else if (c.doorId) bits.push('whip door #' + c.doorId);
-        else if (c.adopt) bits.push('whip door #' + c.adopt + ' (taken over)');
+        else if (c.doorId) bits.push('SPUR door #' + c.doorId);
+        else if (c.adopt) bits.push('SPUR door #' + c.adopt + ' (taken over)');
         body.appendChild(WP.statusRow({
             label: String(c.i) + (c.key ? '  ·  ' + c.key : ''),
             status: c.conflict ? 'err' : c.role === 'none' ? 'off' : 'ok',
@@ -1278,7 +1280,7 @@ function stepReview(body) {
             ...edit('settings') }));
     }
     body.appendChild(WP.el('div', 'wp-hint',
-        'Save writes it all at once. Whip then makes (or takes over) its doors and locks them to the owner.'));
+        'Save writes it all at once. SPUR then makes (or takes over) its doors and locks them to the owner.'));
     if (d.saving) wiz.say('Saving…');
 }
 
