@@ -342,7 +342,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   them: the weapon tables are `GameWeapons` and `GameWeaponModels`, and the pad layout page's game role is `game`.
   Migrations 048 and 049 have new ids (`048_redm_prop_seed_emptied`, `049_redm_vehicle_catalog_rdr2`); a database
   that ran them under their old ids is matched by number (`renamed`, `isApplied` in server/migrations.lua), so
-  they don't run again. Kept as they are: the `fivem` identifier (Cfx.re's account id, a database column the ban
+  they don't run again. Kept as they are: Cfx.re's account identifier (its name is a database column the ban
   checks use) and RedM's own process name, which dev/mcp looks for.
 - **The Director's Speech step** lists no voices or lines (whip's list was the original game's and is gone): a line and a voice
   are typed by name and played through the ambient speech call, not tried on RDR2.
