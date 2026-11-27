@@ -73,9 +73,9 @@ end
 -- RedM (spur_core, 27 Nov 2026): whip's grab clips were the original game's. RDR2's own pick ups are in
 -- `mech_pickup@object` (pickup_low, pickup_med, pickup_high: one hand, no left or two-handed versions, and one set for
 -- both models), so every hand of a band plays its band's clip (GRAB_CLIP). From femga's rdr3_discoveries animation
--- list. NOT YET SEEN IN GAME: which hand each clip uses, and the ms in GRAB_CLOSE and GRAB_DONE, are guesses to be
--- measured in game (time from E to the hand on the pile, and to the hips back up). An empty GRAB_DICT turns the grab
--- off again (PlayGrab answers nil and the pile goes at once).
+-- list. Played in game (27 Nov 2026, redm.11 test): pickup_med and pickup_high reach with the right hand, pickup_low
+-- bends to the ground with both. GRAB_CLOSE and GRAB_DONE are measured (below); a pick up off a real pile with E is
+-- still to be watched. An empty GRAB_DICT turns the grab off again (PlayGrab answers nil and the pile goes at once).
 
 local GRAB_DICT = { male = 'mech_pickup@object', heeled = 'mech_pickup@object' }
 -- The clip each band and hand plays (RDR2's set has one per band).
@@ -88,9 +88,11 @@ local GRAB_MS = 2000
 local FEET_BELOW = 1.0                         -- a ped's feet below GetEntityCoords
 local GRAB_LOW_BELOW, GRAB_HIGH_ABOVE = 0.65, 1.6
 local GRAB_LEFT = -math.rad(30)
--- When the hand closes on it, ms, by RDR2 clip. GUESSES (27 Nov 2026): measure in game.
-local GRAB_CLOSE = { pickup_high = 550, pickup_med = 550, pickup_low = 750 }
--- When it may end early (low: the hips back up); the rest run their GRAB_MS. GUESS (27 Nov 2026).
+-- When the hand closes on it, ms, by RDR2 clip. Measured in game (27 Nov 2026, redm.11 test, the right hand's bone):
+-- pickup_low has both hands at the ground from 610 to 760 ms, pickup_med the right hand furthest out from 460 to
+-- 610 ms, and pickup_high the right hand highest from 300 to 450 ms (by 600 ms it is coming back).
+local GRAB_CLOSE = { pickup_high = 400, pickup_med = 550, pickup_low = 700 }
+-- When it may end early (low: the hips back up; the clip is 1.37 s); the rest run their GRAB_MS.
 local GRAB_DONE = { pickup_low = 1300 }
 local GRAB_STICK = 0.35
 

@@ -1633,20 +1633,29 @@ end)
 
 -- The key turned (on foot: the L key, the radial's Lock).
 -- RedM (spur_core, 27 Nov 2026): whip clicked the original game's car key fob here. An 1899 wagon has a key, not a
--- fob, so the player turns one in the air: RDR2's shopkeeper locking up (`base_r_key`, right hand), on the upper body
--- only (49: upper body, the player keeps moving) and cut at KEY_ANIM_MS. From femga's rdr3_discoveries animation
--- list. NOT YET SEEN IN GAME: the clip is made for a door at arm's length, so the arm may reach out too far, and the
--- shopkeeper clips may be male only. Set KEY_ANIM to nil to lock with no animation.
-local KEY_ANIM = { dict = 'amb_work@world_human_shopkeeper_lockup@male@base', clip = 'base_r_key' }
-local KEY_ANIM_MS = 900
+-- fob, so the player turns one: RDR2's own multiplayer player unlocking a door (`script_mp@player@unlockdoor`,
+-- `unlockdoorr_male` / `unlockdoorr_female`, right hand), on the upper body only (48: the player keeps moving).
+-- Seen in game (27 Nov 2026, redm.11 test): the 3.8 s clip has the hand out at the lock from about 1.2 s to 1.9 s,
+-- so it starts at KEY_ANIM_START and runs KEY_ANIM_MS. (redm.11 played `base_r_key` from the shopkeeper's lock-up,
+-- which is the key prop's own track, not a ped clip: the arm stayed at the side.) Set KEY_ANIM to nil to lock with
+-- no animation.
+local KEY_ANIM = { dict = 'script_mp@player@unlockdoor', male = 'unlockdoorr_male', female = 'unlockdoorr_female' }
+local KEY_ANIM_START = 1.0   -- seconds into the clip
+local KEY_ANIM_MS = 1100
 
 local function PlayKeyAnim()
     if not KEY_ANIM then return end
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then return end
     CreateThread(function()
-        if LoadAnimDict(KEY_ANIM.dict, 1000) then
-            TaskPlayAnim(ped, KEY_ANIM.dict, KEY_ANIM.clip, 4.0, -4.0, KEY_ANIM_MS, 49, 0, false, false, false)
+        if not LoadAnimDict(KEY_ANIM.dict, 1000) then return end
+        local clip = IsPedMale(ped) and KEY_ANIM.male or KEY_ANIM.female
+        TaskPlayAnim(ped, KEY_ANIM.dict, clip, 4.0, -4.0, KEY_ANIM_MS, 48, 0, false, false, false)
+        local t = GetGameTimer()
+        while not IsEntityPlayingAnim(ped, KEY_ANIM.dict, clip, 3) and GetGameTimer() - t < 300 do Wait(0) end
+        local len = GetAnimDuration(KEY_ANIM.dict, clip)
+        if len and len > KEY_ANIM_START then
+            SetEntityAnimCurrentTime(ped, KEY_ANIM.dict, clip, KEY_ANIM_START / len)
         end
     end)
 end

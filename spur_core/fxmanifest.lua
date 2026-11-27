@@ -5,7 +5,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 name 'spur_core'
 author 'Whippy and WLVF (whip_core); RedM port, non-commercial'
 description 'whip_core 1.3.0 ported to RedM (RDR2). Not WHIP, not made or endorsed by WHIP\'s author. LGPL 3.0.'
-version '1.3.0-redm.11'   -- the start-up banner reads it
+version '1.3.0-redm.12'   -- the start-up banner reads it
 -- No whip_updates line: the update check would compare this port against WHIP's own releases.
 
 -- First on both sides: while spur_core loads, GetInvokingResource() names no caller.
