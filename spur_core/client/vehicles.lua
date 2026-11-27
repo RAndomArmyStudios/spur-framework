@@ -1631,6 +1631,26 @@ RegisterNetEvent('spur_core:client:garageStoreConfirmed', function(vehicleId)
     end
 end)
 
+-- The key turned (on foot: the L key, the radial's Lock).
+-- RedM (spur_core, 27 Nov 2026): whip clicked the original game's car key fob here. An 1899 wagon has a key, not a
+-- fob, so the player turns one in the air: RDR2's shopkeeper locking up (`base_r_key`, right hand), on the upper body
+-- only (49: upper body, the player keeps moving) and cut at KEY_ANIM_MS. From femga's rdr3_discoveries animation
+-- list. NOT YET SEEN IN GAME: the clip is made for a door at arm's length, so the arm may reach out too far, and the
+-- shopkeeper clips may be male only. Set KEY_ANIM to nil to lock with no animation.
+local KEY_ANIM = { dict = 'amb_work@world_human_shopkeeper_lockup@male@base', clip = 'base_r_key' }
+local KEY_ANIM_MS = 900
+
+local function PlayKeyAnim()
+    if not KEY_ANIM then return end
+    local ped = PlayerPedId()
+    if IsPedInAnyVehicle(ped, false) then return end
+    CreateThread(function()
+        if LoadAnimDict(KEY_ANIM.dict, 1000) then
+            TaskPlayAnim(ped, KEY_ANIM.dict, KEY_ANIM.clip, 4.0, -4.0, KEY_ANIM_MS, 49, 0, false, false, false)
+        end
+    end)
+end
+
 -- L-key lock / unlock (RegisterKeyMapping)
 
 local lockTogglePressed = false
@@ -1735,6 +1755,7 @@ CreateThread(function()
             end
 
             if closestVeh and closestVId then
+                PlayKeyAnim()
                 TriggerServerEvent('spur_core:server:toggleVehicleLock', closestVId)
             end
         end
@@ -2824,6 +2845,7 @@ end
 function Vehicles.toggleLock(entity)
     local vId = Vehicles.idByEntity(entity)
     if not vId then return end
+    PlayKeyAnim()
     -- The same event as the L key, so the server's checks apply identically.
     TriggerServerEvent('spur_core:server:toggleVehicleLock', vId)
 end

@@ -296,10 +296,11 @@ end)
 -- back, not the game's default. The latest override wins when there are several.
 
 local walkByCmd, moodByCmd = {}, {}
-local knownLoco = {}           -- [loco] = true, for overrides that name one
+local knownLoco, knownArchetype = {}, {}   -- names an override may give as they are
 for _, w in ipairs(EmoteList and EmoteList.walks or {}) do
     walkByCmd[w.cmd] = w
     if w.loco then knownLoco[w.loco] = true end
+    if w.archetype then knownArchetype[w.archetype] = true end
 end
 for _, m in ipairs(EmoteList and EmoteList.moods or {}) do moodByCmd[m.cmd] = m end
 
@@ -309,42 +310,52 @@ local overrideSeq = 0
 local walkApplying = false
 local walkAgain = false
 
---- The walk that should be on the ped now: the newest override, else the chosen walk, else nil.
---- An override is a /walk name, or the loco of one in the list ('very_drunk'). Anything else (an original-game
---- clipset, 'x@y', which RDR2 can't play, or an old name such as 'trash') puts nothing on.
-local function wantedLoco()
-    local best
-    for _, o in pairs(overrides) do
-        if not best or o.seq > best.seq then best = o end
-    end
-    if best then
-        local w = walkByCmd[best.clipset]
-        if w then return w.loco end
-        return knownLoco[best.clipset] and best.clipset or nil
-    end
-    local w = chosenWalk and walkByCmd[chosenWalk]
-    return w and w.loco or nil
-end
-
--- RDR2's walk natives (see shared/emote_list.lua). The motion type takes only on the 'default' stance, so that is
--- set first; clearing both gives the ped its model's own walk back.
+-- RedM (spur_core, 27 Nov 2026): RDR2 has no movement clipsets (SetPedMovementClipset is a stub). A walk in
+-- shared/emote_list.lua is one of two kinds: an `archetype` (a locomotion archetype, a whole gait such as 'cowboy',
+-- put on with _SET_PED_DESIRED_LOCO_FOR_MODEL) or a `loco` (a loco motion type such as 'very_drunk', put on with
+-- _SET_PED_DESIRED_LOCO_MOTION_TYPE over the 'default' archetype, as the motion type does nothing on the player's own).
+-- Clearing both gives the ped its model's own walk back. NOT YET SEEN IN GAME.
 local SET_LOCO_FOR_MODEL   = 0x923583741DC87BCE
 local SET_LOCO_MOTION_TYPE = 0x89F5E7ADECCCB49C
 local CLEAR_LOCO_FOR_MODEL = 0x4FD80C3DD84B817B
 local CLEAR_LOCO_MOTION    = 0x58F7DB5BD8FA2288
 
---- Put the wanted walk on the ped. May be called any time; never waits.
+--- The walk that should be on the ped now, as a walks-list entry ({ archetype } or { loco }): the newest override,
+--- else the chosen walk, else nil. An override is a /walk name, or an archetype or loco of one in the list. Anything
+--- else (an original-game clipset, 'x@y', which RDR2 can't play, or an old name such as 'trash') puts nothing on.
+local function wantedWalk()
+    local best
+    for _, o in pairs(overrides) do
+        if not best or o.seq > best.seq then best = o end
+    end
+    if best then
+        local name = best.clipset
+        if walkByCmd[name] then return walkByCmd[name] end
+        if knownLoco[name] then return { loco = name } end
+        if knownArchetype[name] then return { archetype = name } end
+        return nil
+    end
+    return chosenWalk and walkByCmd[chosenWalk] or nil
+end
+
+--- Put the wanted walk on the ped. May be called any time; never waits (it runs in a thread), and a call that lands
+--- while one is running is honoured when it finishes.
 local function applyWalk()
     if walkApplying then walkAgain = true return end
     walkApplying = true
     CreateThread(function()
         repeat
             walkAgain = false
-            local loco = wantedLoco()
+            local w = wantedWalk()
             local ped = PlayerPedId()
-            if loco then
-                Citizen.InvokeNative(SET_LOCO_FOR_MODEL, ped, IsPedMale(ped) and 'default' or 'default_female')
-                Citizen.InvokeNative(SET_LOCO_MOTION_TYPE, ped, loco)
+            if w and (w.archetype or w.loco) then
+                Citizen.InvokeNative(SET_LOCO_FOR_MODEL, ped,
+                    w.archetype or (IsPedMale(ped) and 'default' or 'default_female'))
+                if w.loco then
+                    Citizen.InvokeNative(SET_LOCO_MOTION_TYPE, ped, w.loco)
+                else
+                    Citizen.InvokeNative(CLEAR_LOCO_MOTION, ped)
+                end
             else
                 Citizen.InvokeNative(CLEAR_LOCO_FOR_MODEL, ped)
                 Citizen.InvokeNative(CLEAR_LOCO_MOTION, ped)
@@ -368,8 +379,8 @@ end
 --- The chosen walk's /walk name, or nil.
 function Emotes.walk() return chosenWalk end
 
---- What an override takes for a walk: a /walk name from the walks list ('drunk') or a loco from it ('very_drunk').
---- Passed on as it is: applyWalk looks it up, and puts nothing on for a name it doesn't know.
+--- What an override takes for a walk: a /walk name from the walks list ('drunk'), or an archetype or loco from
+--- it ('cowboy', 'very_drunk'). Passed on as it is: applyWalk looks it up, and puts nothing on for a name it doesn't know.
 ---@param walk string
 ---@return string|nil
 function Emotes.walkClipset(walk)

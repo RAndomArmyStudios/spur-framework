@@ -1378,7 +1378,7 @@ Config.LoreVoice = {
     ByeRange = 10,           -- a player it said hello to walking this far away hears its Goodbye line
     GreetAgainMinutes = 3,   -- after this long (and having walked off), a player is greeted again
     ReactAgainSeconds = 6,   -- the same reaction again only after this long
-    Gestures = false,        -- it moves its hands as it talks. RedM: no RDR2 gestures are set yet (client/lore_reactions.lua)
+    Gestures = false,        -- it moves its hands as it talks. RedM: RDR2's townsfolk gestures, not yet seen in game; off until they are (client/lore_reactions.lua)
 }
 
 -- Prop catalog: every prop in the game is placeable in the furnisher, filed under the categories below (RedM, 24 Nov
@@ -1462,10 +1462,11 @@ Config.PlaceItemRange        = 10.5    -- How far away you can set an item down 
 -- pick up, another player). `removed` false shows only what they get; `position` is 'right', 'left' or 'bottom'.
 Config.ItemNotices = { enabled = true, removed = true, position = 'right' }
 
--- How the player moves while holding an item out to give it: `walk` is a /walk name ('hurt'), or nil for their own
--- walk; `speed` is 'jog' (no sprint), 'walk' (no running) or nil (as fast as they like). A resource can set its own
--- with SetGiveModeStyle. One item can keep the player's own walk: "Allow player walk animation" on its /whip Items page.
-Config.GiveModeStyle = { walk = nil, speed = 'jog' }   -- whip's 'trash' walk was the original game's
+-- How the player moves while holding an item out to give it: `walk` is a /walk name ('hurt', 'cowboy': shared/emote_list.lua),
+-- or nil for their own walk; `speed` is 'jog' (no sprint), 'walk' (no running) or nil (as fast as they like). A resource
+-- can set its own with SetGiveModeStyle. One item can keep the player's own walk: "Allow player walk animation" on its
+-- /whip Items page. RedM (spur_core, 27 Nov 2026): whip's 'trash' walk was the original game's, so nil.
+Config.GiveModeStyle = { walk = nil, speed = 'jog' }
 
 -- A thrown item that hits someone hard enough knocks them over, and bounces off: it takes weight and speed together,
 -- so a coin thrown fast does not, and nor does a heavy thing rolling slowly. Not someone in a no-PvP zone or with god

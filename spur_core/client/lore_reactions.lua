@@ -194,13 +194,19 @@ end)
 -- into something (below) is sent to every game, and so is the line after one, gestures or not, so it ends that hold; a
 -- line with gestures alone goes to the owner (server/director/lore_voice.lua).
 
--- RedM (spur_core, 26 Nov 2026): whip's gesture clips were the original game's and RDR2 has none of them, so these are
--- empty and nothing plays (Config.LoreVoice.Gestures is off by default). An RDR2 set goes here: GESTURES' m and f
--- dictionaries, TALKING's clips, and FIRST's clip for each kind of line (hello, goodbye, positive, negative, bumped,
--- hitByCar, aimedAt, gunfire, carStolen).
-local GESTURES = {}   ---@type { m: string?, f: string? }
-local TALKING = {}    ---@type string[]
-local FIRST = {}      ---@type table<string, string>
+-- RedM (spur_core, 27 Nov 2026): whip's gesture clips were the original game's. These are RDR2's own talking hands for
+-- townsfolk (`ai_gestures@gen_male@standing@speaker`, and its gen_female twin), and every clip below is in both
+-- dictionaries (femga's rdr3_discoveries animation list). FIRST picks a clip for each kind of line (hello, goodbye,
+-- positive, negative, bumped, hitByCar, aimedAt, gunfire, carStolen); TALKING's are played in turn while it talks.
+-- NOT YET SEEN IN GAME: how each one looks on the upper body over a walk or a guard pose, and whether the _l/_r/_f
+-- endings (the way it turns) suit a ped facing the player. Config.LoreVoice.Gestures is still off by default.
+local GESTURES = { m = 'ai_gestures@gen_male@standing@speaker', f = 'ai_gestures@gen_female@standing@speaker' }
+local TALKING = { 'neutral_punctuate_fl_001', 'neutral_punctuate_fr_001', 'neutral_punctuate_fl_002',
+                  'neutral_punctuate_fr_002', 'neutral_shrug_f_001', 'neutral_nod_f_001', 'neutral_appease_l_001',
+                  'neutral_appease_r_001', 'neutral_point_l_003', 'neutral_point_r_003', 'positive_nod_f_001' }
+local FIRST = { hello = 'neutral_wave_fr_002', goodbye = 'uninterested_wave_fr_001', positive = 'positive_nod_f_002',
+                negative = 'negative_headshake_f_001', bumped = 'annoyed_punctuate_r_001', hitByCar = 'damn_it_r_001',
+                aimedAt = 'defensive_plead_f_001', gunfire = 'negative_disbelief_r_001', carStolen = 'angry_point_r_003' }
 local UPPER_ONLY = 16 + 32      -- upper body, over its own task (it keeps standing, walking or guarding)
 local talkGen = {}              -- [netId] = n: a newer line stops the older one's gestures
 local talkN = 0                 -- (every line's n is new: one still loading never takes a later line for its own)
