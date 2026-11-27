@@ -8,7 +8,7 @@
 --     Health it reads off the car itself;
 --   * says when the car it drove is wrecked: blown up, or sunk (below).
 
---- GTA's tyre numbers: front left, front right, the middle pair of a six-wheeler, rear left, rear
+--- The game's tyre numbers: front left, front right, the middle pair of a six-wheeler, rear left, rear
 --- right, a trailer's middle pair. Bit i-1 of a tyre mask is TYRES[i]. A bike's are 0 and 4.
 local TYRES = { 0, 1, 2, 3, 4, 5, 45, 47 }
 
@@ -71,7 +71,7 @@ end
 --
 -- No server native tells a sunk car from a sound one: its health stays up as it fills with water. This
 -- game sees it: dead (blown up), or under water to the roof for a few seconds (not a boat: a submarine
--- dives). Not GTA's "undriveable", which whip's own ignition sets on a car with its engine off. Said
+-- dives). Not the game's "undriveable", which whip's own ignition sets on a car with its engine off. Said
 -- for the car this game drove, while it still runs that car and is near it (getting out and swimming
 -- off), and said again if it turns back (repaired, lifted out).
 

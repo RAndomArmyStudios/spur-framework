@@ -15,7 +15,7 @@
 --   director.lua         — The Director API's shapes (DirectorRunView, DirectorScenarioView, its events)
 --   satellite.lua        — The Whip.* helper from '@spur_core/lib/satellite.lua'
 --   oxmysql.lua          — oxmysql's MySQL global, as whip calls it
---   runtime.lua          — Corrections to the FiveM runtime's own annotations (multi-value exports, natives
+--   runtime.lua          — Corrections to the Cfx.re runtime's own annotations (multi-value exports, natives
 --                          that take a player as a number, SetTimeout's id and ClearTimeout)
 --   luarc.template.json  — The .luarc.json you copy into your own resource (step 2)
 --
@@ -30,7 +30,7 @@
 --   3. It finds these types next to your resource (../spur_core/types) or next to a [spur] folder
 --      (../[spur]/spur_core/types); for any other layout, change the path in workspace.library
 --   4. Open your resource folder in VS Code — autocomplete is now active
---   For FiveM's natives, add a natives extension too (CfxLua IntelliSense, for one): these files cover whip only.
+--   For Cfx.re's natives, add a natives extension too (CfxLua IntelliSense, for one): these files cover whip only.
 --
 -- USAGE:
 --   local player = exports.spur_core:GetPlayer(source)
@@ -50,5 +50,5 @@
 --
 -- NOTE:
 --   These files contain NO runtime code. They are purely for
---   editor tooling and can be safely ignored by FiveM.
+--   editor tooling and can be safely ignored by Cfx.re.
 -- ============================================

@@ -16,7 +16,7 @@ Vehicles.invCache    = {}   -- [vehicleId] = { trunk = {}, glovebox = {} }  (on-
 -- Who has a compartment open lives in Stores._views ('vehicle:<id>:<compartment>').
 Vehicles._transitionLocks = {}   -- [vehicleId] = true — prevents double retrieve/store
 Vehicles.metaCache   = {}   -- [model] = { trunkSlots, trunkMaxWeight, gloveboxSlots, gloveboxMaxWeight, hasTrunk, hasGlovebox }
-Vehicles.classMetaCache = {}   -- [GTA vehicle class] = the same, for every model of that category
+Vehicles.classMetaCache = {}   -- [game vehicle class] = the same, for every model of that category
 
 -- Entities: the server creates each one (Vehicles.spawn), so it knows the handle on the same line.
 Vehicles._entities        = {}   -- [vehicleId] = serverEntityHandle
@@ -42,7 +42,7 @@ Vehicles._dirtyPos = {}   -- [vehicleId] = { x, y, z, heading }  pending
 -- entity <-> vehicleId index: _entities and _byEntity are one set of bindings kept both ways; setTracked is the only
 -- writer. A binding is believed only while isOurEntity says the handle is still that car (its fingerprint: network
 -- id, model, KeepEntity; or failing that its stamp). The engine reuses handles, a statebag read per lookup is
--- expensive, and a stamp can outlive its car (FiveM #3289).
+-- expensive, and a stamp can outlive its car (Cfx.re issue #3289).
 
 -- VEHICLE_STATE_KEY and VEHICLE_SESSION_KEY come from shared/statebags.lua: client/vehicles.lua
 -- reads what this file writes.
@@ -313,7 +313,7 @@ function Vehicles.ensureTable()
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ]])
 
-    -- Per-category storage defaults: every model of one GTA vehicle class (8 motorcycles, 10 industrial...).
+    -- Per-category storage defaults: every model of one game vehicle class (8 motorcycles, 10 industrial...).
     -- hasTrunk / hasGlovebox: 0 off, NULL on.
     local ok4 = CreateTable('vehicle_class_meta', [[
         CREATE TABLE IF NOT EXISTS `vehicle_class_meta` (
@@ -516,7 +516,7 @@ function Vehicles.loadAll()
         end
 
         -- Snapshot the ids before the first yield: spawn yields, and new street cars add keys to
-        -- _records meanwhile (adding keys during pairs() is undefined). Session vehicles are GTA's
+        -- _records meanwhile (adding keys during pairs() is undefined). Session vehicles are the game's
         -- own street cars: nothing to rebuild.
         local ids = {}
         for vehicleId, def in pairs(Vehicles._records) do
@@ -569,7 +569,7 @@ function Vehicles.loadAll()
 end
 
 -- Storage defaults (/whip Vehicle Adjustments): a car's trunk and glovebox sizes come from the car's own sizes, then
--- its model's row (`vehicle_meta`), then its category's (`vehicle_class_meta`, the GTA vehicle class), then config.lua.
+-- its model's row (`vehicle_meta`), then its category's (`vehicle_class_meta`, the game vehicle class), then config.lua.
 -- Either can be off (a model's word over its category's): an off trunk is not offered and not opened.
 
 --- Each storage's columns.
@@ -677,7 +677,7 @@ function Vehicles.deleteMeta(model)
     return true
 end
 
----@param class number  a GTA vehicle class, 0-22
+---@param class number  a game vehicle class, 0-22
 function Vehicles.saveClassMeta(class, data)
     if not saveRow('vehicle_class_meta', 'class', class, data) then return false end
     Vehicles.classMetaCache[class] = metaRow(data)
@@ -736,7 +736,7 @@ end
 ---@return table  { slots, maxWeight, on }
 function Vehicles.modelStorage(model, kind)
     local class = Vehicles.classForModel(model)
-    -- Model names are not case-sensitive in GTA; the page saves them lower-case.
+    -- Model names are not case-sensitive in the game; the page saves them lower-case.
     local m = model and (Vehicles.metaCache[model] or Vehicles.metaCache[tostring(model):lower()]) or nil
     return Vehicles.layeredStorage(kind, class, class and Vehicles.classMetaCache[class] or nil, m)
 end
@@ -813,7 +813,7 @@ end
 -- CRUD
 -- ============================================
 
---- Which entity type a GTA vehicle CLASS spawns as. Anything not listed is an 'automobile'.
+--- Which entity type a game vehicle CLASS spawns as. Anything not listed is an 'automobile'.
 --- Submarines and trailers share a class with things that are not, so they are left to the
 --- self-correction in Vehicles.spawn.
 local CLASS_VEHTYPE = {
@@ -824,7 +824,7 @@ local CLASS_VEHTYPE = {
     [16] = 'plane',
 }
 
---- GTA's vehicle class of a model (8 a motorbike, 13 a bicycle, 14 a boat...), from the vehicle catalog,
+--- The game's vehicle class of a model (8 a motorbike, 13 a bicycle, 14 a boat...), from the vehicle catalog,
 --- or nil when the catalog does not know the model.
 ---@param model string|nil
 ---@return number|nil
@@ -885,7 +885,7 @@ local function saveModelsSoon()
     end)
 end
 
--- A ceiling: the union only grows, and a modified client could flood it. GTA plus a big add-on
+-- A ceiling: the union only grows, and a modified client could flood it. The game plus a big add-on
 -- pack is a few thousand models. Once a name has been turned away, a model not on the list is
 -- unknown (nil), never "no".
 local MAX_KNOWN_MODELS = 20000
@@ -1011,7 +1011,7 @@ function Vehicles.missingModel(model)
 end
 
 --- A plate as whip stores it: up to 8 characters, trimmed, upper case; nil for "none given", or nil and why for one
---- that cannot be a plate. GTA shows 8 characters, so a longer plate would never match the car again.
+--- that cannot be a plate. The game shows 8 characters, so a longer plate would never match the car again.
 ---@param plate any
 ---@return string|nil plate
 ---@return string|nil why
@@ -1038,7 +1038,7 @@ end
 function Vehicles.create(data)
     -- A model the game has (Vehicles.modelExists), before anything is written: a dealership sale
     -- refunds on this answer, and /whip shows it.
-    local missing = Vehicles.missingModel(data.model or 'wagon02x')   -- RedM (spur_core, 24 Nov 2026): RDR2's wagon when none is given; GTA's adder fails the model check
+    local missing = Vehicles.missingModel(data.model or 'wagon02x')   -- RedM (spur_core, 24 Nov 2026): RDR2's wagon when none is given; the original game's adder fails the model check
     if missing then return nil, missing end
 
     -- The plate rule is Vehicles.normalisePlate. A taken plate is refused with the reason instead of
@@ -1084,7 +1084,7 @@ function Vehicles.create(data)
         query  = 'INSERT INTO `vehicles` (`ownerCharId`,`model`,`plate`,`state`,`garage`,`vehStats`,`properties`,`x`,`y`,`z`,`heading`,`trunkSlots`,`trunkMaxWeight`,`gloveboxSlots`,`gloveboxMaxWeight`,`vehType`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         values = {
             data.ownerCharId,
-            data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was GTA's adder
+            data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
             plate,
             data.state or 'garaged',
             garage,
@@ -1152,7 +1152,7 @@ function Vehicles.loadCreated(insertId, data, plate, garage, stats, props, vehTy
     local def = {
         vehicleId        = insertId,
         ownerCharId      = data.ownerCharId,
-        model            = data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was GTA's adder
+        model            = data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
         plate            = plate,
         state            = data.state or 'garaged',
         garage           = garage,
@@ -1863,7 +1863,7 @@ function Vehicles.mergeClientProperties(vehicleId, props)
 
     -- The record, with the one field a report is allowed to move.
     local out = stored
-    -- GTA's range, 0 to 15; a NaN keeps what is stored.
+    -- The game's range, 0 to 15; a NaN keeps what is stored.
     local dirt = tonumber(reported.dirtLevel)
     if dirt and dirt == dirt then out.dirtLevel = math.max(0.0, math.min(15.0, dirt)) end
 
@@ -2577,7 +2577,7 @@ local function bindEntity(vehicleId, entity, def)
     Vehicles.stampAppearance(vehicleId, entity, def)
 
     -- Owned and temporary cars are told their lock state; street cars are asked (their doors are as
-    -- GTA left them). A just-created temp car would always answer "unlocked".
+    -- the game left them). A just-created temp car would always answer "unlocked".
     if def.session and not def.temp then
         def.locked = (GetVehicleDoorLockStatus(entity) == 2)
     else
@@ -2597,7 +2597,7 @@ local function isOurEntity(vehicleId, entity)
     local indexed = Vehicles._byEntity[entity]
     if indexed ~= nil and indexed ~= vehicleId then return false end
     -- Then the fingerprint: network id, model and KeepEntity (every car whip binds is orphan mode 2, an ambient car is
-    -- not). Its "no" is final: the stamp can be orphaned onto the next car (FiveM #3289), so it is asked only for a
+    -- not). Its "no" is final: the stamp can be orphaned onto the next car (Cfx.re issue #3289), so it is asked only for a
     -- handle with no fingerprint.
     local fp = Vehicles._fingerprint[vehicleId]
     if fp ~= nil then
@@ -2647,7 +2647,7 @@ exports('VehicleModelExists', function(model)
     return Vehicles.modelExists(model)
 end)
 
---- What is standing on a spot a car is about to be spawned on, if anything: a vehicle, or a player (GTA throws a car
+--- What is standing on a spot a car is about to be spawned on, if anything: a vehicle, or a player (the game throws a car
 --- spawned inside another out of it). One rule for every spawn a player or satellite asks for.
 --- Only the same world counts: opts.bucket is the world the new car is born in (0, the shared world, by default).
 --- A garage bay (opts.heading given) is asked by its outline (shared/garage_bay.lua): a car blocks it only when its
@@ -2719,7 +2719,7 @@ function Vehicles.getNetId(vehicleId)
 end
 
 --- Reverse lookup: entity handle to vehicleId, from the index and confirmed as this car (the forward map must agree
---- and isOurEntity confirms the fingerprint). Not the stamp alone: it can outlive its car (FiveM #3289) and a
+--- and isOurEntity confirms the fingerprint). Not the stamp alone: it can outlive its car (Cfx.re issue #3289) and a
 --- statebag read is costly. Before Vehicles.reconcileWorld has run at boot the index is empty, so this answers nil
 --- for a car from the previous run; reconcileWorld reads the raw stamp instead.
 ---@param entity number
@@ -2960,7 +2960,7 @@ function Vehicles.setDoorMask(entity, mask)
     Sentinel.setEntityKey(entity, VEHICLE_DOORS_KEY, mask)
 end
 
---- Take every whip key off an entity, before every delete (FiveM #3289: a statebag on a CreateVehicleServerSetter
+--- Take every whip key off an entity, before every delete (Cfx.re issue #3289: a statebag on a CreateVehicleServerSetter
 --- car can orphan onto the next entity with that network id). The Sentinel lets these through: the car is already
 --- out of the index, so its truth for each key is nil.
 ---@param entity number
@@ -3059,9 +3059,9 @@ function Vehicles.despawnToGarage(vehicleId)
     return true
 end
 
---- Pin (or unpin) a street car on the client that owns it on the network. A street car stays GTA population and
+--- Pin (or unpin) a street car on the client that owns it on the network. A street car stays game population and
 --- the owning client culls it, boot and all, once the player walks away. SetEntityAsMissionEntity is a client
---- native, so the owner is asked. Undone when whip lets the car go (handBackToGta).
+--- native, so the owner is asked. Undone when whip lets the car go (handBackToGame).
 ---@param entity number
 ---@param pin boolean
 local function pinOnOwner(entity, pin)
@@ -3075,7 +3075,7 @@ Vehicles._pinOnOwner = pinOnOwner
 
 --- Strip whip's identity and every block it wrote, and stop forcing the car to persist.
 ---@param entity number
-local function handBackToGta(entity)
+local function handBackToGame(entity)
     stripWhipKeys(entity)
     SetEntityOrphanMode(entity, 0)
     pinOnOwner(entity, false)
@@ -3124,8 +3124,8 @@ function Vehicles.release(vehicleId, reason)
         return
     end
 
-    -- Hand it back to GTA: drop the identity, every block whip wrote on it, and the forced persistence.
-    handBackToGta(entity)
+    -- Hand it back to the game: drop the identity, every block whip wrote on it, and the forced persistence.
+    handBackToGame(entity)
 
     -- Not `despawned` (the car is still there), but announced, so per-vehicle bookkeeping is dropped.
     announce()
@@ -3138,7 +3138,7 @@ end
 
 --- Reconcile what is in the world against what whip believes, once, at startup. Stamps outlive the Lua state that
 --- issued them, so before restoring anything every stamped entity is decided: street cars from the previous run are
---- handed back to GTA (or their ids would collide), and a car whip left out is taken back rather than rebuilt
+--- handed back to the game (or their ids would collide), and a car whip left out is taken back rather than rebuilt
 --- beside itself. Nothing watches bags while spur_core is down, so a client could stamp a same-model car with
 --- someone's id: the candidate nearest the recorded position is taken, only within ADOPT_RANGE; the rest are
 --- handed back. An occupied car is never deleted on a stamp alone.
@@ -3161,7 +3161,7 @@ function Vehicles.reconcileWorld()
     --- first, like every delete. Somebody inside keeps it, as a street car.
     local function discard(entity)
         if occupied(entity) then
-            handBackToGta(entity)
+            handBackToGame(entity)
             cleared = cleared + 1
         else
             stripWhipKeys(entity)
@@ -3193,8 +3193,8 @@ function Vehicles.reconcileWorld()
                 if not list then list = {}; candidates[stampedId] = list end
                 list[#list + 1] = { entity = entity, dist = dist }
             elseif wasSession then
-                -- A street car from a previous run: GTA's again, every whip block cleared.
-                handBackToGta(entity)
+                -- A street car from a previous run: the game's again, every whip block cleared.
+                handBackToGame(entity)
                 cleared = cleared + 1
                 -- Only an id a previous run could have handed out moves the counter (a forged one
                 -- near the top would leave no ids to take).
@@ -3231,7 +3231,7 @@ function Vehicles.reconcileWorld()
             elseif c.dist > ADOPT_RANGE then
                 -- Too far from where the record says the car is to be it on a stamp's word.
                 print(('[spur_core:vehicle] reconcile: an entity stamped as vehicle %d is %.0fm from its record — not adopted, handed back'):format(stampedId, c.dist))
-                handBackToGta(c.entity)
+                handBackToGame(c.entity)
                 cleared = cleared + 1
             else
                 discard(c.entity)   -- a second copy
@@ -3344,7 +3344,7 @@ function Vehicles.registerSessionVehicle(plate, model, netId, vehType, engineOn,
     if existingId then
         local existDef = Vehicles._records[existingId]
 
-        -- Re-adopt first: after a restart or GTA recreating the entity the car may carry no stamp. adopt is
+        -- Re-adopt first: after a restart or the game recreating the entity the car may carry no stamp. adopt is
         -- idempotent and refuses an entity that belongs to something else; its "no" is the answer.
         -- Session defs only: the plate comes off the entity, which a client can rewrite, so nothing a client
         -- reports may rebind an owned vehicle (only Vehicles.spawn and reconcileWorld bind those).
@@ -3387,7 +3387,7 @@ function Vehicles.registerSessionVehicle(plate, model, netId, vehType, engineOn,
 
     local sessionId = newSessionRecord(plate, model, vehType)
 
-    -- Adopt, don't spawn: GTA already put this car in the world. No retry loop: a street car has
+    -- Adopt, don't spawn: the game already put this car in the world. No retry loop: a street car has
     -- existed as long as the player has been looking at it. If it can't be adopted there is no new
     -- car: the record is dropped before any key is minted into it.
     local entity = NetworkGetEntityFromNetworkId(netId)
@@ -3632,7 +3632,7 @@ end)
 
 -- Letting street cars go: a session car is borrowed and given back. Once a minute, a session car whose entity is
 -- gone is forgotten; one with no player within SESSION_NEAR metres (and nobody in its trunk or glovebox) for
--- SESSION_IDLE_MS is released to GTA and forgotten, its memory-only trunk and glovebox with it.
+-- SESSION_IDLE_MS is released to the game and forgotten, its memory-only trunk and glovebox with it.
 local SESSION_IDLE_MS = 10 * 60 * 1000
 local SESSION_NEAR    = 300.0
 local _sessionLastNear = {}   -- [vehicleId] = GetGameTimer() when a player was last near it
@@ -4031,7 +4031,7 @@ end)
 
 --- Take a vehicle out of the world, its record and storage kept (Vehicles.despawnToGarage); storage is flushed
 --- first. With no garage it goes where it belongs: someone's own car into its garage, a temporary car is forgotten,
---- a street car handed back to GTA. `opts.garage` puts an owned car that is out away in that garage, the
+--- a street car handed back to the game. `opts.garage` puts an owned car that is out away in that garage, the
 --- Vehicles.store rules: a street or temporary car is refused, as neither has a row to be garaged in.
 --- `opts.refuseOccupied` refuses a car with somebody in it: on by default with a garage (as StoreVehicle always
 --- refused), off without one. SpawnVehicle brings it out again. `(ok, err)` like every other verb.
@@ -4077,7 +4077,7 @@ end
 exports('DespawnVehicle', function(vehicleId, opts) return Vehicles.despawnByRef(vehicleId, opts) end)
 
 --- Take a car out of the world, whoever's it is: someone's own car goes into its garage, a temporary one is
---- forgotten, and a street car whip only noticed is deleted too (letting it go would hand it back to GTA where it
+--- forgotten, and a street car whip only noticed is deleted too (letting it go would hand it back to the game where it
 --- stands). Answers true, or false and why.
 ---@param vehicleId number
 ---@return boolean ok, string|nil err
@@ -4340,7 +4340,7 @@ exports('CreateOwnedVehicle', Vehicles.createOwned)
 ---@param model string
 ---@param coords vector4|vector3|table  where; `{ x, y, z, heading }` works too
 --- `bucket = n` makes it in that routing bucket from its birth (default 0, the shared world).
---- `force = true` makes it even when the spot is not clear (GTA pushes whatever it lands on aside).
+--- `force = true` makes it even when the spot is not clear (the game pushes whatever it lands on aside).
 ---@param opts table|nil  { plate?, vehType?, forSource?, giveKey?, despawnAfter?, locked?, keyInIgnition?, idleDespawn?, tag?, secure?, bucket?, force? }
 ---@return number|false vehicleId, string|nil err
 exports('SpawnTempVehicle', function(model, coords, opts)

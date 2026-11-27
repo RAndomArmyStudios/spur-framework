@@ -2,7 +2,7 @@
 -- INTERIOR ROOMS — which room of an MLO a point is in, and putting things there
 -- ============================================
 --
--- GTA draws an interior room by room: the room the camera is in, and whatever can be seen from it
+-- The game draws an interior room by room: the room the camera is in, and whatever can be seen from it
 -- through doorways (the MLO's portals). Every entity is filed under a room too, and is drawn only
 -- when its room is. The game files them itself by following them through doorways, which works for
 -- things that walk. It does not work for:

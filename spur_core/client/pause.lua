@@ -1,22 +1,22 @@
 -- ============================================
--- PAUSE MENU — whip's own, in place of GTA's
+-- PAUSE MENU — whip's own, in place of the game's
 -- ============================================
 --
--- Esc, P or a pad's Start open whip's pause menu, never GTA's: the whip logo and Resume / Map /
+-- Esc, P or a pad's Start open whip's pause menu, never the game's: the whip logo and Resume / Map /
 -- Game Settings / Server Settings / Quit on the left, a map on the right. Map makes the map full screen (drag, zoom,
--- double-click for a waypoint, a legend). Game Settings is GTA's own settings menu; Server Settings is this server's
+-- double-click for a waypoint, a legend). Game Settings is the game's own settings menu; Server Settings is this server's
 -- settings page. With the experimental Combined Settings page on (Config.Experimental.combinedSettings) the two are
--- one Settings page, GTA's settings in whip's look beside the server's (client/game_settings.lua).
+-- one Settings page, the game's settings in whip's look beside the server's (client/game_settings.lua).
 -- Quit leaves the server. The page is html/js/pause.js and pause-map.js.
 --
--- The map is whip's, the data is GTA's. The picture is a tile set (whip_media_map/map/whip). What is
+-- The map is whip's, the data is the game's. The picture is a tile set (whip_media_map/map/whip). What is
 -- on it comes from the game, read here while the menu is open and sent to the page: where the
--- player is, every blip (sprite, colour, position — GTA gives no blip's name, so only whip's own
+-- player is, every blip (sprite, colour, position — the game gives no blip's name, so only whip's own
 -- carry one), the GPS line (points along the route), and the waypoint. A waypoint set on the map
--- is GTA's waypoint, so the radar's own GPS line follows it.
+-- is the game's waypoint, so the radar's own GPS line follows it.
 --
--- The keys are checked every frame, for everyone: GTA has no other way to keep its menu shut. One ControlBlocks hook holds 199 (P / Start) and 200 (Esc) off and reads them —
--- except while GTA's own frontend is up (its key bindings, or its settings menu under whip's Settings page, which
+-- The keys are checked every frame, for everyone: the game has no other way to keep its menu shut. One ControlBlocks hook holds 199 (P / Start) and 200 (Esc) off and reads them —
+-- except while the game's own frontend is up (its key bindings, or its settings menu under whip's Settings page, which
 -- keeps the pad off it), whose keys are its own.
 
 --- Is whip's pause menu up? Read by the screens list (client/inventory.lua), like the others.
@@ -25,7 +25,7 @@ PauseMenuOpen = false
 local open = false
 
 -- ============================================
--- Reading GTA's map
+-- Reading the game's map
 -- ============================================
 
 --- Sprites the page draws itself, or that are not places: the player's own arrow (6), north (7),
@@ -33,7 +33,7 @@ local open = false
 local SKIP_SPRITE = { [4] = true, [5] = true, [6] = true, [7] = true, [8] = true, [9] = true,
     [10] = true, [161] = true, [163] = true, [164] = true }
 
---- Highest sprite id asked about. GTA's go past 900; a few spare cost two natives each.
+--- Highest sprite id asked about. The game's go past 900; a few spare cost two natives each.
 local MAX_SPRITE = 1000
 
 --- Display modes that never draw on the big map: 0 hidden, 5 and 9 the radar only.
@@ -41,7 +41,7 @@ local NOT_ON_MAP = { [0] = true, [5] = true, [9] = true }
 
 --- GET_BLIP_HUD_COLOUR, by name or, on a client whose Lua lacks it, by hash.
 local blipHudColour = GetBlipHudColour or function()
-    return 0   -- RedM: RDR2 has no GET_BLIP_HUD_COLOUR (GTA's hash would fail as an unknown native)
+    return 0   -- RedM: RDR2 has no GET_BLIP_HUD_COLOUR (the original game's hash would fail as an unknown native)
 end
 
 local hexCache = {}
@@ -81,7 +81,7 @@ local function describeBlip(b, sprite)
     return ('sprite %d%s, attached to %s'):format(sprite, label and (' "' .. label .. '"') or '', on)
 end
 
---- Blips GTA gave no place (NaN), each said in F8 once, by what it is.
+--- Blips the game gave no place (NaN), each said in F8 once, by what it is.
 local unplacedSaid = {}
 
 --- Every blip on the big map: { x, y, sprite, colour, name? }.
@@ -117,7 +117,7 @@ local function readBlips()
     return list
 end
 
---- Points along a GPS route, `step` metres apart, from the player. GTA gives one point per question
+--- Points along a GPS route, `step` metres apart, from the player. The game gives one point per question
 --- (GetPosAlongGpsTypeRoute) and repeats the end once the distance passes it, which is where this
 --- stops. Slot 0 is the waypoint's route, 1 a blip's (SetBlipRoute).
 local ROUTE_STEP, ROUTE_MAX = 30.0, 700
@@ -134,7 +134,7 @@ local function readRoute(slot)
         local ok, p = posAlongRoute(true, i * ROUTE_STEP, slot)
         if ok == 0 then ok = false end   -- by hash, the answer is a number
         if not ok or type(p) ~= 'vector3' and type(p) ~= 'table' then break end
-        -- NaN never equals itself: an answer GTA did not fill is the end, not 700 points of nothing.
+        -- NaN never equals itself: an answer the game did not fill is the end, not 700 points of nothing.
         if p.x ~= p.x or p.y ~= p.y or (p.x == 0.0 and p.y == 0.0) then break end
         if lx and math.abs(p.x - lx) < 0.5 and math.abs(p.y - ly) < 0.5 then break end
         pts[#pts + 1] = { math.floor(p.x * 10) / 10, math.floor(p.y * 10) / 10 }
@@ -146,7 +146,7 @@ end
 --- The waypoint, or FALSE when there is none, never nil: the page keeps what it has for a key the
 --- message leaves out (pause-map.js setData). nil is left to mean the read failed.
 local function readWaypoint()
-    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (GTA's was the first blip with sprite 8)
+    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (the original game's was the first blip with sprite 8)
     if not c then return false end
     return { x = c.x, y = c.y }
 end
@@ -156,7 +156,7 @@ local function readPlayer()
     local c = GetEntityCoords(ped)
     local street = GetStreetNameFromHashKey((GetStreetNameAtCoord(c.x, c.y, c.z)))
     -- RedM (spur_core, 23 Nov 2026): RDR2's GetNameOfZone (shared/rdr_compat.lua) gives the place's name itself, a
-    -- town, district or state, or '' where it knows none. Not through GetLabelText as on GTA: RedM has its own,
+    -- town, district or state, or '' where it knows none. Not through GetLabelText as on the original game: RedM has its own,
     -- which reads the name as a text label, finds none, and gives 'NULL'.
     local zone = GetNameOfZone(c.x, c.y, c.z) or ''
     return {
@@ -182,8 +182,8 @@ local function read(part, fn, ...)
     return nil
 end
 
---- Every number in it one JSON can carry. GTA hands back NaN and infinities (a blip it cannot place),
---- Lua passes them on as `nan` / `inf`, and FiveM then drops the WHOLE message ("SEND_NUI_MESSAGE:
+--- Every number in it one JSON can carry. The game hands back NaN and infinities (a blip it cannot place),
+--- Lua passes them on as `nan` / `inf`, and Cfx.re then drops the WHOLE message ("SEND_NUI_MESSAGE:
 --- invalid JSON passed in frame").
 local function clean(v)
     if type(v) == 'number' then return v == v and v > -math.huge and v < math.huge end
@@ -250,7 +250,7 @@ end
 -- Sounds
 -- ============================================
 
--- GTA's own frontend sounds, the ones its pause menu makes: a tick moving between items, a click on choosing, the
+-- The game's own frontend sounds, the ones its pause menu makes: a tick moving between items, a click on choosing, the
 -- back sound on leaving, and the waypoint sound when one is set or cleared. The page names what happened
 -- (pauseSound below); only the names in this table play.
 local SOUNDSET = 'HUD_FRONTEND_DEFAULT_SOUNDSET'
@@ -259,7 +259,7 @@ local SOUNDS = {
     side     = 'NAV_LEFT_RIGHT',   -- across: the confirm's two answers, the legend in and out
     select   = 'SELECT',           -- an item chosen, a screen opened
     back     = 'BACK',             -- back to the menu, or out of it
-    waypoint = 'WAYPOINT_SET',     -- GTA plays it for a waypoint set and for one cleared
+    waypoint = 'WAYPOINT_SET',     -- the game plays it for a waypoint set and for one cleared
 }
 
 ---@param what string  a key of SOUNDS
@@ -299,7 +299,7 @@ local function openMenu()
     push(true)
 end
 
---- RedM (spur_core, 24 Nov 2026): RDR2's own screens in place of GTA's. RDR2 has no ActivateFrontendMenu: its pause menu
+--- RedM (spur_core, 24 Nov 2026): RDR2's own screens in place of the original game's. RDR2 has no ActivateFrontendMenu: its pause menu
 --- (Map, Settings with Controls, Quit Game) and its map are uiapps, opened with LAUNCH_UIAPP_BY_HASH (verified in game).
 --- Since this menu holds Esc and P, these are a player's only way to RDR2's own settings. While one is up, the HUD and
 --- the page step aside (CleanScreen) and Esc is RDR2's (rdrMenuUp in pauseKeys); both come back when it shuts.
@@ -315,9 +315,9 @@ end
 -- The keys
 -- ============================================
 
---- One frame: GTA's pause keys held off, and a press opens (or, from a pad, shuts) whip's menu.
+--- One frame: the game's pause keys held off, and a press opens (or, from a pad, shuts) whip's menu.
 local function pauseKeys()
-    if IsPauseMenuActive() then return end   -- GTA's own frontend (key bindings, or under Settings): its keys are its own
+    if IsPauseMenuActive() then return end   -- the game's own frontend (key bindings, or under Settings): its keys are its own
     if rdrMenuUp() then return end           -- RedM (spur_core, 24 Nov 2026): RDR2's own pause menu or map: Esc is theirs
     DisableControlAction(0, 199, true)       -- P, a pad's Start
     DisableControlAction(0, 200, true)       -- Esc
@@ -371,30 +371,30 @@ local function openRdrApp(app)
     end)
 end
 
---- One of GTA's own screens in place of the pause menu. On RedM: RDR2's own pause menu (openRdrApp above).
-local function openGtaMenu(menu)   -- luacheck: ignore menu
+--- One of the original game's own screens in place of the pause menu. On RedM: RDR2's own pause menu (openRdrApp above).
+local function openGameMenu(menu)   -- luacheck: ignore menu
     openRdrApp(RDR_PAUSE_APP)
 end
 
---- RedM (spur_core, 24 Nov 2026): Map on RedM. whip's map draws GTA's world from a media pack that RDR2 has none of
+--- RedM (spur_core, 24 Nov 2026): Map on RedM. whip's map draws the original game's world from a media pack that RDR2 has none of
 --- (html/js/pause-map.js), so the page asks for RDR2's own map instead (html/js/pause.js openMap).
 RegisterNUICallback('pauseRdrMap', function(_, cb)
     cb('ok')
     if open then openRdrApp(RDR_MAP_APP) end
 end)
 
---- Settings' Key Bindings tab: GTA's own key bindings screen.
+--- Settings' Key Bindings tab: the game's own key bindings screen.
 RegisterNUICallback('pauseKeyBindings', function(_, cb)
     cb('ok')
-    openGtaMenu('FE_MENU_VERSION_LANDING_KEYMAPPING_MENU')
+    openGameMenu('FE_MENU_VERSION_LANDING_KEYMAPPING_MENU')
 end)
 
---- GTA's own settings menu: Game Settings, and with the Combined Settings page on, the way in when the page cannot read
---- GTA's (after a game update WHIP's copy of GTA's settings page is not built for), so Graphics, Display and Audio stay
+--- The game's own settings menu: Game Settings, and with the Combined Settings page on, the way in when the page cannot read
+--- the game's (after a game update WHIP's copy of the game's settings page is not built for), so Graphics, Display and Audio stay
 --- reachable.
 RegisterNUICallback('pauseSettings', function(_, cb)
     cb('ok')
-    openGtaMenu('FE_MENU_VERSION_LANDING_MENU')
+    openGameMenu('FE_MENU_VERSION_LANDING_MENU')
 end)
 
 RegisterNUICallback('pauseLeave', function(_, cb)
@@ -421,7 +421,7 @@ RegisterNUICallback('pauseWaypoint', function(data, cb)
         return
     end
     sound('waypoint')
-    -- The route takes GTA a moment to plan; ask twice.
+    -- The route takes the game a moment to plan; ask twice.
     SetTimeout(250, function() if open then push(true) end end)
     SetTimeout(1200, function() if open then push(true) end end)
 end)

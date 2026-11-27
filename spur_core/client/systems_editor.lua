@@ -197,7 +197,7 @@ end)
 -- ============================================
 --
 -- The keys are made the first time someone tests, so a player who never does has no Systems lines in
--- GTA's key settings. Both do nothing unless a test of ours is running (a Director test has keys of
+-- the game's key settings. Both do nothing unless a test of ours is running (a Director test has keys of
 -- its own on the same F5 and F9: the server never lets the two run at once for one player).
 
 local keysMade = false

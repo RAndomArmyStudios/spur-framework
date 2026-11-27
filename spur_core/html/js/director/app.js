@@ -56,7 +56,7 @@ const ed = {
     colHiddenTab: null,    // the tab under it as it went: the page showing another one brings it back
     repeatOpen: {},        // a card's numbered sets shown past the ones written (its Add): '<card id>:<set>' -> the last
     picker: null,          // the item picker, over the page it was opened from: { t, k, label, from, required, query, kind, scroll }
-    weapons: [],           // GTA's weapons this game has: { name, label, group } (directorOpen)
+    weapons: [],           // the weapons this game has: { name, label, group } (directorOpen)
     tasks: null,           // what a placed thing's Tasks can hold (readTasks): { groups, types, order, max }
     taskOpen: null,        // the task row open on a thing's page: '<worldId>~<step key>'
     taskPick: null,        // the thing whose + Task picker is up, over its page
@@ -4576,7 +4576,7 @@ function showPage() {
 /** The screen: IN THE WORLD on a scenario (`d.world`, /whip's Edit: `d.openKey`), the page kept out of sight while it
  *  opens; or the editor as it was left (back from a test). */
 export async function open(d) {
-    // GTA's weapons this game has, for an NPC's weapon (client/director.lua).
+    // The weapons this game has, for an NPC's weapon (client/director.lua).
     if (d && Array.isArray(d.weapons)) ed.weapons = d.weapons;
     if (!root) build();
     const world = !!(d && d.world === true);

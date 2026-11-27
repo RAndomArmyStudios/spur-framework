@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_loadingscreen, 23 Nov 2026): RedM, not FiveM. A port of whip_loadingscreen 1.6.2 for spur_core (README.md,
+-- RedM (spur_loadingscreen, 23 Nov 2026): A port of whip_loadingscreen 1.6.2 for spur_core (README.md,
 -- NOTICE.md): the SPUR wordmark in place of WHIP's logo, and an 1899 backdrop in CSS in place of the three.js blueprint.
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'

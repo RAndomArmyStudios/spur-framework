@@ -3,7 +3,7 @@
 //
 // js/caps.js (a classic script in <head>) has already asked the browser what it can do. This
 // module, on spur_core's own page only (never a DUI page), hands those answers to Lua once the page
-// is up, so Lua and other resources can ask too, and runs /nuicaps gameview: FiveM's new game view
+// is up, so Lua and other resources can ask too, and runs /nuicaps gameview: Cfx.re's new game view
 // live in a box for a few seconds, the test that it works on this build.
 // ========================================
 
@@ -26,7 +26,7 @@ report(REPORT_TRIES);
 
 // ---- /nuicaps gameview ----
 //
-// FiveM's own CfxGameViewRenderer draws the game into a canvas through gl.CFX_BIND_GAME_VIEW. Its
+// Cfx.re's own CfxGameViewRenderer draws the game into a canvas through gl.CFX_BIND_GAME_VIEW. Its
 // placeholder texture is solid blue, so a blue box means the binding did not take.
 let testBox = null;
 let testCanvas = null;

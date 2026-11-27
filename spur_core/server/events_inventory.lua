@@ -789,8 +789,8 @@ end)
 -- server's clock), dropped when give mode ends (the client's heldPropsDrop 'give').
 
 local GIVE_BONE   = 57005               -- SKEL_R_Hand, where give mode holds it
-local GIVE_BONE_L = 18905               -- SKEL_L_Hand: in a vehicle's left-hand seat, GTA throws out of the window left-handed
--- RedM (spur_core, 24 Nov 2026): GTA's { 0.05, 0, 0 } and no turn sat the item in the middle of the hand's thickness,
+local GIVE_BONE_L = 18905               -- SKEL_L_Hand: in a vehicle's left-hand seat, the game throws out of the window left-handed
+-- RedM (spur_core, 24 Nov 2026): the original game's { 0.05, 0, 0 } and no turn sat the item in the middle of the hand's thickness,
 -- and in RDR2's hand that is through the back of it. RDR2's SKEL_R_Hand has x along the fingers, y to the thumb and
 -- z out of the back of the hand; its SKEL_L_Hand has x along the fingers, y into the palm and z backwards (measured
 -- in game). So the item goes 6 cm along the fingers and 3.5 cm into the palm, flat against it in each hand. Long or
@@ -826,7 +826,7 @@ local function isItemProp(itemKey, model)
 end
 
 --- Give mode started: the item in that pocket slot goes in the player's hand, seen by everyone. In the hand
---- GTA throws with (`hand`, the client's: a vehicle's left-hand seat throws left-handed out of its window); asked
+--- the game throws with (`hand`, the client's: a vehicle's left-hand seat throws left-handed out of its window); asked
 --- again with the other when they change seats.
 SecureEvent('spur_core:server:giveHold', {
     rateLimit = 250,

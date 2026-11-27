@@ -1,9 +1,9 @@
 -- Driving camera: a chase camera for players who switch it on (pause menu: Settings → Server → Vehicles), when the server
 -- allows it (Config.DrivingCamera). In a car, bike or quad it takes over with the camera system's chase shot
 -- (client/cam_shots.lua). On top: free look (mouse or right stick, drifts back a second after release), look back
--- (GTA's look-behind, C), shake (Config.DrivingCamera.Shake) and a soft entry.
+-- (the game's look-behind, C), shake (Config.DrivingCamera.Shake) and a soft entry.
 --
--- GTA's view button still sets how far back it sits, and first person is GTA's. It stands aside while aiming or
+-- The game's view button still sets how far back it sits, and first person is the game's. It stands aside while aiming or
 -- shooting, for the cinematic camera, for death, and for any other script's camera on screen.
 --
 -- Two styles, each player's choice: Consistent is the chase camera as it is, the same all the time; Cinematic puts a
@@ -35,7 +35,7 @@ PlayerPrefs.define({
 
 local M = CamMath
 
--- How far back and up, by GTA's view (0 near, 1 middle, 2 far), for a car 4.6 m long; other vehicles scale it.
+-- How far back and up, by the game's view (0 near, 1 middle, 2 far), for a car 4.6 m long; other vehicles scale it.
 local VIEWS = {
     [0] = { dist = 4.4, height = 1.55, fov = 52.0, stiff = 7.5 },
     [1] = { dist = 5.2, height = 1.80, fov = 52.0, stiff = 7.0 },
@@ -129,7 +129,7 @@ local function finish(why)
         DestroyCam(old, false)
         return
     end
-    -- Turn GTA's camera to where ours faced, so the ease back does not swing round.
+    -- Turn the game's camera to where ours faced, so the ease back does not swing round.
     if lastYaw then SetGameplayCamRelativeHeading(M.wrap180(lastYaw - GetEntityHeading(PlayerPedId()))) end
     RenderScriptCams(false, true, EXIT_MS, true, true)
     -- Destroyed after the ease: destroying it earlier cuts the blend short.
@@ -138,7 +138,7 @@ end
 
 --- The viewer's look round the car this frame.
 local function freeLook(dt)
-    if IsControlPressed(0, 79) then   -- GTA's look behind in a vehicle (C, or the right stick's click)
+    if IsControlPressed(0, 79) then   -- the game's look behind in a vehicle (C, or the right stick's click)
         look.yaw = M.dampAngle(look.yaw, 180.0, LOOK.backRate, dt)
         look.pitch = M.damp(look.pitch, 0.0, LOOK.backRate, dt)
         idle, wasBack, look.free = 0.0, true, true
@@ -384,7 +384,7 @@ CreateThread(function()
             ---@cast cam -nil   -- (begun)
             upFrames = upFrames + 1
             if upFrames > 3 and GetRenderingCam() == -1 then
-                -- Script cameras were turned off under it: start again from GTA's camera.
+                -- Script cameras were turned off under it: start again from the game's camera.
                 DestroyCam(cam, false)
                 cam = nil
                 blockedAt = GetGameTimer()
@@ -407,7 +407,7 @@ CreateThread(function()
     end
 end)
 
--- A restart mid-drive gives GTA its camera back at once.
+-- A restart mid-drive gives the game its camera back at once.
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() or not cam then return end
     RenderScriptCams(false, false, 0, true, true)

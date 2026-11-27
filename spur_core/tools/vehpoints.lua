@@ -9,7 +9,7 @@
 --   white dots      every part (bone) the model has, labelled with its name — or, for a part whose
 --                   name is not on the lists below, its number (#17), grey. On a car only the useful
 --                   ones are labelled (a car has well over a hundred); /vehpoints all labels the rest
---   pink            GTA's entry points (where the game stands you to get on or in)
+--   pink            the game's entry points (where the game stands you to get on or in)
 --   grey box        the model's box, with its four sides' middles marked
 --   coloured        each action's pick, and the line from it to where it lands on the skin
 --
@@ -47,8 +47,8 @@ local ACTION_COLOUR = {
 -- The parts looked for
 -- ============================================
 --
--- GTA has no way to give a bone's name, so names are asked for one by one, from these lists. KEY_BONES
--- are the ones an action could stand on (always labelled); OTHER_BONES the rest worth naming. GTA does
+-- The game has no way to give a bone's name, so names are asked for one by one, from these lists. KEY_BONES
+-- are the ones an action could stand on (always labelled); OTHER_BONES the rest worth naming. The game does
 -- give how many bones a model has, and each one's place by its number, so a bone on neither list is
 -- still drawn, as its number. A number that looks like a good spot is a name to find and add here.
 

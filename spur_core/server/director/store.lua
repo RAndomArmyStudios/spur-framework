@@ -563,7 +563,7 @@ function DirectorStore.create(key, name, doc, by, source)
     if not validKey(key) then return false, 'a scenario key is 2-64 letters, digits, _ and -' end
     if scenarios[key] then return false, 'there is already a scenario called ' .. key end
     if type(name) ~= 'string' or name == '' or #name > 80 then return false, 'a name is up to 80 characters' end
-    -- A resource's name as FiveM allows it (letters, digits, _ - and .): the hub's own rule for one.
+    -- A resource's name as Cfx.re allows it (letters, digits, _ - and .): the hub's own rule for one.
     source = type(source) == 'string' and source:match('^pack:[%w_%-%.]+$') and source or 'db'
     local s, why = encode(doc)
     if not s then return false, why end

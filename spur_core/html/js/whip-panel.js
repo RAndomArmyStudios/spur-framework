@@ -690,7 +690,7 @@ const PLACE_MAX_ZOOM = 7.5;   // several marks close together: as close as the m
 const PLACE_DEEP_ZOOM = 9;    // Open map goes closer than the menu's map: a scenario's things a few metres apart
 const PLACE_MIN_ZOOM = 1.4;   // marks all over the map: as far out as the map goes (pause-map.js minZoom)
 const K0 = 0.33 / 16;         // px0 a world metre (pause-map.js toPx0's slope)
-/** What a place map shows: the one place (GTA's plain blip, sprite 1, white, unless it has its own), or `marks`, each
+/** What a place map shows: the one place (the game's plain blip, sprite 1, white, unless it has its own), or `marks`, each
  *  a blip, one of whip's glyphs (a scenario's NPCs, cars, props), or the thing's own picture over its glyph (pic,
  *  fit, frame: PauseMap.pictureMark). Each keeps its mark, for the card a click opens (openPlace). */
 const placeBlips = (o) => (o.marks || [o]).map((m) => ({ x: m.x, y: m.y, name: m.name || '', glyph: m.glyph || null,
@@ -1242,7 +1242,7 @@ export const WP = {
     },
 
     /**
-     * A PLACE ON THE MAP, under the row that names it: whip's GTA map (pause-map.js), small, with the place's mark
+     * A PLACE ON THE MAP, under the row that names it: whip's game map (pause-map.js), small, with the place's mark
      * on it, and Open map to see it big over the panel (drag and scroll; Esc or Close puts it away). Places are
      * read on the map, not as coordinates.
      *

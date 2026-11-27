@@ -1651,7 +1651,7 @@ html.whip-clean #ui-objectives > .ob-card:not(.ob-film) { display: none; }
 /* ---- The mouse turning a camera on Enhanced (client/focus.lua Focus.mouseLook) ----
    The focus is left alone there (taking it again dropped the held button), so the page stops taking the
    mouse and hides its cursor until the button comes up.
-   A SEE-THROUGH CURSOR, NOT `cursor: none`: none reaches FiveM as no cursor at all, and it puts its own
+   A SEE-THROUGH CURSOR, NOT `cursor: none`: none reaches Cfx.re as no cursor at all, and it puts its own
    arrow up for that (client/focus.lua). A 1×1 picture with nothing in it is a real cursor that shows
    nothing. `none` stays as the fallback. */
 html.whip-mouse-look body { pointer-events: none !important; }

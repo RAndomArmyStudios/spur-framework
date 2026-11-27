@@ -207,7 +207,7 @@ RegisterTestModule({
         {
             name = 'Dirt and the Alarm',
             fn = function(source, ctx)
-                -- RedM (spur_test, 24 Nov 2026): RDR2 has neither GTA's dirt level on a vehicle nor a car alarm.
+                -- RedM (spur_test, 24 Nov 2026): RDR2 has neither the original game's dirt level on a vehicle nor a car alarm.
                 skip('RedM: an RDR2 wagon has no dirt level or alarm')
                 local list = { { k = 'd', t = 'dirt', pct = 100 }, { k = 'a', t = 'alarm' }, { k = 'w', t = 'wait', sec = 4 } }
                 local r = play(source, ctx, DK.tasksDoc(carAt('it', 12, 6), list), function(net)
@@ -300,7 +300,7 @@ RegisterTestModule({
                     assertNotNil(DK.until_(source, { net = net }, function(x) return yes(x.onFire) or (x.engineHealth or 1000) < 0 end, 4000), 'its engine alight')
                 end)
                 finished(r)
-                -- RedM (spur_test, 24 Nov 2026): set on fire works; a wagon blown up by GTA's explode-vehicle call is not read as dead.
+                -- RedM (spur_test, 24 Nov 2026): set on fire works; a wagon blown up by the original game's explode-vehicle call is not read as dead.
                 skip('RedM: Set on Fire passed; Blow Up does not leave an RDR2 wagon read as dead')
                 r = play(source, ctx, DK.tasksDoc(carAt('it', 24, -12), { { k = 'b', t = 'blowUp' }, { k = 'w', t = 'wait', sec = 3 } }), function(net)
                     assertNotNil(DK.until_(source, { net = net }, function(x) return yes(x.dead) end, 4000), 'blown up')

@@ -132,7 +132,7 @@ AddEventHandler('spur_core:vehicle:released', function(e)
     local vehicleId = tonumber(e.vehicleId)
     if not vehicleId or not testCars[vehicleId] then return end
     testCars[vehicleId] = nil
-    if e.temp ~= true then return end   -- (a car it claimed is handed back to GTA, still there: the rope stays on it)
+    if e.temp ~= true then return end   -- (a car it claimed is handed back to the game, still there: the rope stays on it)
     local ids = {}
     for id, rope in pairs(Ropes.all) do
         if not rope.byResource and (rope.origin.vehicleId == vehicleId or rope.tail.vehicleId == vehicleId) then

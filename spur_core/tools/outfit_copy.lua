@@ -13,12 +13,12 @@
 --                      index are not
 --   the face           the saved appearance: the head blend, all 20 sliders, eye colour, hair colour and
 --                      highlight, and the 11 overlays whip keeps. That is exactly what whip put on the ped
---                      (ApplyAppearance). The ped's own getters read GTA's memory at fixed places and are
+--                      (ApplyAppearance). The ped's own getters read the game's memory at fixed places and are
 --                      not exact (Dazza Doolan, 4 Nov: the last two sliders came back 0 and 0 instead of
 --                      -0.17 and -1), so they are only asked for a ped with no saved look, and for overlays
 --                      11 and 12 (body blemishes), which whip never sets. Whip blends one set of parents for
 --                      shape and skin
---   tattoos            the saved appearance: GTA cannot list the decorations on a ped by name. The hair fade
+--   tattoos            the saved appearance: the game cannot list the decorations on a ped by name. The hair fade
 --                      is a decoration too, so it comes first in the same list (a head tattoo draws over it)
 --
 -- /w Copy Outfit for Menyoo, or /copyoutfit (developer mode). If the clipboard refuses, the line comes up in
@@ -26,7 +26,7 @@
 
 local FREEMODE = { [GetHashKey('mp_male')] = 'mp_male', [GetHashKey('mp_female')] = 'mp_female' }
 
--- The overlays whip's appearance keeps, by GTA's overlay number (client/appearance.lua OVERLAY_IDS).
+-- The overlays whip's appearance keeps, by the game's overlay number (client/appearance.lua OVERLAY_IDS).
 local SAVED_OVERLAY = { [0] = 'blemishes', 'beard', 'eyebrows', 'ageing', 'makeup', 'blush', 'complexion', 'sunDamage',
     'lipstick', 'moles', 'chestHair' }
 

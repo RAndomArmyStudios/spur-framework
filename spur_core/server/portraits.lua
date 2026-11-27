@@ -1,8 +1,8 @@
 -- ============================================
--- Portraits — each character's face, as GTA's own headshot
+-- Portraits — each character's face, as the game's own headshot
 -- ============================================
 --
--- GTA makes a headshot of a ped for its pause menu (RegisterPedheadshot). whip takes one of each
+-- The game makes a headshot of a ped for its pause menu (RegisterPedheadshot). whip takes one of each
 -- character whenever they are put into the world — every load, and again when the appearance
 -- creator closes (client/portrait.lua) — the page turns it into a small picture (html/js/portrait.js),
 -- and it is kept here, one row per character, for anything in whip that shows a person: the /whip

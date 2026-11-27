@@ -10,7 +10,7 @@
 --
 -- THE SERVER CANNOT COUNT SEATS. GetVehicleMaxNumberOfPassengers is a client native, and the server
 -- only knows who sits in a seat (OneSync keeps 32 per vehicle). A seat past what the vehicle has is
--- the client's own game's to refuse; here it is only checked to be one GTA can have (-1..15).
+-- the client's own game's to refuse; here it is only checked to be one the game can have (-1..15).
 --
 -- ANY VEHICLE, whip's or a street car: claims are keyed on the entity. A locked car does not stop a
 -- move: a lock is about getting in, and these players are in. Moving at speed is allowed.

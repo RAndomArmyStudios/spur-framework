@@ -1,5 +1,5 @@
 // ========================================
-// THE MINIMAP — whip's own, in GTA's radar's place (client/minimap.lua feeds it)
+// THE MINIMAP — whip's own, in the game's radar's place (client/minimap.lua feeds it)
 //
 // The 3D map (pause-map.js's: one copy for the page) in the HUD's map box at the bottom left: top-down on foot, tilted
 // in a vehicle, zooming out with speed, turning with the gameplay camera, the player low in the box — 3D Clanker's
@@ -7,7 +7,7 @@
 // own marks: the player's arrow, the blips, the waypoint and north. The GPS line is drawn in the map, on the ground.
 //
 // WHAT ARRIVES (client/minimap.lua):
-//   minimapShow   { on }: client/hud.lua's decision, where it used to show GTA's radar
+//   minimapShow   { on }: client/hud.lua's decision, where it used to show the game's radar
 //   minimapBox    { left, top, width, height } as fractions of the screen, and its look: shape (the mask's), border
 //                 ('full' | 'outline' | 'none'), and the dial's speed unit (the settings' speeds are in it)
 //   minimapPose   the player and the camera, as often as the frame rate, only when something moved
@@ -24,7 +24,7 @@
 // THE PREVIEW (MinimapPreview, the Minimap tab of that page): a second minimap, bigger, going round from where the
 // player stands — on foot, or in a car at a speed the player sets under it — at the settings as they are moved.
 //
-// A FAR BLIP is pinned to the edge, along the line from the player, as GTA's radar pins one — unless the game made it
+// A FAR BLIP is pinned to the edge, along the line from the player, as the game's radar pins one — unless the game made it
 // short-range (a shop, a garage): then it shows only inside the box. Every mark stays upright (the player's Upright
 // markers), or turns with the map with one the game points pointing its way. One the game made flash, flashes.
 //
@@ -248,7 +248,7 @@ class Minimap {
             this.marksEl.appendChild(el);
             this.blipEls.set(id, el);
         }
-        // The waypoint in the route's colour (GTA's waypoint colour: whip blue with the black HUD), made again if that
+        // The waypoint in the route's colour (the game's waypoint colour: whip blue with the black HUD), made again if that
         // changed.
         if (this.waypointEl && this.waypointEl._colour !== data.colour) { this.waypointEl.remove(); this.waypointEl = null; }
         if (!this.waypointEl) {
@@ -309,7 +309,7 @@ class Minimap {
 
     /** One mark: where it is in the box, pinned to the edge when far (unless `short`), or hidden. `upright` (the
      *  player's Upright markers): never turned, whatever the map or the game does, so no icon is ever sideways or upside
-     *  down. Otherwise it turns with the map, and one the game points (`rot`, GTA's sense) points its own way. */
+     *  down. Otherwise it turns with the map, and one the game points (`rot`, the game's sense) points its own way. */
     place(el, me, x, y, short, rot, yaw, upright) {
         const p = this.gl.project(x, y);
         let at;
@@ -539,7 +539,7 @@ export class MinimapPreview {
         const inVehicle = this.mode === 'car';
         const u = MPS[speedUnit] || MPS.mph;
         const speed = inVehicle ? this.speed * u : WALK;
-        // Round a circle: the heading turns with the distance gone (GTA's heading: anticlockwise from north).
+        // Round a circle: the heading turns with the distance gone (the game's heading: anticlockwise from north).
         const p = this.pos;
         p.heading = (p.heading + (speed * dt / DRIVE_R) * 180 / Math.PI) % 360;
         const h = p.heading * Math.PI / 180;

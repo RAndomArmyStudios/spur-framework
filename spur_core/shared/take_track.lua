@@ -39,7 +39,7 @@ TakeTrack.FLAG = { brake = 1, horn = 2, siren = 4, lights = 8, fullbeam = 16, le
 -- reverse by itself. None (0): a take recorded before takes kept it.
 local GEAR_SHIFT, GEAR_MAX = 10, 31
 
---- A sample's flags with the gear the car is in (GTA's 0, reverse or no gear yet, kept as 1).
+--- A sample's flags with the gear the car is in (the game's 0, reverse or no gear yet, kept as 1).
 function TakeTrack.withGear(flags, gear)
     return flags | (math.max(1, math.min(math.tointeger(gear) or 1, GEAR_MAX)) << GEAR_SHIFT)
 end
@@ -104,7 +104,7 @@ function TakeTrack.turn(ax, ay, az, aw, bx, by, bz, bw)
 end
 local turn = TakeTrack.turn
 
---- A heading (degrees, GTA's: 0 north) from a quaternion.
+--- A heading (degrees, the game's: 0 north) from a quaternion.
 function TakeTrack.heading(qx, qy, qz, qw)
     local yaw = math.atan(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz))
     return math.deg(yaw) % 360.0

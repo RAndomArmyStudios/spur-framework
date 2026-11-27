@@ -136,7 +136,7 @@ RegisterClientTestModule({
                 local ped = PlayerPedId()
                 if IsPedInAnyVehicle(ped, false) then skip('in a vehicle: upper-body animations do not play') end
 
-                -- RedM (spur_test, 23 Nov 2026): RDR2's canteen and a scenario of its own, not GTA's bottle and clip
+                -- RedM (spur_test, 23 Nov 2026): RDR2's canteen and a scenario of its own, not the original game's bottle and clip
                 -- (shared/redm.lua; spur_core lets a client bar hold an item's prop).
                 local hash = GetHashKey(TEST_HELD_PROP)
                 local SCENARIO = 'WORLD_HUMAN_STARE_STOIC'
@@ -164,7 +164,7 @@ RegisterClientTestModule({
                 local okDuring, errDuring = pcall(function()
                     assertTrue(waitFor(function() return heldProp() ~= nil end, 2500), 'the bottle is in hand during the bar')
                     -- TRUTHY, NOT `== true`: this native answers 1 (or false) rather than a boolean,
-                    -- like several BOOL natives in FiveM's Lua.
+                    -- like several BOOL natives in Cfx.re's Lua.
                     assertTrue(waitFor(function() return IsPedUsingScenario(PlayerPedId(), SCENARIO) and true or false end, 2000),
                         'the scenario is playing')
                 end)

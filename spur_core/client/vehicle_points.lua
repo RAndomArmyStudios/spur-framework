@@ -8,7 +8,7 @@
 --
 --   'windscreen'          a NAMED BONE (a part of the model) — a real thing on it, where it has one
 --   { 'hbgrip_l', ... }   any of these bones: the one nearest the player
---   'entry'               GTA'S OWN ENTRY POINTS (_GET_ENTRY_POSITION_OF_DOOR): where the game stands
+--   'entry'               THE GAME'S OWN ENTRY POINTS (_GET_ENTRY_POSITION_OF_DOOR): where the game stands
 --                         a ped to get on or in; the nearest
 --   'box'                 the middle of the model box's side, at waist height; the player's side
 --   'box:rear'            the middle of its back (or 'box:front')
@@ -32,7 +32,7 @@ VehiclePoints = {}
 -- What a vehicle is, and the rules
 -- ============================================
 
---- 'bike' | 'cycle' | 'boat' | 'heli' | 'plane' | 'car', by GTA's vehicle class.
+--- 'bike' | 'cycle' | 'boat' | 'heli' | 'plane' | 'car', by the game's vehicle class.
 ---@return string
 function VehiclePoints.kindOf(veh)
     local class = GetVehicleClass(veh)
@@ -91,7 +91,7 @@ local ENTRY_INDICES = 8                             -- eDoorId 0-7: the four doo
 local MIDDLE = 0.15                                 -- metres either side of the middle line that count as on it
 local FACING = { left = 90.0, right = -90.0, front = 0.0, rear = 180.0 }   -- a sign out of that side, from the vehicle's heading
 
---- GTA's entry points for this vehicle, in the world: { { index, pos } }. An index the vehicle has no
+--- The game's entry points for this vehicle, in the world: { { index, pos } }. An index the vehicle has no
 --- entry for answers nothing useful (zero, or the vehicle's own origin); those, and repeats, are left
 --- out.
 function VehiclePoints.entries(veh)

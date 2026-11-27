@@ -1555,7 +1555,7 @@ Vehicles.onLife('spawned', function(data) if engineHolds[data.vehicleId] then sh
 -- Taken on (maybe an entity whip held before, under an id now gone): written either way, so no reason from then
 -- stays on it
 Vehicles.onLife('registered', function(data) showEngineHold(data.vehicleId) end)
--- Its id gone for good (handed back to GTA, or deleted): its holds with it
+-- Its id gone for good (handed back to the game, or deleted): its holds with it
 Vehicles.onLife('released', function(data) if data then dropHolds(data.vehicleId) end end)
 Vehicles.onLife('deleted', function(data) if data then dropHolds(data.vehicleId) end end)
 

@@ -252,7 +252,7 @@ function FreeCam.start(o)
     -- Look, move, Tab, attack/aim and the wheel are held off for the flight (the one control loop);
     -- the camera still reads them through the disabled readers. Not Esc: a block that names 200 owns
     -- it, and nothing in noclip or lighttest exits on it. A caller whose Esc is an exit names 200 in
-    -- its own block; GTA's pause stays shut by pauseKeys.
+    -- its own block; the game's pause stays shut by pauseKeys.
     block = carried and CARRY_BLOCK or FREECAM_BLOCK
     ControlBlocks.hold('freecam', block)
     startLoop()
@@ -495,7 +495,7 @@ end
 -- The room the camera is in
 -- ============================================
 --
--- GTA draws an MLO by the ROOM the camera is in — that room, and whatever can be seen from it through doorways (the
+-- The game draws an MLO by the ROOM the camera is in — that room, and whatever can be seen from it through doorways (the
 -- MLO's portals) — and it keeps track of which room that is by watching the camera pass through the
 -- doorways. Walking always goes through a doorway, so it never loses count. This camera flies
 -- through walls and floors, crosses no doorway, and the game goes on believing it is in the room (or

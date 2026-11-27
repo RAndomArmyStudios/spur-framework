@@ -11,8 +11,8 @@
 
 local CAMERA_PROPS = {
     -- On the right hand as the paparazzi clips hold it (shared/emote_list.lua's Camera 2).
-    -- RedM (spur_core, 24 Nov 2026): RDR2's box camera; GTA's prop_pap_camera_01 doesn't exist in RDR2. The bone is
-    -- GTA's PH_R_Hand, which shared/rdr_compat.lua turns into RDR2's when the player's game attaches it.
+    -- RedM (spur_core, 24 Nov 2026): RDR2's box camera; the original game's prop_pap_camera_01 doesn't exist in RDR2. The bone is
+    -- the original game's PH_R_Hand, which shared/rdr_compat.lua turns into RDR2's when the player's game attaches it.
     { model = 'p_camera01x', bone = 28422, offset = { 0.0, 0.0, 0.0 }, rot = { 0.0, 0.0, 0.0 } },
 }
 

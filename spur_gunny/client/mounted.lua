@@ -5,7 +5,7 @@
 -- round fired does.
 --
 -- RedM (spur_gunny, 24 Nov 2026): whip_gunny's client/vehicle.lua, cut down. RDR2 aims from the saddle and a seat with
--- the aim button as on foot, so the GTA double tap on RB that turned aiming on is gone, with its pad blocks. Horses
+-- the aim button as on foot, so the double tap on RB that turned aiming on is gone, with its pad blocks. Horses
 -- count as a seat here (IsPedOnMount).
 
 -- The fire buttons: on foot and in the saddle, a driver's, a passenger's (rdr_compat maps them to RDR2's).

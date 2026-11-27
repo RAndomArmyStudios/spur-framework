@@ -27,7 +27,7 @@ money from it, and it credits Whippy and WLVF. It isn't WHIP and doesn't come fr
   model and RedM has no `SetEntityMatrix`. spur_rope draws RDR2's own ropes instead, pinned along the simulated rope
   (`Config.Visuals.Style = 'rdr'`, `RdrRopeType`). The pin native is unnamed in RDR2's list, so the first rope checks
   that its ends follow. If they don't, the console says so and ropes are drawn as a small prop per node (`'balls'`).
-  Tested in game: the pins hold (0.00 m off).
+  Tested in game: the pins hold (0.00 m off). Any other `Style`, whip_rope's two others among them, is drawn as `'rdr'`.
 - **How RDR2's rope types bend.** RDR2 gives each rope type a fixed number of vertices, whatever its length:
 
   | Vertices | Types |

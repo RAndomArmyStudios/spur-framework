@@ -66,7 +66,7 @@ function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 // actually grows. These fall back to the vendored approximations only if the
 // payload is missing, so a swatch never renders blank.
 //
-// DISPLAY ORDER IS OURS, PALETTE INDICES ARE THE GAME'S. GTA stores these in
+// DISPLAY ORDER IS OURS, PALETTE INDICES ARE THE GAME'S. The game stores these in
 // no visual order at all, so a grid that walks 0..63 looks like a jumble. Each
 // swatch keeps the index it actually sets on the ped — that mapping is the
 // game's and must not move — and only the ORDER they are laid out in changes.
@@ -138,7 +138,7 @@ function paletteFor(kind) {
 // APPEARANCE NORMALIZATION + COLLECTION
 // ========================================
 
-// In GTA's head overlay id order (0 blemishes .. 10 chest hair, client/appearance.lua OVERLAY_IDS): a
+// In the game's head overlay id order (0 blemishes .. 10 chest hair, client/appearance.lua OVERLAY_IDS): a
 // style's name is looked up by its place here (itemName).
 const OVERLAY_KEYS = ['blemishes', 'beard', 'eyebrows', 'ageing', 'makeup', 'blush',
                       'complexion', 'sunDamage', 'lipstick', 'moles', 'chestHair'];
@@ -409,7 +409,7 @@ function headIconOf(parent) {
 //
 // The game's own name for each card's item, shown under its picture instead of its number: a
 // clothing or hair item by its picture's name (clothingPictureName — per colour, as the game's shop
-// names are), a face option's style as 'overlay_<GTA overlay id>_<style>' (OVERLAY_KEYS is in GTA's
+// names are), a face option's style as 'overlay_<game overlay id>_<style>' (OVERLAY_KEYS is in the game's
 // id order), a heritage parent as 'parent_<n>'. One script in spur_core (editorNamesUrl), loaded the
 // first time the creator opens and kept. Until it has come, and for an item the game gives no name,
 // a card shows its number. Tattoos carry their own (shared/tattoo_list.lua).
@@ -461,7 +461,7 @@ function refreshCardNames() {
 
 // ---- items with no picture ----
 //
-// GTA's lists carry items that do not exist — their data, nothing to wear — and they are the ones the
+// The game's lists carry items that do not exist — their data, nothing to wear — and they are the ones the
 // renders have no picture for, so these groups show only what has one. NUMBERS ARE KEPT: a card's
 // number is the game's drawable, so the tops run 454, 455, 461 when 456 to 460 are not real.
 // An item is left out only when its COLLECTION has pictures and it is not among them, so a collection
@@ -1377,7 +1377,7 @@ function setHeroIcon(src) {
 
 /**
  * The collection an item came in, in words: 'Base game', or the DLC's own name, tidied
- * ('mp_m_example' → 'Example', 'male_freemode_summer' → 'Summer'). GTA gives items no names; this is
+ * ('mp_m_example' → 'Example', 'male_freemode_summer' → 'Summer'). The game gives items no names; this is
  * the one fact about one there is. '' when the game did not name it (added-on clothing).
  */
 function collectionOf(kind, slot, drawable) {
@@ -1671,7 +1671,7 @@ function onOpacityInput(el) {
     // until the next render pass touches it.
 }
 
-// A face feature as the pad and its sliders show it (featureSign: GTA's +1 runs
+// A face feature as the pad and its sliders show it (featureSign: the game's +1 runs
 // against the labels), and back.
 function featureShown(idx) { return (appearance.faceFeatures[idx] || 0) * featureSign(idx); }
 function setFeatureShown(idx, v) { appearance.faceFeatures[idx] = v * featureSign(idx); }

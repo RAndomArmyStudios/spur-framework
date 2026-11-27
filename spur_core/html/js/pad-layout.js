@@ -9,8 +9,8 @@
 //
 // ONLY WHIP'S BUTTONS CHANGE: the D-pad, L3, A in a vehicle, and LB with A, B, X, Y or the D-pad.
 // What goes on them: whip's own actions and the ones other resources registered (RegisterPadAction —
-// the phone, talk, the radio, nitrous), all listed by pad.lua. GTA's own buttons are drawn with what GTA
-// has on them (its Standard layout, FiveM's controls list) and say so.
+// the phone, talk, the radio, nitrous), all listed by pad.lua. The game's own buttons are drawn with what the game
+// has on them (its Standard layout, Cfx.re's controls list) and say so.
 //
 // LUA OWNS THE LAYOUT. Every change goes to client/pad.lua ('padLayoutSet' / 'padLayoutReset'), which
 // swaps, saves it on the player's PC and answers with the layout as it now is; the page only draws what
@@ -31,10 +31,10 @@ const VIEWS = [
 
 // ---- the drawing ----
 //
-// LAID OUT AS GTA'S OWN CONTROLLER PAGE (GTA Enhanced's picture as the reference, whip's drawing kept). 3D Clanker exported the picture GTA draws there (pause_menu_pages_settings_pc /
+// LAID OUT AS THE GAME'S OWN CONTROLLER PAGE (the original game's Enhanced picture as the reference, whip's drawing kept). 3D Clanker exported the picture the original game draws there (pause_menu_pages_settings_pc /
 // controller, 1024 px; Rockstar's, so never shipped) and the shape, the rings and the label lines here
-// are measured from it: GTA's px → the box = (px - 82) × 0.7218, (px - 270) × 0.7218 + 30. Nine rows a
-// side, straight lines with square bends, in GTA's order.
+// are measured from it: the game's px → the box = (px - 82) × 0.7218, (px - 270) × 0.7218 + 30. Nine rows a
+// side, straight lines with square bends, in the game's order.
 //
 // The controller is drawn in its own box (0-620 across, 0-470 down) placed at OX, OY on a 1600-wide
 // stage. Labels stand in two columns: the left one ends at LABEL_L, the right one starts at LABEL_R;
@@ -45,14 +45,14 @@ const LABEL_L = 460, LABEL_R = 1140;
 const LINE_L = 474, LINE_R = 1126;
 const ROWS = [189, 247, 305, 363, 423, 478, 539, 596, 654];
 
-/** A role on a button in a view: one of whip's slots (it can change), whip's own fixed use, GTA's.
- *  A slot with nothing on it says what the button does then: `also`, GTA's action on it as well (L3's
- *  horn in a car, said beside whip's); `gta`, GTA's action left to it (LB + Y free: Y still gets in);
+/** A role on a button in a view: one of whip's slots (it can change), whip's own fixed use, the game's.
+ *  A slot with nothing on it says what the button does then: `also`, the game's action on it as well (L3's
+ *  horn in a car, said beside whip's); `game`, the game's action left to it (LB + Y free: Y still gets in);
  *  `plain`, the slot it falls back to (LB + a D-pad direction free: the direction's own action);
  *  `whip`, whip's fixed use, which it has free and takes first when not (A in a vehicle: a prompt). */
-const slot = (id, opts = {}) => ({ kind: 'slot', slot: id, also: opts.also, gtaElse: opts.gta, plainElse: opts.plain, whipElse: opts.whip });
+const slot = (id, opts = {}) => ({ kind: 'slot', slot: id, also: opts.also, gameElse: opts.game, plainElse: opts.plain, whipElse: opts.whip });
 const whip = (text, why) => ({ kind: 'whip', text, why });
-const gta = (text) => ({ kind: 'gta', text });
+const game = (text) => ({ kind: 'game', text });
 const dim = { kind: 'dim' };   // LB's view: not part of the LB layer
 
 const LB_WHY = 'whip\'s combo key: hold LB and press another button. "Holding LB" shows what each one does.';
@@ -60,23 +60,23 @@ const B_CAR_WHY = 'whip turns the game\'s cinematic camera off on B in a vehicle
 const PAUSE_WHY = 'Opens this menu.';
 const PROMPT_WHY = 'Uses the 3D prompt you are looking at, and picks in menus.';
 
-/** Every button with a label, in its column's order, top to bottom (GTA's). `glyphs`: its pictures in
- *  the bar. The lines are GTA's routes, button first. Which of a stick's two lines is moving it and which
- *  is pressing it is GTA's page's choice too: moving it from the side (left) or the middle (right). */
+/** Every button with a label, in its column's order, top to bottom (the game's). `glyphs`: its pictures in
+ *  the bar. The lines are the game's routes, button first. Which of a stick's two lines is moving it and which
+ *  is pressing it is the game's page's choice too: moving it from the side (left) or the middle (right). */
 const BUTTONS = [
     // ---- left ----
     { id: 'lt', name: 'LT', glyphs: ['lt'], side: 'L', row: ROWS[0],
       line: [[626, 224], [626, ROWS[0]], [LINE_L, ROWS[0]]],
-      roles: { foot: gta('Aim'), car: gta('Brake / reverse'), lb: dim } },
+      roles: { foot: game('Aim'), car: game('Brake / reverse'), lb: dim } },
     { id: 'lb', name: 'LB', glyphs: ['lb'], side: 'L', row: ROWS[1],
       line: [[626, ROWS[1]], [LINE_L, ROWS[1]]],
       roles: { foot: whip('Combos (hold)', LB_WHY), car: whip('Combos (hold)', LB_WHY), lb: whip('Held', LB_WHY) } },
     { id: 'view', name: 'View', glyphs: ['view'], side: 'L', row: ROWS[2],
       line: [[746, 333], [746, ROWS[2]], [LINE_L, ROWS[2]]],
-      roles: { foot: gta('Change camera'), car: gta('Change camera'), lb: dim } },
+      roles: { foot: game('Change camera'), car: game('Change camera'), lb: dim } },
     { id: 'ls', name: 'Left stick', glyphs: ['ls'], side: 'L', row: ROWS[3],
       line: [[611, ROWS[3]], [LINE_L, ROWS[3]]],
-      roles: { foot: gta('Move'), car: gta('Steer'), lb: dim } },
+      roles: { foot: game('Move'), car: game('Steer'), lb: dim } },
     { id: 'l3', name: 'L3 (stick press)', glyphs: ['l3'], side: 'L', row: ROWS[4],
       line: [[638, 354], [638, ROWS[4]], [LINE_L, ROWS[4]]],
       roles: { foot: slot('l3'), car: slot('l3', { also: 'Horn' }), lb: dim } },
@@ -95,31 +95,31 @@ const BUTTONS = [
     // ---- right ----
     { id: 'rt', name: 'RT', glyphs: ['rt'], side: 'R', row: ROWS[0],
       line: [[976, 224], [976, ROWS[0]], [LINE_R, ROWS[0]]],
-      roles: { foot: gta('Shoot'), car: gta('Accelerate'), lb: dim } },
+      roles: { foot: game('Shoot'), car: game('Accelerate'), lb: dim } },
     { id: 'rb', name: 'RB', glyphs: ['rb'], side: 'R', row: ROWS[1],
       line: [[976, ROWS[1]], [LINE_R, ROWS[1]]],
-      roles: { foot: gta('Take cover'), car: gta('Handbrake'), lb: dim } },
+      roles: { foot: game('Take cover'), car: game('Handbrake'), lb: dim } },
     { id: 'menu', name: 'Menu', glyphs: ['menu'], side: 'R', row: ROWS[2],
       line: [[855, 333], [855, 273], [1084, 273], [1084, ROWS[2]], [LINE_R, ROWS[2]]],
       roles: { foot: whip('Pause menu', PAUSE_WHY), car: whip('Pause menu', PAUSE_WHY), lb: dim } },
     { id: 'y', name: 'Y', glyphs: ['y'], side: 'R', row: ROWS[3],
       line: [[985, 307], [1044, 307], [1044, ROWS[3]], [LINE_R, ROWS[3]]],
-      roles: { foot: gta('Get in a vehicle'), car: gta('Get out'), lb: slot('lb_y', { gta: 'Get in / out' }) } },
+      roles: { foot: game('Get in a vehicle'), car: game('Get out'), lb: slot('lb_y', { game: 'Get in / out' }) } },
     { id: 'b', name: 'B', glyphs: ['b'], side: 'R', row: ROWS[4],
       line: [[1005, 372], [1005, ROWS[4]], [LINE_R, ROWS[4]]],
-      roles: { foot: slot('foot_b', { gta: 'Reload / punch' }), car: whip('Nothing', B_CAR_WHY), lb: slot('lb_b', { gta: 'Reload / punch' }) } },
+      roles: { foot: slot('foot_b', { game: 'Reload / punch' }), car: whip('Nothing', B_CAR_WHY), lb: slot('lb_b', { game: 'Reload / punch' }) } },
     { id: 'a', name: 'A', glyphs: ['a'], side: 'R', row: ROWS[5],
       line: [[963, 414], [963, ROWS[5]], [LINE_R, ROWS[5]]],
       roles: { foot: whip('Use a prompt', PROMPT_WHY), car: slot('veh_a', { whip: 'Use a prompt' }), lb: slot('lb_a') } },
     { id: 'x', name: 'X', glyphs: ['x'], side: 'R', row: ROWS[6],
       line: [[920, 372], [920, ROWS[6]], [LINE_R, ROWS[6]]],
-      roles: { foot: gta('Jump'), car: gta('Next weapon'), lb: slot('lb_x', { gta: 'Jump' }) } },
+      roles: { foot: game('Jump'), car: game('Next weapon'), lb: slot('lb_x', { game: 'Jump' }) } },
     { id: 'rs', name: 'Right stick', glyphs: ['rs'], side: 'R', row: ROWS[7],
       line: [[888, 450], [888, ROWS[7]], [LINE_R, ROWS[7]]],
-      roles: { foot: gta('Look'), car: gta('Look'), lb: dim } },
+      roles: { foot: game('Look'), car: game('Look'), lb: dim } },
     { id: 'r3', name: 'R3 (stick press)', glyphs: ['r3'], side: 'R', row: ROWS[8],
       line: [[860, 449], [860, ROWS[8]], [LINE_R, ROWS[8]]],
-      roles: { foot: gta('Look behind'), car: gta('Look behind'), lb: dim } },
+      roles: { foot: game('Look behind'), car: game('Look behind'), lb: dim } },
 ];
 
 const BY_ID = new Map(BUTTONS.map((b) => [b.id, b]));
@@ -141,9 +141,9 @@ const WHERE_NOTE = { car: 'in the driver\'s seat', foot: 'on foot' };
 
 // ---- the controller's shapes, in its own box (0-620 across, 0-470 down) ----
 //
-// An Xbox Series controller, front on, in the style of GTA's page: a black body with a grey edge, the
+// An Xbox Series controller, front on, in the style of the game's page: a black body with a grey edge, the
 // shells' seam along the underside, white rings for the sticks, the D-pad and the buttons. Points are
-// measured from GTA's picture (see above) and smoothed into curves here; the right half is the left one
+// measured from the game's picture (see above) and smoothed into curves here; the right half is the left one
 // mirrored. No Xbox logo: the guide button is a plain ring.
 
 /** A smooth curve through points (Catmull-Rom as cubic Béziers); `closed` joins the last to the first. */
@@ -275,7 +275,7 @@ function buildStage(svg) {
         face[k] = g;
     }
 
-    // The middle: View, Menu, Share and the guide button (no label: FiveM has no use for the last two).
+    // The middle: View, Menu, Share and the guide button (no label: Cfx.re has no use for the last two).
     const ringed = (at, mark, cls) => {
         const g = el('g', {}, pad);
         el('circle', { cx: at[0], cy: at[1], r: SMALL_R, class: 'pl-part pl-ring' }, g);
@@ -469,7 +469,7 @@ export class PadLayout {
     }
 
     textOf(r, view) {
-        if (r.kind === 'gta') return { text: r.text, note: 'Game', kind: 'gta' };
+        if (r.kind === 'game') return { text: r.text, note: 'Game', kind: 'game' };
         if (r.kind === 'whip') return { text: r.text, note: '', kind: 'fixed' };
         if (r.kind === 'slot') {
             const a = this.on(r.slot);
@@ -480,12 +480,12 @@ export class PadLayout {
                     return { text: p ? p.label : 'Nothing', note: 'as without LB', kind: p ? 'else' : 'empty' };
                 }
                 if (r.whipElse) return { text: r.whipElse, note: '', kind: 'else' };
-                const g = r.gtaElse || r.also;
-                return g ? { text: g, note: 'Game', kind: 'gta' } : { text: 'Nothing', note: '', kind: 'empty' };
+                const g = r.gameElse || r.also;
+                return g ? { text: g, note: 'Game', kind: 'game' } : { text: 'Nothing', note: '', kind: 'empty' };
             }
             const off = a.where && a.where !== view && view !== 'lb' ? WHERE_NOTE[a.where] : '';
-            // Not here (the sprint, in a car), and GTA has the button here: GTA's is what it does.
-            if (off && r.also) return { text: r.also, note: 'Game · ' + a.label + ' ' + off, kind: 'gta' };
+            // Not here (the sprint, in a car), and the game has the button here: the game's is what it does.
+            if (off && r.also) return { text: r.also, note: 'Game · ' + a.label + ' ' + off, kind: 'game' };
             const also = r.also ? 'also the game\'s ' + r.also.toLowerCase() : '';
             const first = r.whipElse ? r.whipElse.toLowerCase() + ' first' : '';
             return { text: a.label, note: [off, also, first].filter(Boolean).join(' · '), kind: 'slot' };
@@ -515,7 +515,7 @@ export class PadLayout {
                 n.classList.toggle('on', on);
                 n.classList.toggle('edit', editable);
                 n.classList.toggle('dim', r.kind === 'dim');
-                n.classList.toggle('gta', l.kind === 'gta' || l.kind === 'else');
+                n.classList.toggle('game', l.kind === 'game' || l.kind === 'else');
                 n.classList.toggle('empty', l.kind === 'empty');
             }
             if (p.shape && !STICK_OF[b.id]) {
@@ -559,7 +559,7 @@ export class PadLayout {
         if (r.kind !== 'slot') {
             this.choicesEl.classList.remove('live');
             const l = this.labelOf(this.sel);
-            if (r.kind === 'gta') {
+            if (r.kind === 'game') {
                 this.whatSub.textContent = 'Game: ' + r.text;
                 this.choicesEl.innerHTML = '<div class="pl-info">The game\'s own button. whip leaves the game\'s buttons to the game; '
                     + 'its controller layout is in the game\'s Settings.</div>';
@@ -574,9 +574,9 @@ export class PadLayout {
         const a = cur ? this.action(cur) : null;
         let does = a ? 'Does: ' + a.label : 'Free';
         if (!a) {
-            // What a free one does: GTA's, or the button's own without LB.
+            // What a free one does: the game's, or the button's own without LB.
             const l = this.labelOf(this.sel);
-            if (l.kind === 'gta') does = 'Free: the game\'s ' + l.text.toLowerCase();
+            if (l.kind === 'game') does = 'Free: the game\'s ' + l.text.toLowerCase();
             else if (l.kind === 'else') does = 'Free: ' + l.text + (r.plainElse ? ', as without LB' : '');
         }
         this.whatSub.textContent = this.note || does;

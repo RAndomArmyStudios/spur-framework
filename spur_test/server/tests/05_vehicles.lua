@@ -11,7 +11,7 @@ local _testVehicleId = nil
 --- A PLATE PER RUN. This was the literal 'TEST', so a run that crashed before its delete left a
 --- car wearing it, and every later run then found THAT car by plate — the lookup tests passed
 --- against the wrong vehicle, and the create collided with it. 'WT' plus six digits is eight
---- characters, the most a GTA plate shows, and is set in setup.
+--- characters, the most a game plate shows, and is set in setup.
 local _testPlate = nil
 
 --- Wait until the tester is out of the test vehicle, or say how long that took to not happen.
@@ -107,7 +107,7 @@ RegisterTestModule({
         },
         {
             -- THE CONTRACT, TESTED. A failure must return `false` plus a reason — not nil, which a
-            -- FiveM export would truncate the reason away with, and not a plate.
+            -- Cfx.re export would truncate the reason away with, and not a plate.
             name = 'CreateOwnedVehicle reports failure as (false, err)',
             fn = function(source)
                 local id, err = exports.spur_core:CreateOwnedVehicle(source, { model = '' })
@@ -130,7 +130,7 @@ RegisterTestModule({
         },
         -- 'GetVehicle returns a copy, not the live record' lived here and could not fail: every
         -- value crossing an export is a copy, so editing what came back could never reach
-        -- spur_core however GetVehicle was written. The guarantee is FiveM's, not the export's.
+        -- spur_core however GetVehicle was written. The guarantee is Cfx.re's, not the export's.
         {
             name = 'GetVehicle({ plate }) finds it',
             fn = function()
@@ -389,7 +389,7 @@ RegisterTestModule({
             end,
         },
         {
-            -- `false` plus a reason, not nil. A FiveM export truncates its return list at the
+            -- `false` plus a reason, not nil. A Cfx.re export truncates its return list at the
             -- first nil, so a producer that failed with nil would take its own error message
             -- with it and the caller would learn nothing about why.
             name = 'AdoptVehicle returns (false, err) for a nonexistent plate',
@@ -522,7 +522,7 @@ RegisterTestModule({
                     assertTrue(waitUntilOut(source), 'out of the car')
                     expect('spur_core:vehicle:exited', -1, 'and getting out is announced — the server never did this before')
 
-                    -- A REAR seat, not the front passenger's. GTA moves a front passenger across into an
+                    -- A REAR seat, not the front passenger's. The game moves a front passenger across into an
                     -- empty driver's seat on its own, which would make this a test of that instead.
                     -- RedM (spur_test, 24 Nov 2026): the buggy's passenger seat (TEST_CAR_PASSENGER_SEAT, shared/redm.lua).
                     local P = TEST_CAR_PASSENGER_SEAT
@@ -604,7 +604,7 @@ RegisterTestModule({
                         return exports.spur_core:GetVehicle(_testVehicleId).locked == false
                     end, 3000) and true or false
 
-                    -- A rear seat (GTA slides a front passenger across into an empty driver's seat).
+                    -- A rear seat (the game slides a front passenger across into an empty driver's seat).
                     -- RedM (spur_test, 24 Nov 2026): the buggy's passenger seat (shared/redm.lua).
                     ClientEnterVehicle(source, _testPlate, TEST_CAR_PASSENGER_SEAT, 5000)
                     waitFor(function() return exports.spur_core:IsPlayerInVehicle(source, _testVehicleId) end, 5000)

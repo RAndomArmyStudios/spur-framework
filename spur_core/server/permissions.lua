@@ -236,7 +236,7 @@ function Permissions.revoke(userId, name, by)
 end
 
 --- Who has been given `name` (directly: full admins hold everything without a row). Each holder's
---- name is the account's latest character, else its FiveM name. Waits on the database for names.
+--- name is the account's latest character, else its Cfx.re name. Waits on the database for names.
 ---@return table[] { userId, name, charId, grantedBy, grantedAt, online }
 function Permissions.holders(name)
     local out, ids = {}, {}

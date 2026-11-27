@@ -7,12 +7,12 @@
 //
 //   1. NUI resources are served as full-screen IFRAMES. The Gamepad API is gated behind a
 //      Permissions-Policy the PARENT document must grant a frame (allow="gamepad"), and the
-//      parent here belongs to FiveM, not to whip. There is no attribute we can add.
+//      parent here belongs to Cfx.re, not to whip. There is no attribute we can add.
 //   2. Even where the API exists, a pad stays hidden from a page until a button is pressed while
 //      that page HAS FOCUS. A HUD overlay never has focus, so the list can legitimately stay
 //      empty forever.
 //
-// So the pad is read where it can be read — by the game, in client/controller.lua, through GTA's
+// So the pad is read where it can be read — by the game, in client/controller.lua, through the game's
 // own control layer — and arrives here as a message.
 //
 // IT SENDS INTENT, NOT KEYS. The payload says 'up', 'select', 'back'; it never says "the D-pad
@@ -121,8 +121,8 @@ NuiRouter.register('navAnalog', (d) => {
    JavaScript at all — `[data-input="pad"] .hint-key { display: none }` and its mirror. Lua settles
    the answer for 400 ms before sending it.
 
-   NOT THE MOUSE CURSOR: CSS cannot hide it in FiveM (`cursor: none` gives no cursor handle, and
-   FiveM's NUIClient::OnCursorChange swaps its default cursor in for that). The
+   NOT THE MOUSE CURSOR: CSS cannot hide it in Cfx.re (`cursor: none` gives no cursor handle, and
+   Cfx.re's NUIClient::OnCursorChange swaps its default cursor in for that). The
    cursor goes with the focus instead: client/focus.lua, Focus.padInput. */
 NuiRouter.register('controllerDevice', (d) => {
     document.documentElement.dataset.input = (d && d.pad) ? 'pad' : 'kbm';

@@ -529,7 +529,7 @@ end
 
 --- A map's key as Config keeps it. 'hash' keys (models: door offsets, hinges) take a model name or
 --- its number, and are kept as the number GetHashKey gives. 'number' keys keep digits as a whole
---- number (a GTA mod slot, a wheel type) and anything else as a name. Other keys are names.
+--- number (a game mod slot, a wheel type) and anything else as a name. Other keys are names.
 ---@return any|nil key, string|nil why
 local function mapKey(entry, k)
     if entry.keyKind == 'number' then

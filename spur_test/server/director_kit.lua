@@ -281,7 +281,7 @@ end
 -- The airport's apron and runways: tarmac all round, nobody's house. A module that makes things in the world takes
 -- the tester there (DK.toField) and back where they were (DK.goHome).
 --
--- RedM (spur_test, 23 Nov 2026): GTA's airport is empty sky on RDR2's map (the tester fell through it and died). The field
+-- RedM (spur_test, 23 Nov 2026): the original game's airport is empty sky on RDR2's map (the tester fell through it and died). The field
 -- is now the first of shared/redm.lua's TEST_FIELDS that proves flat where the tester lands: nine points across it,
 -- all ground, within 1.5 m of each other. None flat: the module is skipped with the reason.
 -- RedM (spur_test, 24 Nov 2026): each candidate's eight neighbouring patches (45 m off) are measured as well, and the

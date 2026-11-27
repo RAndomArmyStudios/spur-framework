@@ -2,13 +2,13 @@
 -- SATELLITES BACK AFTER A RESTART — server/satellites_back.lua
 -- ============================================
 --
--- A satellite whose manifest says `dependency 'spur_core'` is stopped by FiveM when spur_core stops, and nothing
+-- A satellite whose manifest says `dependency 'spur_core'` is stopped by Cfx.re when spur_core stops, and nothing
 -- started it again: a `restart spur_core` left every one of them stopped. Started straight back WITH spur_core (a tool
 -- restarting them all at once), they came up in the players' games before spur_core had, and spur_core was left
 -- started but half working there: no exports, no HUD (Josh, 31 Oct; up first, it came up whole every time).
 --
 -- So spur_core brings them back itself, once it is up in every game:
---   its stop    the satellites that stopped with it (FiveM stops them first, in the same moment) are written down
+--   its stop    the satellites that stopped with it (Cfx.re stops them first, in the same moment) are written down
 --   its start   on a restart (a cold start is server.cfg's to do), once spur_core is ready here and every player's
 --               game has said spur_core is up there (client/ready.lua), or WAIT_MS has gone by for a game that
 --               never says so, each of them still stopped is started.
@@ -25,7 +25,7 @@ local stoppedAt = {}   -- [resource] = GetGameTimer() when it stopped (resources
 local upIn = {}        -- [source] = true: that player's game has had spur_core up since this start
 
 --- `dependency 'spur_core'` is filed as 'dependency'; `dependencies { 'spur_core' }` (whip_autos, whip_fuel, whip_rope)
---- as 'dependencie': FiveM makes a plural key singular by dropping its last letter (seen on Legacy, 31 Oct).
+--- as 'dependencie': Cfx.re makes a plural key singular by dropping its last letter (seen on Legacy, 31 Oct).
 local function dependsOnCore(res)
     for _, key in ipairs({ 'dependency', 'dependencie' }) do
         for i = 0, GetNumResourceMetadata(res, key) - 1 do

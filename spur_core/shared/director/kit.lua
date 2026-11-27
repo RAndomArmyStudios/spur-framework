@@ -101,7 +101,7 @@ end
 
 -- ---- plain data ----
 
---- Is `v` something that can be called (a function, a FiveM function reference, a table with __call)?
+--- Is `v` something that can be called (a function, a Cfx.re function reference, a table with __call)?
 function K.callable(v)
     if type(v) == 'function' then return true end
     if type(v) ~= 'table' then return false end

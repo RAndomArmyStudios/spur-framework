@@ -2,7 +2,7 @@
 -- VIEWPORT ROOM — keeping the game's idea of the camera's room right
 -- ============================================
 --
--- GTA draws an MLO by the ROOM the camera is in — that room, and whatever can be seen from it through
+-- The game draws an MLO by the ROOM the camera is in — that room, and whatever can be seen from it through
 -- doorways (the MLO's portals) — and it keeps track of which room that is by watching the camera pass
 -- through the doorways. Walking always goes through a doorway, so it never loses count. A camera that
 -- gets somewhere WITHOUT one does:

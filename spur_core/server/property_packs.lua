@@ -304,7 +304,7 @@ function PropertyPacks.runSource(src, _)
     if type(src) ~= 'string' then return nil, 'no file' end
     if #src > SOURCE_CAP then return nil, ('the file is %d KB; a pack can be at most %d KB'):format(#src // 1024, SOURCE_CAP // 1024) end
     if src:byte(1) == 27 then return nil, 'compiled Lua is not accepted — ship the .lua text' end
-    -- Not text at all: most likely encrypted by FiveM's asset escrow, which encrypts every .lua it is not told to
+    -- Not text at all: most likely encrypted by Cfx.re's asset escrow, which encrypts every .lua it is not told to
     -- leave alone. Said as that, not as "this file uses code".
     if src:sub(1, 4) == 'FXAP' or src:find('\0', 1, true) then
         return nil, 'this file is not text (encrypted by the asset escrow?): list it in escrow_ignore in your '

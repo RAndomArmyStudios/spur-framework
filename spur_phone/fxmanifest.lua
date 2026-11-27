@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_phone, 24 Nov 2026): RedM, not FiveM. A port of whip_phone 1.1.0 for spur_core, reworked for 1899: the
+-- RedM (spur_phone, 24 Nov 2026): A port of whip_phone 1.1.0 for spur_core, reworked for 1899: the
 -- phone is a pocket notebook (README.md, NOTICE.md).
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
@@ -13,7 +13,7 @@ version '1.1.0-redm.2'
 
 shared_scripts {
     '@spur_core/lib/satellite.lua',   -- first: Whip.register / Whip.core
-    -- RedM (spur_phone, 24 Nov 2026): spur_core's names for the GTA natives RDR2 lacks (control ids, key mappings),
+    -- RedM (spur_phone, 24 Nov 2026): spur_core's names for the original-game natives RDR2 lacks (control ids, key mappings),
     -- loaded into this resource as spur_rope loads them. Only spur_core runs their threads and commands.
     '@spur_core/shared/rdr_compat.lua',
     '@spur_core/shared/rdr_compat_stubs.lua',

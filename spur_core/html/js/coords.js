@@ -110,7 +110,7 @@ function coordsUpdate(data) {
     _els.z.textContent = data.z.toFixed(2);
     _els.h.textContent = data.h.toFixed(2) + '°';
 
-    // GTA's heading turns ANTICLOCKWISE from north, and CSS rotates clockwise: the needle on a
+    // The game's heading turns ANTICLOCKWISE from north, and CSS rotates clockwise: the needle on a
     // north-up dial is at -h. Taken the short way from where it is, so 359° to 1° is a nudge, not a
     // turn the whole way round.
     const delta = ((-data.h - _rot) % 360 + 540) % 360 - 180;

@@ -1237,7 +1237,7 @@ end
 --   * No live run while isolated (Director.startRun), and nobody isolated is put in one.
 --   * Builders are trusted: the shared world's stashes, doors and shops still work.
 --   * In only from the shared world (bucket 0), on foot and in no job: a car does not follow its driver
---     across, and a job's things stay where they are. A held prop never follows a bucket move (FiveM
+--     across, and a job's things stay where they are. A held prop never follows a bucket move (Cfx.re
 --     #912), so it is dropped first, both ways.
 --   * Not to slip away: never while down, being escorted or escorting someone (mid-robbery or
 --     mid-arrest). Coming BACK is allowed in every state.

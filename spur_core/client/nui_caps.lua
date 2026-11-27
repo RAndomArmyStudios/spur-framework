@@ -1,14 +1,14 @@
 --[[
     NUI CAPS — what the game's browser can do
 
-    FiveM's browser is moving from Chromium 103 to Chromium 144. whip's pages ask the browser what it can do, feature by feature (html/js/caps.js), and
+    Cfx.re's browser is moving from Chromium 103 to Chromium 144. whip's pages ask the browser what it can do, feature by feature (html/js/caps.js), and
     spur_core's page tells this file once it is up (html/js/nui-caps.js), so Lua and other resources
     can ask too:
 
         exports.spur_core:GetNuiCaps()     -- Whip.call('GetNuiCaps') from a satellite
         AddEventHandler('spur_core:nui:capsDetected', function(caps) ... end)
 
-    /nuicaps prints the answers; /nuicaps gameview shows FiveM's new game view in a box for a few
+    /nuicaps prints the answers; /nuicaps gameview shows Cfx.re's new game view in a box for a few
     seconds (the test that it works on this build).
 ]]
 

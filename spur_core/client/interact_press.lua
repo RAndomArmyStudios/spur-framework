@@ -72,7 +72,7 @@
 -- AIMING (Josh): free aim, aiming from cover, or the aim control held with a weapon out: no press (and no ground grab,
 -- client/ground.lua), the thing just happens.
 --
--- Headings are GTA's: degrees, counter-clockwise from north. A ped at heading h faces (-sin h, cos h); its right
+-- Headings are the game's: degrees, counter-clockwise from north. A ped at heading h faces (-sin h, cos h); its right
 -- is (cos h, sin h).
 
 -- ARMED OR IN COVER (Josh, 2 Nov; 3D Clanker's three more sets): the standing press carries the spine, both arms and

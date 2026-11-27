@@ -16,7 +16,7 @@ const sec = DebugPanel.section('player', { title: 'Player stats', order: 1 });
 const NAMES = { health: 'Health', armour: 'Armour', hunger: 'Hunger', thirst: 'Thirst', developer: 'Developer' };
 const label = (n) => NAMES[n] || (String(n).charAt(0).toUpperCase() + String(n).slice(1).replace(/_/g, ' '));
 
-/** How full a stat is, as the HUD draws it: health counts from 100 (GTA's dead) to 200. */
+/** How full a stat is, as the HUD draws it: health counts from 100 (the game's dead) to 200. */
 function pctOf(s) {
     const v = Number(s.value) || 0, max = Number(s.max) || 100;
     if (s.type === 'vital' && max === 200) return (v - 100);

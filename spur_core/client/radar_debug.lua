@@ -56,7 +56,7 @@ local STOCK = {
     bigmap_mask  = {  0.145,   0.015,    0.176,  0.395,       'L', 'B' },
     bigmap_blur  = { -0.019,   0.022,    0.262,  0.464,       'L', 'B' },
     golf_courses = {  0.003,  -0.038,    0.27375, 0.347,      'L', 'B' },
-    -- GTA has no frame; its "stock" is whip's own (client/hud_skin.lua).
+    -- The game has no frame; its "stock" is whip's own (client/hud_skin.lua).
     frame        = {  0.0060,  0.0700,   0.1720,  0.1655,     'L', 'B', 1.0 },
 }
 
@@ -77,7 +77,7 @@ local opts = {
     bigmapOn      = false,
     hideBars      = true,
     maskShape     = Config.MinimapMask or false,
-    frameOver     = false,  -- the black skin's frame drawn over GTA's HUD instead of under it
+    frameOver     = false,  -- the black skin's frame drawn over the game's HUD instead of under it
 }
 
 -- ============================================
@@ -256,7 +256,7 @@ local function OpenTuner()
     StartOutlineThread()
     Focus.take('radarDebug', { screen = true })
     SendNUIMessage({ action = 'radarDebugOpen', data = BuildPayload() })
-    if HudSkinTunerChanged then HudSkinTunerChanged() end   -- the black skin's frame and dark tiles, for GTA's radar
+    if HudSkinTunerChanged then HudSkinTunerChanged() end   -- the black skin's frame and dark tiles, for the game's radar
 end
 
 local function CloseTuner()
@@ -329,7 +329,7 @@ end)
 ---
 --- 'config' IS THE DEFAULT AND THE USEFUL ONE: whip's own shipped values, straight out of
 --- radarRects in client/hud.lua. That is the "known good" a tuning session wants to get back
---- to after wandering — the point it left from. The button first reset to GTA's vanilla
+--- to after wandering — the point it left from. The button first reset to the game's vanilla
 --- frontend.xml instead, which threw away the tuned position and was never what anyone meant
 --- by "reset".
 ---

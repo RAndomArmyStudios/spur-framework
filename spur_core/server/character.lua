@@ -50,8 +50,8 @@ end
 -- ============================================
 --
 -- whip makes its standing NPCs (shop keepers, the Director's standing things) once a character has
--- loaded: not when someone connects, as a player still in FiveM's menus is connected. Nobody is there to
--- see an NPC before then, so it costs nothing. (It began as a workaround: on FiveM for GTAV Enhanced in
+-- loaded: not when someone connects, as a player still in Cfx.re's menus is connected. Nobody is there to
+-- see an NPC before then, so it costs nothing. (It began as a workaround: on the original game's Enhanced build in
 -- Oct 2026, an entity the server made with nobody in the game had its network id handed out again to a
 -- player's ped or car. Cfx has patched that, and cfx-server b177 no longer does it.)
 

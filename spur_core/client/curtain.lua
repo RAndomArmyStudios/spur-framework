@@ -2,11 +2,11 @@
 -- THE CURTAIN — client/curtain.lua
 -- ============================================
 --
--- whip's own blackout, as opposed to GTA's DoScreenFadeOut. Two things make it worth having
+-- whip's own blackout, as opposed to the game's DoScreenFadeOut. Two things make it worth having
 -- rather than just calling the native:
 --
 --   IT REPORTS BACK. Cover() does not return until the browser has confirmed the screen is
---   genuinely black. GTA's fade gives you nothing to wait on, so hiding work behind it means
+--   genuinely black. The game's fade gives you nothing to wait on, so hiding work behind it means
 --   sleeping for a guessed duration — and a guess that is too short shows the player the
 --   machinery. The character screen teleports people across the map, streams a corner of the
 --   world and builds a ped behind this; none of that takes a predictable length of time.
@@ -46,26 +46,26 @@ local COVER_RESEND_MS = 400
 -- this file knows when a blackout starts and ends.
 --
 --   It follows the whole blackout, not the curtain element. The long loads — into the world, back
---   to the character screen, in and out of the creator — hand the black to GTA's fade part way
+--   to the character screen, in and out of the creator — hand the black to the game's fade part way
 --   (GiveToGame) and take it back at the end (TakeFromGame), with the curtain itself lifted in
 --   between, and that stretch is exactly the loading. So the logo shows from the first Cover to
---   the Uncover that ends it. (NUI draws over GTA's fade, so it stays on top the whole way.)
+--   the Uncover that ends it. (NUI draws over the game's fade, so it stays on top the whole way.)
 --
 --   From the moment the curtain is called: the logo comes up as the black starts to fall (the
 --   character screen's quick blinks between shots included).
 --
 --   It ends if the picture comes back some other way. Every flow here ends with Curtain.Uncover,
 --   but a logo left on over a live picture would be a bug on screen: if neither the curtain nor
---   GTA's fade is holding the black, the logo goes. Checked twice, LOADER_CHECK_MS apart, so an
+--   the game's fade is holding the black, the logo goes. Checked twice, LOADER_CHECK_MS apart, so an
 --   instant handover between the two blackouts is never mistaken for it.
 --
--- Only whip's curtain: GTA's own fades (the death screen's, drama rather than loading) never show
+-- Only whip's curtain: the game's own fades (the death screen's, drama rather than loading) never show
 -- the logo.
 local LOADER_CHECK_MS = 500
 
 local _blackout    = false   -- from the first Cover to the Uncover that ends it
 local _blackGen    = 0       -- bumped at both ends: a timer or watcher from an earlier blackout stands down
-local _curtainDown = false   -- the curtain element itself, as opposed to GTA's fade, holding the black
+local _curtainDown = false   -- the curtain element itself, as opposed to the game's fade, holding the black
 local _logoOn      = false
 
 local function screenIsBlack()
@@ -181,7 +181,7 @@ function Curtain.Uncover(ms)
     end
 end
 
---- Hand the blackout to GTA's own fade, covering over `ms` on the way.
+--- Hand the blackout to the game's own fade, covering over `ms` on the way.
 ---
 --- For the moment a screen is about to be hidden: the curtain falls where the player can see it,
 --- the game's fade goes black INSTANTLY underneath while nothing is visible anyway, and only
@@ -214,7 +214,7 @@ function Curtain.GiveToGame(ms)
     sendUncover(0)
 end
 
---- Take the blackout back from GTA's fade, leaving the curtain holding it.
+--- Take the blackout back from the game's fade, leaving the curtain holding it.
 ---
 --- The mirror image: the curtain is put up instantly behind the game's fade — uncovering
 --- nothing, because the fade is still black in front of it — and the fade is then cleared.

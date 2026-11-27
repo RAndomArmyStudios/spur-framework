@@ -40,7 +40,7 @@ const onResize = () => { if (hud) hud.resize(); };
 /* What the dial was last told, kept so a dial that loads late (or reloads) starts from the current picture. */
 const state = { rpm: 0, maxRpm: 8, redline: null, speed: 0, units: 'mph', gear: 'N', engine: false, lights: 'off', locked: false, damage: false,
     kind: 'car', pitch: 0, roll: 0, altitude: 0, gearState: 'none', power: 0, anchored: false, skin: null };
-/* Its config (Config.VehicleHud): the aircraft horizon, 'ball' or 'flat', and whether cars wear their own GTA
+/* Its config (Config.VehicleHud): the aircraft horizon, 'ball' or 'flat', and whether cars wear their own game
    dashboard's look (dashSkins; 3D Clanker's skins: hud.js setConfig `skins`). */
 const dialConfig = { attitude: 'ball', skins: true };
 
@@ -60,7 +60,7 @@ const gauges = new Map();             // id -> what is on the dial now
 // The numbers
 // ============================================
 
-/* GTA's rpm is not in rpm: 0.2 at idle, 1.0 at the limiter. It runs in a straight line from the engine's idle (sent
+/* The game's rpm is not in rpm: 0.2 at idle, 1.0 at the limiter. It runs in a straight line from the engine's idle (sent
    with its range: measured for most vanilla engines, 0 for an electric, else ~11% of the scale) to its limiter, which
    is THE TOP OF THE SCALE (v11: the needle runs to the last number, then bounces off the limiter). hud.js engages the bounce, the judder and the flash at 99% with the needle there too.
    client/vehicle_hud.lua's revRange chooses the range, by engine.
@@ -76,7 +76,7 @@ function toThousands(raw, max, idle) {
     return low + (Math.max(raw, 0.2) - 0.2) / (LIMITER_RAW - 0.2) * (max - low);
 }
 
-/* A boat's dial reads engine power, not revs (3D Clanker's v8): GTA's 0.2 idle .. 1.0 flat out as 0 .. 1, and 0.99 and
+/* A boat's dial reads engine power, not revs (3D Clanker's v8): the game's 0.2 idle .. 1.0 flat out as 0 .. 1, and 0.99 and
    up as full, as the limiter is for the revs (the game hovers just under 1.0 there). Worked out here from the rpm
    already sent, so the message carries nothing more. */
 function toPower(raw) {
@@ -293,8 +293,8 @@ NuiRouter.register('vehicleHudConfig', (d) => {
 });
 
 // Getting into a vehicle: its rev range (thousands), its redline (thousands; null = the dial's own 87%), its idle
-// (thousands; where GTA's 0.2 lands), its kind ('car', 'air', 'boat'), whether it has a dial at all, and its skin
-// (its own GTA dashboard's look, a skins3d.js id: client/vehicle_hud.lua from data/dash_skins.lua; false: none).
+// (thousands; where the game's 0.2 lands), its kind ('car', 'air', 'boat'), whether it has a dial at all, and its skin
+// (its own game dashboard's look, a skins3d.js id: client/vehicle_hud.lua from data/dash_skins.lua; false: none).
 NuiRouter.register('vehicleDialRange', (d) => {
     if (!d) return;
     hasDial = d.dial !== false;
@@ -329,7 +329,7 @@ NuiRouter.register('updateVehicleDials', (d) => {
         p.gearState = d.gearState || 'none';
     } else if (state.kind === 'boat') {
         // The propeller out of the water under throttle (client/vehicle_hud.lua BoatPropOut): the
-        // engine revs free to its top, which GTA's boat rpm (tied to the hull's speed) never shows. The dial eases up
+        // engine revs free to its top, which the game's boat rpm (tied to the hull's speed) never shows. The dial eases up
         // to it and back down when it bites again.
         p.power = d.freeRev === true ? 1 : toPower(rawRpm); p.anchored = d.anchored === true;
     }

@@ -172,7 +172,7 @@ end
 ---   out.x, out.y, out.z the point the look meets its box (onSelect's ctx.coords)
 ---   out.nx, ny, nz      the way the surface faces there, where the look met the surface itself (the map, a body)
 ---   out.px, py, pz      where the prompt stands: on that side, or just over the top
----   out.heading         a side's: GTA's heading straight out of it; nil over a top (it faces you)
+---   out.heading         a side's: the game's heading straight out of it; nil over a top (it faces you)
 ---   out.wrap            a side's: the box as seen from that side, for the renderer to wrap on
 --- `sticky` is the one it had: kept while the look still meets its box. Answers whether it found one.
 ---@return boolean

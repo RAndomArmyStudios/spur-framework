@@ -3,7 +3,7 @@
 // A plain script (no import or export), so a page loads it with <script> and a module with import: js/assets.js
 // reads it (whipAssetUrl).
 
-// RedM (spur_core, 23 Nov 2026): EMPTY, as shared/assets_index.lua: whip's media packs are GTA V's pictures, videos
+// RedM (spur_core, 23 Nov 2026): EMPTY, as shared/assets_index.lua: whip's media packs are the original game's pictures, videos
 // and map, so whipAssetUrl answers null for everything.
 // RedM (spur_core, 25 Nov 2026): one area, RDR2's 3D map (map/rdr-map3d.js, dev/map3d_rdr.py), kept in spur_core itself. Only here:
 // shared/assets_index.lua stays empty, as the server's catalogs read it and spur_core is no picture pack.

@@ -106,7 +106,7 @@ local function paidVals(shopId, receipt)
 end
 
 --- Up to talking: loaded, not down, not in the character creator. Down is the server's word for it
---- (MarkPlayerDead) OR a ped at GTA's dying health: the death report waits for the server to see the
+--- (MarkPlayerDead) OR a ped at the game's dying health: the death report waits for the server to see the
 --- ped fall before marking it (server/events_misc.lua, playerDied), and the shop's close can arrive in
 --- that wait.
 local function canTalk(source)

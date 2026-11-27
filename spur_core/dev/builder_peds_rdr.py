@@ -1,6 +1,6 @@
 """Make html/js/builder-peds.js (the Director world builder's NPC list) from RDR2's peds.
 
-RedM (spur_core, 24 Nov 2026). whip_core's list is GTA V's 881 peds; none of them exist in RDR2, so picking one placed
+RedM (spur_core, 24 Nov 2026). whip_core's list is the original game's 881 peds; none of them exist in RDR2, so picking one placed
 nothing. This makes the same file (PED_CLUSTERS, PED_CATEGORIES, PEDS) from femga's RDR2 ped list:
 
     https://github.com/femga/rdr3_discoveries/blob/master/peds/peds_list.lua   (data only: hash, model, outfits)
@@ -323,7 +323,7 @@ def main():
         name, cat = name_and_category(model)
         rows.append([model, cat, name])
 
-    # "#n": the n-th of a name, counted in the list's order of the model numbers, as the GTA list counts them.
+    # "#n": the n-th of a name, counted in the list's order of the model numbers, as the original list counts them.
     order = {c[0]: i for i, c in enumerate(CATEGORIES)}
     rows.sort(key=lambda r: (order[r[1]], r[2].lower(), number_of(r[0]) or 0, r[0]))
     counts = {}
@@ -360,7 +360,7 @@ def main():
     lines.append('// ========================================')
     lines.append("// THE WORLD BUILDER'S NPCs (the Director's World tab): RDR2's peds")
     lines.append('//')
-    lines.append('// RedM (spur_core, 24 Nov 2026): whip_core listed GTA V\'s 881 peds here, none of which RDR2 has, so picking one')
+    lines.append('// RedM (spur_core, 24 Nov 2026): whip_core listed the original game\'s 881 peds here, none of which RDR2 has, so picking one')
     lines.append('// placed nothing. These are RDR2\'s, %d of them, from femga\'s rdr3_discoveries peds/peds_list.lua (saddles left' % len(rows))
     lines.append('// out). The names are made from the model names (dev/builder_peds_rdr.py: a place code, its words, sex and age),')
     lines.append('// so a few read oddly; search finds the model name too. There are no pictures of RDR2 peds yet: a tile shows')

@@ -137,7 +137,7 @@ local screen = Whip.padScreen({
     releases  = { a = true, up = true, down = true, left = true, right = true, rb = true },
     keepInput = 'always',
     -- the pad buttons that would act in the world too: jump, get in, cover, reload, melee, sprint
-    -- RedM (spur_phone, 24 Nov 2026): GTA ids, which spur_core's rdr_compat turns into RDR2's; 263 and 264 (GTA's melee
+    -- RedM (spur_phone, 24 Nov 2026): original-game ids, which spur_core's rdr_compat turns into RDR2's; 263 and 264 (the original game's melee
     -- attacks) have no RDR2 match there and are left out (140-143 hold melee off).
     block     = { controls = { 21, 22, 23, 24, 25, 37, 44, 45, 140, 141, 142, 143, 257 } },
     onButton  = function(cmd, down, rep) nui({ type = 'cmd', cmd = cmd, down = down, rep = rep }) end,
@@ -151,7 +151,7 @@ local ours = false   -- the hands are the phone's: nothing else was playing when
 local held = nil     -- the emote we started, while it is still playing
 
 local function emoteFor(mode)
-    -- RedM (spur_phone, 24 Nov 2026): nothing in the hand unless config.lua names an emote (no GTA phone or tablet emote)
+    -- RedM (spur_phone, 24 Nov 2026): nothing in the hand unless config.lua names an emote (no original-game phone or tablet emote)
     local e = type(Config.Emotes) == 'table' and Config.Emotes[mode] or nil
     return type(e) == 'string' and e ~= '' and e or nil
 end
@@ -227,7 +227,7 @@ local blockWarned = false     -- Config.BlockControls refused: said once per ses
 local putAway = 0
 local closePhone   -- (below)
 
--- KNOCKED DOWN PUTS IT AWAY. GTA has no ragdoll event, so while the phone is out (and only then) it looks five times
+-- KNOCKED DOWN PUTS IT AWAY. The game has no ragdoll event, so while the phone is out (and only then) it looks five times
 -- a second, as spur_core's progress bar does (client/ui.lua). Held to an app, that is giving up.
 local RAGDOLL_LOOK_MS = 200
 local watching = 0            -- one watch per time the phone comes out
@@ -508,8 +508,8 @@ end, false)
 RegisterCommand('-spur_phone', function() end, false)
 RegisterKeyMapping('+spur_phone', 'Notebook: open / close', 'keyboard', Config.OpenKey)
 
--- ANSWER / DECLINE A CALL FROM A KEY (Josh, 7 Nov 2026), with the phone out or put away. Players change them in GTA's
--- Settings > Key Bindings > FiveM. The page does it, as its Answer and Decline buttons do (html/modules/phone,
+-- ANSWER / DECLINE A CALL FROM A KEY (Josh, 7 Nov 2026), with the phone out or put away. Players change them in the game's
+-- Settings > Key Bindings > Cfx.re. The page does it, as its Answer and Decline buttons do (html/modules/phone,
 -- on.callKey), and only to a call ringing in: any other time the key does nothing.
 local function callKey(which)
     -- Typing in chat or another UI has the keys; the phone's own focus is not that (its typing keeps the keys anyway)

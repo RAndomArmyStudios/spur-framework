@@ -93,10 +93,10 @@ CreateThread(function()
 end)
 
 -- ============================================
--- How lore NPCs look: a GTA ped's hat, or a whole look made in the character editor
+-- How lore NPCs look: a game ped's hat, or a whole look made in the character editor
 -- ============================================
 --
--- A GTA PED'S HAT (Director > Lore characters > Details > Hat): GTA puts no prop on a ped by itself, and only the
+-- A game PED'S HAT (Director > Lore characters > Details > Hat): the game puts no prop on a ped by itself, and only the
 -- game that OWNS a networked ped can change what it wears (the others see what that game sends). So every game looks
 -- once a second at the lore NPCs it owns, and puts back any prop that is not as the lore character has it. A new
 -- owner does the same, so it lasts as the NPC changes hands.
@@ -183,12 +183,12 @@ RegisterNetEvent('spur_core:client:loreLooks', function(list)
 end)
 
 -- ============================================
--- Gestures while a lore character talks: GTA's talking hands, without GTA's voice
+-- Gestures while a lore character talks: the game's talking hands, without the game's voice
 -- ============================================
 --
--- GTA's peds wave their hands about as they talk because its speech plays a gesture with each line. Ours are
+-- The game's peds wave their hands about as they talk because its speech plays a gesture with each line. Ours are
 -- recordings, so the server tells every game when a line starts and how long it is (spur_core:client:loreTalk), and
--- the game that OWNS the NPC plays GTA's own standing gestures on it (when Config.LoreVoice.Gestures is on), upper body
+-- the game that OWNS the NPC plays the game's own standing gestures on it (when Config.LoreVoice.Gestures is on), upper body
 -- only, over whatever it is doing: one that suits the line first (a wave for Hello), then ordinary talking ones until
 -- the line ends. Played by the owner, so every game sees them. Not in a car, on the floor or in a scenario. A line said
 -- into something (below) is sent to every game, and so is the line after one, gestures or not, so it ends that hold; a

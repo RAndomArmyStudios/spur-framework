@@ -287,7 +287,7 @@ end)
 -- Walk style
 -- ============================================
 --
--- GTA shares a ped's walk with other players by itself, so only this client applies it. What it
+-- The game shares a ped's walk with other players by itself, so only this client applies it. What it
 -- does NOT do is keep it: a new model (login, /charedit), a respawn or a revive can come back with
 -- the default walk. So it is applied again at each of those moments.
 --
@@ -378,7 +378,7 @@ end
 -- Mood (facial expression)
 -- ============================================
 --
--- GTA does NOT share a face, so the server puts each player's mood on their statebag
+-- The game does NOT share a face, so the server puts each player's mood on their statebag
 -- (PLAYER_MOOD_KEY) and every client puts it on that player's ped — this player's own included.
 --
 -- A ped that goes out of range and comes back is a NEW ped, without the face. So while anyone in
@@ -411,7 +411,7 @@ local function refreshMoods()
         elseif ped ~= 0 and DoesEntityExist(ped) then
             if IsEntityDead(ped) then
                 -- Dressed again once they are back up: a death keeps the same ped,
-                -- so the handle test below never re-dressed it, and GTA may drop a dead ped's face.
+                -- so the handle test below never re-dressed it, and the game may drop a dead ped's face.
                 moodWatch[id] = false
             elseif ped ~= dressed then
                 faceOn(ped, cmd)

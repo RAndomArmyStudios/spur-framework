@@ -1,27 +1,27 @@
 -- ============================================
--- GAME SETTINGS — GTA's own settings, on whip's pause menu page
+-- GAME SETTINGS — the game's own settings, on whip's pause menu page
 -- ============================================
 --
--- The pause menu's Settings (html/js/settings-page.js), under Game, is GTA's settings in whip's look: every tab GTA has
--- (Audio, Display, Graphics...) read from GTA, and changed through GTA, so they are kept where GTA keeps them.
+-- The pause menu's Settings (html/js/settings-page.js), under Game, is the game's settings in whip's look: every tab the game has
+-- (Audio, Display, Graphics...) read from the game, and changed through the game, so they are kept where the game keeps them.
 --
--- GTA'S SETTINGS MENU RUNS UNDER WHIP'S PAGE, NOT DRAWN. stream/scaleform/pause_menu_pages_settings.gfx is GTA's
+-- THE GAME'S SETTINGS MENU RUNS UNDER WHIP'S PAGE, NOT DRAWN. stream/scaleform/pause_menu_pages_settings.gfx is the game's
 -- settings page with whip's questions added (its source and how to build it: dev/pause_settings/). Asked for a column
--- named "whip|<what>|...", the page answers instead (GET_COLUMN_SELECTION). GTA answers a frame later at the earliest,
+-- named "whip|<what>|...", the page answers instead (GET_COLUMN_SELECTION). The game answers a frame later at the earliest,
 -- so questions go in batches and come back together; an answer carries CHUNK characters of text, a longer one is read
 -- in pieces.
 --
--- A CHANGE IS MADE AS A PLAYER MAKES IT: the row clicked, then left or right pressed, and GTA's menu does the rest. A
--- graphics change waits for Apply, GTA asks its own questions (keep these display settings? restart needed?), a list
--- GTA fills as it goes (the radio stations) steps through. GTA ignores a press to a menu it does not draw, so the menu
+-- A CHANGE IS MADE AS A PLAYER MAKES IT: the row clicked, then left or right pressed, and the game's menu does the rest. A
+-- graphics change waits for Apply, the game asks its own questions (keep these display settings? restart needed?), a list
+-- the game fills as it goes (the radio stations) steps through. The game ignores a press to a menu it does not draw, so the menu
 -- is drawn for the press only, under whip's page, which covers it. Its questions are shown on whip's page and
 -- answered from there.
 --
 -- One job at a time: each callback waits its turn. The page going back to the menu, the pause menu shutting or
--- spur_core stopping shuts GTA's menu.
+-- spur_core stopping shuts the game's menu.
 
--- RedM (spur_core, 23 Nov 2026): RDR2 has no GTA settings menu to drive. Every callback answers with an error, which
--- the page shows on its Game tabs; whip's own (Server) settings are unaffected. The GTA code below is kept as it was.
+-- RedM (spur_core, 23 Nov 2026): RDR2 has no settings menu this file can drive. Every callback answers with an error, which
+-- the page shows on its Game tabs; whip's own (Server) settings are unaffected. The game code below is kept as it was.
 do
     local WHY = "RDR2's game settings are in its own menu (Esc > Settings)"
     for _, name in ipairs({ 'gameSettingsOpen', 'gameSettingsTab', 'gameSettingsFocus', 'gameSettingsStep',
@@ -33,24 +33,24 @@ do
 end
 
 local MENU = 'FE_MENU_VERSION_LANDING_MENU'   -- the menu that opens on the settings, without the pause tabs
-local FRONTEND = 2                            -- the control group GTA's menus read
+local FRONTEND = 2                            -- the control group the game's menus read
 local KEY = { left = 189, right = 190, accept = 201, cancel = 202, x = 203 }
-local MAX_PENDING = 8         -- questions waiting at once; GTA's own limit is unknown
+local MAX_PENDING = 8         -- questions waiting at once; the game's own limit is unknown
 local CHUNK = 60              -- text one answer carries ("W1|" and 60 characters come back whole)
-local PAGE_WAIT_MS = 10000    -- GTA's settings page answering after it opens: about 3 s the first time
-local STEP_TRIES = 3          -- GTA now and then drops a press on quick repeats: a step is pressed again if it did not land
+local PAGE_WAIT_MS = 10000    -- the game's settings page answering after it opens: about 3 s the first time
+local STEP_TRIES = 3          -- the game now and then drops a press on quick repeats: a step is pressed again if it did not land
 local MAX_STEPS = 40          -- a slider set by dragging: presses toward the value, at most
 
-local KEYS_TAB = 1131         -- Key Bindings: GTA's own screen, a page of its own (pause.lua opens it)
-local HIDDEN_TABS = { [1139] = true }          -- Voice Chat: GTA's voice chat, which FiveM servers do not use
+local KEYS_TAB = 1131         -- Key Bindings: the game's own screen, a page of its own (pause.lua opens it)
+local HIDDEN_TABS = { [1139] = true }          -- Voice Chat: the game's voice chat, which Cfx.re servers do not use
 local GRAPHICS_TABS = { [1137] = true, [1138] = true }
 
---- A row's kind by GTA's type: 0 something to do (Restore Defaults), 1 a list, 2 a slider. Others are shown only.
+--- A row's kind by the game's type: 0 something to do (Restore Defaults), 1 a list, 2 a slider. Others are shown only.
 local KINDS = { [0] = 'button', [1] = 'list', [2] = 'slider' }
 
---- GTA's questions whip knows, by the hash of their text's label: a title and buttons, each the key GTA takes for it
---- and `ends` when it ends the graphics changes waiting (applied, discarded or put back). `lapses`: GTA answers it
---- itself when its time runs out, putting the old settings back. Any other is shown as GTA's question with OK and Back.
+--- The game's questions whip knows, by the hash of their text's label: a title and buttons, each the key the game takes for it
+--- and `ends` when it ends the graphics changes waiting (applied, discarded or put back). `lapses`: the game answers it
+--- itself when its time runs out, putting the old settings back. Any other is shown as the game's question with OK and Back.
 local QUESTIONS = {}
 for _, q in ipairs({
     { label = 'GFX_WARNING_MP', title = 'Apply graphics changes?',
@@ -72,21 +72,21 @@ local UNKNOWN_QUESTION = { title = 'The game is asking', buttons = { { 'OK', KEY
 
 --- GET_WARNING_MESSAGE_TITLE_HASH, by name or, on a client whose Lua lacks it, by hash.
 local warningHash = GetWarningMessageTitleHash or function()
-    return 0   -- RedM: no GTA warning screens to read
+    return 0   -- RedM: no such warning screens to read
 end
 
-local active = false          -- GTA's settings menu is up for whip's page
+local active = false          -- the game's settings menu is up for whip's page
 local gen = 0                 -- bumped on every open and close: a job from an older one stops
 local busy = false            -- a job is running
-local drawn = false           -- GTA's menu drawn this frame (a press is on its way)
+local drawn = false           -- the game's menu drawn this frame (a press is on its way)
 local pressing = nil          -- the control held down this frame, or nil
-local onRow = nil             -- 'tab:row' GTA's menu was clicked onto; nil once anything else may have moved it
-local wantRow = nil           -- 'tab:row' chosen on the page last: GTA's menu follows only the newest
-local asked = nil             -- the hash of the question GTA is asking now, or nil
-local answering = false       -- an answer to GTA's question is being pressed: another waits for the next question
+local onRow = nil             -- 'tab:row' the game's menu was clicked onto; nil once anything else may have moved it
+local wantRow = nil           -- 'tab:row' chosen on the page last: the game's menu follows only the newest
+local asked = nil             -- the hash of the question the game is asking now, or nil
+local answering = false       -- an answer to the game's question is being pressed: another waits for the next question
 local chosen = nil            -- the answer pressed to the question up: { question, ends }, until that question goes
 ---@type table[]|nil
-local tabs = nil              -- GTA's tabs as read: { index, id, label }
+local tabs = nil              -- the game's tabs as read: { index, id, label }
 local labels = {}             -- [tab id] = { [row id] = name }: they do not change while the menu is up
 --- [tab id] = { [row id] = { count, texts, list } }: a row's options (a slider's: its top). A list's are read again after
 --- any change on its tab, as one row can change another's (a resolution, the refresh rates).
@@ -94,7 +94,7 @@ local options = {}
 local rowIndex = {}           -- [tab id] = { [row id] = index }: where a row was last read, so it can be read alone
 --- [graphics tab id] = { [row id] = { from = { value, text }, steps } }: graphics changes made here and waiting for
 --- Apply, each with what it was and how many steps it has moved (right +, left -), which is how Undo takes it back. Kept
---- here, not read from GTA: the "changed" mark GTA shows on such a row is on the row drawn, not on the data the page reads.
+--- here, not read from the game: the "changed" mark the game shows on such a row is on the row drawn, not on the data the page reads.
 local pending = {}
 
 local function anyPending()
@@ -123,9 +123,9 @@ end
 
 local function stillOpen(g) return active and gen == g end
 
---- Every question's answer, in order. GTA drops questions now and then: sent while its page is still loading (the
---- first open takes about 3 s), or on their way when GTA asks a question of its own. A batch not answered within
---- RESEND_MS goes again, until `patience` ms (3000) have gone by without an answer; after a question of GTA's, once
+--- Every question's answer, in order. The game drops questions now and then: sent while its page is still loading (the
+--- first open takes about 3 s), or on their way when the game asks a question of its own. A batch not answered within
+--- RESEND_MS goes again, until `patience` ms (3000) have gone by without an answer; after a question of the game's, once
 --- it has been answered.
 local RESEND_MS = 500
 local function askAll(cmds, g, patience)
@@ -167,12 +167,12 @@ local function fields(answer)
     return t
 end
 
---- GTA's text without its markup: <font> tags and ~colour~ codes.
+--- The game's text without its markup: <font> tags and ~colour~ codes.
 local function plain(text)
     return (text:gsub('<[^>]*>', ''):gsub('~[^~]*~', ''):gsub('&amp;', '&'):gsub('&lt;', '<'):gsub('&gt;', '>'))
 end
 
---- The longest start of `s` that is whole UTF-8: GTA can cut a long answer through a character.
+--- The longest start of `s` that is whole UTF-8: the game can cut a long answer through a character.
 local function wholeUtf8(s)
     for cut = 0, 3 do
         local t = s:sub(1, #s - cut)
@@ -215,7 +215,7 @@ local function readTexts(list, g)
 end
 
 --- Rows' data in column `col` (1 the tabs, 2 the settings): { index, id, type, value, state, count }.
---- state is GTA's: 0 cannot be changed, 1 can, 2 changed and not applied.
+--- state is the game's: 0 cannot be changed, 1 can, 2 changed and not applied.
 local function rowOf(answer, index)
     local f = fields(answer)
     if f[1] ~= 'W1' then return nil end
@@ -236,7 +236,7 @@ local function readRow(col, index, g)
     return rowOf(ask(('whip|row|%d|%d'):format(col, index), g), index)
 end
 
---- What GTA shows: { tabs, rows, tab (the tab row chosen), menuState }.
+--- What the game shows: { tabs, rows, tab (the tab row chosen), menuState }.
 local function head(g, patience)
     local f = fields(ask('whip|head', g, patience))
     if f[1] ~= 'W1' then return nil end
@@ -245,12 +245,12 @@ local function head(g, patience)
 end
 
 -- ============================================
--- GTA's menu, held under the page
+-- the game's menu, held under the page
 -- ============================================
 
 local close
 
---- GTA's question `hash` to the page (nil: GTA is done asking, and the tab may have changed).
+--- The game's question `hash` to the page (nil: the game is done asking, and the tab may have changed).
 local function sendQuestion(hash)
     local q = hash and (QUESTIONS[hash] or UNKNOWN_QUESTION)
     local msg = { action = 'gameSettingsQuestion', refresh = not hash }
@@ -258,14 +258,14 @@ local function sendQuestion(hash)
         local words = {}
         for i, b in ipairs(q.buttons) do words[i] = b[1] end
         -- `id`: an answer names the question it answers, so one meant for this question never lands on the next.
-        -- RedM (spur_core, 23 Nov 2026): RedM's GetLabelText gives nil, not GTA's 'NULL', for a label it lacks.
+        -- RedM (spur_core, 23 Nov 2026): RedM's GetLabelText gives nil, not the original game's 'NULL', for a label it lacks.
         msg.question = { id = hash, title = q.title, body = q.body or (q.label and plain(GetLabelText(q.label) or '')) or '',
             buttons = words }
     end
     SendNUIMessage(msg)
 end
 
---- GTA's question `hash` gone: answered from the page (`chosen`), or by GTA itself when its time ran out. Either way,
+--- The game's question `hash` gone: answered from the page (`chosen`), or by the game itself when its time ran out. Either way,
 --- whether the graphics changes waiting are over is the question's to say.
 local function questionGone(hash)
     local q = QUESTIONS[hash] or UNKNOWN_QUESTION
@@ -276,14 +276,14 @@ local function questionGone(hash)
 end
 
 --- One frame while the menu is up: not drawn (bar a press), its cursor hidden, the pad kept off it, the press held, and
---- GTA's questions watched for. whip's pause menu shutting (Resume, Esc, logging out) shuts it.
+--- the game's questions watched for. whip's pause menu shutting (Resume, Esc, logging out) shuts it.
 local function frame()
     if not active then return end
     if not PauseMenuOpen then close() return end
-    -- (RedM: GTA's SUPPRESS_FRONTEND_RENDERING_THIS_FRAME and SET_MOUSE_CURSOR_VISIBLE dropped: RDR2 has neither.)
+    -- (RedM: the original game's SUPPRESS_FRONTEND_RENDERING_THIS_FRAME and SET_MOUSE_CURSOR_VISIBLE dropped: RDR2 has neither.)
     DisableAllControlActions(FRONTEND)
     if pressing then
-        -- Both groups: GTA's menus read the frontend's, and some of its keys the player's too. The pad driver
+        -- Both groups: the game's menus read the frontend's, and some of its keys the player's too. The pad driver
         -- (client/controller.lua) reads the press as well: the page takes no pad input while an answer is pressed
         -- (until gameSettingsAnswer answers), and none that changes something while a job runs.
         for _, group in ipairs({ 0, FRONTEND }) do
@@ -310,7 +310,7 @@ function close()
     SendNUIMessage({ action = 'gameSettingsQuestion' })
 end
 
---- A control pressed for `holdMs` (100) and let go, with the menu drawn around it: GTA takes some presses as they are
+--- A control pressed for `holdMs` (100) and let go, with the menu drawn around it: the game takes some presses as they are
 --- let go.
 local function press(control, g, holdMs)
     if control ~= KEY.left and control ~= KEY.right then onRow = nil end
@@ -323,8 +323,8 @@ local function press(control, g, holdMs)
     if stillOpen(g) then drawn = false end
 end
 
---- The page shut while GTA's menu was opening for it: the menu shut as soon as it is up (close() found nothing to shut
---- yet), so the player is not left in GTA's own settings with whip's pause keys off.
+--- The page shut while the game's menu was opening for it: the menu shut as soon as it is up (close() found nothing to shut
+--- yet), so the player is not left in the game's own settings with whip's pause keys off.
 local function abandonOpening()
     local deadline = GetGameTimer() + 2000
     while not IsPauseMenuActive() and GetGameTimer() < deadline do Wait(0) end
@@ -332,8 +332,8 @@ local function abandonOpening()
     error('closed', 0)
 end
 
---- GTA's settings menu up and answering, its tabs read. Opened again when something shut it: what was read, and the
---- changes waiting for Apply (GTA drops them with its menu), go with the old one.
+--- The game's settings menu up and answering, its tabs read. Opened again when something shut it: what was read, and the
+--- changes waiting for Apply (the game drops them with its menu), go with the old one.
 local function ensureOpen(g)
     if tabs and IsPauseMenuActive() then return end
     tabs, onRow = nil, nil
@@ -350,9 +350,9 @@ local function ensureOpen(g)
         assert(GetGameTimer() < deadline, 'The game\'s settings did not open')
         Wait(0)
     end
-    -- GTA's menu coming up can take the keyboard and mouse from whip's page: given back.
+    -- The game's menu coming up can take the keyboard and mouse from whip's page: given back.
     Focus.reassert()
-    -- Its settings page loads after the menu says it is ready: GTA answers once it has (about 3 s the first time).
+    -- Its settings page loads after the menu says it is ready: the game answers once it has (about 3 s the first time).
     local h
     deadline = GetGameTimer() + PAGE_WAIT_MS
     repeat
@@ -381,7 +381,7 @@ local function tabOf(id)
     end
 end
 
---- GTA showing tab `id`: clicked in its menu, then waited for until its rows are in.
+--- The game showing tab `id`: clicked in its menu, then waited for until its rows are in.
 local function showTab(id, g)
     local t = assert(tabOf(id), 'The game has no such settings tab')
     local h = assert(head(g), 'The game\'s settings page did not answer')
@@ -403,8 +403,8 @@ end
 -- A tab as the page draws it
 -- ============================================
 
---- GTA's video memory bar, as GTA last set it on a Graphics tab: { label, percent, percent2 } (percent2 -1: one bar),
---- or nil before GTA has.
+--- The game's video memory bar, as the game last set it on a Graphics tab: { label, percent, percent2 } (percent2 -1: one bar),
+--- or nil before the game has.
 local function readMemory(g)
     local f = fields(ask('whip|vidmem', g))
     if f[1] ~= 'W1' then return nil end
@@ -418,7 +418,7 @@ local function readMemory(g)
     return { label = plain(label), percent = tonumber(f[2]) or 0, percent2 = tonumber(f[3]) or -1 }
 end
 
---- Every row of the tab GTA shows: { id, label, kind, value, max, text, options, locked, changed }.
+--- Every row of the tab the game shows: { id, label, kind, value, max, text, options, locked, changed }.
 local function readTab(id, g)
     local h = showTab(id, g)
     local data = readRows(2, h.rows, g)
@@ -430,7 +430,7 @@ local function readTab(id, g)
     rowIndex[id] = where
 
     -- Names once per tab; a list's options until a change on its tab (or their count changes), and always for a list
-    -- of one (GTA fills it as it goes, so its one option is what it is set to).
+    -- of one (the game fills it as it goes, so its one option is what it is set to).
     local want, why = {}, {}
     for _, r in ipairs(data) do
         where[r.id] = r.index
@@ -502,7 +502,7 @@ local function answer(id, g, extra)
     return st
 end
 
---- The tab's row `rowId` as GTA has it now: its data and, for a list, the option it shows. Read alone where it was last
+--- The tab's row `rowId` as the game has it now: its data and, for a list, the option it shows. Read alone where it was last
 --- seen; the whole tab only when it is not there any more.
 local function rowNow(id, rowId, g)
     local h = showTab(id, g)
@@ -525,8 +525,8 @@ local function rowNow(id, rowId, g)
     return found
 end
 
---- Tab `id`'s row clicked in GTA's menu, so a press lands on it. Twice: the first click into the list moves GTA there,
---- the second tells GTA which row it is on. Not at all when GTA is on it already: each click is an input to GTA too,
+--- Tab `id`'s row clicked in the game's menu, so a press lands on it. Twice: the first click into the list moves the game there,
+--- the second tells the game which row it is on. Not at all when the game is on it already: each click is an input to the game too,
 --- with its menu sound.
 local function focusRow(id, row, g)
     local at = id .. ':' .. row.id
@@ -538,7 +538,7 @@ local function focusRow(id, row, g)
     onRow = at
 end
 
---- One step left (-1) or right (1) on a row, pressed again if GTA dropped it. Answers whether it moved. A graphics
+--- One step left (-1) or right (1) on a row, pressed again if the game dropped it. Answers whether it moved. A graphics
 --- row that moved waits for Apply.
 local function stepRow(id, rowId, dir, g)
     local row = assert(rowNow(id, rowId, g), 'that setting is gone')
@@ -595,7 +595,7 @@ local function job(fn)
     return { error = why }
 end
 
---- A tab id from the page: a number GTA has.
+--- A tab id from the page: a number the game has.
 local function tabArg(data)
     local id = type(data) == 'table' and tonumber(data.tab)
     return id and tabOf(id) and id or nil
@@ -609,7 +609,7 @@ end
 -- The page's callbacks
 -- ============================================
 
---- Settings opened: GTA's menu up, its tabs, and the one asked for (`tab`) or the first.
+--- Settings opened: the game's menu up, its tabs, and the one asked for (`tab`) or the first.
 RegisterNUICallback('gameSettingsOpen', function(data, cb)
     if not PauseMenuOpen then return cb({ error = 'closed' }) end
     if not active then
@@ -640,7 +640,7 @@ RegisterNUICallback('gameSettingsTab', function(data, cb)
     end))
 end)
 
---- The row chosen on the page (hovered, or moved to with the keys or pad): GTA's menu put on it too, as its own follows
+--- The row chosen on the page (hovered, or moved to with the keys or pad): the game's menu put on it too, as its own follows
 --- the mouse and pad, so a change after is one press. A row chosen while this waits takes its place.
 RegisterNUICallback('gameSettingsFocus', function(data, cb)
     cb({})
@@ -683,7 +683,7 @@ RegisterNUICallback('gameSettingsSet', function(data, cb)
     end))
 end)
 
---- A row that does something (Restore Defaults): pressed as Enter would. GTA may ask first.
+--- A row that does something (Restore Defaults): pressed as Enter would. The game may ask first.
 RegisterNUICallback('gameSettingsPress', function(data, cb)
     cb(job(function(g)
         ensureOpen(g)
@@ -727,16 +727,16 @@ RegisterNUICallback('gameSettingsUndo', function(data, cb)
     end))
 end)
 
---- How many rows on the tab shown GTA marks as changed and not applied (its own mark), or nil when its page cannot say.
+--- How many rows on the tab shown the game marks as changed and not applied (its own mark), or nil when its page cannot say.
 local function changedCount(g)
     local f = fields(ask('whip|changed', g))
     return f[1] == 'W1' and tonumber(f[2]) or nil
 end
 
---- The graphics changes applied, as GTA's Apply (Space) does, on a row that changed. GTA asks first (its answer,
+--- The graphics changes applied, as the game's Apply (Space) does, on a row that changed. The game asks first (its answer,
 --- gameSettingsAnswer, decides), or applies them: its own count of rows changed falls to none. With neither after a
---- press, GTA dropped it: Space once more, and then the changes keep waiting and the page says Apply did not go through.
---- Where GTA's count cannot tell (it marks none), no question after a press means applied.
+--- press, the game dropped it: Space once more, and then the changes keep waiting and the page says Apply did not go through.
+--- Where the game's count cannot tell (it marks none), no question after a press means applied.
 RegisterNUICallback('gameSettingsApply', function(data, cb)
     cb(job(function(g)
         ensureOpen(g)
@@ -775,9 +775,9 @@ RegisterNUICallback('gameSettingsApply', function(data, cb)
     end))
 end)
 
---- GTA's question answered: button `index` (1 the first) of question `id` pressed. Not a job: a job waits for the
+--- The game's question answered: button `index` (1 the first) of question `id` pressed. Not a job: a job waits for the
 --- answer. Only for the question still up, and one answer at a time: a second press of the same button (a double tap)
---- would otherwise land on GTA's next question. Answered once the press is over, so the page knows when the pad is the
+--- would otherwise land on the game's next question. Answered once the press is over, so the page knows when the pad is the
 --- player's again. What the answer does to the graphics changes waiting is said when the question goes (questionGone).
 RegisterNUICallback('gameSettingsAnswer', function(data, cb)
     if not active or not asked or answering or type(data) ~= 'table' then return cb({}) end
@@ -791,12 +791,12 @@ RegisterNUICallback('gameSettingsAnswer', function(data, cb)
     press(b[2], gen, 150)
     Wait(300)
     answering = false
-    -- GTA dropped the press: the same question is still up, and the page (which put it away) is shown it again.
+    -- The game dropped the press: the same question is still up, and the page (which put it away) is shown it again.
     if active and asked == was then sendQuestion(was) end
     cb({})
 end)
 
---- Back to whip's menu, or the pause menu shut: GTA's menu shut with it. A change waiting for Apply is dropped.
+--- Back to whip's menu, or the pause menu shut: the game's menu shut with it. A change waiting for Apply is dropped.
 RegisterNUICallback('gameSettingsClose', function(_, cb)
     close()
     cb({})

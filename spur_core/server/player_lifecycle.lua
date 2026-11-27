@@ -185,7 +185,7 @@ local _identityNotices = {}
 --- other than its Rockstar license — or that another account shares one of its IDs.
 ---
 --- Both, and loudly: recovery is right when someone's Rockstar license changes, but two Rockstar
---- accounts sharing one PC's FiveM login would take turns owning the same whip account, each one
+--- accounts sharing one PC's Cfx.re login would take turns owning the same whip account, each one
 --- "recovering" it from the other. Nothing here can tell those cases apart, so the people who can
 --- are told: the player, who knows whether those are their characters, and every admin online —
 --- with the console and the activity log as the record.

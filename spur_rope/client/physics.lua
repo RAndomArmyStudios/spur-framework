@@ -19,7 +19,7 @@ Rope.LinkLength = linkOf
 
 -- Hands
 
-local HAND_BONE = 'SKEL_R_Hand'   -- RedM (spur_rope, 24 Nov 2026): by name (Rope.BoneCoords; 57005 is GTA's number)
+local HAND_BONE = 'SKEL_R_Hand'   -- RedM (spur_rope, 24 Nov 2026): by name (Rope.BoneCoords; 57005 is the original game's number)
 
 -- (The bone's index is asked each time, not kept per ped handle: a handle is reused for a new ped, whose
 -- model may number its bones differently. Rope.AnchorThisFrame reads a hand once a frame anyway.)
@@ -512,7 +512,7 @@ end
 -- BackstopPull. It catches fast cars the elastic pull can't. Runs once per frame, since entity speeds only change
 -- between frames.
 -- The pull back: once nothing holds the rope open, it draws its ends back to slack (ReturnRate per metre stretched,
--- capped at ReturnSpeed, built up at ReturnAccel, at most ReturnPull). The spring alone can't: GTA holds a stopped car
+-- capped at ReturnSpeed, built up at ReturnAccel, at most ReturnPull). The spring alone can't: the game holds a stopped car
 -- on its brakes. A driver on the throttle away from the rope is left to the spring.
 
 --- A car whose driver has the throttle on away from the rope (`away`: the way out from the other end).
@@ -665,7 +665,7 @@ function Rope.ApplyRopeLimit(rope, frameDt)
     if drivenAway(rope, 'origin', -nA) or drivenAway(rope, 'tail', -nB) then return end
     local returnSpeed = cpl.ReturnSpeed or 3.0
     if math.max(#vA, #vB) > returnSpeed + 1.5 then return end
-    -- Never pushes something other ropes hold, or a stuck prop. A still car is pushed: GTA holds it on
+    -- Never pushes something other ropes hold, or a stuck prop. A still car is pushed: the game holds it on
     -- its brakes.
     local inO, inT = heldA and 0.0 or massA, heldB and 0.0 or massB
     if inO > 0.0 and inT > 0.0 then
@@ -677,7 +677,7 @@ function Rope.ApplyRopeLimit(rope, frameDt)
     end
     if inO + inT <= 0.0 then return end
     local target = math.min(returnSpeed, (cpl.ReturnRate or 1.0) * (d - naturalLength))
-    -- Speed builds at ReturnAccel from the current closing speed (a tug, not a snap); against GTA's
+    -- Speed builds at ReturnAccel from the current closing speed (a tug, not a snap); against the game's
     -- brakes the push grows until it beats them
     local closingNow = -opening
     local cmd = math.min(target, math.max(returning or 0.0, closingNow) + (cpl.ReturnAccel or 6.0) * dt)

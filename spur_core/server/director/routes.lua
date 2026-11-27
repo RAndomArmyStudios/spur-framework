@@ -1,7 +1,7 @@
 -- Routes: the points an NPC walks, placed in the world builder, each with an optional wait.
 --   w.def = { points = { { k, at = { x, y, z, heading }, wait = seconds, act = 'stand' | 'look' | 'emote' |
 --             'scenario', emote, scenario } }, order = 'loop' | 'once' | 'pingpong' | 'random', pace = 'walk' | 'run',
---             findWay = true (GTA pathfinds between points; else a straight line) }
+--             findWay = true (the game pathfinds between points; else a straight line) }
 -- An NPC walks one with the Walk a Route task (tasks.lua). A route is compiled to task steps when the NPC is made.
 -- Each Go To carries its drawn point (`leg`): an NPC on that line walks straight (client/npcs.lua), one off it
 -- pathfinds to the point first. At random never draws the lines: it always pathfinds.

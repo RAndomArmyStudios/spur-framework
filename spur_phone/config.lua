@@ -45,8 +45,8 @@ Config.GameClock = true
 Config.BlockControls = { 'combat', 'look', 'vehicleCombat', 'weaponWheel' }
 
 -- RedM (spur_phone, 24 Nov 2026): what the player holds while the notebook is out: an emote's /e name from
--- spur_core's emote list (spur_core/shared/emote_list.lua). '' (the default) holds nothing: whip_phone's were GTA
--- phone and tablet animations, and no RDR2 notebook animation has been tried in game yet. Name one here once it has.
+-- spur_core's emote list (spur_core/shared/emote_list.lua). '' (the default) holds nothing: whip_phone's were the original
+-- game's phone and tablet animations, and no RDR2 notebook animation has been tried in game yet. Name one here once it has.
 -- A player already in an emote (sitting, leaning) is left as they are.
 Config.Emotes = {
     phone  = '',   -- the notebook closed in one hand

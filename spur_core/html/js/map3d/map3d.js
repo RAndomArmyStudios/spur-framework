@@ -1,11 +1,11 @@
-// whip's 3D map: the 2D map's shapes (gtav-map.js: same shapes, colours and paint order) standing on the game's
+// whip's 3D map: the 2D map's shapes (whip's 2D map data: same shapes, colours and paint order) standing on the game's
 // heights (whip_media_map/map/whip-map3d.js; built by the 3D map's build/ scripts). One WebGL canvas, drawn on demand only.
 //
 //   import { WhipMap3D, MinimapCamera, K0 } from './map3d/map3d.js';
 //   const map = new WhipMap3D(container, { data: window.WHIP_MAP3D });   // builds in slices: await map.ready
 //   map.resize(W, H, dpr); map.setView({ x, y, pxPerMetre, offsetX, offsetY, yaw, pitch }); map.render();
 //   map.setMarker({ x, y, z, rotDeg, sizePx }); map.render();   // the player arrow; hidden parts as an outline
-//   map.setCamera({ x, y, z, rotX, rotY, rotZ, fov }); map.render();   // a GTA camera's own view (perspective)
+//   map.setCamera({ x, y, z, rotX, rotY, rotZ, fov }); map.render();   // a game camera's own view (perspective)
 //   map.setPin({ x, y, z, heading }); map.render();               // the spawn beacon + ring (renderPin(): its light only)
 //
 // TOP-DOWN (pitch 90) is today's map: an orthographic camera straight down, SCREEN PX PER METRE = K0 * 2^zoom, the
@@ -16,7 +16,7 @@
 // walls are shaded only when tilted, so top-down keeps the exact palette.
 // RedM (spur_core, 25 Nov 2026): a data file may ask for more (meta, both optional): topShade, how much of the terrain's
 // slope shading top-down shows too (0..1; whip's 0), and landRgb, the land's colour drawn as it is. RDR2's map has
-// no building shapes, so its land IS the map: it asks for both (dev/map3d_rdr.py), and whip's GTA file keeps its look.
+// no building shapes, so its land IS the map: it asks for both (dev/map3d_rdr.py), and whip's original file keeps its look.
 // Everything is cut into squares (CHUNK) and each layer kind is one THREE.BatchedMesh: three culls every square against
 // the view and draws a batch's visible squares in one call (WEBGL_multi_draw; without it, one call per square).
 import * as THREE from 'three';
@@ -388,7 +388,7 @@ export class WhipMap3D {
         this.canvas = el instanceof HTMLCanvasElement ? el : document.createElement('canvas');
         if (!(el instanceof HTMLCanvasElement)) { this.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block'; el.appendChild(this.canvas); }
         this.scene = new THREE.Scene();
-        // setView's orthographic camera (the 2D map's maths) and setCamera's perspective one (a GTA camera's view);
+        // setView's orthographic camera (the 2D map's maths) and setCamera's perspective one (a game camera's view);
         // this.camera is whichever the last of the two calls chose
         this.ortho = this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, FAR);
         this.persp = new THREE.PerspectiveCamera(50, 1, 1, PERSP_FAR);
@@ -447,7 +447,7 @@ export class WhipMap3D {
         // the build gives the page back every SLICE_MS; the longest stretch between two breaths (and where it ended) is
         // kept in the stats. GIVEN BACK BY A MESSAGE, NOT A TIMER: Chromium holds a nested
         // setTimeout(0) for at least 4 ms, so every breath cost as long as the slice before it: the build waited as long
-        // as it worked (1.12 s -> 0.58 s headless), and far longer with the CPU busy, as it is under FiveM's own loading
+        // as it worked (1.12 s -> 0.58 s headless), and far longer with the CPU busy, as it is under Cfx.re's own loading
         // screen when the page first builds this (92 s -> 2.4 s at a quarter speed). The page still runs between slices.
         let tSlice = t0, longest = 0, longestAt = '';
         const mc = new MessageChannel();
@@ -910,10 +910,10 @@ export class WhipMap3D {
     }
 
     /** x, y: the world point drawn at the view's centre (middle + offsetX, offsetY CSS px); pxPerMetre there;
-     *  yaw: degrees, 0 = north up, GTA's sense (anticlockwise); pitch: 90 = straight down */
+     *  yaw: degrees, 0 = north up, the game's sense (anticlockwise); pitch: 90 = straight down */
     setView(v) { this.gcam = null; this.camera = this.ortho; Object.assign(this.view, v); this._placeCamera(); }
 
-    /** a perspective camera placed as a GTA camera is, so the map can stand in for the game's picture (a cross-fade
+    /** a perspective camera placed as a game camera is, so the map can stand in for the game's picture (a cross-fade
      *  lines up): x, y, z its position (world m); rotX the pitch (degrees, -90 straight down), rotY the roll, rotZ the
      *  heading (degrees anticlockwise from north), as GetCamRot(cam, 2) gives them; fov the vertical field of view
      *  (degrees, as GetCamFov); shiftX, shiftY: CSS px the picture's centre moves right and down (a lens shift: the
@@ -930,7 +930,7 @@ export class WhipMap3D {
         this.hs = 1;
         this.scene.scale.set(1, 1, 1); this.scene.updateMatrixWorld();
         const px = rad(c.rotX ?? -90), rz = rad(c.rotZ || 0);
-        // GTA's camera looks along f; its right is r (heading 0 looks north, right is east); up = r x f
+        // The game's camera looks along f; its right is r (heading 0 looks north, right is east); up = r x f
         const f = new THREE.Vector3(-Math.sin(rz) * Math.cos(px), Math.cos(rz) * Math.cos(px), Math.sin(px));
         const r = new THREE.Vector3(Math.cos(rz), Math.sin(rz), 0), u = new THREE.Vector3().crossVectors(r, f);
         if (c.rotY) { r.applyAxisAngle(f, rad(c.rotY)); u.applyAxisAngle(f, rad(c.rotY)); }
@@ -953,7 +953,7 @@ export class WhipMap3D {
         const ox = v.offsetX || 0, oy = v.offsetY || 0;
         const p = THREE.MathUtils.degToRad(Math.max(5, Math.min(90, v.pitch ?? 90)));
         const yaw = THREE.MathUtils.degToRad(v.yaw || 0);
-        // heightScale squashes every height alike (the minimap: GTA's radar is flat; the ground layers stay on it)
+        // heightScale squashes every height alike (the minimap: the game's radar is flat; the ground layers stay on it)
         this.hs = v.heightScale ?? 1;
         this.scene.scale.set(1, 1, this.hs); this.scene.updateMatrixWorld();
         const f = new THREE.Vector3(-Math.sin(yaw), Math.cos(yaw), 0);       // the screen's up, on the ground
@@ -1028,7 +1028,7 @@ export class WhipMap3D {
      *  round it with a notch pointing the heading. Both are drawn over everything: buildings never hide them. It stays
      *  the same size on screen however far the camera is (sizePx, default 7.5% of the canvas height; the column is
      *  BEACON.height of those tall). p: { x, y, z (the spot, world m; omitted = the map's ground), heading (degrees,
-     *  GTA's; omitted = no notch), sizePx, scale (times the size), alpha (0-1, all of it), ring (0-1, the ring and notch),
+     *  the game's; omitted = no notch), sizePx, scale (times the size), alpha (0-1, all of it), ring (0-1, the ring and notch),
      *  strike (0-1, how much of the column has come down from the sky: 1 = all of it), flash (0+, the landing's
      *  brightening), glow (0-1, the glow at the foot), motes (0-1, the specks rising), t (ms, the clock the light drifts
      *  on; default performance.now()) }. null = no pin. Then render(), or renderPin() when only strike, flash, glow, motes
@@ -1118,7 +1118,7 @@ export class WhipMap3D {
                 rc.setXYZW(i * 2 + k, 0.949, 0.957, 0.969, ra);
             }
         }
-        // the notch: a triangle off the ring, pointing the heading (GTA's: 0 = north, anticlockwise)
+        // the notch: a triangle off the ring, pointing the heading (the game's: 0 = north, anticlockwise)
         const n0 = PIN_SEG * 2, hd = p.heading == null ? null : THREE.MathUtils.degToRad(p.heading);
         const dx = hd == null ? 0 : -Math.sin(hd), dy = hd == null ? 0 : Math.cos(hd);
         const tri = [[r1 + 0.24 * s, 0], [r1 - 0.02 * s, 0.15 * s], [r1 - 0.02 * s, -0.15 * s]];
@@ -1379,7 +1379,7 @@ export class WhipMap3D {
 
 // ---- the minimap's camera ----
 //
-// GTA's radar, ours: top-down on foot, tilted in a vehicle, zooming out with speed, turning with the gameplay camera
+// The game's radar, ours: top-down on foot, tilted in a vehicle, zooming out with speed, turning with the gameplay camera
 // (its yaw is never smoothed: it must feel instant), the player low in the middle. Poses arrive at any rate with a
 // timestamp; between them the position is carried on along the last velocity (at most 250 ms).
 const smooth = (cur, target, dt, tau) => cur + (target - cur) * (1 - Math.exp(-dt / tau));

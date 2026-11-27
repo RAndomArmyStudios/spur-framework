@@ -442,9 +442,9 @@ end
 -- ============================================
 --
 -- A new object takes its interior from the floor under it, and a lamp's light is settled when it is
--- made: where the game has the house's floor collision marked OUTSIDE (FiveM can leave a house's
+-- made: where the game has the house's floor collision marked OUTSIDE (Cfx.re can leave a house's
 -- collision behind across a reconnect, and an MLO reloaded at the wrong moment comes back on it),
--- every lamp glows and lights nothing. Waiting does not mend it; a full FiveM restart does.
+-- every lamp glows and lights nothing. Waiting does not mend it; a full game restart does.
 --
 -- Asked only a metre above a floor: you, if you are standing in the property; its visit point; its
 -- lowest pieces (not its anchor, which can be in the slab between two storeys). Called broken only on
@@ -592,7 +592,7 @@ function bringIn(propertyId)
             madeUnlinked[propertyId] = true
             if not saidUnlinked[propertyId] then
                 saidUnlinked[propertyId] = true
-                print(('[spur_core:props] property %s: its floor is not attached to its interior (the game marks it outside), so lamps made on it give no light. Leaving and coming back can mend it; a full RedM restart does (after a server restart, restart FiveM rather than reconnecting)')
+                print(('[spur_core:props] property %s: its floor is not attached to its interior (the game marks it outside), so lamps made on it give no light. Leaving and coming back can mend it; a full RedM restart does (after a server restart, restart RedM rather than reconnecting)')
                     :format(tostring(propertyId)))
             end
         end

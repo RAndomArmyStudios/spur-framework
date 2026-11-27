@@ -20,7 +20,7 @@
    cursor is gone and the page goes inert, so a pointer passing over a key cannot drag it. The controls
    stay lit then: they are what the player is reading.
 
-   2022-SAFE: FiveM's CEF is Chromium 103. No :has(), no nesting, no color-mix(), no container queries.
+   2022-SAFE: Cfx.re's CEF is Chromium 103. No :has(), no nesting, no color-mix(), no container queries.
    The scale is a transform on one box (.ce-scale), never `zoom`: on CEF zoom scales the paint and not
    the clicks (css/creator.css has the post-mortem).
    ======================================== */
@@ -872,7 +872,7 @@
     font-weight: var(--ui-fw-semibold);
     color: var(--ui-text-mid);
 }
-/* The capsule's keys are a keyboard's (the play keys are GTA key bindings): shown on a pad too. */
+/* The capsule's keys are a keyboard's (the play keys are game key bindings): shown on a pad too. */
 #cam-editor.ce-pad .ce-pb-keys .ce-hint.kbm-only { display: inline-flex; }
 #cam-editor.ce-pad .ce-pb-keys .ce-k-kbm { display: inline-flex; }
 

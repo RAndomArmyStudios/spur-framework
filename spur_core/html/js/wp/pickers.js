@@ -418,7 +418,7 @@ export function propPicker(opts) {
 
 // ---- the vehicle picker ----
 
-/** GTA's vehicle classes, by the number the catalog keeps (GET_VEHICLE_CLASS). RedM (spur_core, 24 Nov 2026): the
+/** The original game's vehicle classes, by the number the catalog keeps (GET_VEHICLE_CLASS). RedM (spur_core, 24 Nov 2026): the
  *  ones RDR2's vehicles are filed under (server/vehicle_catalog_list.lua) read as 1899 names. */
 export const VEHICLE_CLASSES = ['Buggies & carts', 'Coaches', 'SUVs', 'Coupes', 'Muscle', 'Sports Classics', 'Sports', 'Super',
     'Motorcycles', 'Off-road', 'Industrial', 'Utility', 'Wagons', 'Cycles', 'Boats', 'Helicopters', 'Planes', 'Service',
@@ -816,7 +816,7 @@ export function itemPicker(opts) {
 
 // ---- a person's face ----
 //
-// THEIR PORTRAIT: GTA's headshot of the character, taken in game and kept by the server
+// THEIR PORTRAIT: the game's headshot of the character, taken in game and kept by the server
 // (server/portraits.lua). Asked for in batches — every avatar drawn in one go joins one request — and
 // kept here a few minutes; a character with none keeps their initials.
 
@@ -1211,7 +1211,7 @@ export function itemList(opts) {
 // A MAP BLIP'S COLOUR (the shop and garage wizards' Map steps)
 // ========================================
 
-/** Blip colours by GTA colour id, with roughly how the map draws them. */
+/** Blip colours by game colour id, with roughly how the map draws them. */
 export const BLIP_COLOURS = [
     [2, 'Green', '#72cc72'], [0, 'White', '#f0f0f0'], [1, 'Red', '#e03232'], [3, 'Blue', '#5db6e5'],
     [5, 'Yellow', '#eec64e'], [17, 'Orange', '#f08c3c'], [27, 'Purple', '#a05ad2'], [8, 'Pink', '#f0a0c8'],

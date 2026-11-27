@@ -236,7 +236,7 @@ function PropertyEditor.aimSign(opts)
                 if valid then
                     local n = normal or vector3(0.0, 0.0, 1.0)
                     x, y, z = coords.x + n.x * SIGN_LIFT, coords.y + n.y * SIGN_LIFT, coords.z + n.z * SIGN_LIFT
-                    -- Facing you: GTA heading of the direction back to the camera, plus the turn.
+                    -- Facing you: game heading of the direction back to the camera, plus the turn.
                     local dx, dy = cam.x - x, cam.y - y
                     if dx * dx + dy * dy > 0.0001 then heading = (math.deg(math.atan(-dx, dy)) + turn) % 360.0 end
                     -- WHERE THE PROMPTS LOOK FOR IT, not only where it is drawn. `follow` (below) runs
@@ -630,7 +630,7 @@ local function bayAt(bays, px, py, pz)
         if math.abs(pz - b.z) <= BAY_AIM_DZ then
             local dx, dy = px - b.x, py - b.y
             local h = math.rad(b.heading)
-            -- GTA headings: forward is (-sin, cos), right (cos, sin) — WorldQuad.groundBasis's.
+            -- Game headings: forward is (-sin, cos), right (cos, sin) — WorldQuad.groundBasis's.
             local along = -dx * math.sin(h) + dy * math.cos(h)
             local across = dx * math.cos(h) + dy * math.sin(h)
             if math.abs(along) <= halfL and math.abs(across) <= halfW then

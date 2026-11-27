@@ -189,7 +189,7 @@ function Vehicles.claim(vehicleId, who, opts)
     local driver = driverOf(entity)
     local oldPlate = def.plate
     Vehicles.cleanupSessionVehicle(vehicleId, 'claimed')
-    -- A street car is handed back to GTA by its release, not removed: it is replaced here. The handle
+    -- A street car is handed back to the game by its release, not removed: it is replaced here. The handle
     -- read before the release waited, deleted only if it is still that car.
     if entity and DoesEntityExist(entity) and sameHash(GetEntityModel(entity), modelHash) then DeleteEntity(entity) end
     if wantPlate and not plate then

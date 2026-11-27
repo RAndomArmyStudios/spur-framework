@@ -61,7 +61,7 @@ const KINDS = [
 
 /** People who look like they work in a shop: the Shopkeeper step's first chip.
  *  RedM (spur_core, 24 Nov 2026): RDR2's own shop people (store owners, gunsmiths, bartenders, barbers, butchers,
- *  doctors, a tailor, vendors), in place of GTA's; every name checked against femga's rdr3_discoveries ped list. */
+ *  doctors, a tailor, vendors), in place of the game's; every name checked against femga's rdr3_discoveries ped list. */
 const SHOP_STAFF = [
     'u_m_m_valgenstoreowner_01', 'u_m_m_rhdgenstoreowner_01', 'u_m_m_strgenstoreowner_01', 'u_f_m_tumgeneralstoreowner_01',
     'u_m_m_nbxgeneralstoreowner_01', 'u_m_m_armgeneralstoreowner_01', 'u_m_o_blwgeneralstoreowner_01',
@@ -70,11 +70,11 @@ const SHOP_STAFF = [
     'u_f_m_vhtbartender_01', 'u_m_m_valbarber_01', 's_m_m_barber_01', 'u_m_m_valbutcher_01', 'u_m_m_valdoctor_01',
     's_m_m_tailor_01', 's_m_m_marketvendor_01', 'u_m_m_sdcustomvendor_01',
 ];
-const DEFAULT_KEEPER = 'u_m_m_valgenstoreowner_01';   // RedM (spur_core, 24 Nov 2026): was GTA's mp_m_shopkeep_01
+const DEFAULT_KEEPER = 'u_m_m_valgenstoreowner_01';   // RedM (spur_core, 24 Nov 2026): was the original game's mp_m_shopkeep_01
 
-/** Map icons a shop is likely to want, by GTA blip sprite. Any other number can be typed. */
+/** Map icons a shop is likely to want, by game blip sprite. Any other number can be typed. */
 // RedM (spur_core, 24 Nov 2026): only the numbers shared/rdr_compat.lua turns into an RDR2 icon (its SPRITE table:
-// store, tailor, barber, gunsmith, saloon, doctor, bank). GTA's Fuel, Car mods, Pizza, Weed and the rest have no
+// store, tailor, barber, gunsmith, saloon, doctor, bank). The game's Fuel, Car mods, Pizza, Weed and the rest have no
 // RDR2 icon and all showed as the same plain point. Labels in RDR2's words.
 const BLIPS = [
     [52, 'General store'], [73, 'Tailor'], [71, 'Barber'], [110, 'Gunsmith'], [93, 'Saloon'], [51, 'Doctor'],
@@ -572,7 +572,7 @@ function stepKeeper(body) {
     body.appendChild(tabs.root);
 
     if (draft.keeper === 'prop') {
-        const prop = WP.input({ placeholder: 'e.g. p_register01x', value: draft.prop, inputAction: 'swProp' });   // RedM (spur_core, 24 Nov 2026): RDR2's till; was GTA's prop_till_01
+        const prop = WP.input({ placeholder: 'e.g. p_register01x', value: draft.prop, inputAction: 'swProp' });   // RedM (spur_core, 24 Nov 2026): RDR2's till; was the original game's prop_till_01
         prop.maxLength = 60;
         const cols = WP.el('div', 'wp-cols-2');
         cols.appendChild(WP.field('Prop model', prop));
@@ -781,7 +781,7 @@ function stepMap(body) {
         return;
     }
     body.appendChild(WP.el('div', 'wp-section-title', 'Icon'));
-    // RedM (spur_core, 24 Nov 2026): named tiles with no picture. The pictures were GTA's blips (img/blips/<n>.webp,
+    // RedM (spur_core, 24 Nov 2026): named tiles with no picture. The pictures were the original game's blips (img/blips/<n>.webp,
     // which spur_core does not ship), so in game every tile showed a broken image.
     const icons = WP.el('div', 'wp-tiles wp-tiles-small');
     for (const [sprite, label] of BLIPS) {

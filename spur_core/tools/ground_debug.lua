@@ -72,7 +72,7 @@ local function markBlip(it)
     if not b then
         local h = AddBlipForCoord(it.x + 0.0, it.y + 0.0, it.z + 0.0)
         SetBlipSprite(h, 1)
-        SetBlipColour(h, 5)          -- GTA's yellow
+        SetBlipColour(h, 5)          -- the game's yellow
         SetBlipScale(h, 0.55)
         SetBlipAsShortRange(h, false)
         b = { handle = h }

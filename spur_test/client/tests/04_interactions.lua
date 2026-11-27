@@ -468,7 +468,7 @@ RegisterClientTestModule({
                 end
 
                 assertEqual(opt1('_t_can_no').why, 'closed for lunch', 'false, why: the why is the reason')
-                assertEqual(opt1('_t_can_zero').why, 'canInteract said no', '0 is no (FiveM-truthy)')
+                assertEqual(opt1('_t_can_zero').why, 'canInteract said no', '0 is no (native-truthy)')
                 assertEqual(opt1('_t_can_boom').why, 'canInteract threw', 'a throw hides it, and says so')
                 assertTrue(opt1('_t_can_ctx').offered, 'true is yes')
                 assertEqual(seen and seen.id, '_t_can_ctx', 'canInteract got ctx.id')
@@ -592,7 +592,7 @@ RegisterClientTestModule({
                 local obj = CreateObject(model, pos.x + 2.0, pos.y, pos.z - 0.9, false, false, false)
                 SetModelAsNoLongerNeeded(model)
                 ctx.obj = obj
-                -- A native's yes is 1 on the client, not true: read it the FiveM way (nil/false/0 = no).
+                -- A native's yes is 1 on the client, not true: read it the Cfx.re way (nil/false/0 = no).
                 -- No box is a setup failure, not a result, so it skips.
                 local exists = DoesEntityExist(obj)
                 if obj == 0 or not exists or exists == 0 then skip('the box to ride on could not be made') end

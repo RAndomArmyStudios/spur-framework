@@ -337,6 +337,13 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   `docs/examples` resources. An emptied list keeps its shape, so the code that reads it finds nothing and goes on.
   Code comments and placeholders that named the original game's places, cars, people and gangs use RDR2 or neutral
   examples, and text a player or admin sees says "the game".
+- **The original game's name out of the code (26 Nov 2026).** Code comments that named the original game, or named
+  Cfx.re by its other platform's name, now say "the game", "the original game" or "Cfx.re", and code names went with
+  them: the weapon tables are `GameWeapons` and `GameWeaponModels`, and the pad layout page's game role is `game`.
+  Migrations 048 and 049 have new ids (`048_redm_prop_seed_emptied`, `049_redm_vehicle_catalog_rdr2`); a database
+  that ran them under their old ids is matched by number (`renamed`, `isApplied` in server/migrations.lua), so
+  they don't run again. Kept as they are: the `fivem` identifier (Cfx.re's account id, a database column the ban
+  checks use) and RedM's own process name, which dev/mcp looks for.
 - **The Director's Speech step** lists no voices or lines (whip's list was the original game's and is gone): a line and a voice
   are typed by name and played through the ambient speech call, not tried on RDR2.
   The example scenarios use RDR2's peds, guns and a coach (24 Nov 2026), but their words are still whip's: a car

@@ -1,8 +1,8 @@
 """Make map/rdr-map3d.js, the 3D map's data for RDR2, from a survey of the game (dev/map_survey.lua, collected by dev/map_survey_read.py).
 
 RedM (spur_core, 25 Nov 2026). whip's 3D map (html/js/map3d/map3d.js: the pause map, the minimap and the spawn
-picker) draws one data file, a media pack's map/whip-map3d.js: GTA V's 2D map shapes standing on heights read from
-the game. RDR2 has no such file, and none can be taken from GTA's. This builds one in the same format (meta.v 3), from
+picker) draws one data file, a media pack's map/whip-map3d.js: the original game's 2D map shapes standing on heights read from
+the game. RDR2 has no such file, and none can be taken from the original game's. This builds one in the same format (meta.v 3), from
 what the survey read in RDR2 itself: the ground's height on a grid, the water's surface, and the roads. Nothing is
 downloaded and none of the game's map art is used. The renderer and the format are whip's (whip_core by Whippy and
 WLVF); spur_core is non-commercial.
@@ -31,7 +31,7 @@ OUT = os.path.join(HERE, '..', 'map', 'rdr-map3d.js')
 # The palette's source colours. The page maps each to whip's own colours (map3d.js whipColour) and its kind by
 # brightness (kindOf): land up to 35, buildings 36-129, paths 130, roads 131-180, highways over 180; water has more
 # blue than red + 6. A colour in the wrong band changes what the shape is drawn as.
-TOP_SHADE = 1.0            # top-down, the terrain's slope shading at full (whip's GTA map: none)
+TOP_SHADE = 1.0            # top-down, the terrain's slope shading at full (whip's original map: none)
 LAND_RGB = [48, 54, 50]    # the land as drawn (whip's [17, 20, 25] left RDR2's hills almost black)
 COLOURS = [
     [20, 20, 20],      # 0 land (the terrain)

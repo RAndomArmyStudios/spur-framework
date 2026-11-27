@@ -8,7 +8,7 @@
 --
 -- STORED IN THE INTERIOR'S OWN SPACE. A row is { model, lx, ly, lz, rx, ry, rz } relative to the
 -- property's placement, and world space is worked out when it is used: world = placement + local,
--- and a world heading is rz + yaw (GTA's rotation order 2 applies Z last, so the placement's turn
+-- and a world heading is rz + yaw (the game's rotation order 2 applies Z last, so the placement's turn
 -- simply adds to it). A property re-bound to a moved interior takes its furniture with it.
 --
 -- FETCHED ON APPROACH, NOT SENT AT LOGIN. Housing sent every room's furniture to every player at

@@ -1,5 +1,5 @@
 -- ============================================
--- GAME PLATFORM — FiveM on GTA V Legacy, or on GTA V Enhanced
+-- GAME PLATFORM — the original game's Legacy or Enhanced build
 -- ============================================
 --
 -- ONE WHIP RUNS ON BOTH. Almost all of it is the same; where the two differ (models built for each, the
@@ -14,7 +14,7 @@
 --                                    -- the Legacy server: nothing (or setr whip_platform legacy)
 --
 -- setr, so players' games see it too (a replicated convar). The server also hands its value on itself,
--- which is enough on Legacy, but a `set` never reached the game on FiveM for GTAV Enhanced (20 Oct 2026).
+-- which is enough on Legacy, but a `set` never reached the game on the original game's Enhanced build (20 Oct 2026).
 -- /whipplatform, in a player's F8, says what their game read. Anything but legacy or enhanced reads as
 -- legacy, with a warning when the server starts.
 
@@ -46,5 +46,5 @@ else
     end, false)
 end
 
---- 'legacy' or 'enhanced': which GTA V this server runs on (server.cfg's whip_platform).
+--- 'legacy' or 'enhanced': which build of the original game this server runs on (server.cfg's whip_platform).
 exports('GetPlatform', function() return GamePlatform.name end)

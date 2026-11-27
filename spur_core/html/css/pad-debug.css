@@ -213,7 +213,7 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* THE HALF-TRAVEL LINE ON A TRIGGER, which is where GTA starts reporting it as a pressed button
+/* THE HALF-TRAVEL LINE ON A TRIGGER, which is where the game starts reporting it as a pressed button
    (the docs say so of L2_INDEX/R2_INDEX). Drawn because the interesting question about a trigger
    is never "how far is it" on its own — it is "how far is it RELATIVE to the point the game
    changes its mind", and a bar without that line cannot answer it.

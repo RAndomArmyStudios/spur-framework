@@ -19,11 +19,11 @@ function BodyState.underwater(ped)
     return not (ok and sub ~= nil and sub ~= 0)
 end
 
--- Faster than this downwards, in the air, is a fall (a jump is slower). A long fall ragdolls the ped and ends GTA's
+-- Faster than this downwards, in the air, is a fall (a jump is slower). A long fall ragdolls the ped and ends the game's
 -- own falling state, so speed is what still says it.
 local FALL_SPEED = -6.0   -- metres a second
 
---- Is the player falling? GTA's fall or a skydive, or a body in the air coming down fast. Not in a seat.
+--- Is the player falling? The game's fall or a skydive, or a body in the air coming down fast. Not in a seat.
 ---@param ped number
 ---@return boolean
 function BodyState.falling(ped)

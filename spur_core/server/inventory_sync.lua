@@ -265,7 +265,7 @@ function Inventory.giveOrDrop(source, player, item, amount, metadata, opts)
         -- The push below announces spur_core:item:added (Inventory.announceChanges); this says why.
         Inventory.noteChangeReason(source, why, Log.byCaller())
         Inventory.syncAndSave(source, player)
-        -- `false`, NOT `nil`: giveOrDrop is what the AddItem EXPORT returns, and a FiveM export
+        -- `false`, NOT `nil`: giveOrDrop is what the AddItem EXPORT returns, and a Cfx.re export
         -- truncates its return list at the first nil (the placement would be lost).
         return true, false, 'inventory'
     end

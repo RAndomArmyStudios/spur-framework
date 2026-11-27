@@ -110,7 +110,7 @@ SecureEvent('spur_core:server:garageSpotList', {
 end)
 
 --- What is standing in a bay, if anything — a vehicle, or a player other than the one asking. A car
---- brought out into an occupied bay spawns inside it, and GTA throws one of them. The rule is
+--- brought out into an occupied bay spawns inside it, and the game throws one of them. The rule is
 --- Vehicles.spotBlocked, shared with SpawnVehicle and CreateOwnedVehicle{spawnAt}.
 ---@return string|nil why
 local function bayBlocked(spot, source)
@@ -721,7 +721,7 @@ local function returnAccessoryKey(vehicleId, src)
     Stores.moveByAddress(from, { kind = 'player', id = src, sub = 'player' }, opts)
 end
 
---- Somebody got out: a locked car unlocks (GTA lets you open a locked car's door from inside), unless the server
+--- Somebody got out: a locked car unlocks (the game lets you open a locked car's door from inside), unless the server
 --- turned that off (Config.UnlockOnExit = false: the car stays locked, as a car that locks itself). Leaving the game in
 --- it (`left`: a logout, a drop) is not getting out: the car stays as they locked it (Josh, 1 Nov: logging out in a
 --- locked car left it open for anyone).
@@ -1690,7 +1690,7 @@ end)
 -- Once per account a server run (its license; reconnecting does not report again), so a client cannot keep feeding
 -- the list (which has its own ceiling). The list is saved for MODELS_FORGET_DAYS, so a report that would add more than
 -- MODELS_SAVE_NEW_MAX new names to a list that already knows MODELS_SEEDED is believed for this run only, never
--- saved: GTA itself is about 800 cars and an add-on pack a few hundred, but a lying client's junk must not outlive
+-- saved: the game itself is about 800 cars and an add-on pack a few hundred, but a lying client's junk must not outlive
 -- restarts or fill the ceiling for two weeks. (A name it shares with a believable report is saved then.)
 -- MODELS_SAVE_NEW_MAX is for the whole run, every account together, not each one (audit 20, VEH-6: twelve accounts,
 -- or one over twelve restarts, filled the saved list); what is over it is known until the restart only.

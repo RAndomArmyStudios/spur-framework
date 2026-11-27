@@ -224,7 +224,7 @@ ToolHandlers['Systems Creator'] = {
     isActive = function() return false end,
 }
 
--- Deliberately UNBOUND by default — admins bind it in GTA's keybind settings, and an
+-- Deliberately UNBOUND by default — admins bind it in the game's keybind settings, and an
 -- unbound default can never collide with anyone's existing binds.
 RegisterKeyMapping('spur', 'Spur: Open Admin Panel', 'keyboard', '')
 

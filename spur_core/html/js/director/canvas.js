@@ -373,7 +373,7 @@ export class Canvas {
 
     /** THE CARDS SHARP AGAIN, once the view is still. The world moves as one layer (css .dr-world, will-change:
      *  transform), so a pan or a zoom repaints nothing; but the browser may keep that layer's picture at the size it
-     *  was drawn and stretch it, so zoomed in the cards stay soft. Or it draws them sharp, but FiveM's browser puts a new
+     *  was drawn and stretch it, so zoomed in the cards stay soft. Or it draws them sharp, but Cfx.re's browser puts a new
      *  picture on screen only when something on the page changes, so the sharp one waits for a click or a drag (which
      *  is why one sometimes fixed it). So: the layer is let go for two frames and taken up again (drawn afresh at
      *  the zoom it is shown at), and then a few frames are asked for over the next second (the ticker, a dot nobody

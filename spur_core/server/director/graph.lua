@@ -232,7 +232,7 @@ local function checkWorld(doc, world, problems)
                 id, uses, 'world')
         end
         if w.kind == 'prop' and def.weapon ~= nil then
-            -- A Fixed Weapon is a firearm with a world model, GTA's or one a running resource adds
+            -- A Fixed Weapon is a firearm with a world model, the game's or one a running resource adds
             -- (shared/weapon_catalog.lua): any other name has no model, and nothing to fire.
             if not WeaponCatalog.modelOf(def.weapon) then
                 local from = WeaponCatalog.goneWith(def.weapon)
@@ -267,7 +267,7 @@ local function checkWorld(doc, world, problems)
             end
         end
         if w.kind == 'npc' then
-            -- An NPC carries a weapon (never a whip item), GTA's or one a running resource adds: a misspelt one
+            -- An NPC carries a weapon (never a whip item), the game's or one a running resource adds: a misspelt one
             -- would leave it unarmed with nothing said.
             local wpn = type(def.weapon) == 'table' and def.weapon.name or def.weapon
             if wpn ~= nil and wpn ~= '' and not Fields.isWeapon(wpn) then

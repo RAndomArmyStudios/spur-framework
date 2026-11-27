@@ -93,7 +93,7 @@ function DevTools.isAllowed(source)
 end
 
 --- Why `source` may not use `ace` now, or nil when they may. whip.devtools also needs developer mode on;
---- any other ACE is FiveM's answer alone.
+--- any other ACE is Cfx.re's answer alone.
 ---@param source number
 ---@param ace string
 ---@return string|nil

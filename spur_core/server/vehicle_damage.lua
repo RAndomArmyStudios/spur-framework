@@ -7,7 +7,7 @@
 -- other stats on its row unit. Dents are not kept: the car looks clean and keeps its numbers.
 --
 -- Where each number comes from:
---   engine, body   the SERVER reads them off the car (GTA's sync from the game running it): when
+--   engine, body   the SERVER reads them off the car (the game's sync from the game running it): when
 --                  the driver gets out, in the car sweep, and at the last look before a despawn.
 --   doors, tyres   the DRIVER'S game reports them (client/vehicle_damage.lua). No server native
 --                  sees a torn-off door, and the server numbers wheels its own way, not by the
@@ -20,12 +20,12 @@
 -- wheel. The put-back only ever adds damage (the lower health, more doors and tyres), so sending it
 -- twice, or onto a car hit since it spawned, does nothing wrong.
 --
--- Both sources are the game running the car, as GTA's own sync is: a modified game can repair its
+-- Both sources are the game running the car, as the game's own sync is: a modified game can repair its
 -- own car whichever way this is read.
 
 VehicleDamage = {}
 
---- The stats, on GTA's own scales. Doors are a mask of door numbers 0-7 (bit n is door n); tyres
+--- The stats, on the game's own scales. Doors are a mask of door numbers 0-7 (bit n is door n); tyres
 --- are masks over client/vehicle_damage.lua's TYRES list. A car never written reads the defaults: new.
 local STATS = {
     engineHealth = { default = 1000, min = 0, max = 1000, persist = true },
@@ -46,7 +46,7 @@ for name, config in pairs(STATS) do
 end
 
 --- After the put-back is confirmed, reads wait this long: the server's copy of the car comes by
---- GTA's sync, which can land after the answer, and a read of the old copy would save the car as new.
+--- the game's sync, which can land after the answer, and a read of the old copy would save the car as new.
 local SETTLE_MS = 2000
 
 --- An offer to the same game is not sent again inside this.
@@ -190,7 +190,7 @@ function VehicleDamage.sweep(vehicleId, entity)
 end
 
 --- A repair: the car is like new on record. The car itself is fixed by the game running it (by the server on
---- GTA V Enhanced); reads wait SETTLE_MS again, so a read of the car before the fix lands does not put the damage back.
+--- the original game's Enhanced build); reads wait SETTLE_MS again, so a read of the car before the fix lands does not put the damage back.
 ---@param vehicleId number
 ---@return boolean ok
 ---@return string|nil err
@@ -296,7 +296,7 @@ end)
 -- ============================================
 --
 -- A sunk car's health stays up as it fills with water: no server native shows it. The game running the
--- car says (client/vehicle_damage.lua), as GTA's own sync trusts that game with the car. Kept per
+-- car says (client/vehicle_damage.lua), as the game's own sync trusts that game with the car. Kept per
 -- entity: a new one (out of the garage again) starts sound.
 
 -- [vehicleId] = the entity it was wrecked as. By the car, and let go by its own lifecycle (below), not by an

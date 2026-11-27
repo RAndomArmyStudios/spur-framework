@@ -3,12 +3,12 @@
 -- ============================================
 --
 -- The server says which blips this player sees; this makes them, and nothing else. No frame loop:
--- a GTA blip is made when one arrives, remade when it changes, and removed when it goes. A character
+-- a game blip is made when one arrives, remade when it changes, and removed when it goes. A character
 -- coming on gets the whole list (spur_core:client:blips), and logging out clears it.
 
 local blips = {}   -- [wireId] = { point = blip, area = blip }
 
---- [GTA blip handle] = its label. GTA lets nothing read a blip's name back, so the pause map
+--- [game blip handle] = its label. The game lets nothing read a blip's name back, so the pause map
 --- (client/pause.lua) asks here for whip's labels and those registered by other resources.
 local labelOf = {}
 local externalLabels = {}
@@ -36,7 +36,7 @@ function WhipBlipLabel(handle)
     return labelOf[handle] or externalLabels[handle]
 end
 
---- [GTA blip handle] = the number on it (ShowBlip's `number`). GTA lets nothing read that back either, so whip's own
+--- [game blip handle] = the number on it (ShowBlip's `number`). The game lets nothing read that back either, so whip's own
 --- maps (client/pause.lua, client/minimap.lua) ask here.
 local numberOf = {}
 
@@ -48,7 +48,7 @@ function WhipBlipNumber(handle)
 end
 
 --- Name, for the pause map, a blip spur_core made outside this file (/w Reveal Players); nil forgets it.
---- GTA's own name for it is the caller's to set.
+--- The game's own name for it is the caller's to set.
 ---@param handle number
 ---@param label string|nil
 function WhipBlipSetLabel(handle, label)
@@ -114,7 +114,7 @@ RegisterNetEvent('spur_core:client:blips', function(list)
     end
 end)
 
--- GTA's own waypoint (the one a player can set on the pause map), set for them.
+-- The game's own waypoint (the one a player can set on the pause map), set for them.
 RegisterNetEvent('spur_core:client:waypoint', function(x, y)
     x, y = tonumber(x), tonumber(y)
     if x and y then SetNewWaypoint(x + 0.0, y + 0.0) end
@@ -124,9 +124,9 @@ end)
 -- ONE WAYPOINT PER VEHICLE (server/blips.lua's vehicleWaypoint)
 -- ============================================
 --
--- A waypoint set or cleared in a vehicle with another player in it is set or cleared for them too, as in GTA
--- Online — the minimap and the pause map both draw GTA's waypoint, so both show it. GTA says nothing when a
--- waypoint changes (the pause map, a server's SetPlayerWaypoint, GTA clearing it on arrival), so it is watched:
+-- A waypoint set or cleared in a vehicle with another player in it is set or cleared for them too, as in the original game's
+-- online mode — the minimap and the pause map both draw the game's waypoint, so both show it. The game says nothing when a
+-- waypoint changes (the pause map, a server's SetPlayerWaypoint, the game clearing it on arrival), so it is watched:
 -- twice a second, only from getting in to getting out. Only a change made in the car is shared; one already set
 -- when you got in is yours. One that arrives from the car is not sent back (WP_ECHO_MS).
 
@@ -138,7 +138,7 @@ local wpQuietUntil = 0       -- a received one is settling in: not read as this 
 local wpWatching = false
 
 local function readWaypoint()
-    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (GTA's was the first blip with sprite 8)
+    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (the original game's was the first blip with sprite 8)
     if not c then return false end
     return { x = c.x, y = c.y }
 end

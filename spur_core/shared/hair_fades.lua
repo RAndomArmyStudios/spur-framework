@@ -2,7 +2,7 @@
 -- HAIR FADES — the ones the character editor offers (HairFades)
 -- ============================================
 --
--- RedM (spur_core, 26 Nov 2026): whip_core listed GTA V's scalp fades here, another game's, and they are gone.
+-- RedM (spur_core, 26 Nov 2026): whip_core listed the original game's scalp fades here, and they are gone.
 -- The list is empty until RDR2's are gathered, so the editor's Hair tab offers no fade and the server keeps
 -- none (server/events_misc.lua, sanitizeAppearance). Data only.
 --

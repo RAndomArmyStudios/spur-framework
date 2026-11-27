@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_chat, 23 Nov 2026): RedM, not FiveM. A port of whip_chat 1.2.0 for spur_core (README.md, NOTICE.md).
+-- RedM (spur_chat, 23 Nov 2026): A port of whip_chat 1.2.0 for spur_core (README.md, NOTICE.md).
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 lua54 'yes'

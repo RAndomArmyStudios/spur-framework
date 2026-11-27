@@ -2,7 +2,7 @@
 // PAGE PICTURE — whip's page drawn over a game picture (js/screenshot.js, a shot with `ui`)
 // ========================================
 //
-// A shot reads the game's picture alone: whip's page is laid over the game by FiveM afterwards, and nothing hands a
+// A shot reads the game's picture alone: whip's page is laid over the game by Cfx.re afterwards, and nothing hands a
 // script the two together. This draws the page as it looks right now into the picture. It copies every element shown
 // into an SVG image, each carrying its own computed style (what differs from the browser's default for it or from its
 // parent's), its ::before / ::after, the fonts it uses and its pictures and canvases as data, every scrolled box at its

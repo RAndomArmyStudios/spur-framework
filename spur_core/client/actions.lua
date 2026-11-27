@@ -133,7 +133,7 @@ local function forgetReports(key)
     end
 end
 
---- A condition's answer, FiveM-truthy: false, nil and 0 are no (a native answering 0 means no).
+--- A condition's answer, native-truthy: false, nil and 0 are no (a native answering 0 means no).
 local function yes(v)
     return v ~= nil and v ~= false and v ~= 0
 end

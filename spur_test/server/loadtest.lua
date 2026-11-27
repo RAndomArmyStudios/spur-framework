@@ -672,7 +672,7 @@ end
 ---
 ---   * whip's own per-source rate limiter would reject nearly all of them, since one client is
 ---     standing in for two hundred. Hence the bypass seam, renewed while the run lives.
----   * FIVEM'S OWN net-event limiter is NOT bypassed and cannot be. Push a single client too hard
+---   * CFX.RE'S OWN net-event limiter is NOT bypassed and cannot be. Push a single client too hard
 ---     and the server kicks it for reliable-event overflow. That is why this dial defaults low and
 ---     is capped well below the others — it is the one that can end your session.
 ---

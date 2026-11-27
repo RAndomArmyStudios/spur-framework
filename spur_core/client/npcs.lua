@@ -31,7 +31,7 @@ local _, NPC_GROUP = AddRelationshipGroup('WHIP_NPC')
 SetRelationshipBetweenGroups(3, NPC_GROUP, `PLAYER`)   -- 3 = neutral: NPCs start on nobody by themselves
 SetRelationshipBetweenGroups(3, `PLAYER`, NPC_GROUP)
 
--- ONE OF WHIP'S NPCS FIGHTING ANOTHER (NPC Attacks at an NPC, Fight an NPC). GTA has no ped take on one of its own
+-- ONE OF WHIP'S NPCS FIGHTING ANOTHER (NPC Attacks at an NPC, Fight an NPC). The game has no ped take on one of its own
 -- group, and every whip NPC is in NPC_GROUP: told to fight one, it never got into combat at all. So on the game
 -- running the fight, the NPC fought is held in FOE_GROUP while the fight is on (holdFoe, FOE_HOLD_MS after each
 -- look), which whip's NPCs take as they take players: neutral, fought only when told to. Its owner's game gives it its
@@ -134,9 +134,9 @@ end
 --
 -- An NPC standing on a car the scenario lets players stand on while it moves (the car's page: VehicleData
 -- directorStandOn, client/director_standon.lua) rides it. Its owner fixes it to the car where it stands, facing as it
--- does (attached, as a mission's gunmen on a truck bed), so the car carries it, GTA's fall-off never throws it, and
+-- does (attached, as a mission's gunmen on a truck bed), so the car carries it, the game's fall-off never throws it, and
 -- its freeze, its post and its walk home (all a spot in the world, where the car no longer is) leave it alone. It
--- still looks, aims, shoots, plays its emote and fights from there, turned by its hold to what it aims at (GTA cannot
+-- still looks, aims, shoots, plays its emote and fights from there, turned by its hold to what it aims at (the game cannot
 -- turn a ped fixed to a car: only its head and arms follow). A task that takes it somewhere (a step that moves), sitting in a car,
 -- running away, following someone, or its death lets go of it first; standing on the car again after, it is fixed
 -- again. Looked at by the watch every quarter second and as a brain is applied; only with such a car near.
@@ -338,7 +338,7 @@ local function standOrGuard(ped, w)
 end
 
 --- Not fighting: run from whoever it flees, follow whoever it follows, or go home and stand / guard
---- there (both anchor to where the ped is NOW, so one that has wandered — a fight, GTA's own AI after
+--- there (both anchor to where the ped is NOW, so one that has wandered — a fight, the game's own AI after
 --- a task ended, a post moved — walks back to its post first and the watch starts the task there).
 local function idle(ped, w)
     local b = w.brain
@@ -382,7 +382,7 @@ end
 
 local attackThing   -- (below, after the weapons it reads)
 
---- A gun it has with no rounds in THIS game, loaded with `rounds`. GTA hands the next game that owns an NPC the gun
+--- A gun it has with no rounds in THIS game, loaded with `rounds`. The game hands the next game that owns an NPC the gun
 --- it holds but not its ammo: given on one player's game, it reaches another's empty and only clicks (a run another
 --- player started, an NPC passing between games as players move). Asked wherever it is sent to fight.
 local function loaded(ped, hash, rounds)
@@ -392,7 +392,7 @@ local function loaded(ped, hash, rounds)
 end
 
 --- Hold `target` in FOE_GROUP on this game for a moment longer (see FOE_GROUP): only one of whip's own NPCs. A player,
---- another resource's ped, or one whose group this game never set (another game's NPC: its group here is GTA's own)
+--- another resource's ped, or one whose group this game never set (another game's NPC: its group here is the game's own)
 --- is fought as it is.
 local function holdFoe(target)
     if IsPedAPlayer(target) or not NetworkGetEntityIsNetworked(target) then return end
@@ -402,7 +402,7 @@ local function holdFoe(target)
     if g ~= FOE_GROUP then SetPedRelationshipGroupHash(target, FOE_GROUP) end
 end
 
---- Fight another ped, one of whip's NPCs held as a foe first, or GTA would not take it on. Kept as the NPC's foe (w.foe)
+--- Fight another ped, one of whip's NPCs held as a foe first, or the game would not take it on. Kept as the NPC's foe (w.foe)
 --- so the watch holds it for as long as the fight lasts.
 local function fightPed(ped, w, target)
     holdFoe(target)
@@ -594,7 +594,7 @@ end
 local NAV_TASK, STRAIGHT_TASK = GetHashKey('SCRIPT_TASK_FOLLOW_NAV_MESH_TO_COORD'), GetHashKey('SCRIPT_TASK_GO_STRAIGHT_TO_COORD')
 
 -- WALKING ON THROUGH A POINT. A Go To with another straight after it (a route's points with no stop between) comes
--- with that one as its `ahead` (server/task_seq.lua). GTA is told not to slow down at its point (ENAV_NO_STOPPING: it
+-- with that one as its `ahead` (server/task_seq.lua). The game is told not to slow down at its point (ENAV_NO_STOPPING: it
 -- also keeps the ped moving while a new path is found), and a little before it gets there this game sets off for the
 -- next one by itself (jobDone), so it walks on while the server's next job is on its way. That job's Go To finds it
 -- already going there and leaves its walk be.
@@ -641,7 +641,7 @@ STEP.goTo = function(ped, _, s)
         and GetScriptTaskStatus(ped, on.task) ~= 7 then
         taskId, since = on.task, on.since   -- (already on its way there: it set off as it walked through the last point)
     else
-        -- (Walking on through it: its way at the end is the way on, so GTA has no turn to make there.)
+        -- (Walking on through it: its way at the end is the way on, so the game has no turn to make there.)
         taskId, since = walkTo(ped, s.p, ahead ~= nil, ahead and wayOn(a, ahead.at) or (a.heading or 0.0)), GetGameTimer()
     end
     -- Done there, or when its walk has ended as near as it could get (a point a little off the paths).
@@ -682,10 +682,10 @@ STEP.flee = function(ped, _, s)
     elseif at then TaskSmartFleeCoord(ped, at.x, at.y, at.z, 100.0, -1, false, false) end
 end
 
--- TAKE COVER: to its point, and in cover there, hiding from what the point faces (10 m out along its heading). GTA
+-- TAKE COVER: to its point, and in cover there, hiding from what the point faces (10 m out along its heading). The game
 -- left to find cover near a place picks its own, often far off, or none: so a cover point of its own is made on the
 -- marker, facing its way, low (crouched) or high (against a wall), and the NPC is sent to that one. There and still
--- standing a moment later, it is put in cover where it stands. GTA picks which way a ped in cover faces by itself, so
+-- standing a moment later, it is put in cover where it stands. The game picks which way a ped in cover faces by itself, so
 -- one facing the other way from its step's is put in again, facing its way. In cover and facing its way, the step is
 -- done (the watch: `cover`). One cover point an NPC, gone with the NPC.
 local coverOf = {}   -- [ped] = the cover point its Take Cover made
@@ -745,7 +745,7 @@ STEP.cover = function(ped, w, s, left)
             if not inCover or isLeft ~= faceLeft then
                 -- TASK_PUT_PED_DIRECTLY_INTO_COVER, by its hash (all eleven of its parameters): its facing forced to
                 -- the step's side; the way in played only when it is not in cover yet.
-                -- RedM: RDR2's version has GTA's eleven in the same places and two more (p11, p12), passed as false
+                -- RedM: RDR2's version has the original game's eleven in the same places and two more (p11, p12), passed as false
                 -- and 0 so the game does not read leftovers.
                 -- RedM (spur_core, 24 Nov 2026): its task cleared first and the way in always played. In game a ped in cover facing left
                 -- stayed facing left until both were done. A soft clear didn't take it out of cover (it came back
@@ -773,8 +773,8 @@ end
 --- A gun in its hand, loaded: the one it holds, else the best it has, else a pistol (an NPC with none aims at nothing).
 -- RedM (spur_core, 24 Nov 2026): RDR2 has no WEAPON_PISTOL; its pistol here is the Cattleman revolver.
 local PISTOL = GetHashKey('WEAPON_REVOLVER_CATTLEMAN')
--- RedM (spur_core, 24 Nov 2026): GTA's IsPedArmed(ped, 4) asks about the weapon in the hand. RDR2's flags are not
--- GTA's: a townsperson with a holstered revolver read as armed with nothing in their hand, so they were never handed
+-- RedM (spur_core, 24 Nov 2026): the original game's IsPedArmed(ped, 4) asks about the weapon in the hand. RDR2's flags are not
+-- the original game's: a townsperson with a holstered revolver read as armed with nothing in their hand, so they were never handed
 -- one and aimed at nothing. This asks about the weapon in the hand itself (IS_WEAPON_A_GUN).
 local function isGun(weapon)
     if not weapon or weapon == 0 or weapon == UNARMED then return false end
@@ -800,14 +800,14 @@ STEP.aimAt = function(ped, _, s, left)
     if e then TaskAimGunAtEntity(ped, e, left, false) elseif at then TaskAimGunAtCoord(ped, at.x, at.y, at.z, left, false, false) end
 end
 
--- SHOOT AT, its style for the step: how often it hits, how fast it pulls the trigger (40% is GTA's own pace, 100% ten
+-- SHOOT AT, its style for the step: how often it hits, how fast it pulls the trigger (40% is the game's own pace, 100% ten
 -- times it), single shots to full auto, and how good a fighter it is. Its brain set again mid-step keeps them
 -- (applyBrain). NPC Attacks' style is the same, for every fight it has (the brain's `style`).
 local PATTERN = { ['single shots'] = GetHashKey('FIRING_PATTERN_SINGLE_SHOT'), ['bursts'] = GetHashKey('FIRING_PATTERN_BURST_FIRE'),
                   ['full auto'] = FULL_AUTO }
 local SKILL = { ['a rookie'] = 0, ['a pro'] = 1, ['a killer'] = 2 }
 
--- A KILLER never holds fire. GTA's peds stop shooting by themselves: they duck and flinch when shot at, get pinned
+-- A KILLER never holds fire. The game's peds stop shooting by themselves: they duck and flinch when shot at, get pinned
 -- down by fire coming their way, fire slower the further off the target is, wait for a clear line, and from cover
 -- peek out every few seconds for a short burst (combatbehaviour.meta's in-cover times). A killer has all of that
 -- off, keeps its firing pattern, and stays that way on this game for the rest of its life (a fight after its Shoot
@@ -846,7 +846,7 @@ STEP.shootAt = function(ped, _, s, left)
 end
 
 -- What Throw hands it (shared/director/steps.lua's options).
--- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons, in place of GTA's (WEAPON_GRENADE, WEAPON_MOLOTOV, WEAPON_SMOKEGRENADE,
+-- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons, in place of the original game's (WEAPON_GRENADE, WEAPON_MOLOTOV, WEAPON_SMOKEGRENADE,
 -- WEAPON_FLARE, WEAPON_SNOWBALL, WEAPON_BALL), none of which RDR2 has.
 local THROWN = { ['dynamite'] = 'WEAPON_THROWN_DYNAMITE', ['fire bottle'] = 'WEAPON_THROWN_MOLOTOV',
                  ['poison bottle'] = 'WEAPON_THROWN_POISONBOTTLE', ['tomahawk'] = 'WEAPON_THROWN_TOMAHAWK',
@@ -893,8 +893,8 @@ STEP.throw = function(ped, w, s)
         rec.given[hash] = true
         GiveWeaponToPed(ped, hash, 1, false, true)
         SetCurrentPedWeapon(ped, hash, true)
-        -- TASK_THROW_PROJECTILE: FiveM's wrapper declares fewer parameters than the game reads.
-        -- RedM: RDR2's takes four (ped and three undocumented), GTA's older form (ped, x, y, z); GTA's two later
+        -- TASK_THROW_PROJECTILE: Cfx.re's wrapper declares fewer parameters than the game reads.
+        -- RedM: RDR2's takes four (ped and three undocumented), the original game's older form (ped, x, y, z); the original game's two later
         -- additions are not passed. Untested in game (CONVERSION.md).
         Citizen.InvokeNative(0x7285951DBF6B5A51, ped, at.x + 0.0, at.y + 0.0, at.z + 0.0)
         Wait(2500)
@@ -1009,7 +1009,7 @@ STEP.die = function(ped)
     SetEntityHealth(ped, 0)
 end
 
---- Up again as it was. GTA keeps a ped that writhed or died hurt through a resurrect (it limps and clutches itself, as
+--- Up again as it was. The game keeps a ped that writhed or died hurt through a resurrect (it limps and clutches itself, as
 --- if on low health): its injured and hurt flags off, its walk back to its own, its blood gone.
 local function unhurt(ped)
     SetPedConfigFlag(ped, 166, false)   -- CPED_CONFIG_FLAG_IsInjured
@@ -1027,7 +1027,7 @@ STEP.revive = function(ped, w)
 end
 
 STEP.writhe = function(ped, _, s, left)
-    -- RedM: GTA's TASK_WRITHE (wounded on the ground, shooting at the nearest player) has no RDR2 counterpart.
+    -- RedM: the original game's TASK_WRITHE (wounded on the ground, shooting at the nearest player) has no RDR2 counterpart.
     -- The NPC is left as it is; CONVERSION.md lists the step.
     if RdrCompat then RdrCompat.hits['TASK_WRITHE'] = (RdrCompat.hits['TASK_WRITHE'] or 0) + 1 end
 end
@@ -1161,7 +1161,7 @@ local function applyBrain(ped, w)
     SetPedCombatAttributes(ped, 58, not flees)            -- CA_DISABLE_FLEE_FROM_COMBAT
     -- After a player in a car, on foot: not looking for a car of their own, never taking one (NPC
     -- drivers are not whip's yet), allowed to chase on foot, and pressing in rather than holding a spot.
-    -- Numbers: FiveM's eCombatAttribute list and SET_PED_COMBAT_MOVEMENT (2 = offensive).
+    -- Numbers: Cfx.re's eCombatAttribute list and SET_PED_COMBAT_MOVEMENT (2 = offensive).
     SetPedCombatAttributes(ped, 1, false)                 -- CA_USE_VEHICLE
     SetPedCombatAttributes(ped, 41, false)                -- CA_CAN_COMMANDEER_VEHICLES
     SetPedCombatAttributes(ped, 21, true)                 -- CA_CAN_CHASE_TARGET_ON_FOOT
@@ -1190,7 +1190,7 @@ local function applyBrain(ped, w)
     -- RedM (spur_core, 24 Nov 2026): RDR2 gives gang and lawman models guns of their own when they're made (a
     -- g_m_m_uniduster_01 came with a Winchester, a double-action revolver and a knife), and in a fight the ped draws
     -- the best it has: Steal the Car's guards were given a Cattleman and a sawed-off and drew a Henry and a Winchester.
-    -- GTA's script-made peds carry nothing, so whip's NPCs hold only what they're given. Those guns go once, before
+    -- The game's script-made peds carry nothing, so whip's NPCs hold only what they're given. Those guns go once, before
     -- anything is given; the state bag tells every game that takes the ped over that it has been done.
     local state = NetworkGetEntityIsNetworked(ped) and Entity(ped).state or nil
     if not (state and state.spurBare) then
@@ -1222,7 +1222,7 @@ local function applyBrain(ped, w)
     -- What it wears (its page's Outfit): put on by its owner, as only the owner can (the others see what this game sends).
     if b.outfit then PedOutfit.apply(ped, PedOutfit.read(b.outfit)) end
     -- One that cannot move stands exactly on its post. The server's freeze is an RPC queued until a game owns the ped,
-    -- and in between, a spot touching a bush or a counter has GTA's physics push it out sideways or up. Back on its post
+    -- and in between, a spot touching a bush or a counter has the game's physics push it out sideways or up. Back on its post
     -- (and its heading) as the freeze goes on, by every game that takes it over. Not one waiting on its interior (the
     -- gate's release does that), not a corpse, and not one on a car it rides (fixed to the car first: ride). Once a post
     -- on this game: a brain sent again (a state change) must not pull it back off where its tasks put it (a Teleport)

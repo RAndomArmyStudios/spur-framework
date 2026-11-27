@@ -738,7 +738,7 @@ exports('CreateGarage', function(data)
     local caller = Registry.caller()   -- first, before anything can yield
     -- Who asked is kept, so the blip shows only while that resource runs ("Who made it").
     local garage, err = Garages.create(data, caller ~= GetCurrentResourceName() and caller or nil)
-    -- `false`, not nil. A FiveM export truncates its return list at the first nil, so returning nil
+    -- `false`, not nil. A Cfx.re export truncates its return list at the first nil, so returning nil
     -- here would take the reason with it and the caller would be told only that something failed.
     if not garage then return false, err or 'Could not create the garage' end
     return garage

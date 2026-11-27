@@ -507,7 +507,7 @@
             + '<path d="M6 4.4h11.6l-2.6 4.2 2.6 4.2H6" fill="currentColor" stroke-width="1.4"/></svg>',
 
         // TARGET, PIN, STAR: more marks an objective card can wear (ShowObjective's `icon`, client/ui.lua):
-        // take someone out, get somewhere, lose the cops (GTA's wanted star). Not actions, so not in the
+        // take someone out, get somewhere, lose the cops (the game's wanted star). Not actions, so not in the
         // loading screen's copy.
         target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"'
             + ' stroke-linecap="round" stroke-linejoin="round">'

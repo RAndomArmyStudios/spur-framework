@@ -12,14 +12,14 @@ local function around(src, dist, side)
     local c = GetEntityCoords(ped)
     local h = GetEntityHeading(ped)
     local r = math.rad(h)
-    local fx, fy = -math.sin(r), math.cos(r)       -- GTA: heading 0 faces +Y
+    local fx, fy = -math.sin(r), math.cos(r)       -- the game: heading 0 faces +Y
     local rx, ry = fy, -fx
     return { x = c.x + fx * dist + rx * (side or 0), y = c.y + fy * dist + ry * (side or 0), z = c.z,
              heading = (h + 180.0) % 360.0 }
 end
 
 local function npcDef(at, over)
-    local d = { model = 's_m_m_valdealer_01', coords = at, behaviour = 'stand', conditions = { canMove = true },   -- RedM (spur_core, 24 Nov 2026): was GTA's s_m_y_dealer_01
+    local d = { model = 's_m_m_valdealer_01', coords = at, behaviour = 'stand', conditions = { canMove = true },   -- RedM (spur_core, 24 Nov 2026): was the original game's s_m_y_dealer_01
                 weapon = 'WEAPON_REVOLVER_CATTLEMAN' }   -- RedM (spur_core, 24 Nov 2026): RDR2 has no WEAPON_PISTOL
     for k, v in pairs(over or {}) do d[k] = v end
     return d
@@ -98,7 +98,7 @@ local TESTS = {
         build = function(src)
             local world = {
                 { id = 'npc', kind = 'npc', layer = 'run', label = 'Car test NPC', def = npcDef(around(src, 30)) },
-                -- RedM (spur_core, 23 Nov 2026): an RDR2 buggy, not GTA's Sultan.
+                -- RedM (spur_core, 23 Nov 2026): an RDR2 buggy, not the original game's Sultan.
                 { id = 'car', kind = 'vehicle', layer = 'run', label = 'Test car', def = { model = 'buggy01', coords = around(src, 0, 4), locked = false,
                   key = { exists = true, where = 'ignition' } } },
             }

@@ -29,18 +29,18 @@ PedHold = {}
 --- WHAT EVERY PLAYER PED CARRIES, whatever is held: written on each new ped (see apply), and the helmet again
 --- when its setting changes.
 ---
---- A helmet on a bike: GTA puts one on a character as they get onto a motorbike — ped config
+--- A helmet on a bike: the game puts one on a character as they get onto a motorbike — ped config
 --- flag 35, PutOnMotorcycleHelmet — over whatever they wear on their head. Config.BikeAutoHelmet = false (the
---- default) turns that off, so they ride in what they have on; true gives GTA's helmet back.
+--- default) turns that off, so they ride in what they have on; true gives the game's helmet back.
 ---
 --- And what a death took away: a death resurrects the player twice (client/death.lua: where they
 --- fall, and again at the hospital), and each resurrect can hand back a NEW ped that has none of what was
 --- set on the old one. These were set only at the first spawn or load, so they were gone from then on:
----   * flag 48, BlockWeaponSwitching — GTA's weapon wheel and scroll switching stay dead (whip draws
+---   * flag 48, BlockWeaponSwitching — the game's weapon wheel and scroll switching stay dead (whip draws
 ---     weapons from the inventory). Give mode turns it off for the ball and back on (client/inventory.lua):
 ---     left off while that runs.
 ---   * SetCanAttackFriendly — player-on-player damage (client/spawn.lua turns friendly fire on).
----   * GTA's health regen off: a resurrect gives it back (DoRespawn turned it off again; a revive did not).
+---   * the game's health regen off: a resurrect gives it back (DoRespawn turned it off again; a revive did not).
 local HELMET_FLAG      = 35
 local WEAPON_LOCK_FLAG = 48
 local function pedSettings(ped)

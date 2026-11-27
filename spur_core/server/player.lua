@@ -827,7 +827,7 @@ end
 --- The sheet another resource's HANDLER is handed — a SecureEvent or SecureCallback handler, an item
 --- use handler, a context action, an effect callback: serialize() without `metadata`.
 ---
---- FiveM copies every argument across the resource boundary, and metadata is the appearance (about a
+--- Cfx.re copies every argument across the resource boundary, and metadata is the appearance (about a
 --- kilobyte) on every shot and every effect tick. GetPlayer(source) has the whole sheet.
 ---@return table
 function WhipPlayer:handlerSheet()
@@ -883,7 +883,7 @@ exports('IsSessionCurrent', IsSessionCurrent)
 -- ============================================
 -- Public Exports
 -- ============================================
--- These return data (WhipPlayer:serialize()), not the live object: FiveM copies values across a
+-- These return data (WhipPlayer:serialize()), not the live object: Cfx.re copies values across a
 -- resource boundary and a metatable doesn't survive the copy, so the methods get exports of their
 -- own below. In-core code uses Players[source] and keeps the methods.
 --
@@ -1148,7 +1148,7 @@ exports('GetPlayerCoords', function(source)
 end)
 
 --- The character's full name, or nil for a player not in a character: one string, cheaper than the
---- whole sheet. Not FiveM's GetPlayerName, which is the account's name.
+--- whole sheet. Not Cfx.re's GetPlayerName, which is the account's name.
 ---@param source number
 ---@return string|nil
 exports('GetPlayerFullName', function(source)
@@ -1274,7 +1274,7 @@ exports('LogoutPlayer', function(source)
     return true
 end)
 
--- The pause menu's Quit (client/pause.lua): leave the server, back to FiveM's
+-- The pause menu's Quit (client/pause.lua): leave the server, back to Cfx.re's
 -- server list. The character saves on the drop, as on any disconnect. Allowed dead, or with no
 -- character: leaving is never something to refuse.
 SecureEvent('spur_core:server:leaveServer', {

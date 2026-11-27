@@ -1,23 +1,23 @@
 -- ============================================
--- RedM COMPATIBILITY LAYER: whip_core's GTA V natives on RDR2
+-- RedM COMPATIBILITY LAYER: whip_core's original-game natives on RDR2
 -- ============================================
 --
 -- spur_core is whip_core 1.3.0 (by Whippy, LGPL 3.0) ported to RedM. This file is new in the port
 -- (added 23 Nov 2026) and is under the LGPL 3.0 like the rest of spur_core.
 --
--- whip_core was written for GTA V, so its code calls about 300 natives that RDR2 does not have. Rather than
+-- whip_core was written for the original game, so its code calls about 300 natives that RDR2 does not have. Rather than
 -- rewrite every call, this file (loaded before every other spur_core script, on both sides) gives each of
 -- those names a body:
 --
 --   MAPPED   the RDR2 native that does the same job (blips, text, shape tests, load scenes, scenarios,
 --            weather, clock, weapons, doors, screen maths). Written out below.
---   STUBBED  nothing in RDR2 does it (vehicles' tuning, GTA's pause menu, scaleform, ped headshots, freemode
+--   STUBBED  nothing in RDR2 does it (vehicles' tuning, the original game's pause menu, scaleform, ped headshots, freemode
 --            clothing, interiors' room data...). The call does nothing and returns a safe value.
---            shared/rdr_compat_stubs.lua holds those, generated from the GTA V native list.
+--            shared/rdr_compat_stubs.lua holds those, generated from the original-game native list.
 --
 -- A name is only defined when RedM does not already have it (def), except where RedM has the same name with
 -- different arguments and whip's call would go wrong (force): TaskStartScenarioInPlace, IsPedUsingScenario
--- and SetBlipSprite take a hash on RDR2 where GTA takes a name or a number.
+-- and SetBlipSprite take a hash on RDR2 where the original game takes a name or a number.
 --
 -- The first time a stub is called it says so in the console (F8 / server console), once per name:
 --     [spur_core] RedM: <Name> has no RDR2 equivalent: skipped
@@ -75,7 +75,7 @@ local function noteHit(name)
     end
 end
 
---- A GTA V native RDR2 has no counterpart for: does nothing, returns `...` (the safe values for its GTA return
+--- An original-game native RDR2 has no counterpart for: does nothing, returns `...` (the safe values for its original-game return
 --- and out-parameters). `side` is 'client', 'server' or 'both'.
 function C.stub(name, side, ...)
     if not onSide(side) or _G[name] ~= nil then return end
@@ -103,7 +103,7 @@ local function listHits()
     local names = {}
     for n in pairs(C.hits) do names[#names + 1] = n end
     table.sort(names, function(a, b) return C.hits[a] > C.hits[b] end)
-    print(('[%s] RedM compat (%s): %d GTA-only natives called so far'):format(RES, SERVER and 'server' or 'client', #names))
+    print(('[%s] RedM compat (%s): %d natives RDR2 lacks called so far'):format(RES, SERVER and 'server' or 'client', #names))
     for _, n in ipairs(names) do print(('  %-44s %d'):format(n, C.hits[n])) end
 end
 
@@ -196,7 +196,7 @@ if SERVER then
         end, true)
     end
 
-    -- server/object_viewer.lua repairs and damages vehicles through FiveM's server-side vehicle natives, and
+    -- server/object_viewer.lua repairs and damages vehicles through Cfx.re's server-side vehicle natives, and
     -- server/npcs.lua asks whether an NPC is frozen. RedM's server has none of them.
     def('IsEntityPositionFrozen', function() return false end)
     def('GetVehicleNumberOfWheels', function() return 4 end)
@@ -289,7 +289,7 @@ if OWN then RegisterCommand('spurcompat', listHits, false) end
 local N = Citizen.InvokeNative
 
 -- ---- text --------------------------------------------------------------------------------
--- GTA: SetTextFont/Scale/Colour/Centre, SetTextEntry('STRING') or BeginTextCommandDisplayText, then the text
+-- the game: SetTextFont/Scale/Colour/Centre, SetTextEntry('STRING') or BeginTextCommandDisplayText, then the text
 -- in components, then DrawText(x, y). RDR2: the same style setters, then DisplayText(VarString(text), x, y).
 -- whip builds every label that way, so the components are kept here and drawn in one go.
 
@@ -310,7 +310,7 @@ end
 local function drawPending(x, y)
     local s = takeText()
     if s == '' then return end
-    -- RDR2's font 1 (the one RedM frameworks draw labels with); GTA's font numbers mean nothing here.
+    -- RDR2's font 1 (the one RedM frameworks draw labels with); the original game's font numbers mean nothing here.
     if SetTextFontForCurrentCommand then SetTextFontForCurrentCommand(1) end
     N(0xD79334A4BB99BAD1, varString(s), x + 0.0, y + 0.0)                             -- _DISPLAY_TEXT
 end
@@ -327,7 +327,7 @@ def('AddTextComponentString', addText)
 def('AddTextComponentSubstringPlayerName', addText)
 def('DrawText', drawPending)
 def('EndTextCommandDisplayText', drawPending)
---- GTA's text labels (GXT) do not exist: a label reads as itself, a missing one as GTA's 'NULL'.
+--- The game's text labels (GXT) do not exist: a label reads as itself, a missing one as the game's 'NULL'.
 --- Only where RedM lacks GetLabelText: RedM b1491 has its own, which reads RDR2's labels and gives nil (not 'NULL')
 --- for one it lacks, so whip's callers treat nil and 'NULL' alike (seen in game, 23 Nov 2026: /spurzone).
 def('GetLabelText', function(label)
@@ -336,7 +336,7 @@ def('GetLabelText', function(label)
 end)
 
 -- ---- zones -------------------------------------------------------------------------------
--- GTA: GetNameOfZone(x, y, z) gives the zone's GXT label ('VINE'), and GetLabelText its name. RDR2 has neither:
+-- the original game: GetNameOfZone(x, y, z) gives the zone's GXT label ('VINE'), and GetLabelText its name. RDR2 has neither:
 -- GET_MAP_ZONE_AT_COORDS gives the hash of the town (type 1), the district (10) or the state (0) at a point.
 -- GetNameOfZone here asks for each in turn and hands back the first one's name, or '' in open water or anywhere
 -- none of the names below is known. Callers use the name as it is: RedM's own GetLabelText would read it as a
@@ -405,12 +405,12 @@ local STYLE_POINT = 1664425300                   -- the map-point style RedM fra
 local STYLE_RADIUS = hash('BLIP_STYLE_RADIUS')
 local STYLE_ENTITY = hash('BLIP_STYLE_FRIENDLY')
 
--- RedM (spur_core, 25 Nov 2026): the blip list. RDR2 cannot list its blips: GTA's GetFirstBlipInfoId / GetNextBlipInfoId,
+-- RedM (spur_core, 25 Nov 2026): the blip list. RDR2 cannot list its blips: the original game's GetFirstBlipInfoId / GetNextBlipInfoId,
 -- through which whip's minimap and pause map find every blip, have no RDR2 counterpart, and as stubs they answered
 -- none, so both maps showed no blips. spur_core's own blips are kept here as they are made (AddBlipFor*), with what
--- GTA would answer about each (sprite, colour, display, alpha, short range, flashing, what it is on), and those
+-- the game would answer about each (sprite, colour, display, alpha, short range, flashing, what it is on), and those
 -- lookups read this list (below, after the blip natives). Blips other resources or the game make are not in it.
-local blipReg, blipBySprite, blipWalk = {}, {}, {}   -- [blip] = its facts; [GTA sprite] = { [blip] = true }; walks
+local blipReg, blipBySprite, blipWalk = {}, {}, {}   -- [blip] = its facts; [game sprite] = { [blip] = true }; walks
 local function blipSetSprite(b, sprite)
     local r = blipReg[b]
     if not r then return end
@@ -419,7 +419,7 @@ local function blipSetSprite(b, sprite)
     blipBySprite[sprite] = blipBySprite[sprite] or {}
     blipBySprite[sprite][b] = true
 end
---- A blip just made: `sprite` GTA's first one for its kind (1 a point or a thing, 9 an area), `kind` GTA's blip type.
+--- A blip just made: `sprite` the game's first one for its kind (1 a point or a thing, 9 an area), `kind` the game's blip type.
 local function trackBlip(b, sprite, kind, entity)
     if math.type(b) ~= 'integer' or b == 0 then return b end
     local old = blipReg[b]   -- a handle used again
@@ -428,7 +428,7 @@ local function trackBlip(b, sprite, kind, entity)
     blipSetSprite(b, sprite)
     return b
 end
-local ENTITY_BLIP = { [1] = 2, [2] = 1, [3] = 3 }   -- GetEntityType (ped, vehicle, object) to GTA's blip type
+local ENTITY_BLIP = { [1] = 2, [2] = 1, [3] = 3 }   -- GetEntityType (ped, vehicle, object) to the game's blip type
 
 def('AddBlipForCoord', function(x, y, z)
     return trackBlip(N(0x554D9D53F696D002, STYLE_POINT, x + 0.0, y + 0.0, (z or 0.0) + 0.0, Citizen.ResultAsInteger()), 1, 4)
@@ -442,7 +442,7 @@ def('AddBlipForEntity', function(entity)
         ENTITY_BLIP[GetEntityType(entity)] or 2, entity)
 end)
 
--- GTA sprite numbers whip uses (config and code) -> RDR2 blip textures. A string is taken as an RDR2 sprite
+-- Original-game sprite numbers whip uses (config and code) -> RDR2 blip textures. A string is taken as an RDR2 sprite
 -- name, a hash as an RDR2 sprite hash.
 local SPRITE = {
     [1] = 'blip_poi', [9] = 'blip_ambient_npc', [40] = 'blip_proc_home', [52] = 'blip_shop_store',
@@ -465,7 +465,7 @@ force('SetBlipSprite', function(blip, sprite)
     if math.type(sprite) == 'integer' and sprite >= 0 and sprite < 1000 then blipSetSprite(blip, sprite) end   -- RedM (spur_core, 25 Nov 2026)
 end)
 
--- GTA blip colour numbers -> the RDR2 modifiers that only set a colour. Colours with none (blues, greens,
+-- Original-game blip colour numbers -> the RDR2 modifiers that only set a colour. Colours with none (blues, greens,
 -- purples, pinks) keep the style's own colour.
 local MOD = {
     white = hash('BLIP_MODIFIER_PLAYER_HORSE_IN_RANGE'), red = hash('BLIP_MODIFIER_AREA_OUT_OF_BOUNDS'),
@@ -494,7 +494,7 @@ force('SetBlipFlashes', function(blip, toggle)
     if blipReg[blip] then blipReg[blip].flash = toggle and true or nil end                      -- RedM (spur_core, 25 Nov 2026)
 end)
 
--- Blip names: GTA spells them out as a text command; RDR2 takes the string.
+-- Blip names: the original game spells them out as a text command; RDR2 takes the string.
 def('BeginTextCommandSetBlipName', function() startText() end)
 def('EndTextCommandSetBlipName', function(blip)
     N(0x9CB1A1623062F402, blip, takeText())                                                     -- _SET_BLIP_NAME
@@ -502,7 +502,7 @@ end)
 
 def('GetBlipInfoIdCoord', function(blip) return N(0x201C319797BDA603, blip, Citizen.ResultAsVector()) end)   -- GET_BLIP_COORDS
 
--- RedM (spur_core, 25 Nov 2026): GTA's blip lookups, over the blip list (above). Settings RDR2 has no counterpart for (display,
+-- RedM (spur_core, 25 Nov 2026): the original game's blip lookups, over the blip list (above). Settings RDR2 has no counterpart for (display,
 -- alpha, short range) are only remembered, for whip's maps to read; they change nothing on RDR2's own map.
 if not SERVER then
     def('GetFirstBlipInfoId', function(sprite)
@@ -538,8 +538,8 @@ if not SERVER then
     def('SetBlipDisplay', function(b, d) if blipReg[b] then blipReg[b].display = d end end)
     def('SetBlipAlpha', function(b, a) if blipReg[b] then blipReg[b].alpha = a end end)
     def('SetBlipAsShortRange', function(b, on) if blipReg[b] then blipReg[b].short = on and true or false end end)
-    -- A blip's colour on whip's maps: GTA answers a HUD colour, which GetHudColour turns into RGB. RDR2 has
-    -- neither, so a blip answers 1000 + its GTA blip colour, and GetHudColour gives that colour's RGB (GTA's
+    -- A blip's colour on whip's maps: the original game answers a HUD colour, which GetHudColour turns into RGB. RDR2 has
+    -- neither, so a blip answers 1000 + its game blip colour, and GetHudColour gives that colour's RGB (the game's
     -- palette, near enough). Any other HUD colour stays white, as the stub was.
     local BLIP_RGB = {
         [0] = 0xfefefe, 0xe03232, 0x71cb71, 0x5db6e5, 0xfefefe, 0xeec64e, 0xc25050, 0x9c6eaf, 0xfe7ac3, 0xf59d79,
@@ -555,7 +555,7 @@ if not SERVER then
     end)
 end
 
--- Waypoints. GTA finds the waypoint as the first blip with sprite 8; whip's four lookups go through
+-- Waypoints. The game finds the waypoint as the first blip with sprite 8; whip's four lookups go through
 -- RdrCompat.waypoint() instead. SetNewWaypoint has no RDR2 counterpart: it draws a GPS route to the point and is
 -- remembered as the waypoint until the player sets or clears one.
 local setWaypoint
@@ -583,7 +583,7 @@ end)
 
 -- ---- world & screen ------------------------------------------------------------------------
 
--- GTA's StartShapeTestRay is the synchronous LOS probe (same hash on both games): the result is ready at once,
+-- The game's StartShapeTestRay is the synchronous LOS probe (same hash on both games): the result is ready at once,
 -- which is how whip reads it.
 def('StartShapeTestRay', function(x1, y1, z1, x2, y2, z2, flags, ignore, p8)
     return N(0x377906D8A31E5586, x1 + 0.0, y1 + 0.0, z1 + 0.0, x2 + 0.0, y2 + 0.0, z2 + 0.0, flags or -1,
@@ -620,10 +620,10 @@ end)
 quiet('GetSafeZoneSize', 'client', 1.0)
 
 def('IsUsingKeyboard', function(c) return truthy(N(0xA571D46727E2B718, c or 0, Citizen.ResultAsInteger())) end)
--- GTA's IsInputDisabled(2) is "the player is on keyboard and mouse".
+-- The game's IsInputDisabled(2) is "the player is on keyboard and mouse".
 def('IsInputDisabled', function(c) return truthy(N(0xA571D46727E2B718, 0, Citizen.ResultAsInteger())) end)
 
--- GTA weather names -> RDR2's (RDR2 names pass through).
+-- Original-game weather names -> RDR2's (RDR2 names pass through).
 local WEATHER = {
     EXTRASUNNY = 'SUNNY', CLEAR = 'HIGHPRESSURE', NEUTRAL = 'SUNNY', SMOG = 'MISTY', FOGGY = 'FOG',
     CLOUDS = 'CLOUDS', OVERCAST = 'OVERCAST', RAIN = 'RAIN', THUNDER = 'THUNDERSTORM', CLEARING = 'DRIZZLE',
@@ -653,15 +653,15 @@ def('AddDoorToSystem', function(doorHash)
 end)
 
 -- ---- natives RedM has under the same name, with other arguments ------------------------------
--- whip passes GTA's arguments; these take them and call RDR2's version. Raw calls, so numbers are made floats
+-- whip passes the original game's arguments; these take them and call RDR2's version. Raw calls, so numbers are made floats
 -- where RDR2 reads a float, and a string RDR2 reads as a hash is hashed.
 
 local function f(v) return (tonumber(v) or 0) + 0.0 end
 local function toHash(s) return type(s) == 'string' and hash(s) or s end
 
--- GTA: (pedType, model, ...). RDR2 has no ped type, and a ped it spawns has no outfit (it is invisible) until
+-- The original game: (pedType, model, ...). RDR2 has no ped type, and a ped it spawns has no outfit (it is invisible) until
 -- one is put on: a random one here, which the appearance code replaces for the player's own peds.
--- (Client only: the server's CreatePed is FiveM's own and keeps GTA's arguments on RedM.)
+-- (Client only: the server's CreatePed is Cfx.re's own and keeps the original game's arguments on RedM.)
 force('CreatePed', function(_, model, x, y, z, heading, isNetwork, scriptHost)
     local ped = N(0xD49F9B0955C367DE, model, f(x), f(y), f(z), f(heading), isNetwork == true, scriptHost == true,
         false, false, Citizen.ResultAsInteger())                                                -- CREATE_PED
@@ -669,13 +669,13 @@ force('CreatePed', function(_, model, x, y, z, heading, isNetwork, scriptHost)
     return ped
 end)
 
--- GTA: eight booleans. RDR2: one bitset (femga AI/ENTITY_PROOFS): 1 bullet, 2 fire, 4 explosion, 8 collision,
--- 16 melee, 32 steam, 64 smoke, 128 headshot, 256 projectile. GTA's p7 reads as smoke; RDR2 has no drown proof.
+-- The original game: eight booleans. RDR2: one bitset (femga AI/ENTITY_PROOFS): 1 bullet, 2 fire, 4 explosion, 8 collision,
+-- 16 melee, 32 steam, 64 smoke, 128 headshot, 256 projectile. The original game's p7 reads as smoke; RDR2 has no drown proof.
 local PROOF = { 1, 2, 4, 8, 16, 32, 64 }
 force('SetEntityProofs', function(entity, ...)
     local on, bits = { ... }, 0
     for i, bit in ipairs(PROOF) do if on[i] then bits = bits | bit end end
-    if on[1] then bits = bits | 128 | 256 end              -- GTA's bullet proof covers headshots and arrows too
+    if on[1] then bits = bits | 128 | 256 end              -- the game's bullet proof covers headshots and arrows too
     N(0xFAEE099C6F890BB8, entity, bits, false)                                                   -- SET_ENTITY_PROOFS
 end)
 force('GetEntityProofs', function(entity)
@@ -686,7 +686,7 @@ force('GetEntityProofs', function(entity)
     return table.unpack(r, 1, 9)
 end)
 
--- GTA: (soundId, name, soundset, p3); RDR2: (name, soundset, p2, p3), with its own sounds. The GTA sounds whip
+-- The original game: (soundId, name, soundset, p3); RDR2: (name, soundset, p2, p3), with its own sounds. The original-game sounds whip
 -- plays -> RDR2 menu sounds (femga audio/frontend_soundsets); others are skipped.
 local FRONTEND = {
     ['HUD_FRONTEND_DEFAULT_SOUNDSET/NAV_UP_DOWN'] = { 'NAV_DOWN', 'HUD_PLAYER_MENU' },
@@ -705,19 +705,19 @@ force('PlaySoundFrontend', function(a, b, c, d)
     if s then N(0x67C540AA08E4A6F5, s[1], s[2], true, 0) else noteHit('PlaySoundFrontend ' .. tostring(c) .. '/' .. tostring(b)) end
 end)
 
--- RDR2's ambient speech takes a struct of speech parameters, not GTA's line name.
+-- RDR2's ambient speech takes a struct of speech parameters, not the original game's line name.
 force('PlayPedAmbientSpeechNative', function() noteHit('PlayPedAmbientSpeechNative') end)
 
 -- RDR2 reads a weapon's damage from a weapon object, not its hash: whip's director shows 0.
 force('GetWeaponDamage', function() noteHit('GetWeaponDamage'); return 0.0 end)
 
--- GTA: (entity) -> fire id; RDR2: (entity, intensity, bone, flags).
+-- The original game: (entity) -> fire id; RDR2: (entity, intensity, bone, flags).
 force('StartEntityFire', function(entity)
     N(0xC4DC7418A44D6822, entity, 1.0, 0, 0)                                                     -- START_ENTITY_FIRE
     return 0
 end)
 
--- GTA: (ped, weapon, ammo, isHidden, forceInHand); RDR2 adds holster, attach point, add reason and so on.
+-- The original game: (ped, weapon, ammo, isHidden, forceInHand); RDR2 adds holster, attach point, add reason and so on.
 -- RedM (spur_core, 24 Nov 2026): bIgnoreUnlocks (the 11th) is on. With it off the weapon reached the ped's inventory
 -- some time under 500 ms later (spur_gunny's /gunnygivelab), so the SetCurrentPedWeapon that follows a give failed:
 -- Steal the Car's guards were given their card's gun but kept their model's own rifle in hand. With it on the
@@ -736,25 +736,25 @@ force('IsWeaponValid', function(weapon)
     return truthy(N(0x937C71165CF334B3, weapon, Citizen.ResultAsInteger()))                     -- IS_WEAPON_VALID
 end)
 
--- GTA: (ped, from, distance, time, preferPavements, updateToNearest); RDR2: (..., fleeType, speed, targetPed).
+-- The original game: (ped, from, distance, time, preferPavements, updateToNearest); RDR2: (..., fleeType, speed, targetPed).
 force('TaskSmartFleePed', function(ped, from, distance, time)
     N(0x22B0D0E37CCB840D, ped, from, f(distance), math.floor(tonumber(time) or -1), 0, 3.0, 0)  -- TASK_SMART_FLEE_PED
 end)
 
--- GTA's last three are lockX/Y/Z; RDR2's are p8, ik flags, p10, a task filter (a string) and p12, so they are
+-- The original game's last three are lockX/Y/Z; RDR2's are p8, ik flags, p10, a task filter (a string) and p12, so they are
 -- not passed on. The flag bits below 64 (loop, hold, upper body, secondary...) are the same in both games.
 force('TaskPlayAnim', function(ped, dict, name, blendIn, blendOut, duration, flags, rate)
     N(0xEA47FE3719165B94, ped, dict, name, f(blendIn or 8.0), f(blendOut or -8.0), math.floor(tonumber(duration) or -1),
         math.floor(tonumber(flags) or 0), f(rate), false, 0, false, 0, false)                   -- TASK_PLAY_ANIM
 end)
 
--- GTA's last one is a task message name in RDR2 (a string): not passed on.
+-- The original game's last one is a task message name in RDR2 (a string): not passed on.
 force('SetPedToRagdoll', function(ped, t1, t2, kind, p4, p5)
     return truthy(N(0xAE99FB955581844A, ped, math.floor(tonumber(t1) or 0), math.floor(tonumber(t2) or 0),
         math.floor(tonumber(kind) or 0), p4 == true, p5 == true, 0, Citizen.ResultAsInteger()))  -- SET_PED_TO_RAGDOLL
 end)
 
--- Named by GTA as strings, by RDR2 as hashes.
+-- Named by the original game as strings, by RDR2 as hashes.
 force('RequestNamedPtfxAsset', function(asset) N(0xF2B2353BBC0D4E8F, toHash(asset)) end)
 force('HasNamedPtfxAssetLoaded', function(asset)
     return truthy(N(0x65BB72F29138F5D6, toHash(asset), Citizen.ResultAsInteger()))
@@ -770,10 +770,10 @@ force('SetGameplayCamRelativeHeading', function(heading) N(0x5D1EB123EAC5D071, f
 
 -- ---- peds ----------------------------------------------------------------------------------
 
--- Scenarios: GTA takes the name, RDR2 the hash. RedM's TaskStartScenarioInPlace takes the hash, so this replaces it.
+-- Scenarios: the original game takes the name, RDR2 the hash. RedM's TaskStartScenarioInPlace takes the hash, so this replaces it.
 function C.scenarioHash(s) return type(s) == 'string' and hash(s) or s end
 force('TaskStartScenarioInPlace', function(ped, scenario, duration, playEnter)
-    if not duration or duration == 0 then duration = -1 end      -- GTA's 0 is "no delay"; RDR2's -1 is "until stopped"
+    if not duration or duration == 0 then duration = -1 end      -- the original game's 0 is "no delay"; RDR2's -1 is "until stopped"
     N(0x524B54361229154F, ped, C.scenarioHash(scenario), duration, playEnter ~= false, 0, -1.0, false)
 end)
 force('IsPedUsingScenario', function(ped, scenario)
@@ -790,7 +790,7 @@ local armour = {}
 def('SetPedArmour', function(ped, amount) armour[ped] = math.max(0, math.min(100, tonumber(amount) or 0)) end)
 def('GetPedArmour', function(ped) return armour[ped] or 0 end)
 
--- Clothing. RDR2 dresses a ped with metaped outfit presets, not GTA's numbered components, and a ped with none
+-- Clothing. RDR2 dresses a ped with metaped outfit presets, not the original game's numbered components, and a ped with none
 -- is invisible. Slot 11 (Tops) stands for the preset: drawable N is preset N (wrapped to how many the model has),
 -- so the creator's Tops cards pick a whole RDR2 outfit and a saved appearance keeps it. The other slots, props,
 -- hair, face and overlays stay stubs (rdr_compat_stubs.lua).
@@ -930,7 +930,7 @@ if not SERVER then
         return b
     end
 
-    -- GTA: (ped, shape mother, father, third, skin mother, father, third, shape mix, skin mix, third mix, isParent).
+    -- The game: (ped, shape mother, father, third, skin mother, father, third, shape mix, skin mix, third mix, isParent).
     force('SetPedHeadBlendData', function(ped, mom, dad, _, _, _, _, _, skinMix)
         if not ped or ped == 0 or not DoesEntityExist(ped) or not sexOf(ped) then return end
         local b = bodyFor(ped)
@@ -1038,7 +1038,7 @@ if not SERVER then
         noteHit('GetPedHeadOverlayNum')
         return 0
     end)
-    -- GTA: (ped, overlay, index, opacity); index 255 or opacity 0 is none.
+    -- The game: (ped, overlay, index, opacity); index 255 or opacity 0 is none.
     force('SetPedHeadOverlay', function(ped, overlay, index, opacity)
         if overlay ~= BEARD_OVERLAY then return noteHit('SetPedHeadOverlay') end
         local b = rebody(ped)
@@ -1049,7 +1049,7 @@ if not SERVER then
         b.beard = beard
         rebodyDone(ped, b)
     end)
-    -- GTA: (ped, overlay, colour type, colour, second colour).
+    -- The game: (ped, overlay, colour type, colour, second colour).
     force('SetPedHeadOverlayColor', function(ped, overlay, _, colour)
         if overlay ~= BEARD_OVERLAY then return noteHit('SetPedHeadOverlayColor') end
         local b = rebody(ped)
@@ -1063,9 +1063,9 @@ if not SERVER then
     force('SetPedDefaultComponentVariation', function(ped) C.equipOutfit(ped, 0) end)
 end
 
--- Health. GTA counts a ped's health from 100 (dead) to 200 (full), and whip does its sums on that scale (stats,
+-- Health. The game counts a ped's health from 100 (dead) to 200 (full), and whip does its sums on that scale (stats,
 -- the HUD, NPCs, drowning, the death screen). An RDR2 ped dies at 0 and its full health differs by model. A ped's
--- health is moved between the scales here; a dead ped reads 0, as in GTA. Objects and wagons are left alone.
+-- health is moved between the scales here; a dead ped reads 0, as in the game. Objects and wagons are left alone.
 if not SERVER then
     local function isPed(e) return e and e ~= 0 and truthy(N(0xCF8176912DDA4EA5, e, Citizen.ResultAsInteger())) end  -- IS_ENTITY_A_PED
     local function rawMax(e) return N(0x15D757606D170C3C, e, false, Citizen.ResultAsInteger()) or 0 end  -- GET_ENTITY_MAX_HEALTH
@@ -1109,7 +1109,7 @@ else
     end)
 end
 
--- GTA's "regenerate up to this fraction" -> RDR2's regeneration rate: 0 turns it off.
+-- The original game's "regenerate up to this fraction" -> RDR2's regeneration rate: 0 turns it off.
 def('SetPlayerHealthRechargeLimit', function(player, limit)
     N(0x8899C244EBCF70DE, player, (tonumber(limit) or 0) <= 0 and 0.0 or 1.0)                  -- SET_PLAYER_HEALTH_RECHARGE_MULTIPLIER
 end)
@@ -1126,7 +1126,7 @@ end)
 
 def('IsEntityPositionFrozen', function(entity) return truthy(N(0x083D497D57B7400F, entity, Citizen.ResultAsInteger())) end)
 
--- GTA's movement clipsets are RDR2's clip sets.
+-- The original game's movement clipsets are RDR2's clip sets.
 def('RequestAnimSet', function(name) N(0xEF7611B57A820126, name) end)                              -- REQUEST_CLIP_SET
 def('HasAnimSetLoaded', function(name) return truthy(N(0x1F23D6B6DA1CC3B2, name, Citizen.ResultAsInteger())) end)
 
@@ -1178,7 +1178,7 @@ end)
 
 local function isBoat(m) return truthy(N(0x799CFC7C5B743B15, m, Citizen.ResultAsInteger())) end
 local function isTrain(m) return truthy(N(0xFC08C8F8C1EDF174, m, Citizen.ResultAsInteger())) end
--- GTA's classes whip asks about: 14 boats, 21 trains; every wagon and coach reads as 0 (an ordinary car).
+-- The game's classes whip asks about: 14 boats, 21 trains; every wagon and coach reads as 0 (an ordinary car).
 local function classOf(model)
     if isBoat(model) then return 14 end
     if isTrain(model) then return 21 end
@@ -1197,7 +1197,7 @@ def('DrawSpriteUv', function(dict, name, x, y, w, h, u1, v1, u2, v2, heading, r,
 end)
 
 -- ---- controls --------------------------------------------------------------------------------
--- GTA numbers its controls (0-360); RDR2 names them by hash. Every control native takes whip's GTA number and
+-- original-game numbers its controls (0-360); RDR2 names them by hash. Every control native takes whip's original-game number and
 -- reads the RDR2 control on the same key and pad button (femga rdr3_discoveries, Controls/README.md), or the one meant for the
 -- same thing where the keys differ (noted). A number with no RDR2 control is passed on and reads as never
 -- pressed; it is listed by /spurcompat. Hashes (RDR2 controls, key mappings) pass through.
@@ -1294,12 +1294,12 @@ end
 -- ============================================================================================
 -- PED FLAGS (client side). RedM (spur_core, 24 Nov 2026)
 -- ============================================================================================
--- whip numbers ped config flags and ped reset flags as GTA V does. RDR2 numbers them its own way: GTA's config 48
--- (BlockWeaponSwitching) is RDR2's ShouldFixIfNoCollision, and GTA's reset 200 (DisableActionMode), which whip sets
--- every frame, is RDR2's EnableEagleEyeInVehicle. Each GTA number whip uses maps here to RDR2's own (femga's
+-- whip numbers ped config flags and ped reset flags as the original game does. RDR2 numbers them its own way: the original game's config 48
+-- (BlockWeaponSwitching) is RDR2's ShouldFixIfNoCollision, and the original game's reset 200 (DisableActionMode), which whip sets
+-- every frame, is RDR2's EnableEagleEyeInVehicle. Each original-game number whip uses maps here to RDR2's own (femga's
 -- rdr3_discoveries, AI/CPED_CONFIG_FLAGS and AI/CPED_RESET_FLAGS). One with no RDR2 counterpart (false) is not passed
 -- on: its value is kept per ped, so a read gives back what was set. A number not listed is passed on as it is.
--- Only whip's GTA numbers are listed; a resource that loads this file and wants RDR2's own numbers calls
+-- Only whip's original-game numbers are listed; a resource that loads this file and wants RDR2's own numbers calls
 -- RdrCompat.rawPedConfigFlag / RdrCompat.rawPedResetFlag.
 if not SERVER then
     local CONFIG_FLAG = {
@@ -1327,7 +1327,7 @@ if not SERVER then
         [216] = false,  -- DisableSeatShuffleDueToInjuredDriver
         [274] = false,  -- BlockRagdollFromVehicleFallOff
     }
-    -- [ped] = { [gta flag] = true }: the unmapped ones set on. Only "on" is kept (an NPC's flags are mostly switched
+    -- [ped] = { [original-game flag] = true }: the unmapped ones set on. Only "on" is kept (an NPC's flags are mostly switched
     -- off), and a ped's table goes with its last one.
     local kept = {}
     local function keep(ped, flag, on)
@@ -1385,8 +1385,8 @@ end
 -- ============================================================================================
 -- PED BONES (client side). RedM (spur_core, 24 Nov 2026)
 -- ============================================================================================
--- A ped bone tag is a hash of the bone's name, and GTA and RDR2 hash their skeletons' names differently: GTA's
--- PH_R_Hand is 28422, RDR2's is 7966. whip passes GTA's tags (held props, the head for prompts and bubbles, the
+-- A ped bone tag is a hash of the bone's name, and the original game and RDR2 hash their skeletons' names differently: the original game's
+-- PH_R_Hand is 28422, RDR2's is 7966. whip passes the original game's tags (held props, the head for prompts and bubbles, the
 -- creator's camera), so each one whip uses maps here to RDR2's tag for the same bone (femga's rdr3_discoveries
 -- boneNames/mp_male, the same names on mp_female). A tag not listed is passed on as it is.
 if not SERVER then
@@ -1433,11 +1433,11 @@ end
 -- ============================================
 -- HIDDEN ON THIS SCREEN ONLY (client side). RedM (spur_core, 24 Nov 2026)
 -- ============================================
--- GTA's SET_ENTITY_LOCALLY_INVISIBLE (every frame: hidden for this game, seen by everyone else) isn't in RDR2.
+-- the original game's SET_ENTITY_LOCALLY_INVISIBLE (every frame: hidden for this game, seen by everyone else) isn't in RDR2.
 -- RDR2 has it for players only: SET_LOCAL_PLAYER_INVISIBLE_LOCALLY for the player's own ped and
 -- SET_PLAYER_INVISIBLE_LOCALLY for another player's, both every frame. The camera item hides the player's ped
 -- with it while they look through the lens. Any other entity (a prop, a car, an NPC) stays seen, as the stub
--- left it (rdr_compat_stubs.lua's quiet one is now only for builds without these natives). The bool is GTA's
+-- left it (rdr_compat_stubs.lua's quiet one is now only for builds without these natives). The bool is the game's
 -- "and their vehicle too", or RDR2's "on" if nativedb's name for it is right: true is right either way, as
 -- client/take_copies.lua hides a rider's real car as well and the camera ends in a vehicle.
 if not SERVER then
@@ -1452,7 +1452,7 @@ if not SERVER then
     end)
 end
 
--- GTA's NETWORK_EXPLODE_VEHICLE(vehicle, audible, invisible, netId) isn't in RDR2; its EXPLODE_VEHICLE(vehicle,
+-- The original game's NETWORK_EXPLODE_VEHICLE(vehicle, audible, invisible, netId) isn't in RDR2; its EXPLODE_VEHICLE(vehicle,
 -- audible, invisible, p3, p4) is. The Director's Blow Up step (client/actors.lua) and the object viewer's explode
 -- (client/ov_effects.lua) use it on a wagon or coach they control. RedM (spur_core, 24 Nov 2026)
 if not SERVER then
@@ -1463,11 +1463,11 @@ if not SERVER then
     end)
 end
 
--- FiveM's key bindings (Settings > Key Bindings). Where this RedM build has none, whip's bound commands still
+-- Cfx.re's key bindings (Settings > Key Bindings). Where this RedM build has none, whip's bound commands still
 -- run from F8; the keys are not bound.
 def('RegisterKeyMapping', function(command) noteHit('RegisterKeyMapping') end)
 
--- shared/rdr_compat_stubs.lua (next in the manifest) fills in every other GTA-only name whip calls.
+-- shared/rdr_compat_stubs.lua (next in the manifest) fills in every other name whip calls that RDR2 doesn't have.
 
 -- ============================================================================================
 -- SEATS (client side). RedM (spur_core, 24 Nov 2026)

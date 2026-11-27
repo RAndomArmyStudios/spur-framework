@@ -54,7 +54,7 @@ end
 --- a second time.
 local registerWarned = {}
 
---- Put a door into GTA's DoorSystem, and CHECK THAT IT WENT IN.
+--- Put a door into the game's DoorSystem, and CHECK THAT IT WENT IN.
 ---
 --- AddDoorToSystem fails SILENTLY (the door budget exhausted, or another script has claimed that
 --- physical door under a different key), and a door recorded as registered when it is not ignores

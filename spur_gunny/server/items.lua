@@ -42,7 +42,7 @@ local function packImage(itemName)
     return nil
 end
 
--- RedM (spur_gunny, 25 Nov 2026): whip_gunny's item pictures are GTA's guns, so this copy shipped none and every
+-- RedM (spur_gunny, 25 Nov 2026): whip_gunny's item pictures are the original game's guns, so this copy shipped none and every
 -- gun showed spur_core's "no picture" glyph. Now each item has the picture of its class (a revolver, a repeater, a
 -- box of cartridges...), drawn for this copy: html/img/items/class/<class>.png (painted, 25 Nov 2026; flat .svg drawings before that). A picture named after the item
 -- itself (html/img/items/<item>.webp or .png, here or in a weapon pack) still comes first.

@@ -1,5 +1,5 @@
 -- ============================================
--- WEAPON CATALOG — GTA's own weapons, and those other resources add
+-- WEAPON CATALOG — the game's own weapons, and those other resources add
 -- ============================================
 --
 -- The game's are shared/rdr_weapons.lua, each firearm's world model with them. A resource that streams
@@ -8,10 +8,10 @@
 -- Director's NPC weapons, its Hold a Weapon step, its Fixed Weapons (a firearm with a world model), Dungeon Mode, the
 -- Object Viewer's Give a weapon. Each says whose it is: "Pump Shotgun (gunny)". They go when that resource stops.
 --
--- Everything reads weapons through here (get, modelOf, weaponOf, list), never GtaWeapons alone.
+-- Everything reads weapons through here (get, modelOf, weaponOf, list), never GameWeapons alone.
 --
 -- RedM (spur_core, 24 Nov 2026): on RDR2 the game's own are shared/rdr_weapons.lua, which fills the same two tables
--- (GtaWeapons, GtaWeaponModels) with RDR2's weapons and world models; "GTA's" below means the game's own.
+-- (GameWeapons, GameWeaponModels) with RDR2's weapons and world models.
 --
 -- SHARED: the server and each game keep their own list. The server's decides what Check and a run accept; a game's what
 -- its editor and world builder offer (only those that game has: they ask it).
@@ -22,16 +22,16 @@ local MAX_WEAPONS = 200   -- one resource's list
 local MAX_LABEL = 40
 local MAX_TAG = 16
 
--- Every group GTA's list has, in its order; the firearms' (a world model) from shared/gta_weapon_models.lua.
+-- Every group the game's list has, in its order; the firearms' (a world model) from GameWeaponModels (shared/rdr_weapons.lua).
 local GROUP_AT, GROUP_ORDER = {}, {}
-for _, w in ipairs(GtaWeapons.list) do
+for _, w in ipairs(GameWeapons.list) do
     if not GROUP_AT[w.group] then
         GROUP_ORDER[#GROUP_ORDER + 1] = w.group
         GROUP_AT[w.group] = #GROUP_ORDER
     end
 end
 local FIREARM = {}
-for _, g in ipairs(GtaWeaponModels.groups) do FIREARM[g] = true end
+for _, g in ipairs(GameWeaponModels.groups) do FIREARM[g] = true end
 
 local added = {}     -- [NAME] = { name, label, group, model?, from }: what other resources add
 local byModel = {}   -- [model] = NAME, of those added with one
@@ -65,17 +65,17 @@ local reg = Registry.new('weapons', {
 -- Reading
 -- ============================================
 
---- A weapon by its name (any case): GTA's { name, label, group }, or one added { name, label, group, model?, from }.
+--- A weapon by its name (any case): the game's { name, label, group }, or one added { name, label, group, model?, from }.
 --- Nil when it is neither.
 function WeaponCatalog.get(name)
     if type(name) ~= 'string' then return nil end
     local up = name:upper()
-    return GtaWeapons.byName[up] or added[up]
+    return GameWeapons.byName[up] or added[up]
 end
 
 --- A firearm's world model, or nil (no such firearm here, or one added without a model).
 function WeaponCatalog.modelOf(name)
-    local m = GtaWeaponModels.modelOf(name)
+    local m = GameWeaponModels.modelOf(name)
     if m then return m end
     local w = type(name) == 'string' and added[name:upper()] or nil
     return w and w.model or nil
@@ -83,7 +83,7 @@ end
 
 --- The firearm a world model is, or nil.
 function WeaponCatalog.weaponOf(model)
-    return GtaWeaponModels.weaponOf(model) or (type(model) == 'string' and byModel[model:lower()]) or nil
+    return GameWeaponModels.weaponOf(model) or (type(model) == 'string' and byModel[model:lower()]) or nil
 end
 
 --- What a list shows for it: its label, and whose for one added ("Pump Shotgun (gunny)").
@@ -97,13 +97,13 @@ function WeaponCatalog.goneWith(name)
     return type(name) == 'string' and goneWith[name:upper()] or nil
 end
 
---- Every weapon, GTA's and those added: by group (GTA's order), each group by label, GTA's first where two share one.
+--- Every weapon, the game's and those added: by group (the game's order), each group by label, the game's first where two share one.
 --- The same table until the catalog changes: read it, never write it.
 local listed, listedAt
 function WeaponCatalog.list()
     if listed and listedAt == WeaponCatalog.version then return listed end
     local out = {}
-    for _, w in ipairs(GtaWeapons.list) do out[#out + 1] = w end
+    for _, w in ipairs(GameWeapons.list) do out[#out + 1] = w end
     for _, w in pairs(added) do out[#out + 1] = w end
     table.sort(out, function(a, b)
         local ga, gb = GROUP_AT[a.group], GROUP_AT[b.group]
@@ -131,8 +131,8 @@ local function readWeapon(e, i, tag)
     if not name or #name > 64 or not name:match('^WEAPON_[A-Z0-9_]+$') then
         return nil, ('weapon %d: name is WEAPON_ and capitals, digits or _, like WEAPON_MY_PUMP'):format(i)
     end
-    -- RedM (spur_core, 24 Nov 2026): "the game's own" (RDR2's, shared/rdr_weapons.lua), not "GTA's own".
-    if GtaWeapons.byName[name] then return nil, ('%s is one of the game\'s own: it is listed already'):format(name) end
+    -- RedM (spur_core, 24 Nov 2026): "the game's own" means RDR2's (shared/rdr_weapons.lua).
+    if GameWeapons.byName[name] then return nil, ('%s is one of the game\'s own: it is listed already'):format(name) end
     local label = type(e.label) == 'string' and e.label:gsub('%c', ' '):match('^%s*(.-)%s*$') or ''
     if label == '' or #label > MAX_LABEL then return nil, ('%s: label is text, %d characters at most'):format(name, MAX_LABEL) end
     if not GROUP_AT[e.group] then
@@ -143,8 +143,8 @@ local function readWeapon(e, i, tag)
         if not FIREARM[e.group] then return nil, ('%s: only a firearm has a world model (not %s)'):format(name, e.group) end
         model = type(e.model) == 'string' and e.model:lower() or nil
         if not model or #model > 64 or not model:match('^[%w_]+$') then return nil, ('%s: model is a model\'s name'):format(name) end
-        if GtaWeaponModels.weaponOf(model) then
-            return nil, ('%s: %s is the game\'s %s\'s model'):format(name, model, GtaWeaponModels.weaponOf(model))   -- RedM (spur_core, 24 Nov 2026)
+        if GameWeaponModels.weaponOf(model) then
+            return nil, ('%s: %s is the game\'s %s\'s model'):format(name, model, GameWeaponModels.weaponOf(model))   -- RedM (spur_core, 24 Nov 2026)
         end
     end
     return { name = name, label = label, group = e.group, model = model, from = tag }

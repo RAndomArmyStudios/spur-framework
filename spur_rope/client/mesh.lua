@@ -13,7 +13,7 @@
     The roll is carried from piece to piece (a rotation-minimising frame), so the strand twist runs
     across joints instead of jumping.
 
-    RedM (spur_rope, 24 Nov 2026): 'segments' can't be drawn on RedM. spur_rope_seg is a GTA V model (kept outside the
+    RedM (spur_rope, 24 Nov 2026): 'segments' can't be drawn on RedM. spur_rope_seg is an original-game model (kept outside the
     resource) and RedM has no SetEntityMatrix to place and scale a piece. client/visuals.lua draws 'rdr' instead
     (RDR2's own rope, pinned along ours, below). The pieces' code stays for a game that has both.
 ]]
@@ -114,7 +114,7 @@ end
 -- ============================================================================
 -- RDR2'S OWN ROPE, PINNED ALONG OURS (Config.Visuals.Style = 'rdr')
 -- ============================================================================
--- RedM (spur_rope, 24 Nov 2026): whip_rope pinned one of GTA's ropes along ours ('gta'). RDR2 has ropes too (ADD_ROPE,
+-- RedM (spur_rope, 24 Nov 2026): whip_rope pinned one of the original game's ropes along ours. RDR2 has ropes too (ADD_ROPE,
 -- types 0-18 in ropedata.xml; 0, 15 and 18 hang like a rope), but no ROPE_LOAD_TEXTURES, no
 -- ROPE_SET_UPDATE_PINVERTS and no named PIN_ROPE_VERTEX. 0xE54BF2CE6C7D23A9 is unnamed in RDR2's native list and has
 -- PIN_ROPE_VERTEX's shape (rope, vertex, x, y, z), so it pins here. That is a guess, so the first rope checks it:
@@ -153,7 +153,7 @@ Rope.Mesh.Along = along
 --- One of RDR2's ropes, `len` metres of `ropeType`, at `a`: its handle, or nil.
 local function addRope(a, len, ropeType)
     len = len + 0.0
-    -- RDR2's ADD_ROPE: GTA's arguments, its unkPtr filled in by RedM, and one more BOOL (p17) at the end
+    -- RDR2's ADD_ROPE: the original game's arguments, its unkPtr filled in by RedM, and one more BOOL (p17) at the end
     local ok, handle = pcall(AddRope, a.x, a.y, a.z, 0.0, 0.0, 0.0, len, ropeType or 0,
         len, 0.5, 0.0, false, false, false, 1.0, false, false)
     if not ok or not handle or handle == 0 or not DoesRopeExist(handle) then

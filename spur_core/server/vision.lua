@@ -119,7 +119,7 @@ end
 --- Is a point in front of it (inside its cone), or right beside it?
 local function inCone(at, h, cone, px, py, d)
     if d <= NEAR_M or cone >= 360.0 then return true end
-    -- GTA's heading 0 is north (+y) and turns anticlockwise: facing (-sin h, cos h).
+    -- The game's heading 0 is north (+y) and turns anticlockwise: facing (-sin h, cos h).
     local fx, fy = -math.sin(h), math.cos(h)
     local dx, dy = px - at.x, py - at.y
     local flat = math.sqrt(dx * dx + dy * dy)

@@ -177,7 +177,7 @@ function buildOpts(o) {
     optsEl.appendChild(optToggle('outlines', 'showOutlines', o.showOutlines !== false, true, false));
     optsEl.appendChild(optToggle('bigmap',   'bigmapOn',     !!o.bigmapOn,             true, false));
     optsEl.appendChild(optToggle('hide bars', 'hideBars',    o.hideBars !== false,     true, false));
-    // The black skin's frame on top of GTA's HUD, for if the radar is drawn before it and hidden.
+    // The black skin's frame on top of the game's HUD, for if the radar is drawn before it and hidden.
     optsEl.appendChild(optToggle('frame over the HUD', 'frameOver', !!o.frameOver, true, false));
 
     // Mask shape cycles rather than using a dropdown: four states, and the point is flicking
@@ -265,7 +265,7 @@ document.getElementById('rd-reset').addEventListener('click', () => {
     nuiCallback('radarDebugReset', { mode: 'config' });
 });
 
-// GTA's own frontend.xml values. Kept as a diagnostic rather than a convenience: if the
+// The game's own frontend.xml values. Kept as a diagnostic rather than a convenience: if the
 // compass aligns here and nowhere else, the scaleform is ignoring the overrides entirely.
 document.getElementById('rd-vanilla').addEventListener('click', () => {
     nuiCallback('radarDebugReset', { mode: 'stock' });

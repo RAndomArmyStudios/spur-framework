@@ -251,7 +251,7 @@ local OPTIONS = {
     { key = 'map.hide', group = 'mapProp', how = 'act', danger = true, when = mapProp, label = 'Remove for everyone',
       hint = 'Hidden on every game until a restart, or until you Put it back on the Dungeon Mode page.' },
 
-    -- another resource's networked object (or GTA's)
+    -- another resource's networked object (or the game's)
     { key = 'move', group = 'world', how = 'local', when = netObj, label = 'Move',
       hint = 'Drag it and turn it with the furnisher\'s arrows and rings, from where you stand.' },
     { key = 'obj.hidden', group = 'world', how = 'toggle', hold = 'hidden', when = netObj, label = 'Turn invisible',
@@ -485,7 +485,7 @@ local function walks()
     return out
 end
 
---- Give a weapon's list: the weapons an NPC can carry (shared/weapon_catalog.lua: GTA's, and those other resources add,
+--- Give a weapon's list: the weapons an NPC can carry (shared/weapon_catalog.lua: the game's, and those other resources add,
 --- "Pump Shotgun (gunny)"), those this game has. Again when the catalog changes.
 local weaponList, weaponListAt
 local function weapons()

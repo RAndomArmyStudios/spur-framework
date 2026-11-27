@@ -14,7 +14,7 @@
 
 ThrowAim = {}
 
-ThrowAim.GRAVITY = 9.81   -- m/s², what GTA pulls a thrown object down with
+ThrowAim.GRAVITY = 9.81   -- m/s², what the game pulls a thrown object down with
 ThrowAim.LOFT    = 2.5    -- m/s up, added to a throw at something out of reach
 
 local sqrt = math.sqrt

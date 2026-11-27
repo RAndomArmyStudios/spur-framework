@@ -273,7 +273,7 @@ local NEAR_RANGE = 120.0                -- the boxes asked: what is within this 
 local NEAR_MS = 1000                    -- and that list read again this often
 local near, nearAt = {}, -NEAR_MS
 
---- Has it no collision (a ground item, a non-solid prop: no ray meets it)? Read at call time: FiveM puts a native
+--- Has it no collision (a ground item, a non-solid prop: no ray meets it)? Read at call time: Cfx.re puts a native
 --- into _G only on its first ordinary lookup, so a rawget at load sees nil. Falls back to the hash.
 local function collisionOff(e)
     local ok, v = pcall(GetEntityCollisionDisabled, e)

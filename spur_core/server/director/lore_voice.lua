@@ -515,7 +515,7 @@ function LoreVoice.playFrom(npcId, v, opts)
     end
     -- (`voice`: each game shows it as the line is heard there, not as it is asked for: client/bubbles.lua.)
     if v.text and Bubbles then Bubbles.show({ netId = n.netId }, v.text, { far = bonus, voice = true }) end
-    -- Its hands while it talks (client/lore_reactions.lua): the game that owns it plays GTA's gestures for the line's
+    -- Its hands while it talks (client/lore_reactions.lua): the game that owns it plays the game's gestures for the line's
     -- length (Config.LoreVoice.Gestures), or holds the megaphone up or the radio to its mouth (shown whatever that says:
     -- it is what it talks into) as its voice has them: none for a megaphone or a frequency spur_voice refused.
     local vv = voices[npcId]
@@ -665,7 +665,7 @@ end
 
 --- How the lore NPCs look, for the games near them to put on: { [netId] = { look = key, v } } for one made in the
 --- character editor (every game near puts it on, asking for it by key), else { props = { { anchor, drawable,
---- texture }, ... } } for a GTA ped's hat (director/lore.lua props: the owning game puts it on). Only NPCs with one.
+--- texture }, ... } } for a game ped's hat (director/lore.lua props: the owning game puts it on). Only NPCs with one.
 --- And any other NPC with a look of its own: { npc = npcId, v = npcId } (asked for by its id: spur_core:npcLook; an
 --- NPC's look never changes, so its id is its version).
 function LoreVoice.looks()

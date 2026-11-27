@@ -1,8 +1,8 @@
 -- ============================================
--- THE MINIMAP — whip's own, in GTA's radar's place
+-- THE MINIMAP — whip's own, in the game's radar's place
 -- ============================================
 --
--- GTA's radar is not shown (client/hud.lua keeps it hidden, but for the /radardebug tuner). whip's 3D map stands in
+-- The game's radar is not shown (client/hud.lua keeps it hidden, but for the /radardebug tuner). whip's 3D map stands in
 -- its place, in the HUD's map box at the bottom left: html/js/minimap.js draws it, from 3D Clanker's 3D map. hud.lua
 -- decides WHEN, as it decided for the radar (MinimapShow: a vehicle, or on foot by the player's choice, with no screen
 -- up). This file feeds the page while it shows, and nothing runs while it does not:
@@ -17,7 +17,7 @@
 -- The blips are found as the pause menu's map finds them (client/pause.lua): every sprite asked for its blips. Here
 -- the scan is spread over frames (SPRITES_PER_FRAME), as it runs all the while the minimap is up, and a blip on a
 -- moving thing is followed between scans. A blip the game made short-range shows only inside the box; any other is
--- pinned to its edge when far (minimap.js), as on GTA's radar. A blip's rotation and flashing go with it.
+-- pinned to its edge when far (minimap.js), as on the game's radar. A blip's rotation and flashing go with it.
 --
 -- THE PLAYER'S SETTINGS are declared here (the pause menu's Settings → Server → Minimap, client/player_prefs.lua), all
 -- read by the page (page = true). The Minimap tab shows a preview of the minimap on a drive (html/js/minimap.js
@@ -27,7 +27,7 @@
 local MOVES_MS = 100            -- the moving blips
 local DATA_MS = 1500            -- every blip, the route and the waypoint
 local SPRITES_PER_FRAME = 100   -- the blip scan, this many sprites a frame
-local MAX_SPRITE = 1000         -- the highest sprite asked about (GTA's go past 900)
+local MAX_SPRITE = 1000         -- the highest sprite asked about (the game's go past 900)
 local MOVED_M = 0.5             -- a moving blip is sent again once it has moved this far
 
 --- Sprites that are not places on the minimap: the player's own arrow (6), north (7), the waypoint (8, sent on its
@@ -36,7 +36,7 @@ local SKIP_SPRITE = { [4] = true, [5] = true, [6] = true, [7] = true, [8] = true
     [10] = true, [161] = true, [163] = true, [164] = true }
 
 --- Display modes that never show: 0, 1 and 7. NOT 3 and 4, which the natives' table calls "the big map only": 4 is
---- what most scripts set for an ordinary blip, and GTA shows it on the radar too. Leaving them out hid every blip
+--- what most scripts set for an ordinary blip, and the game shows it on the radar too. Leaving them out hid every blip
 --- but the waypoint (Josh, 28 Oct).
 local NEVER_SHOWN = { [0] = true, [1] = true, [7] = true }
 
@@ -201,11 +201,11 @@ local movers = {}               -- the blips on moving things, from the last sca
 local moverAt = {}              -- [blip] = { x, y } as last sent
 local sentBox = nil
 
--- ---- reading GTA ----
+-- ---- reading the game ----
 
 --- GET_BLIP_HUD_COLOUR, by name or, on a client whose Lua lacks it, by hash (as client/pause.lua).
 local blipHudColour = GetBlipHudColour or function()
-    return 0   -- RedM: RDR2 has no GET_BLIP_HUD_COLOUR (GTA's hash would fail as an unknown native)
+    return 0   -- RedM: RDR2 has no GET_BLIP_HUD_COLOUR (the original game's hash would fail as an unknown native)
 end
 
 local hexCache = {}
@@ -220,7 +220,7 @@ local function hudHex(hud, fresh)
     return hex
 end
 
---- A number JSON can carry: GTA answers NaN or an infinity for a blip it cannot place, and FiveM then drops the WHOLE
+--- A number JSON can carry: the game answers NaN or an infinity for a blip it cannot place, and Cfx.re then drops the WHOLE
 --- message (client/pause.lua says more).
 local function finite(v)
     return type(v) == 'number' and v == v and v > -math.huge and v < math.huge
@@ -228,7 +228,7 @@ end
 
 local function tenth(v) return math.floor(v * 10 + 0.5) / 10 end
 
---- A blip's rotation (degrees, GTA's sense), or nil for none.
+--- A blip's rotation (degrees, the game's sense), or nil for none.
 local function rotationOf(b)
     local r = GetBlipRotation(b)
     return (finite(r) and r ~= 0) and r or nil
@@ -329,7 +329,7 @@ end
 
 --- The waypoint, or FALSE when there is none (the page keeps what it has for a key a message leaves out).
 local function readWaypoint()
-    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (GTA's was the first blip with sprite 8)
+    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (the original game's was the first blip with sprite 8)
     if not c then return false end
     if not finite(c.x) or not finite(c.y) then return false end
     return { x = c.x, y = c.y }
@@ -385,7 +385,7 @@ local function poseLoop(gen)
         local inVeh = veh ~= 0
         local x, y = math.floor(c.x * 20 + 0.5) / 20, math.floor(c.y * 20 + 0.5) / 20
         local heading = tenth(GetEntityHeading(ped))
-        -- The map turns with the gameplay camera, as GTA's radar does (degrees, GTA's sense, like a heading).
+        -- The map turns with the gameplay camera, as the game's radar does (degrees, the game's sense, like a heading).
         local camYaw = tenth(GetGameplayCamRot(2).z)
         local speed = tenth(GetEntitySpeed(inVeh and veh or ped))
         local p = _pose

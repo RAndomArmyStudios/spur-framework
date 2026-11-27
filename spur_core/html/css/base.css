@@ -9,7 +9,7 @@
    custom properties resolve at computed-value time, the override wins everywhere at
    equal specificity — that is the entire skinning mechanism.
 
-   2022-SAFE ONLY. FiveM's CEF is Chromium 103: no :has(), no native nesting, no
+   2022-SAFE ONLY. Cfx.re's CEF is Chromium 103: no :has(), no native nesting, no
    color-mix(), no container queries, no @layer. Derived tints are therefore declared as
    explicit alpha tokens beside their parent color, not computed.
 
@@ -193,7 +193,7 @@
     --dr-wire-dim:      rgba(255, 255, 255, 0.3);
     --dr-kind-events:   rgb(196, 78, 78);
     --dr-kind-events-tint:   rgba(196, 78, 78, 0.14);
-    --dr-kind-goals:    rgb(206, 176, 70);       /* GTA's objective yellow, muted */
+    --dr-kind-goals:    rgb(206, 176, 70);       /* the game's objective yellow, muted */
     --dr-kind-goals-tint:    rgba(206, 176, 70, 0.14);
     --dr-kind-flow:     rgb(138, 148, 168);
     --dr-kind-flow-tint:     rgba(138, 148, 168, 0.12);

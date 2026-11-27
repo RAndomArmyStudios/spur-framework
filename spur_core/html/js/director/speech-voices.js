@@ -1,7 +1,7 @@
 // ========================================
 // THE SPEECH TASK'S VOICES AND LINES (html/js/director/panels.js)
 //
-// RedM (spur_core, 26 Nov 2026): whip_core listed GTA V's voices and lines here. They are another game's and are
+// RedM (spur_core, 26 Nov 2026): whip_core listed the original game's voices and lines here. They are
 // gone; the lists are empty until RDR2's are gathered, so a speech step's Voice and Line are plain fields.
 // Each voice is [ its name, its label, its group (a: passers-by, g: gangs, s: jobs and services, n: others),
 // which lines it has (a bit each, base64) ].

@@ -5,13 +5,13 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 name 'spur_core'
 author 'Whippy and WLVF (whip_core); RedM port, non-commercial'
 description 'whip_core 1.3.0 ported to RedM (RDR2). Not WHIP, not made or endorsed by WHIP\'s author. LGPL 3.0.'
-version '1.3.0-redm.7'   -- the start-up banner reads it
--- No whip_updates line: the update check would compare this port against WHIP's own GTA V releases.
+version '1.3.0-redm.8'   -- the start-up banner reads it
+-- No whip_updates line: the update check would compare this port against WHIP's own releases.
 
 -- First on both sides: while spur_core loads, GetInvokingResource() names no caller.
 shared_script 'shared/invoker.lua'
 shared_script 'shared/error_tap.lua'
--- RedM: the GTA V natives the code still calls, mapped to RDR2 ones or made safe no-ops (CONVERSION.md lists
+-- RedM: the original game's natives the code still calls, mapped to RDR2 ones or made safe no-ops (CONVERSION.md lists
 -- which). Before every file that could call one.
 shared_script 'shared/rdr_compat.lua'
 shared_script 'shared/rdr_compat_stubs.lua'
@@ -48,7 +48,7 @@ shared_script 'shared/property_math.lua'
 shared_script 'shared/garage_bay.lua'
 shared_script 'shared/spot_shape.lua'
 shared_script 'shared/bubbles.lua'
--- RedM (spur_core, 24 Nov 2026): RDR2's weapons and their world models, in place of whip's GTA lists (none of which
+-- RedM (spur_core, 24 Nov 2026): RDR2's weapons and their world models, in place of whip's original-game lists (none of which
 -- RDR2 has; deleted 26 Nov 2026).
 shared_script 'shared/rdr_weapons.lua'
 shared_script 'shared/weapon_catalog.lua'
@@ -119,7 +119,7 @@ server_scripts {
     -- Before server/items/*.lua: wallet and duffle_bag call RegisterPanelItem.
     'server/panels.lua',
     -- The built-in list first: prop_catalog.lua seeds its table from it.
-    'server/prop_catalog_seed.lua',   -- RedM (spur_core, 24 Nov 2026): RDR2's props (dev/prop_catalog_rdr.py); GTA's are gone
+    'server/prop_catalog_seed.lua',   -- RedM (spur_core, 24 Nov 2026): RDR2's props (dev/prop_catalog_rdr.py); the original game's are gone
     'server/prop_catalog.lua',
     -- No JavaScript on the server: any makes FXServer enter spur_core every server frame.
     'server/clothing_pictures.lua',
@@ -148,7 +148,7 @@ server_scripts {
     'server/vehicle_catalog.lua',
     'server/vehicle_catalog_list.lua',
     'server/jobs.lua',
-    'server/atm_positions.lua',   -- GTA's own cash machines, for IsNearAtm (generated)
+    'server/atm_positions.lua',   -- the map's cash machines, for IsNearAtm (none on RDR2)
     'server/atm.lua',
     'server/shops.lua',
     'server/prices.lua',
@@ -423,7 +423,7 @@ client_scripts {
     'client/rdr_world.lua',          -- RedM (spur_core, 25 Nov 2026): RDR2's interactions as whip prompts
     'client/rdr_interactions.lua',   -- RedM (spur_core, 25 Nov 2026)
     'client/pause.lua',         -- after controls.lua (ControlBlocks at file scope)
-    'client/game_settings.lua', -- the pause menu's Settings page: GTA's settings menu under it
+    'client/game_settings.lua', -- the pause menu's Settings page: the game's settings menu under it
     'client/cam_shots.lua',
     'client/camera.lua',
     'client/drive_cam.lua',     -- after camera.lua
@@ -482,7 +482,7 @@ chat_theme 'spur' {
     style = '.chat-window, .chat-input { left: 22%; }',
 }
 
--- (whip_core streamed GTA for-sale sign props here: not part of the RedM port.)
+-- (whip_core streamed original-game for-sale sign props here: not part of the RedM port.)
 
 -- NUI callbacks answer only spur_core's own page: otherwise another resource's web view on an admin's client could call them.
 nui_callback_strict_mode 'true'

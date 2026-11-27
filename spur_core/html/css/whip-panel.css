@@ -1526,7 +1526,7 @@
     flex-shrink: 0;
 }
 .wp-avatar .wp-dot { position: absolute; right: 0; bottom: 0; z-index: 1; width: 9px; height: 9px; box-shadow: 0 0 0 2px var(--ui-surface-solid); }
-/* THEIR PORTRAIT (pickers.js avatar): GTA's headshot, framed on the face; the initials stay under it,
+/* THEIR PORTRAIT (pickers.js avatar): the game's headshot, framed on the face; the initials stay under it,
    hidden, for when it is missing. */
 .wp-avatar-img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 30%; }
 .wp-avatar.has-portrait .wp-avatar-initials { visibility: hidden; }
@@ -2539,7 +2539,7 @@ button.wp-tally:hover { background: var(--ui-surface-hover); }
 }
 
 /* ---- A place on the map (WP.place) ----
-   whip's GTA map (pause-map.js, css/pause.css), small, under the row that names the place, with Open map in its
+   whip's game map (pause-map.js, css/pause.css), small, under the row that names the place, with Open map in its
    corner. The map element fills its box (.pmap is absolute, inset 0). */
 .wp-place {
     position: relative;
@@ -3378,7 +3378,7 @@ button.ib-pic-frame:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--u
     text-align: center; border-top: 1px solid var(--ui-border); background: var(--ui-surface-solid); overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; }
 /* Their look beside the fields: the card, and the character editor's buttons under it. A look made there shows its
-   portrait (a headshot: the head, in the middle) where a GTA ped stands. */
+   portrait (a headshot: the head, in the middle) where a game ped stands. */
 .wl-look { display: flex; flex-direction: column; gap: var(--ui-sp-3); min-width: 0; }
 .wl-look > .wp-btn, .wl-look-pair > .wp-btn { width: 100%; justify-content: center; }
 .wl-look-card > img { object-position: 50% 50%; }

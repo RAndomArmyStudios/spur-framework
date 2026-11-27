@@ -6,7 +6,7 @@
 
    TWO ROWS, ONE EACH, TALKING INDEPENDENTLY, so two /me's at once both show. The shopper on top,
    the keeper under them: each a capsule like the player HUD's (css/status-hud.css), its face always
-   showing — the shopper's portrait (GTA's headshot, js/portrait.js), the keeper's picture the admin
+   showing — the shopper's portrait (the game's headshot, js/portrait.js), the keeper's picture the admin
    panel shows of its NPC, cropped to the head — and that one's line unfolding beside it as a HUD notice
    does from its disc, at the in-world bubble's proportions. A shop with no keeper has the one row.
 

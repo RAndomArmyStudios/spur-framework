@@ -1,11 +1,11 @@
 // ========================================
-// PAUSE MENU — whip's, in place of GTA's (client/pause.lua)
+// PAUSE MENU — whip's, in place of the game's (client/pause.lua)
 //
 // Left: the whip logo with its loading light, then Resume / Map / Controller / Swap Character /
-// Game Settings / Server Settings / Quit, and where the player is. Game Settings opens GTA's own settings menu in the
+// Game Settings / Server Settings / Quit, and where the player is. Game Settings opens the game's own settings menu in the
 // pause menu's place; Server Settings slides the menu away for the Settings page (settings-page.js) with this server's
 // settings, as Controller does. With the experimental Combined Settings page on (Config.Experimental.combinedSettings,
-// sent with each open) the two are one Settings item: that page with GTA's own settings beside the server's.
+// sent with each open) the two are one Settings item: that page with the game's own settings beside the server's.
 // Behind it, filling the screen, the map — centred on the
 // player in the middle of the screen. Map slides the menu away and makes the map live: drag, zoom,
 // double-click for a waypoint, a legend. Controller slides it away too and hides the map for the
@@ -27,7 +27,7 @@ import { logoMarkup, logoLight } from './logo-light.js';
 import { PadLayout } from './pad-layout.js';
 import { SettingsPage } from './settings-page.js';
 
-// The menu, by the Combined Settings page switch: off, GTA's own settings menu and this server's settings apart;
+// The menu, by the Combined Settings page switch: off, the game's own settings menu and this server's settings apart;
 // on, one Settings page with both (settings-page.js).
 const MENU_APART = [
     { id: 'resume', label: 'Resume' },
@@ -65,7 +65,7 @@ const STICK_PAN = 1300;     // px a second with the stick all the way over (half
 const TRIGGER_ZOOM = 2.4;   // zoom levels a second with a trigger pulled all the way (likewise)
 const STICK_TURN = 120;     // degrees a second the right stick turns the map, all the way over (likewise)
 const STICK_TILT = 60;      // ...and tilts it, up toward the horizon
-// Blip snapping on a pad, as GTA's map does: the centre this near a blip is on it — the blip is
+// Blip snapping on a pad, as the game's map does: the centre this near a blip is on it — the blip is
 // picked, the stick slows over it, and let go there the map slides it to the middle.
 const SNAP_R = 20;          // px
 const SNAP_SLOW = 0.45;     // the stick's speed while on one
@@ -135,7 +135,7 @@ const onPad = () => document.documentElement.dataset.input === 'pad';
 
 // ---- sounds ----
 
-/** One of GTA's frontend sounds, by what happened: 'nav' (up and down), 'side' (across), 'select', 'back'.
+/** One of the game's frontend sounds, by what happened: 'nav' (up and down), 'side' (across), 'select', 'back'.
  *  client/pause.lua plays it; the waypoint's own sound, and the open and Resume sounds, are played there. */
 const sound = (name) => nuiCallback('pauseSound', { name });
 
@@ -198,7 +198,7 @@ function drawConfirm() {
     confirmBtns.forEach((el, i) => el.classList.toggle('on', i === confirmSel));
 }
 
-// RedM (spur_core, 24 Nov 2026): whip's map draws GTA's world from a media pack (pause-map.js), and RDR2 has none, so
+// RedM (spur_core, 24 Nov 2026): whip's map draws the original game's world from a media pack (pause-map.js), and RDR2 has none, so
 // there the map stays blank. Map then opens RDR2's own map instead (client/pause.lua, the pauseRdrMap callback).
 let map3dOn = false;   // RedM (spur_core, 25 Nov 2026): Config.Map3D, sent with pauseOpen
 function openMap() {
@@ -214,7 +214,7 @@ function choose(i) {
     else if (id === 'map') openMap();   // RedM (spur_core, 24 Nov 2026): was setMode('map')
     else if (id === 'controller') setMode('pad');
     else if (id === 'settings' || id === 'serverSettings') setMode('settings');
-    else if (id === 'gameSettings') { sound('select'); nuiCallback('pauseSettings', {}); }   // GTA's own, in the pause menu's place
+    else if (id === 'gameSettings') { sound('select'); nuiCallback('pauseSettings', {}); }   // the game's own, in the pause menu's place
     else if (CONFIRMS[id]) ask(id);
 }
 
@@ -225,7 +225,7 @@ function answerConfirm(i) {
 
 // ---- legend ----
 
-/** Friendlier names than the sprite's for the common unnamed ones (FiveM's list calls a gas
+/** Friendlier names than the sprite's for the common unnamed ones (Cfx.re's list calls a gas
  *  station a "jerry can" and a store "crim holdups"). */
 const COMMON = { 52: 'Store', 361: 'Gas station', 75: 'Tattoo parlour' };
 

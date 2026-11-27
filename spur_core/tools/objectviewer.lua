@@ -1,5 +1,5 @@
 -- Object Viewer: names the props, vehicles and peds around you in the world, drawn by the game from one DUI texture
--- as billboards that face you. GTA gives only a model hash, so the name is read off the entity with
+-- as billboards that face you. The game gives only a model hash, so the name is read off the entity with
 -- GetEntityArchetypeName (Cfx-only client native). It errors on anything that is not a ped, vehicle or object (the
 -- three this tool scans) and can return an empty string, which counts as no name; the tag then falls back to the hash.
 -- It shares InteractGetCameraForward and InteractComputeScore with client/interact.lua so the entity it picks is
@@ -196,7 +196,7 @@ local function unsigned(h)
     return h
 end
 
--- WHAT THE GAME WILL NOT NAME, WHIP CAN. GTA V Enhanced answers GetEntityArchetypeName for some models only (a map's
+-- WHAT THE GAME WILL NOT NAME, WHIP CAN. The original game's Enhanced build answers GetEntityArchetypeName for some models only (a map's
 -- own props) and nothing for the rest, so they showed as their hash. The media packs have a picture of every prop, car and
 -- ped the Director places, each named by its model, and html/js/picture-bounds.js lists them all with the box round
 -- what is drawn in each: read once, that list names a hash, and gives the card its picture (fitted as the Director
@@ -294,8 +294,8 @@ end
 
 --- The resource that created this entity, if the game will say.
 ---
---- GetEntityScript is a base-GTA native that reports the script owning an entity, and under
---- FiveM that is normally the RESOURCE NAME — which is what makes "who spawned this" answerable
+--- GetEntityScript is a base-game native that reports the script owning an entity, and under
+--- Cfx.re that is normally the RESOURCE NAME — which is what makes "who spawned this" answerable
 --- at all. It is called behind a pcall because the documented signature carries an out-param
 --- that not every binding exposes the same way, and because entities owned by nothing at all
 --- are a normal case rather than an error.
@@ -310,7 +310,7 @@ local function EntityResource(entity)
     return nil
 end
 
--- GTA's own kinds of spawn (GetEntityPopulationType), for what no script made.
+-- The game's own kinds of spawn (GetEntityPopulationType), for what no script made.
 local POPULATION = {
     [1] = 'Game (kept)', [2] = 'Game (parked car)', [3] = 'Game (patrol)', [4] = 'Game (scenario)',
     [5] = 'Game (traffic, passer-by)', [6] = 'Game (kept)',
@@ -323,7 +323,7 @@ local origins = {}
 --- One line describing where an entity came from.
 ---
 --- In order: a player; a whip car (its id bag says which, saved or not); what the server said for it; the resource the
---- game names (GetEntityScript, often nothing for what the server made); then GTA's own kind of spawn. "Script
+--- game names (GetEntityScript, often nothing for what the server made); then the game's own kind of spawn. "Script
 --- (unnamed)" used to cover every whip car and NPC: the server made them, so no script on this game owns them.
 ---@return string
 local function EntityOrigin(entity, kind)

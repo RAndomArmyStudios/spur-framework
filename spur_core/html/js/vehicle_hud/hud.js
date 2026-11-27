@@ -12,7 +12,7 @@
 //   hud.setConfig({ scale?, right?, bottom?, attitude?, skins? })   size (1 = reference), dial centre from the corner
 //                                                 in dial radii, the aircraft attitude indicator: 'ball' (3D) or 'flat',
 //                                                 and skins: false for the dial as designed on every car
-//   WHIP EDIT:setState({ skin }) — a dial-art id from skins3d.js (the car's own GTA dashboard look),
+//   WHIP EDIT:setState({ skin }) — a dial-art id from skins3d.js (the car's own game dashboard look),
 //                                                 or false / null for the dial as designed
 //   hud.resize()                                  after the window changes size
 //   hud.dispose()                                 frees the WebGL context and GPU memory
@@ -103,13 +103,13 @@ export function createVehicleHud(canvas) {
   let smoothRpm = 0, dip = 0;                                 // rpm eased toward the updates; dip: the limiter bounce below it
   let bounceFor = 0;                                          // WHIP EDIT:how long the bounce has run
   // WHIP EDIT:how long the revs have been under the limiter zone, and how long that may last before the
-  // limiter lets go. GTA's rpm wobbles round the top (or the bounce would not play easing into a donut).
+  // limiter lets go. The game's rpm wobbles round the top (or the bounce would not play easing into a donut).
   let limiterOff = 0;
   const LIMITER_RELEASE = 0.25;
   // WHIP EDIT:the bounce follows the NEEDLE, not the flash: it starts the moment the needle reaches the top and
   // stops the moment the revs fall away. Tied to state.limiter it waited out the flash's 0.15 s hold (the needle
   // paused at the top) and its 0.25 s release (it bounced on the way down). In: the revs and the needle at the limiter
-  // (atLimit). Out: the revs under BOUNCE_OUT of the top, low enough that GTA's wobble round 99% stays in.
+  // (atLimit). Out: the revs under BOUNCE_OUT of the top, low enough that the game's wobble round 99% stays in.
   let atTop = false;
   const BOUNCE_OUT = 0.95;
 

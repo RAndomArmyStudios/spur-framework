@@ -84,7 +84,7 @@ const KIND = {
     preset: { order: 2, icon: 'place' },
 };
 
-/** a GTA camera pose from an orbit rig: a target, the distance to it, pitch (degrees, -90 down) and heading */
+/** a game camera pose from an orbit rig: a target, the distance to it, pitch (degrees, -90 down) and heading */
 function rigPose(r, W) {
     const p = rad(r.pitch), h = rad(r.heading);
     const fx = -Math.sin(h) * Math.cos(p), fy = Math.cos(h) * Math.cos(p), fz = Math.sin(p);
@@ -100,7 +100,7 @@ function poseRig(c, tz) {
     return { tx: c.x + fx * d, ty: c.y + fy * d, tz: c.z + fz * d, d: Math.max(1, d), pitch: c.rotX, heading: c.rotZ, fov: c.fov, shift: 0 };
 }
 
-/** a GTA camera pose's look direction */
+/** a game camera pose's look direction */
 function fwdOf(c) {
     const p = rad(c.rotX), h = rad(c.rotZ);
     return [-Math.sin(h) * Math.cos(p), Math.cos(h) * Math.cos(p), Math.sin(p)];

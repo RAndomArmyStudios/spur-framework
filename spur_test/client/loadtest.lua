@@ -21,7 +21,7 @@ local sentTotal   = 0
 --- arrives — players act in clusters, not on a metronome — and because a Wait per event would
 --- cap the rate at the frame rate long before it reached anything interesting.
 ---
---- THE RISK THIS CARRIES: these are real reliable network events. FiveM's server-side limiter is
+--- THE RISK THIS CARRIES: these are real reliable network events. Cfx.re's server-side limiter is
 --- not something whip can bypass, and a client that overruns it gets kicked for event overflow.
 --- The server caps the rate before it ever gets here; this loop does not second-guess that, but it
 --- does report what it actually sent so the panel shows reality rather than the request.

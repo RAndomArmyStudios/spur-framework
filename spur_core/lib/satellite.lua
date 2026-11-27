@@ -27,14 +27,14 @@ local _startProblems = 0
 -- ============================================
 --
 -- As spur_core keeps its own (shared/error_tap.lua): an error in your threads, timeouts, event handlers, NUI
--- callbacks, commands and statebag handlers, and a print in red (^1), is printed (or reported by FiveM) as before
+-- callbacks, commands and statebag handlers, and a print in red (^1), is printed (or reported by Cfx.re) as before
 -- and also handed to spur_core, which keeps the last few hundred for tools to read (GetErrorLog). A SecureEvent or
 -- SecureCallback handler of yours that throws is kept by spur_core under your name. Your export's errors still go
 -- to whoever called it, and are not kept.
 --
 -- To do it, this block replaces Citizen.CreateThread, CreateThreadNow and SetTimeout (CreateThread and SetTimeout
 -- too), RegisterCommand, AddStateBagChangeHandler, RegisterNUICallback and print in YOUR resource with versions
--- that do the same and report a failure. FiveM runs every event handler through CreateThreadNow, so each handler
+-- that do the same and report a failure. Cfx.re runs every event handler through CreateThreadNow, so each handler
 -- call costs one xpcall more (about half a microsecond). A resource that wraps these itself, or wants none of it,
 -- turns it off with one line in its fxmanifest:   whip_error_tap 'no'
 -- Everything else here (Whip.register, Whip.call...) works the same either way; its errors just are not kept.
@@ -89,7 +89,7 @@ if GetResourceMetadata(SELF, 'whip_error_tap', 0) ~= 'no' then
         if type(fn) ~= 'function' then return fn end
         return function(...) return runCaught(fn, ...) end
     end
-    -- A thread's catch, named as the function it wraps: FiveM names a thread after the function it was started with
+    -- A thread's catch, named as the function it wraps: Cfx.re names a thread after the function it was started with
     -- (the profiler, resmon), so one catch round every thread made all of your loops one row named after this file.
     -- Compiled once for each function a thread starts with, as a function of that file over those lines (spur_core's
     -- shared/error_tap.lua does the same).
@@ -128,7 +128,7 @@ if GetResourceMetadata(SELF, 'whip_error_tap', 0) ~= 'no' then
     ---@diagnostic disable-next-line: duplicate-set-field -- wrapped on purpose (this section's top says why)
     Citizen.SetTimeout = function(ms, fn) return nativeTimeout(ms, threadGuard(fn)) end
     CreateThread, SetTimeout = Citizen.CreateThread, Citizen.SetTimeout
-    -- The runtime catches these itself: kept, then raised again, so FiveM reports them as before.
+    -- The runtime catches these itself: kept, then raised again, so Cfx.re reports them as before.
     local function rethrow(fn)
         if type(fn) ~= 'function' then return fn end
         return function(...)
@@ -246,7 +246,7 @@ local function callCore(name, ...)
     end
 
     -- Called where nothing can wait (file scope, a sort callback): run in line as a plain export call.
-    -- An export that waits then shows up as an "attempt to yield" error (FiveM's export __call awaits
+    -- An export that waits then shows up as an "attempt to yield" error (Cfx.re's export __call awaits
     -- whenever coroutine.running() is truthy, which in Lua 5.4 it always is). The export is already
     -- running in spur_core's own thread and finishes there, so the caller is told it STARTED.
     if not coroutine.isyieldable() then
@@ -264,7 +264,7 @@ local function callCore(name, ...)
 
     -- An export that cannot wait (most of them): straight through, no thread and no promise.
     if not WAITS_HERE[name] then
-        -- The lookup inside the pcall too: FiveM raises "No such export" for a name spur_core does not have (one
+        -- The lookup inside the pcall too: Cfx.re raises "No such export" for a name spur_core does not have (one
         -- renamed, or a typo), and that must answer false like any failure rather than throw out of a Whip.register.
         local packed = table.pack(pcall(function(...) return exports[CORE][name](exports[CORE], ...) end, ...))
         if not packed[1] then
@@ -410,7 +410,7 @@ function Whip.register(fn)
 end
 
 --- Run `fn` when spur_core stops. ONLY FOR A RESOURCE WITHOUT `dependency 'spur_core'`: with it (every
---- whip resource), FiveM stops your resource first when spur_core stops, so this never runs, and your
+--- whip resource), Cfx.re stops your resource first when spur_core stops, so this never runs, and your
 --- resource starts fresh when spur_core brings it back. Without it, this is for letting go of anything
 --- that only made sense while spur_core ran: a UI you opened through it, a car you were previewing.
 --- Whatever you REGISTERED needs no cleanup — spur_core forgets it by itself, and Whip.register puts it back.
@@ -927,7 +927,7 @@ end
 -- A controller on your NUI screen (client side): Whip.padScreen
 -- ============================================
 --
--- The browser cannot read a gamepad inside FiveM. While your screen is open this reads the pad in Lua and
+-- The browser cannot read a gamepad inside Cfx.re. While your screen is open this reads the pad in Lua and
 -- sends each press to your page, owns your NUI focus (no mouse cursor while a pad drives; the mouse moving
 -- brings it back), and holds the pad's world actions off. On the client, once:
 --
@@ -1726,7 +1726,7 @@ end
 -- Weapons of your own (both sides): Whip.weapons
 -- ============================================
 --
--- Add-on weapons your resource streams (its own WEAPON_* in its weapons.meta), offered beside GTA's wherever whip lists
+-- Add-on weapons your resource streams (its own WEAPON_* in its weapons.meta), offered beside the game's wherever whip lists
 -- weapons: the Director's NPC weapons and its Hold a Weapon step, its Fixed Weapons (a firearm with a world model),
 -- Dungeon Mode, the Object Viewer's Give a weapon. ONE call, in a file both sides load:
 --
@@ -1735,7 +1735,7 @@ end
 --         { name = 'WEAPON_MY_KNIFE', label = 'Knife', group = 'melee' },
 --     }, { tag = 'mine' })
 --
--- name: WEAPON_ and capitals, digits or _ (64), never one of GTA's. label (40). group: pistol, smg, rifle, machine gun,
+-- name: WEAPON_ and capitals, digits or _ (64), never one of the game's. label (40). group: pistol, smg, rifle, machine gun,
 -- shotgun, sniper, heavy, thrown, stun gun or melee. model: its world model, a firearm's only; with one it can be a
 -- Fixed Weapon. tag (16): shown beside each label, "Pump Shotgun (mine)"; your resource's name unless given.
 -- Called again, the new list replaces the old. They go when your resource stops. A refusal is printed here, with why.

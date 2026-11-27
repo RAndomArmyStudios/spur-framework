@@ -387,7 +387,7 @@ function DirectorNodes.carLook(ctx, worldId)
 end
 
 --- How damaged a car reads, 0 (new) to 100 (wrecked): the worse of its body and its engine. nil while no player's game
---- runs it: the server reads what a game last sent, and 0 before one has (FiveM: no health node yet).
+--- runs it: the server reads what a game last sent, and 0 before one has (Cfx.re: no health node yet).
 function DirectorNodes.carDamage(ent)
     local owner = NetworkGetEntityOwner(ent)
     if not owner or owner <= 0 then return nil end

@@ -545,7 +545,7 @@ local function listMissing(models, why)
         if model then listed[model] = true end
     end
     if text == '' then
-        -- RedM (spur_core, 24 Nov 2026): the game is RDR2, not GTA V Legacy or Enhanced.
+        -- RedM (spur_core, 24 Nov 2026): the game is RDR2, not the original game's Legacy or Enhanced build.
         text = '# Props hidden from selection in game: spur_core found them missing from this game (RDR2).\n'
             .. '# Each is marked unavailable in the prop catalog, so the furnisher never offers it. Added to as more\n'
             .. '# are found.\n\n'

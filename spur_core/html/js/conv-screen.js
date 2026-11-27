@@ -1,7 +1,7 @@
 /* ========================================
    THE DIALOG ON THE SCREEN — RedM (spur_core, 24 Nov 2026)
 
-   On GTA the dialog capsule (interact3d/dialog.html) is a DUI texture that client/conversations.lua draws beside the
+   On the game the dialog capsule (interact3d/dialog.html) is a DUI texture that client/conversations.lua draws beside the
    NPC. RDR2 has no DUI textures, so there it could not be drawn at all: a Director Dialog Line showed neither the
    NPC's line nor the answers. Then conversations.lua sends the capsule's messages here, and this shows that same
    page in a frame low on the screen, so it looks and lays out (grid, stack, team, haggle) as it does in the world.

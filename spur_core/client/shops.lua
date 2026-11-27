@@ -99,7 +99,7 @@ end
 
 local function CreateShopBlip(data)
     if shopBlips[data.shopId] then return end
-    -- No icon asked for: none, including 0, which GTA would draw as its "higher" arrow. And none
+    -- No icon asked for: none, including 0, which the game would draw as its "higher" arrow. And none
     -- while the resource that made the shop is not running (Shops.wireOne's ownerAway).
     if not data.blipSprite or data.blipSprite == 0 or data.ownerAway then return end
 
@@ -111,7 +111,7 @@ local function CreateShopBlip(data)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentSubstringPlayerName(data.name or 'Shop')
     EndTextCommandSetBlipName(blip)
-    -- GTA can't read a blip's name back: the pause map's legend asks client/blips.lua for it.
+    -- The game can't read a blip's name back: the pause map's legend asks client/blips.lua for it.
     WhipBlipSetLabel(blip, data.name or 'Shop')
 
     shopBlips[data.shopId] = blip

@@ -118,7 +118,7 @@ function GetVehicleProperties(vehicle)
 end
 
 -- ============================================
--- Extras, without GTA's repair
+-- Extras, without the game's repair
 -- ============================================
 --
 -- SWITCHING AN EXTRA REPAIRS THE CAR (SET_VEHICLE_EXTRA): its body, its engine, its doors and tyres, its fuel and
@@ -128,7 +128,7 @@ end
 -- cannot be put back; whip keeps health, doors and tyres, not dents.
 
 local EXTRA_LAST = 14                              -- extras 1-14: what whip saves (GetVehicleProperties)
-local WEAR_TYRES = { 0, 1, 2, 3, 4, 5, 45, 47 }    -- GTA's tyre numbers (client/vehicle_damage.lua's TYRES)
+local WEAR_TYRES = { 0, 1, 2, 3, 4, 5, 45, 47 }    -- the game's tyre numbers (client/vehicle_damage.lua's TYRES)
 local WEAR_DOORS = 7                               -- doors 0-7
 
 local function readWear(veh)
@@ -260,7 +260,7 @@ function SetVehicleProperties(vehicle, props)
     -- Livery
     if props.livery ~= nil and props.livery >= 0 then SetVehicleLivery(vehicle, props.livery) end
 
-    -- Extras: only those not already as saved, and without GTA's repair (setExtras). Every push of a car's look
+    -- Extras: only those not already as saved, and without the game's repair (setExtras). Every push of a car's look
     -- used to set them all, which repaired any car with extras each time.
     if type(props.extras) == 'table' then setExtras(vehicle, props.extras) end
 
@@ -302,7 +302,7 @@ local _saidEntityHint = {}   -- [resource] = true once told (SetVehiclePropertie
 
 --- Apply an appearance to a vehicle, here and now.
 ---
---- LOCAL AND UNSAVED, BUT NOT UNSEEN. Vehicle mods are part of GTA's networked vehicle state, so
+--- LOCAL AND UNSAVED, BUT NOT UNSEEN. Vehicle mods are part of the game's networked vehicle state, so
 --- this changes the car for every player who can see it — provided this client holds network
 --- control of the entity. Without control the natives silently do nothing, so take it first (in a thread):
 ---
@@ -338,9 +338,9 @@ exports('SetVehicleProperties', function(vehicle, props)
     return true
 end)
 
---- Switch a vehicle's extras (the parts GTA turns on and off: light bars, roof racks, covers), keeping its damage.
+--- Switch a vehicle's extras (the parts the game turns on and off: light bars, roof racks, covers), keeping its damage.
 ---
---- GTA REPAIRS A CAR WHEN AN EXTRA IS SWITCHED: its health, doors, tyres, fuel and dirt. This reads them first and
+--- The game REPAIRS A CAR WHEN AN EXTRA IS SWITCHED: its health, doors, tyres, fuel and dirt. This reads them first and
 --- puts them back, and switches only the extras not already as asked. Use it, not SetVehicleExtra, or switching a
 --- part is a free repair. Local and unsaved like SetVehicleProperties (control first); stored with the car through
 --- SetVehicleAppearance's `extras`.

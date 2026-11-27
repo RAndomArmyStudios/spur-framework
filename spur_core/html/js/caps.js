@@ -1,7 +1,7 @@
 /* ========================================
    CAPS — what this browser can do
 
-   FiveM's browser is moving from Chromium 103 to Chromium 144. whip runs on both, so it never asks "which version is this?" — it asks the browser,
+   Cfx.re's browser is moving from Chromium 103 to Chromium 144. whip runs on both, so it never asks "which version is this?" — it asks the browser,
    feature by feature, and uses the new way where the answer is yes and the old way where it is no.
 
    window.WhipCaps, set by this file:
@@ -19,9 +19,9 @@
      schedulerYield    scheduler.yield() — let the browser draw between chunks of a long job
      webgpu            navigator.gpu is there (not a promise that a GPU adapter is)
      zoomScreenPx      inside a CSS-zoomed box getBoundingClientRect is in SCREEN pixels. False on
-                       FiveM's Chromium 103, which measured such boxes unzoomed (Chrome 128
+                       Cfx.re's Chromium 103, which measured such boxes unzoomed (Chrome 128
                        standardised zoom). Measured, not looked up.
-     gameView          FiveM's new game view: CfxGameViewRenderer, and gl.CFX_BIND_GAME_VIEW on a
+     gameView          Cfx.re's new game view: CfxGameViewRenderer, and gl.CFX_BIND_GAME_VIEW on a
                        WebGL2 texture. (<object type="application/x-cfx-game-view"> shows the game
                        on both builds; this is what a page needs to read the picture itself.)
 
@@ -34,11 +34,11 @@
      WhipCaps.snapshot()           the flags alone, as a plain object (for Lua)
 
    On <html>: class caps-<flag> for every flag that is true (caps-anchor, caps-game-view ...) and
-   data-chrome="<version>". In CSS, @supports is safe only for a feature FiveM's Chromium 103 does not
+   data-chrome="<version>". In CSS, @supports is safe only for a feature Cfx.re's Chromium 103 does not
    have at all (text-wrap, anchor positioning, field-sizing, interpolate-size, @starting-style); for
    :has() use .caps-has, and for zoomScreenPx and gameView the classes are the only way to ask.
 
-   NEVER JUST "THE BROWSER PARSES IT". FiveM's Chromium 103 ran with every experimental web feature
+   NEVER JUST "THE BROWSER PARSES IT". Cfx.re's Chromium 103 ran with every experimental web feature
    switched on, so a half-built feature parses there: CSS.supports('selector(:has(a))') is true on it.
    And any value with var() in it passes CSS.supports / @supports in every Chrome (it is only checked
    when the style is worked out), so a test never puts var() in. A flag is true only where the browser
@@ -133,7 +133,7 @@
         return out;
     };
 
-    /** Ask again (FiveM adds the game view to the page as it is made) and set the classes again. */
+    /** Ask again (Cfx.re adds the game view to the page as it is made) and set the classes again. */
     caps.refresh = function () {
         detect();
         applyClasses();
@@ -162,7 +162,7 @@
     caps.refresh();
     window.WhipCaps = caps;
 
-    // Once more when the page is in: anything FiveM injected late is counted, and on a page that
+    // Once more when the page is in: anything Cfx.re injected late is counted, and on a page that
     // loaded this before <html> existed the classes land now
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { caps.refresh(); });

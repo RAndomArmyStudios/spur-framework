@@ -10,7 +10,7 @@
 -- layer on top: Focus.padInput(on).
 --
 -- No cursor while the pad drives the screen: that layer takes the cursor away through SetNuiFocus's hasCursor, since
--- CSS `cursor: none` reaches FiveM as no cursor handle and it puts the default cursor up. Moving the mouse brings the
+-- CSS `cursor: none` reaches Cfx.re as no cursor handle and it puts the default cursor up. Moving the mouse brings the
 -- cursor back (the driver lets go). A screen the pad cannot drive (the character creator) never gets here, so it
 -- keeps its cursor.
 

@@ -65,7 +65,7 @@ export function placeMarks(places) {
 
 const yesNo = (v) => (v === undefined ? undefined : v ? 'Yes' : 'No');
 
-// A car's takes on the map: each drive its own colour, the first GTA's route purple.
+// A car's takes on the map: each drive its own colour, the first the game's route purple.
 export const TAKE_COLOURS = ['#a44cf2', '#38bdf8', '#fbbf24', '#f472b6', '#34d399', '#f97316'];
 const clock = (ms) => { const sec = Math.round(ms / 1000); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
 

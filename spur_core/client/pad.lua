@@ -1,9 +1,9 @@
 -- The pad in the world: whip's buttons, each player's layout, and the stick jog and sprint.
 -- What a button does is a layout (Config.Controller.Layout is the default; each player can change theirs
 -- on the pause menu's Controller screen, kept in a KVP). Other resources add actions with
--- RegisterPadAction. GTA's own buttons stay GTA's: only whip's actions move, between whip's buttons (SLOTS).
+-- RegisterPadAction. The game's own buttons stay the game's: only whip's actions move, between whip's buttons (SLOTS).
 -- The buttons are read as frontend controls every frame while a pad is the device (ControlBlocks
--- 'padRead'), since FiveM key bindings never fired from a pad. Each press also asks WhipLastInputIsPad,
+-- 'padRead'), since Cfx.re key bindings never fired from a pad. Each press also asks WhipLastInputIsPad,
 -- as the frontend controls are arrow keys on a keyboard. Actions wait for IsGameInputFree unless they
 -- work in menus. While LB is held, a prompt's A, a bar's cancel and a panel's select and X step aside.
 
@@ -48,11 +48,11 @@ end
 
 -- whip's buttons, and the actions that go on them
 
---- Each is a frontend control (one physical button whatever GTA's layout). `lb`: read while LB is held.
---- `block`: GTA controls held off while LB is held and something is on it. `dir`: a prompt's options
+--- Each is a frontend control (one physical button whatever the game's layout). `lb`: read while LB is held.
+--- `block`: game controls held off while LB is held and something is on it. `dir`: a prompt's options
 --- step on it. `car`: read only in a vehicle, and a prompt in view takes it first. `foot`: read only
---- on foot. A `car` or `foot` button is GTA's own, taken only while what is on it is ready
---- (SetPadActionReady); `gta` lists the controls held off then. Listed in the controller screen's
+--- on foot. A `car` or `foot` button is the game's own, taken only while what is on it is ready
+--- (SetPadActionReady); `game` lists the controls held off then. Listed in the controller screen's
 --- order; the first button keeps an action a layout names twice.
 local SLOTS = {
     { id = 'dpad_up',       control = 188, name = 'D-Up',       dpad = true, dir = 'up' },
@@ -60,8 +60,8 @@ local SLOTS = {
     { id = 'dpad_left',     control = 189, name = 'D-Left',     dpad = true },
     { id = 'dpad_right',    control = 190, name = 'D-Right',    dpad = true },
     { id = 'l3',            control = 209, name = 'L3' },
-    { id = 'veh_a',         control = 201, name = 'A (in a vehicle)', car = true, gta = { 73 } },        -- a bike's duck
-    { id = 'foot_b',        control = 202, name = 'B (on foot)',      foot = true, gta = { 45, 140, 263 } },  -- reload, the light punch
+    { id = 'veh_a',         control = 201, name = 'A (in a vehicle)', car = true, game = { 73 } },        -- a bike's duck
+    { id = 'foot_b',        control = 202, name = 'B (on foot)',      foot = true, game = { 45, 140, 263 } },  -- reload, the light punch
     { id = 'lb_a',          control = 201, name = 'LB+A',       lb = true, block = { 73, 141 } },       -- duck in a car, the heavy punch
     { id = 'lb_b',          control = 202, name = 'LB+B',       lb = true, block = { 45, 140, 263 } },  -- reload, the light punch
     { id = 'lb_x',          control = 203, name = 'LB+X',       lb = true, block = { 22, 99 } },        -- jump, a car's next weapon
@@ -301,7 +301,7 @@ end
 local held = false
 local down = {}   -- [lb slot id] = its button is down, during this LB hold
 
---- Held off while LB is down: GTA's actions on the buttons LB + something uses, and 21 (sprint) only
+--- Held off while LB is down: the game's actions on the buttons LB + something uses, and 21 (sprint) only
 --- where A still sprints (SprintOnA) and LB + A holds something, else it would stop the stick sprint.
 local function modBlock()
     local list = {}
@@ -396,7 +396,7 @@ end)
 -- action, on L3 by default). The first click jogs at once; one click while sprinting drops to the jog.
 -- The read holds off 36 (duck), so there is no sneak on a pad.
 -- Jog = a move blend of at least 2 (1 walks, 2 jogs, 3 sprints). Sprint = at least 3 with sprint (21)
--- held as well. GTA forgets both after a frame, so the read sets them every frame while one is on.
+-- held as well. The game forgets both after a frame, so the read sets them every frame while one is on.
 -- stickClick times the double click itself (SprintDoubleClickMs).
 
 --- Below this far from the centre the stick is "in the middle".
@@ -408,7 +408,7 @@ local lastClick = -100000
 local padFrame   -- the read, below; the run switches its block
 
 --- The read's block: 36 (sneak), 21 (A's sprint, not with SprintOnA), 80 (B's cinematic camera in a car),
---- and GTA's own action on a `car` or `foot` button while what is on it is ready (73 under A in a vehicle,
+--- and the game's own action on a `car` or `foot` button while what is on it is ready (73 under A in a vehicle,
 --- 45/140/263 under B on foot). Re-held as the player gets in or out. Nothing at all during the stick
 --- sprint: ControlBlocks' "related actions" would stop the injected sprint.
 holdReader = function()
@@ -419,9 +419,9 @@ holdReader = function()
         controls[#controls + 1] = 80
         local inCar = IsPedInAnyVehicle(PlayerPedId(), false)
         for _, s in ipairs(SLOTS) do
-            if s.gta and ((s.car and inCar) or (s.foot and not inCar))
+            if s.game and ((s.car and inCar) or (s.foot and not inCar))
                 and layout[s.id] and actionOf(layout[s.id]).ready ~= false then
-                for _, c in ipairs(s.gta) do controls[#controls + 1] = c end
+                for _, c in ipairs(s.game) do controls[#controls + 1] = c end
             end
         end
     end
@@ -661,7 +661,7 @@ local function vehicleControls(veh)
     return rows
 end
 
---- What GTA's help text names a binding: 't_E' for a key, 'b_115' for a mouse wheel.
+--- What the game's help text names a binding: 't_E' for a key, 'b_115' for a mouse wheel.
 local function bindingName(command)
     return GetControlInstructionalButton(0, GetHashKey(command) | 0x80000000, true)
 end
@@ -721,7 +721,7 @@ end
 AddEventHandler('spur_core:vehicle:entered', function(data)
     if type(data) ~= 'table' then return end
     if data.seat == -1 then showVehicleControls(data.entity) else hideVehicleControls() end
-    if reading then holdReader() end   -- GTA's buttons differ in a car
+    if reading then holdReader() end   -- the game's buttons differ in a car
 end)
 AddEventHandler('spur_core:vehicle:exited', function()
     hideVehicleControls()
@@ -736,7 +736,7 @@ end)
 --         onRelease = function() stop() end,
 --         where     = 'car',                   -- 'car' / 'foot': where it does anything
 --         slot      = 'veh_a',                 -- the button it goes on while that has nothing on it
---         ready     = false,                   -- not yet: the button stays GTA's (SetPadActionReady)
+--         ready     = false,                   -- not yet: the button stays the game's (SetPadActionReady)
 --     })
 --
 -- One owner per name: registering again replaces it, and it goes when its resource stops. It runs only
@@ -824,8 +824,8 @@ exports('RemovePadAction', function(id)
     return padActionReg:remove(Registry.caller(), id)
 end)
 
---- Can one of your pad actions do anything right now? If not ready, its button is GTA's again (the press
---- goes through and GTA's action is not held off). It keeps its button.
+--- Can one of your pad actions do anything right now? If not ready, its button is the game's again (the press
+--- goes through and the game's action is not held off). It keeps its button.
 ---@param id string
 ---@param ready boolean
 ---@return boolean ok, string|nil why

@@ -78,7 +78,7 @@ function DirectorLore.ensureTable()
 end
 
 -- ============================================
--- What its NPC wears on top (a hat): GTA puts no prop on a ped by itself
+-- What its NPC wears on top (a hat): the game puts no prop on a ped by itself
 -- ============================================
 --
 -- { { anchor, drawable, texture }, ... }: anchor 0 is the head (a hat), 1 the eyes (glasses). Kept as
@@ -317,7 +317,7 @@ function DirectorLore.save(key, f, byName)
     if name == '' or #name > 80 then return nil, 'A name is 1 to 80 characters' end
     local model = trim(f.model)
     if #model > 64 or (model ~= '' and not model:match('^[%w_]+$')) then return nil, 'A ped model is its spawn name (letters, digits, _)' end
-    -- One with a look made in the character editor keeps that look's ped (Use a GTA ped takes the look away first).
+    -- One with a look made in the character editor keeps that look's ped (Use a game ped takes the look away first).
     if looks[key] then model = looks[key].model end
     local bankName = trim(f.bankName)
     if #bankName > 50 then return nil, 'A bank name is at most 50 characters' end
@@ -413,7 +413,7 @@ end
 -- Its look, made in the character editor, and its headshot
 -- ============================================
 
---- Their look made in the character editor (an appearance, a copy), or nil for a GTA ped.
+--- Their look made in the character editor (an appearance, a copy), or nil for a game ped.
 function DirectorLore.lookOf(key)
     local look = looks[key]
     return look and json.decode(json.encode(look)) or nil
@@ -421,7 +421,7 @@ end
 
 --- Give them a look made in the character editor, with the headshot taken of it (a picture as server/portraits.lua
 --- keeps one; '' for none, which takes an old one away: it shows the old look). `look` nil takes the look and its
---- headshot away (Use a GTA ped): their ped stays as it was until it is changed. true, or false and why.
+--- headshot away (Use a game ped): their ped stays as it was until it is changed. true, or false and why.
 function DirectorLore.setLook(key, look, image, byName)
     local c = chars[key]
     if not c then return false, 'No lore character called ' .. tostring(key) end
@@ -478,7 +478,7 @@ function DirectorLore.setLook(key, look, image, byName)
 end
 
 -- The builder's game sends the look it made (the character editor's Save; tools/panel_sections/director.lua) with
--- the headshot it took of it, or the Lore page sends 'none' to take the look away (Use a GTA ped).
+-- the headshot it took of it, or the Lore page sends 'none' to take the look away (Use a game ped).
 SecureCallback('spur_core:director:loreLook', {
     permission = 'director.build', whileDead = true, rateLimit = 2000, burst = 2,
     params = { { 'key', 'key', 64 }, { 'look', 'any' }, { 'image', 'string', (Portraits and Portraits.MAX_LEN or 65536) + 1, '' } },

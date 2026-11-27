@@ -252,7 +252,7 @@ local function modeLoop()
                 UI.ShowInterrupted(stopped, 'Placing ' .. tostring(placeItemName))
                 CancelPlaceMode(PlayerIsDead and 'dead' or 'cancelled')
             else
-                -- Scroll = rotate, independent of everything else. GTA headings grow
+                -- Scroll = rotate, independent of everything else. Game headings grow
                 -- counter-clockwise, so wheel UP turns the item left, DOWN turns it
                 -- right, 15° a notch; % keeps it in the event's 0..360 param range.
                 -- (A PlaceObject call's: 2° with Ctrl held, and the arrows raise and lower it.)

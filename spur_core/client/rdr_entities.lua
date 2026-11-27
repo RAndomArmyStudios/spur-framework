@@ -34,7 +34,7 @@ end)
 
 -- RedM (spur_core, 24 Nov 2026): a vehicle the server asked for, made here. The server's own CreateVehicle gives a wagon
 -- no harness to fill (RDR2 expects 0 draft animals), so the server asks this game instead (server/rdr_entities.lua,
--- askVehicle). RDR2's CreateVehicle takes two more arguments than GTA's: bDontAutoCreateDraftAnimals false puts the
+-- askVehicle). RDR2's CreateVehicle takes two more arguments than the original game's: bDontAutoCreateDraftAnimals false puts the
 -- wagon's own animals in its harness. client/draft_animals.lua tells the server of them, and fills an empty harness.
 local DRAFT_ANIMAL_COUNT = 0xA19447D83294E29F   -- GET_DRAFT_ANIMAL_COUNT (vehicle, int* expected, int* actual)
 local IS_DRAFT_VEHICLE   = 0xEA44E97849E9F3DD

@@ -2,7 +2,7 @@
 -- /whip SECTION — Vehicle Adjustments (client wiring)
 -- ============================================
 --
--- Trunk and glovebox per category (`vehicle_class_meta`, every model of one GTA vehicle class) and per model
+-- Trunk and glovebox per category (`vehicle_class_meta`, every model of one game vehicle class) and per model
 -- (`vehicle_meta`). The section in html/js/wp/vehicleModels.js is the screen, and every change is one of
 -- server/vehicle_manager.lua's whip.devtools-gated callbacks. This file only asks.
 

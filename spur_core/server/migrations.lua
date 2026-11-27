@@ -503,7 +503,7 @@ Migrations.list = {
             .. 'A database that has not seeded them yet has none of these rows (the catalog seeds after migrations, '
             .. 'from server/prop_catalog_seed_world.lua, which has the v2 categories): nothing to do.',
         run = function()
-            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- RedM (spur_core, 26 Nov 2026): the list was the original game's props and is gone. SPUR's catalog
             -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
@@ -518,7 +518,7 @@ Migrations.list = {
             .. 'data/prop_category_moves_v3.csv. A database that has not seeded them yet: nothing to do (the seed '
             .. 'has the v3 categories and leaves the 8 out).',
         run = function()
-            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- RedM (spur_core, 26 Nov 2026): the list was the original game's props and is gone. SPUR's catalog
             -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
@@ -531,7 +531,7 @@ Migrations.list = {
             .. 'unavailable already). The list is data/prop_category_moves_v4.csv. A database that has not seeded '
             .. 'them yet: nothing to do (the seed leaves them out).',
         run = function()
-            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- RedM (spur_core, 26 Nov 2026): the list was the original game's props and is gone. SPUR's catalog
             -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
@@ -544,7 +544,7 @@ Migrations.list = {
             .. 'parts) and come out of the furnisher. Each only while it is still where v4 left it. The list is '
             .. 'data/prop_category_moves_v5.csv. A database that has not seeded them yet: nothing to do.',
         run = function()
-            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- RedM (spur_core, 26 Nov 2026): the list was the original game's props and is gone. SPUR's catalog
             -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
@@ -677,8 +677,9 @@ Migrations.list = {
     },
     {
         -- RedM (spur_core, 23 Nov 2026): new.
-        id   = '048_redm_gta_prop_seed',
-        note = 'RedM: the furniture catalog was seeded with whip_core\'s GTA V props (some 15,000), which RDR2 does '
+        id   = '048_redm_prop_seed_emptied',
+        renamed = true,   -- RedM (spur_core, 26 Nov 2026): id reworded; see isApplied
+        note = 'RedM: the furniture catalog was seeded with whip_core\'s props from the original game (some 15,000), which RDR2 does '
             .. 'not have, and every login sent them all. The seed is now empty (server/prop_catalog_seed.lua). This '
             .. 'takes out every seeded row (no addedBy): /prop add rows stay, and Config.PropSeeds rows are seeded '
             .. 'again straight after, as start-up loads the catalog after the migrations. A `run`: on a fresh '
@@ -687,19 +688,20 @@ Migrations.list = {
             if not Migrations.has.table('prop_catalog') then return true end
             local ok, res = pcall(MySQL.query.await, 'DELETE FROM `prop_catalog` WHERE `addedBy` IS NULL')
             if not ok then
-                print(('[spur_core:migrations] 048 could not remove the GTA props (%s); it runs again at the next '
+                print(('[spur_core:migrations] 048 could not remove the original-game props (%s); it runs again at the next '
                     .. 'start'):format(tostring(res)))
                 return false
             end
             local n = type(res) == 'table' and tonumber(res.affectedRows) or 0
-            if n > 0 then print(('[spur_core:migrations] 048: %d GTA prop(s) taken out of the furniture catalog'):format(n)) end
+            if n > 0 then print(('[spur_core:migrations] 048: %d original-game prop(s) taken out of the furniture catalog'):format(n)) end
             return true
         end,
     },
     {
         -- RedM (spur_core, 24 Nov 2026): new.
-        id   = '049_redm_gta_vehicle_catalog',
-        note = 'RedM: the vehicle catalog was seeded with whip_core\'s GTA V cars (some 700), none of which RDR2 has. '
+        id   = '049_redm_vehicle_catalog_rdr2',
+        renamed = true,   -- RedM (spur_core, 26 Nov 2026): id reworded; see isApplied
+        note = 'RedM: the vehicle catalog was seeded with whip_core\'s cars from the original game (some 700), none of which RDR2 has. '
             .. 'The list is now RDR2\'s (server/vehicle_catalog_list.lua). This takes out every row that is not on it; '
             .. 'start-up loads the catalog after the migrations and adds the RDR2 ones. A `run`: on a fresh database '
             .. 'the table is not there yet, and nothing needs taking out.',
@@ -716,12 +718,12 @@ Migrations.list = {
             local marks = ('?,'):rep(#keep):sub(1, -2)
             local ok, res = pcall(MySQL.query.await, 'DELETE FROM `vehicle_catalog` WHERE `model` NOT IN (' .. marks .. ')', keep)
             if not ok then
-                print(('[spur_core:migrations] 049 could not remove the GTA cars (%s); it runs again at the next '
+                print(('[spur_core:migrations] 049 could not remove the original-game cars (%s); it runs again at the next '
                     .. 'start'):format(tostring(res)))
                 return false
             end
             local n = type(res) == 'table' and tonumber(res.affectedRows) or 0
-            if n > 0 then print(('[spur_core:migrations] 049: %d GTA car(s) taken out of the vehicle catalog'):format(n)) end
+            if n > 0 then print(('[spur_core:migrations] 049: %d original-game car(s) taken out of the vehicle catalog'):format(n)) end
             return true
         end,
     },
@@ -864,8 +866,21 @@ local function loadApplied()
     end
     for _, row in ipairs(rows or {}) do
         applied[row.id] = true
+        local num = type(row.id) == 'string' and row.id:match('^(%d+)_')
+        if num then applied['#' .. num] = true end   -- RedM (spur_core, 26 Nov 2026): for isApplied
     end
     return applied
+end
+
+--- Has this database had the migration? By its id; or, for one marked `renamed` (its id was reworded after it
+--- shipped), by its number, as a database that ran it recorded it under the old id. RedM (spur_core, 26 Nov 2026).
+---@param applied table<string, boolean>
+---@param migration table
+---@return boolean
+local function isApplied(applied, migration)
+    if applied[migration.id] then return true end
+    local num = migration.renamed and migration.id:match('^(%d+)_')
+    return num and applied['#' .. num] or false
 end
 
 --- One migration's statements (each skipped when its guard says the change is there), then its `run`.
@@ -958,7 +973,7 @@ function Migrations.run(newDatabase)
     -- Counted from 1, whatever their ids: what this database is about to be given.
     local pending = {}
     for _, migration in ipairs(Migrations.list) do
-        if not applied[migration.id] then pending[#pending + 1] = migration end
+        if not isApplied(applied, migration) then pending[#pending + 1] = migration end
     end
     if #pending == 0 then return true end
     print(('[spur_core:migrations] updating the database: %d change(s)'):format(#pending))

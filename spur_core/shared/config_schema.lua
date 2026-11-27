@@ -55,7 +55,7 @@ local MAX_CHARACTERS = 30
 
 -- A place on the map, and the way it faces.
 -- y reaches -7000 in the far south.
--- RedM (spur_core, 23 Nov 2026): x from -8000, not GTA's -4000, so New Austin's west (Tumbleweed, about -5500) fits.
+-- RedM (spur_core, 23 Nov 2026): x from -8000, not the original game's -4000, so New Austin's west (Tumbleweed, about -5500) fits.
 local WORLD = { x = { -8000, 8000 }, y = { -7000, 8000 }, z = { -200, 2000 }, w = { 0, 360 } }
 
 -- A camera's turn: pitch (up and down), roll, yaw (round), in degrees.
@@ -168,11 +168,11 @@ local SHOWN_WHEN = {
     { value = 'off', label = 'Never shown' },
 }
 
--- A GTA model name. Checked for its characters only: whether the game has it shows in game.
+-- A game model name. Checked for its characters only: whether the game has it shows in game.
 local MODEL = '^[%w_]+$'
 local MODEL_WHY = 'must be a model name (letters, digits and _)'
 
--- A resource name, as FiveM allows them.
+-- A resource name, as Cfx.re allows them.
 local RESOURCE = '^[%w_%-]+$'
 local RESOURCE_WHY = 'must be a resource name (letters, digits, _ and -)'
 
@@ -557,7 +557,7 @@ ConfigSchema = {
               help = 'The game puts a helmet on a character getting onto a motorbike, over whatever they wear on their head. Off: they ride in what they have on.' },
             { path = 'Seats.NoAutoShuffle', type = 'bool',
               label = 'Passengers stay in their seat',
-              help = 'On: the game no longer slides a passenger into an empty driver\'s seat, getting in at the passenger door gives the passenger seat, and the game\'s own shuffle button (H, D-pad right) does nothing. Players change seat with Seats on the F1 wheel. Off is GTA\'s own way.' },
+              help = 'On: the game no longer slides a passenger into an empty driver\'s seat, getting in at the passenger door gives the passenger seat, and the game\'s own shuffle button (H, D-pad right) does nothing. Players change seat with Seats on the F1 wheel. Off is the game\'s own way.' },
             { path = 'VehiclePartPrompts', type = 'record',
               fields = {
                   { key = 'door.enabled', type = 'bool', label = 'Doors' },

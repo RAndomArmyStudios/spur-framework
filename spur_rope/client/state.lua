@@ -12,7 +12,7 @@
         linkLength = number,          -- metres between two nodes: the server's for this rope, as it was made
                                       -- (never Config.Rope's, which may have changed since: Rope.LinkLength)
         -- HOW IT IS DRAWN (client/visuals.lua, client/mesh.lua)
-        lookStyle = 'rdr' | 'balls' | nil (RedM; whip_rope's 'segments' and 'gta' are 'rdr'), lookReady = boolean, propsLoading = boolean,
+        lookStyle = 'rdr' | 'balls' | nil (RedM; whip_rope's other looks are 'rdr'), lookReady = boolean, propsLoading = boolean,
         props = { entity, ... },      -- 'balls': one per node (or more, along a spline)
         segments = { entity, ... },   -- 'segments': one rope piece per gap
         rdrRope = number|nil,         -- 'rdr': RDR2's rope, pinned along this one (RedM, spur_rope 24 Nov 2026)
@@ -116,9 +116,9 @@ function Rope.Util.DebugPrint(...)
     end
 end
 
---- RedM (spur_rope, 24 Nov 2026): a ped's bone by its name. RDR2 numbers its bones its own way, so whip_rope's GTA
+--- RedM (spur_rope, 24 Nov 2026): a ped's bone by its name. RDR2 numbers its bones its own way, so whip_rope's original-game
 --- numbers (57005 the right hand, 31086 the head) name other bones there, or none. The name's index on this ped, or
---- GTA's number's where the name isn't found.
+--- the original game's number where the name isn't found.
 local BONE_TAGS = { SKEL_R_Hand = 57005, SKEL_Head = 31086 }
 function Rope.BoneIndex(ped, name)
     local i = GetEntityBoneIndexByName(ped, name)

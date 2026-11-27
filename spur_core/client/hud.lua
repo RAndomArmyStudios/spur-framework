@@ -45,7 +45,7 @@ local function minimapFor(inVehicle)
     return showMinimapOnFoot()
 end
 
--- Hiding GTA's own HUD: HideHudComponentThisFrame lasts one frame, so components are moved off screen
+-- Hiding the game's own HUD: HideHudComponentThisFrame lasts one frame, so components are moved off screen
 -- with SetHudComponentPosition instead. Positions reset on a resolution change (no event), so they are
 -- re-applied every second; a component that ignores a position goes in HUD_PER_FRAME.
 
@@ -69,7 +69,7 @@ local HUD_HIDDEN = {
 --- Components that refuse to stay moved and need the per-frame call. The thread below exists only if this is non-empty.
 local HUD_PER_FRAME = {}
 
---- GTA's car names (vehicle name and class, area, street), hidden with the per-frame call while a character
+--- The game's car names (vehicle name and class, area, street), hidden with the per-frame call while a character
 --- is loaded. Runs on the ControlBlocks loop (client/pause.lua), held by the radar loop below and let go at logout.
 local CAR_NAMES = {
     6,  -- VEHICLE_NAME
@@ -98,7 +98,7 @@ local function ApplyHudOffsets()
     end
 end
 
---- Re-apply every second while a character is loaded (GTA restores its HUD during a death at its own timing).
+--- Re-apply every second while a character is loaded (the game restores its HUD during a death at its own timing).
 CreateThread(function()
     local lastW, lastH = 0, 0
 
@@ -157,7 +157,7 @@ end
 local function ApplyMinimapMask()
     local shape = Config.MinimapMask
     if not shape then return false end
-    -- RedM (spur_core, 23 Nov 2026): radarmasksm and whip's whipmask_*.ytd are GTA V's. RDR2's minimap keeps its own.
+    -- RedM (spur_core, 23 Nov 2026): radarmasksm and whip's whipmask_*.ytd are the original game's. RDR2's minimap keeps its own.
     if RdrCompat then return false end
 
     local dict = 'whipmask_' .. tostring(shape)
@@ -428,12 +428,12 @@ end, false)
 -- HUD visibility, pushed rather than polled:
 --   IsAnyScreenOpen()  client/inventory.lua fires spur_core:ui:stateChanged on every transition.
 --   PlayerIsDead       client/death.lua calls the function below after each write.
---   frontendUp         GTA's own pause menu, which no event announces: the radar loop below looks five times a second.
+--   frontendUp         the game's own pause menu, which no event announces: the radar loop below looks five times a second.
 
 --- What the panel was last told, so an unchanged signal sends nothing.
 local hudLastHidden = false
 
---- GTA's own pause menu is up (its frontend: the map, its settings pages). The game draws it under this page, so the
+--- The game's own pause menu is up (its frontend: the map, its settings pages). The game draws it under this page, so the
 --- gauges, the minimap and the vehicle dial (which follow the status HUD's fade) would sit on top of it.
 local frontendUp = false
 
@@ -448,7 +448,7 @@ function WhipRefreshHudVisibility()
     if not PlayerLoaded or not hudUp then return end
 
     -- A screen, not merely "busy": a progress bar leaves the HUD up. Asked as the HUD (true): a screen opened
-    -- with keepHud (the phone) leaves it up too. GTA's pause menu hides it as one of whip's screens does.
+    -- with keepHud (the phone) leaves it up too. The game's pause menu hides it as one of whip's screens does.
     local shouldHide = (IsAnyScreenOpen and IsAnyScreenOpen(true)) or PlayerIsDead or frontendUp
     if shouldHide == hudLastHidden then return end
 
@@ -532,8 +532,8 @@ local function radarShouldShow()
     return minimapFor(isInVehicle)
 end
 
---- GTA's radar is shown only to the tuner (/radardebug). Everyone else sees whip's own minimap
---- (client/minimap.lua, html/js/minimap.js) when the radar would show, but not under GTA's pause menu.
+--- The game's radar is shown only to the tuner (/radardebug). Everyone else sees whip's own minimap
+--- (client/minimap.lua, html/js/minimap.js) when the radar would show, but not under the game's pause menu.
 ---@param want boolean  radarShouldShow's answer
 local function radarFor(want)
     return want and (RadarDebugOpen == true or not SpurMap3D())   -- RedM (spur_core, 25 Nov 2026): RDR2's radar without the 3D map
@@ -588,10 +588,10 @@ CreateThread(function()
         local cost = WhipCost.start()
         local ped = PlayerPedId()
         isInVehicle = IsPedInAnyVehicle(ped, false)
-        -- GTA's car, area and street names: hidden in a vehicle and on foot alike (CAR_NAMES above)
+        -- The game's car, area and street names: hidden in a vehicle and on foot alike (CAR_NAMES above)
         armCarNames(true)
 
-        -- GTA's radar only on change or when the game disagrees (death, a satellite's DisplayRadar). IsRadarHidden
+        -- The game's radar only on change or when the game disagrees (death, a satellite's DisplayRadar). IsRadarHidden
         -- is a BOOL native (1 or false: never `== true`). whip's minimap every pass: MinimapShow is change-gated.
         local want = radarShouldShow()
         local shownChanged = (want ~= shown)
@@ -602,7 +602,7 @@ CreateThread(function()
         end
         MinimapShow(boxFor(want))
 
-        -- GTA's pause menu came up or went (a BOOL native, as above): the HUD goes with it, or comes back.
+        -- The game's pause menu came up or went (a BOOL native, as above): the HUD goes with it, or comes back.
         local frontend = IsPauseMenuActive() and true or false
         if frontend ~= frontendUp then
             frontendUp = frontend
@@ -631,7 +631,7 @@ end)
 -- Player load/logout: health regen disable + HUD init
 
 RegisterNetEvent('spur_core:client:playerLoaded', function()
-    -- Disable GTA's native health regen to 50 HP
+    -- Disable the game's native health regen to 50 HP
     SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0)
     SetPlayerHealthRechargeLimit(PlayerId(), 0.0)
 

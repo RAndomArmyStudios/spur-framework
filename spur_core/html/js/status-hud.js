@@ -334,7 +334,7 @@ function interrupt(name) {
     }, INTERRUPT_MS);
 }
 
-/** A stat's value as the percent its gauge draws: health's GTA range 100-200 is 0-100%, everything else a
+/** A stat's value as the percent its gauge draws: health's game range 100-200 is 0-100%, everything else a
  *  direct percentage of its max. */
 function percentOf(config, value) {
     if (config.type === 'vital' && config.max === 200) return Math.max(0, Math.min(100, ((value - 100) / 100) * 100));

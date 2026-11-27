@@ -5,8 +5,8 @@
     or 'balls' (a prop per node) — along the rope's points (its nodes, or more along a Catmull-Rom spline);
     someone hanging off the rope drawn by a stand-in ped; and the debug overlay.
 
-    RedM (spur_rope, 24 Nov 2026): whip_rope's 'segments' (a streamed GTA V model placed with SetEntityMatrix) and
-    'gta' (GTA's rope) are both 'rdr' here; the ball is an RDR2 model (Rope.PropModel).
+    RedM (spur_rope, 24 Nov 2026): whip_rope's 'segments' (a streamed original-game model placed with SetEntityMatrix) and
+    its other look (the original game's own rope) are both 'rdr' here; the ball is an RDR2 model (Rope.PropModel).
 ]]
 
 local DebugPrint = Rope.Util.DebugPrint
@@ -14,7 +14,7 @@ local DebugPrint = Rope.Util.DebugPrint
 Rope.HANG_ANIM_DICT = 'missrappel'
 Rope.HANG_ANIM_NAME = 'rappel_idle'
 
--- RedM (spur_rope, 24 Nov 2026): 'missrappel' is GTA's rappel animation, which RDR2 doesn't have. The stand-in plays it
+-- RedM (spur_rope, 24 Nov 2026): 'missrappel' is the original game's rappel animation, which RDR2 doesn't have. The stand-in plays it
 -- only where the game has it (a hanging stand-in otherwise keeps its idle pose).
 local function hangAnimExists()
     return DoesAnimDictExist(Rope.HANG_ANIM_DICT) and true or false
@@ -25,9 +25,6 @@ end
 -- ============================================================================
 
 Rope.STYLES = { rdr = true, balls = true }
--- RedM (spur_rope, 24 Nov 2026): whip_rope's looks, as this game draws them
-local STYLE_ALIAS = { segments = 'rdr', gta = 'rdr' }
-
 local lookGeneration = 0      -- one more on every change of look: a rope still loading the old one waits on
 
 --- The rope pieces' model: with shadows, or the cheaper one without. (Not drawn on RedM: client/mesh.lua.)
@@ -39,8 +36,8 @@ end
 --- The look ropes are drawn in on this game now.
 function Rope.CurrentStyle()
     local style = Config.Visuals.Style or 'rdr'
-    style = STYLE_ALIAS[style] or style
-    if not Rope.STYLES[style] then style = 'balls' end
+    -- RedM (spur_rope, 26 Nov 2026): any other look, whip_rope's two others among them, is drawn as 'rdr'
+    if not Rope.STYLES[style] then style = 'rdr' end
     -- RDR2's rope found not to follow its pins (client/mesh.lua): the balls
     if style == 'rdr' and not Rope.Mesh.RdrUsable() then style = 'balls' end
     return style
@@ -51,7 +48,7 @@ function Rope.RdrRopeType()
     return math.tointeger(tonumber(Config.Visuals.RdrRopeType)) or 0
 end
 
--- RedM (spur_rope, 24 Nov 2026): whip_rope's ball was GTA's prop_tennis_ball. Config.Visuals.PropModel where RDR2 has
+-- RedM (spur_rope, 24 Nov 2026): whip_rope's ball was the original game's prop_tennis_ball. Config.Visuals.PropModel where RDR2 has
 -- it, else the first of these it has (small RDR2 props), said once in the console.
 local PROP_FALLBACKS = { `p_baitbread01x`, `p_baitcheese01x`, `p_canteen01x` }
 local propModel = nil
@@ -490,7 +487,7 @@ function Rope.UpdateHangingVisuals(rope)
                         SetLocalPlayerVisibleLocally(false)
                         -- RedM (spur_rope, 24 Nov 2026): RDR2 has neither of those two (spur_core stubs them), and
                         -- its SET_PLAYER_VISIBLE_LOCALLY each frame left our ped unseen for good (tested in game): our own
-                        -- body never hangs on RedM (client/interaction.lua HangOnRope), so this is GTA's alone
+                        -- body never hangs on RedM (client/interaction.lua HangOnRope), so this is the original game's alone
                     else
                         if not x then x, y, z = HangSpot(node.position) end
                         if IsPedRagdoll(ped) then ClearPedTasksImmediately(ped) end
@@ -526,7 +523,7 @@ function Rope.DrawRopeDebug(rope)
         if Config.DrawDebugSpheres then
             local r, g, b = 255, 255, 0
             if i == 1 then r, g, b = 0, 255, 0 elseif i == nodeCount then r, g, b = 255, 0, 0 end
-            -- RedM (spur_rope, 24 Nov 2026): GTA's marker 28 (a sphere) is a number RDR2's markers (hashes) don't
+            -- RedM (spur_rope, 24 Nov 2026): the original game's marker 28 (a sphere) is a number RDR2's markers (hashes) don't
             -- know: a small cross of lines marks the node instead
             local d = 0.04
             DrawLine(p.x - d, p.y, p.z, p.x + d, p.y, p.z, r, g, b, 200)

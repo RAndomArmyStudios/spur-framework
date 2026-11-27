@@ -155,10 +155,10 @@ end
 -- ============================================================================
 -- Two driven cars on one rope (or a thing kept by one player and pulled by another) are each moved by their own
 -- game, which sees the other one as it was: about the two players' pings ago (to the server and on), plus a
--- little for GTA's own sending. Each of those games is told, per rope, so its pull can allow for it
+-- little for the game's own sending. Each of those games is told, per rope, so its pull can allow for it
 -- (client/physics.lua's pullPoint).
 
-local SEND_MS = 0.05     -- s: GTA sends a moving car on every few frames, so half that again on top
+local SEND_MS = 0.05     -- s: the game sends a moving car on every few frames, so half that again on top
 local LAG_STEP = 0.02    -- s: a change smaller than this is not worth sending
 
 Keepers.lagSent = {}     -- [server id] = { [ropeId] = s }: what their game was last told
@@ -254,13 +254,13 @@ end
 -- ============================================================================
 -- NOBODY LEFT WITHOUT THE WHEEL
 -- ============================================================================
--- A keeper's game locks what it keeps so GTA won't hand it on (client/keep.lua). The lock is on the car, not on the
--- game: it goes with the car when FiveM moves it anyway (its owner left, changed worlds at the character screen, or
+-- A keeper's game locks what it keeps so the game won't hand it on (client/keep.lua). The lock is on the car, not on the
+-- game: it goes with the car when Cfx.re moves it anyway (its owner left, changed worlds at the character screen, or
 -- went quiet), and the game holding it then has no idea. Nobody else gets control of it again: a player at its wheel
 -- sits in a car that takes no notice of them, and a keeper's game asks for it forever, so its rope holds the other
 -- end to it like a post, while its owner drives it fine. So every car or prop a rope has had kept is watched:
 -- whoever should have it (the player at its wheel, else its keeper) and still doesn't after STUCK_MS has its owner's
--- game told to lift the lock ('spur_rope:letGo'), again every REMIND_MS. GTA hands a car to its driver, and a keeper
+-- game told to lift the lock ('spur_rope:letGo'), again every REMIND_MS. The game hands a car to its driver, and a keeper
 -- gets what it asks for, within a second or so, so this only ever fires on a stuck one.
 
 local STUCK_MS = 3000
@@ -294,7 +294,7 @@ function Keepers.watch()
                         .. ' let go (%d)'):format(nameOf(want), driver and 'has sat at the wheel of car' or 'has kept',
                         netId, (now - w.stuckSince) / 1000, nameOf(owner), w.told))
                     if w.told == TELL_TIMES then
-                        print(('[spur_rope] %d: %s\'s game never let go, so no rope\'s lock holds it (a FiveM'
+                        print(('[spur_rope] %d: %s\'s game never let go, so no rope\'s lock holds it (a Cfx.re'
                             .. ' ownership stall: getting out and in again, or another player getting in, may free'
                             .. ' it)'):format(netId, nameOf(owner)))
                     end

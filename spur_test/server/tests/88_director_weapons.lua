@@ -3,7 +3,7 @@
 -- ============================================
 --
 -- On the test field. A Fixed Weapon is a prop whose page names a gun (def.weapon): each game makes that gun's world
--- model (shared/gta_weapon_models.lua). Attached to a car, it rides on it. Fire Weapon fires it for real: here a
+-- model (spur_core's shared/rdr_weapons.lua). Attached to a car, it rides on it. Fire Weapon fires it for real: here a
 -- pistol, at a spot well away from the tester.
 
 local N = DK.N

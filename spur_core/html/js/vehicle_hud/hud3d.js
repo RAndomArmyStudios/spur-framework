@@ -3,7 +3,7 @@
 // a ring of light blades that rise with the revs, a floating needle, a rolling gear number and glass status jewels.
 // Extra gauges orbit it as miniatures of the same dial (see gauges.js). The dial leans under acceleration and braking,
 // kicks on shifts and shakes near the limiter. No post-processing: glows are additive meshes that leave the canvas
-// alpha untouched, so the canvas can sit transparently over the game later (FiveM NUI).
+// alpha untouched, so the canvas can sit transparently over the game later (Cfx.re NUI).
 //
 // Cost: no lights or environment map (everything is unlit; the jewel caps carry baked shading); changing numbers are
 // quads cut from a glyph atlas, so a new speed rewrites a few vertices instead of re-uploading a texture; the numerals
@@ -44,7 +44,7 @@ const GEAR_Y = -0.503, NUMERAL_H = 0.12, NUMERAL_R = 0.69, JEWEL = 1.4;
 const UNIT_K = 1.35, UNIT_BASE = 0.165, TICK_IN = 0.765, NUM_GAP = 0.03;
 const GLOW = Object.freeze({ inner: 0.76, base: 0.06, peak: 0.6, decay: 2.2, needle: 0.4, smoke: 0.62 });
 
-// Skins: a theme over the same dial, e.g. a car's own GTA dashboard (skins3d.js). A skin sets colours,
+// Skins: a theme over the same dial, e.g. a car's own game dashboard (skins3d.js). A skin sets colours,
 // fonts and the needle's profile only; the layout, rev scale, blades, status lights, extra gauges and motion stay the
 // dial's own. Colours are CSS hex; fonts are a family (null: the dial's Roboto) plus CSS style/weight prefixes.
 // DEFAULT_SKIN is the dial as designed. Hud3D.setSkin(skin) takes any subset of it.

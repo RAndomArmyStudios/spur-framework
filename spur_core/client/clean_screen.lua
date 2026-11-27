@@ -5,7 +5,7 @@
 -- The Camera Creator's play mode holds it while a shot rolls (and the whole time, if the player chose
 -- that), so a recording (OBS, ShadowPlay) has the picture alone. While anything holds it:
 --
---   GTA's own    HUD and radar, every frame (HideHudAndRadarThisFrame)
+--   The game's own    HUD and radar, every frame (HideHudAndRadarThisFrame)
 --   whip's page  every layer of it hidden (html.whip-clean, css/ui.css) but what the holder shows itself
 --   the world    3D prompts, /me bubbles, bay decals: WorldQuad.draw draws nothing (client/world_quad.lua) while
 --                any hold hides the world (CleanScreen.world), as every hold does but one that keeps it (the

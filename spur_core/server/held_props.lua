@@ -21,7 +21,7 @@
 --   owner's word is what ends the hand-over; a lie leaves a bottle unattached, which is cosmetic.
 --
 -- AND THE OWNER DELETES IT, TOO. A server DeleteEntity on an object a client owns can be undone
--- by that client, which sends it straight back (FiveM issues #3989, #2256) — and the window for it
+-- by that client, which sends it straight back (Cfx.re issues #3989, #2256) — and the window for it
 -- is widest just after the object is made, while it is still being handed over. Spamming emotes
 -- hit that window every time, and bottles piled up in the player's hand for everyone to see. So a
 -- prop leaving a hand is RETIRED (see retire below): its owner is asked to delete it, and the
@@ -251,7 +251,7 @@ for _, e in ipairs(EmoteList and EmoteList.emotes or {}) do
     for _, p in ipairs(e.props or {}) do HeldProps.allowModel(p.model) end
 end
 
--- RedM (spur_core, 23 Nov 2026): and every configured item's own prop. whip's GTA emote list held props (a beer
+-- RedM (spur_core, 23 Nov 2026): and every configured item's own prop. whip's original-game emote list held props (a beer
 -- bottle, a coffee cup), and those were what a client-run bar could hold; RDR2's emotes are scenarios that bring
 -- their own, so without this no client bar could hold anything. An item's prop is a thing a player holds already
 -- (eating, drinking, a bandage).
@@ -391,14 +391,14 @@ end)
 
 --- A LOGOUT DROPS THEM ON THE SERVER, not only when the client says so. Logging out moves the player
 --- to character select's routing bucket first (WhipPlayer:logout), and an attached prop does not
---- follow a bucket move (FiveM #912): it floated where their hand was, for everyone left behind,
+--- follow a bucket move (Cfx.re issue #912): it floated where their hand was, for everyone left behind,
 --- until the client's own drop arrived. Core's hook, not the public event, which any resource can fire.
 Character.onLife('logout', function(e)
     HeldProps.drop(e.source)
 end)
 
 --- ANY OTHER MOVE TO ANOTHER WORLD DROPS THEM TOO, whatever made it (the Director's own-world test, any
---- resource's SetPlayerRoutingBucket): the prop cannot follow (FiveM #912), and it would hang where the
+--- resource's SetPlayerRoutingBucket): the prop cannot follow (Cfx.re issue #912), and it would hang where the
 --- hand was for everyone left behind while its owner went on counting it as held. There is no event for a
 --- bucket move, so the players holding props are looked at; whose world changed is dropped and said
 --- (spur_core:heldProps:lost, reason 'world'). Nothing to look at, nothing done.

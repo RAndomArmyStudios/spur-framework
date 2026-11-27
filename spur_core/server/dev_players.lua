@@ -4,7 +4,7 @@
 --
 -- Every player with a character, sent once a second to each admin who has Reveal Players on: where they
 -- stand and face, their character's name and charId, and their account's name (GetPlayerName: the Steam
--- name when Steam is running, the FiveM account's otherwise). tools/show_players.lua draws them — a blip
+-- name when Steam is running, the Cfx.re account's otherwise). tools/show_players.lua draws them — a blip
 -- on the minimap and the pause map, and blue words over the head of anyone near enough to see.
 --
 -- BORN WITH THE FIRST VIEWER, ENDED WITH THE LAST: nobody pays for the loop until an admin turns it on.

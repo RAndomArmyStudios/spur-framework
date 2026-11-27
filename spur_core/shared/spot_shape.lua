@@ -43,7 +43,7 @@ function SpotShape.inside(r, x, y, z)
         local half = r.w * 0.5
         return dx * dx + dy * dy <= half * half
     end
-    -- Along the spot's heading (GTA's: 0 faces north, turning left), and across it.
+    -- Along the spot's heading (the game's: 0 faces north, turning left), and across it.
     local h = math.rad(r.heading or 0.0)
     local fx, fy = -math.sin(h), math.cos(h)
     local along, across = dx * fx + dy * fy, dx * fy - dy * fx

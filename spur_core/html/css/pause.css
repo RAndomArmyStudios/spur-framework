@@ -1,5 +1,5 @@
 /* ========================================
-   PAUSE MENU — whip's, in place of GTA's (js/pause.js, js/pause-map.js; client/pause.lua)
+   PAUSE MENU — whip's, in place of the game's (js/pause.js, js/pause-map.js; client/pause.lua)
 
    The map fills the screen; the menu sits over its left side — the logo with its loading light,
    Resume / Map / Swap Character / Settings / Quit, where the player is. The player is in the middle of
@@ -506,7 +506,7 @@ html[data-input="pad"] #pause .pm-keys { display: none; }
 }
 
 /* A blip with a number (ShowBlip's `number`, pause-map.js blipImage): its icon filling the mark, the number in a
-   dark badge at the lower right, as GTA draws a numbered blip. The minimap's marks are the same (css/minimap.css). */
+   dark badge at the lower right, as the game draws a numbered blip. The minimap's marks are the same (css/minimap.css). */
 .pmap-numbered > .pmap-blip-icon {
     position: absolute;
     inset: 0;

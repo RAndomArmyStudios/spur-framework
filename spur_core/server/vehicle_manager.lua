@@ -480,7 +480,7 @@ SecureEvent('spur_core:server:vmSave', {
 
     if not changed then return end
 
-    -- The plate by the same rule as a new car: trimmed, upper case, 8 at most (what GTA puts on the
+    -- The plate by the same rule as a new car: trimmed, upper case, 8 at most (what the game puts on the
     -- car), and not one another car wears.
     if out.plate ~= nil then
         if out.plate == Vehicles.NULL then
@@ -661,7 +661,7 @@ SecureEvent('spur_core:server:vmCreate', {
 
     local def, createErr = Vehicles.create({
         ownerCharId = ownerCharId,
-        model       = Sanitize.key(data.model, 60) or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was GTA's adder, which fails the model check
+        model       = Sanitize.key(data.model, 60) or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder, which fails the model check
         plate       = Sanitize.string(data.plate, 8),   -- 8, as Vehicles.create allows
         state       = Sanitize.enum(data.state, { 'garaged', 'out', 'impounded' }, 'garaged'),
         garage      = garageKeyOf(data.garage),
@@ -836,12 +836,12 @@ end)
 -- ============================================
 --
 -- The /whip Vehicles group's Vehicle Adjustments page (html/js/wp/vehicleModels.js) writes `vehicle_class_meta`
--- (a category: every model of one GTA vehicle class) and `vehicle_meta` (one model) with these calls, read by
+-- (a category: every model of one game vehicle class) and `vehicle_meta` (one model) with these calls, read by
 -- Vehicles.modelStorage. What a car gets: its own sizes (given when it was made) → its model's row → its
 -- category's → config.lua. Either row can turn the trunk or the glovebox off, the model's word over its category's.
 
 local SIZE_FIELDS = { 'trunkSlots', 'trunkMaxWeight', 'gloveboxSlots', 'gloveboxMaxWeight' }
-local CLASS_LAST = 22   -- GTA's vehicle classes: 0 (compacts) to 22 (open wheel)
+local CLASS_LAST = 22   -- the game's vehicle classes: 0 (compacts) to 22 (open wheel)
 
 --- A row as the page reads it.
 local function rowOut(m)

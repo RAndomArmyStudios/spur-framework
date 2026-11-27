@@ -6,8 +6,8 @@
 -- tools/panel_sections/config.lua); the login takes a scene's prop from here when its Config.ArrivalScenes
 -- line has none (client/arrival.lua).
 --
--- RedM (spur_core, 26 Nov 2026): whip_core's list was GTA V's story scenes (its three leads' switch scenes),
--- another game's, and is gone. Empty: add scenes to Config.ArrivalScenes yourself.
+-- RedM (spur_core, 26 Nov 2026): whip_core's list was the original game's story scenes (its three leads' switch scenes),
+-- and is gone. Empty: add scenes to Config.ArrivalScenes yourself.
 --
 --   key     the scene's name (dictionary/clip)
 --   cam     the camera move; none: it plays under the game camera

@@ -174,7 +174,7 @@ local function dressNpc(ent, x)
         end
         local deadline = GetGameTimer() + 10000
         while got.asking and GetGameTimer() < deadline do Wait(50) end
-        -- (A GTA ped of their own has no look: as it is.)
+        -- (A game ped of their own has no look: as it is.)
         if got.look and DoesEntityExist(ent) then ApplyAppearance(ent, got.look) end
     end)
 end
@@ -495,7 +495,7 @@ local function thingMark(it, selected)
     elseif it.door then
         if not it.obj then return nil end
         m = m or {}
-        -- The middle of its box, turned with it: GTA's right is (cos, sin), its forward (-sin, cos).
+        -- The middle of its box, turned with it: the game's right is (cos, sin), its forward (-sin, cos).
         local d = it.dims
         local lx, ly, lz = 0.0, 0.0, 1.0
         if d then lx, ly, lz = (d.mn.x + d.mx.x) * 0.5, (d.mn.y + d.mx.y) * 0.5, (d.mn.z + d.mx.z) * 0.5 end

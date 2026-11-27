@@ -155,7 +155,7 @@ define({
         local id = ctx:need('car')
         if not Vehicles.getDef(id) then return 'refused' end
         ctx:call(function()
-            -- (Whip's one way to take a car away: a street car is deleted, not handed back to GTA where it stands.)
+            -- (Whip's one way to take a car away: a street car is deleted, not handed back to the game where it stands.)
             local ok, why = Vehicles.removeFromWorld(id)
             if not ok then ctx:log('car %s: %s', tostring(id), tostring(why)) return 'refused' end
             return 'removed'

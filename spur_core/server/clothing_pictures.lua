@@ -2,7 +2,7 @@
 -- Clothing pictures — which apparel and accessories have one
 -- ========================================
 --
--- The character editor shows apparel and accessories only where there is a picture: GTA's lists carry items
+-- The character editor shows apparel and accessories only where there is a picture: the game's lists carry items
 -- that do not exist, only their data, and those are the ones with none. Numbers are kept — a card's
 -- number is the game's own — so a list runs 454, 455, 461 when 456 to 460 are not real. The editor
 -- decides card by card (html/js/creator.js hasPicture); this side says which pictures there are.
@@ -17,8 +17,8 @@
 --
 -- No list, nothing hidden: without it, every card shows as it did before pictures.
 --
--- RedM (spur_core, 23 Nov 2026): data/clothing-pictures.json is gone. It listed GTA V's clothing, and the editor
--- would have hidden RDR2 outfit presets by whether GTA's item of the same number had a picture. Without it nothing
+-- RedM (spur_core, 23 Nov 2026): data/clothing-pictures.json is gone. It listed the original game's clothing, and the editor
+-- would have hidden RDR2 outfit presets by whether the original game's item of the same number had a picture. Without it nothing
 -- is hidden, and noList says nothing (there is no media pack to rebuild it from).
 
 local RES = GetCurrentResourceName()

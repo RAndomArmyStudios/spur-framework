@@ -338,12 +338,12 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     }).catch(() => {});
 
-    // ONLY WHAT FIVEM SENDS (main.js's fromFiveM): another resource's frame can postMessage straight into this page and
+    // ONLY WHAT THE GAME SENDS (main.js's fromGame): another resource's frame can postMessage straight into this page and
     // press its buttons, outside developer mode (audit 20, CLI-3). This page's own SendNUIMessage has no source, or the
     // root page's; a sibling frame is neither, and the browser sets `source`.
-    const fromFiveM = (ev) => { const s = ev.source; return s === null || s === window || s === window.parent || s === window.top; };
+    const fromGame = (ev) => { const s = ev.source; return s === null || s === window || s === window.parent || s === window.top; };
     window.addEventListener('message', async (ev) => {
-        if (!fromFiveM(ev)) return;
+        if (!fromGame(ev)) return;
         const d = ev.data;
         if (!d || d.action !== 'whipProbe') return;
         try {

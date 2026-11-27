@@ -459,7 +459,7 @@ function A.view(on)
     if on then startViewing() else stopViewing() end
 end
 
---- Nothing on screen but the picture (the editor's panels, GTA's HUD and radar), or everything back.
+--- Nothing on screen but the picture (the editor's panels, the game's HUD and radar), or everything back.
 function A.hud(hidden)
     if hidden == nil then hidden = not S.hideHud end
     if hidden == S.hideHud then return end
@@ -1380,7 +1380,7 @@ end
 --   Num 1-9       straight to that camera
 --   F9            back to the editor, the camera where you left it
 --
--- Made the first time someone plays (GTA's Settings → Key Bindings → FiveM can move them), and dead
+-- Made the first time someone plays (the game's Settings → Key Bindings → Cfx.re can move them), and dead
 -- unless the Camera Creator is playing. While a shot rolls nothing is on screen but the picture
 -- (CleanScreen); with "Clean screen" on (the card, kept on this PC) the whole time you play.
 --

@@ -132,7 +132,7 @@ RegisterTestModule({
                     'whip_world.weather')
 
                 -- Lower case is the same weather.
-                -- RedM (spur_test, 23 Nov 2026): SUNNY, an RDR2 weather (spur_core's Config.Weathers); GTA's
+                -- RedM (spur_test, 23 Nov 2026): SUNNY, an RDR2 weather (spur_core's Config.Weathers); the original game's
                 -- CLEAR isn't one.
                 assertTrue(exports.spur_core:SetWeather('sunny'), 'lower case accepted')
                 assertEqual(exports.spur_core:GetWeather(), 'SUNNY', 'normalised to upper case')

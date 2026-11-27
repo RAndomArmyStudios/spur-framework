@@ -2,7 +2,7 @@
 -- Dev Tools — Reveal Players
 -- ============================================
 --
--- Every player marked: a blue blip on the minimap and the pause map (client/pause.lua reads GTA's blips,
+-- Every player marked: a blue blip on the minimap and the pause map (client/pause.lua reads the game's blips,
 -- and names these through WhipBlipSetLabel), and, over the head of anyone near enough to see, a TAG:
 -- their character's name and charId and their account's name (the Steam name when Steam is running).
 --
@@ -22,7 +22,7 @@ local on    = false
 local rows  = {}   -- [serverId] = the server's row { s, c, n, a, x, y, z, h }
 local marks = {}   -- [serverId] = { blip, ped, label }  ped 0: the blip sits on the server's spot
 
-local BLIP_COLOUR = 3        -- GTA's blue
+local BLIP_COLOUR = 3        -- the game's blue
 local NAME_RANGE  = 250.0    -- metres: further off, a tag is clutter, and the blip still says where
 local HEAD_BONE   = 31086    -- SKEL_Head
 local HEAD_LIFT   = 0.3      -- metres above the head bone the line ends
@@ -90,7 +90,7 @@ local function scaleAt(dist)
     return 1.0 - (1.0 - MIN_SCALE) * ((dist - NEAR) / (FAR - NEAR))
 end
 
---- A name shown as it is: GTA's map label reads ~ as a colour or button code, and a player picks their
+--- A name shown as it is: the game's map label reads ~ as a colour or button code, and a player picks their
 --- own name. (The tag is set as text by its page, but takes the same name, so the two always agree.)
 local function plain(s)
     return (tostring(s or '?'):gsub('~', ''))
@@ -122,7 +122,7 @@ local function mark(r)
         SetBlipSprite(blip, 1)
         SetBlipColour(blip, BLIP_COLOUR)
         SetBlipScale(blip, 0.85)
-        SetBlipCategory(blip, 7)   -- "Other Players", in GTA's own map legend
+        SetBlipCategory(blip, 7)   -- "Other Players", in the game's own map legend
         SetBlipAsShortRange(blip, false)
         ShowHeadingIndicatorOnBlip(blip, true)
         m = { blip = blip, ped = ped }

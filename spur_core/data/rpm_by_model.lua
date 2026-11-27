@@ -1,6 +1,6 @@
 -- Rev range per vehicle model: { idle, limiter } in thousand rpm, keyed by spawn name, and a top per class.
 -- GetVehicleCurrentRpm 0.2 = idle, 1.0 = limiter. A model not listed uses classMax.
--- RedM (spur_core, 26 Nov 2026): whip_core's per-model list was GTA V's cars, another game's, and is gone; the
+-- RedM (spur_core, 26 Nov 2026): whip_core's per-model list was the original game's cars, and is gone; the
 -- class tops stay (plain numbers). List a wagon's or a mod car's range under models to give it one.
 return {
     classMax = {   -- top of the dial when the model isn't listed: class median limiter / 0.97, rounded up to 0.5k

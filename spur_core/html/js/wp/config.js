@@ -956,7 +956,7 @@ export function makeSettingsSection(def) {
     //
     // A records setting with widget 'mapPoints' (the fuel stations' icons): the rows as icons on a small map, and Edit
     // on the map opens it big over the panel, where an icon is dragged to move it, clicked to rename or remove it, and
-    // added where the admin stands or in the middle of the map. `marker = { sprite, colour, name }`: the icon (GTA's
+    // added where the admin stands or in the middle of the map. `marker = { sprite, colour, name }`: the icon (the game's
     // blip and blip colour) and a new row's name. Every change is an unsaved edit, sent by Apply.
 
     /** A row's position field (its first vec3) and name field (its first string). */

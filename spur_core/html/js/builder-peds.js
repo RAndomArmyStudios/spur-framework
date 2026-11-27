@@ -1,7 +1,7 @@
 // ========================================
 // THE WORLD BUILDER'S NPCs (the Director's World tab): RDR2's peds
 //
-// RedM (spur_core, 24 Nov 2026): whip_core listed GTA V's 881 peds here, none of which RDR2 has, so picking one
+// RedM (spur_core, 24 Nov 2026): whip_core listed the original game's 881 peds here, none of which RDR2 has, so picking one
 // placed nothing. These are RDR2's, 1974 of them, from femga's rdr3_discoveries peds/peds_list.lua (saddles left
 // out). The names are made from the model names (dev/builder_peds_rdr.py: a place code, its words, sex and age),
 // so a few read oddly; search finds the model name too. There are no pictures of RDR2 peds yet: a tile shows

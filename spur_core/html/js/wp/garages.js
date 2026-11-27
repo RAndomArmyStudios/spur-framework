@@ -54,10 +54,10 @@ let wiz = null;            // its WP.stepper
 let wizAt = 'name';        // the step it is on, so the panel reopens there
 let pendingSelect = null;  // a garage just made: opened once the list has it
 
-/** Map icons a garage is likely to want, by GTA blip sprite. Any other number can
+/** Map icons a garage is likely to want, by game blip sprite. Any other number can
  *  be typed. */
 // RedM (spur_core, 24 Nov 2026): only the numbers shared/rdr_compat.lua turns into an RDR2 icon (its SPRITE table).
-// GTA's Garage door, Shutter, Hangar, Sports car and Tow hook have none and all showed as the same plain point.
+// The game's Garage door, Shutter, Hangar, Sports car and Tow hook have none and all showed as the same plain point.
 const GARAGE_BLIPS = [
     [357, 'Wagon'], [225, 'Coach'], [40, 'Home'], [1, 'Point'],
 ];
@@ -554,7 +554,7 @@ function stepMap(body) {
     hint(body, 'Where its blip sits on the map. Cars come out at its bays, not here.');
 
     body.appendChild(WP.el('div', 'wp-section-title', 'Icon'));
-    // RedM (spur_core, 24 Nov 2026): named tiles with no picture. The pictures were GTA's blips (img/blips/<n>.webp,
+    // RedM (spur_core, 24 Nov 2026): named tiles with no picture. The pictures were the original game's blips (img/blips/<n>.webp,
     // which spur_core does not ship), so in game every tile showed a broken image (seen in the shop wizard).
     const icons = WP.el('div', 'wp-tiles wp-tiles-small');
     for (const [sprite, label] of GARAGE_BLIPS) {

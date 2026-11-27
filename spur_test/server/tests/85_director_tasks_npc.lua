@@ -4,17 +4,17 @@
 --
 -- Each test is one placed NPC with a task list (its page: Tasks), made without its tasks, then Start Tasks: its
 -- Finished ends the run ("finished"), Could not fails it. While the list plays, the tester's game is asked what the
--- NPC is doing (its seat, its weapon, its animation...). GTA's own AI (where a walk or a drive takes it) is only
+-- NPC is doing (its seat, its weapon, its animation...). The game's own AI (where a walk or a drive takes it) is only
 -- asked to have moved it at all; what is the game's to decide is not asserted. Fight the Run's Players is left
 -- out: it would go for the tester.
 
 local N = DK.N
--- RedM (spur_test, 23 Nov 2026): GTA's 'wave' and 'think' clips aren't in RDR2, and spur_core's RedM emotes are scenarios:
+-- RedM (spur_test, 23 Nov 2026): the original game's 'wave' and 'think' clips aren't in RDR2, and spur_core's RedM emotes are scenarios:
 -- 'smoke' is WORLD_HUMAN_SMOKE (shared/emote_list.lua). No RDR2 animation dictionary is chosen for the
 -- by-animation test yet, so it is skipped with the reason.
 local SMOKE = { emote = 'smoke', scenario = 'WORLD_HUMAN_SMOKE' }
 
---- A GTA heading from a to b (0: north, 90: west).
+--- A game heading from a to b (0: north, 90: west).
 local function headingTo(a, b) return math.deg(math.atan(-(b.x - a.x), b.y - a.y)) % 360.0 end
 local function angleOff(a, b) local d = math.abs((a - b) % 360.0) return d > 180 and 360 - d or d end
 
@@ -185,7 +185,7 @@ RegisterTestModule({
         {
             name = 'Play Emote by an animation, then an emote that is a scenario',
             fn = function(source, ctx)
-                skip("RedM: no RDR2 animation dictionary is chosen for this test yet (GTA's misscarsteal4@aliens isn't in the game)")
+                skip("RedM: no RDR2 animation dictionary is chosen for this test yet (the original game's misscarsteal4@aliens isn't in the game)")
                 local THINK = { dict = '', clip = '' }
                 local list = {
                     { k = 'a', t = 'emote', by = 'animation', dict = THINK.dict, clip = THINK.clip, loop = true, sec = 4 },
@@ -240,7 +240,7 @@ RegisterTestModule({
                                                                                 { k = 'u', t = 'freeze', on = false } }),
                     nil)
                 finished(r)
-                -- RedM (spur_test, 24 Nov 2026): GTA's TASK_WRITHE has no RDR2 counterpart, so spur_core's Writhe step
+                -- RedM (spur_test, 24 Nov 2026): the original game's TASK_WRITHE has no RDR2 counterpart, so spur_core's Writhe step
                 -- leaves the NPC as it is (CONVERSION.md). The list finishing is checked above; the writhe itself can't be.
                 skip('RedM: RDR2 has no writhe task, so the Writhe step does nothing (spur_core CONVERSION.md); the list finished')
             end,

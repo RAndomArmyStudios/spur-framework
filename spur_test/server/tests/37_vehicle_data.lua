@@ -1077,7 +1077,7 @@ RegisterTestModule({
                 assertTrue(v and v.locked == false, 'locked = false stands open')
 
                 -- THE DOORS ARE NOT LOCKED — which is the promise, rather than one particular number.
-                -- GTA has two "open" values, 0 (no lock) and 1 (unlocked), and on its second run
+                -- The game has two "open" values, 0 (no lock) and 1 (unlocked), and on its second run
                 -- (09-24) an open car read 0 on the server for the whole five seconds while the
                 -- locked car above read 2 at once. So: wait for the tester's game to take the car
                 -- (it gets an owner), watch for a lock that should not come, then check it is open.

@@ -26,7 +26,7 @@
 -- the collector), the figures are at least that much, and the table says so. Past MEMORY_CAP_KB it is let run again
 -- and memory is no longer counted.
 --
--- The other half is client/profiling.lua: each event handler named after its event in a FiveM profiler capture.
+-- The other half is client/profiling.lua: each event handler named after its event in a Cfx.re profiler capture.
 --
 -- BOTH SIDES. Loaded by spur_core and by a satellite with
 --     client_script '@spur_core/lib/cost.lua'      (the player's game: /whipcost in F8)

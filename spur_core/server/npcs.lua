@@ -8,13 +8,13 @@
 -- uses this through the same functions the exports wrap, and so can any resource, from code.
 --
 -- WHO RUNS ITS AI. A networked ped is simulated by whichever player's game OWNS it, and that changes
--- as players come and go. What GTA keeps in that game's memory only (its relationship group, combat
+-- as players come and go. What the game keeps in that game's memory only (its relationship group, combat
 -- and flee settings, whether it reacts, its task, its weapon) is LOST when the ped changes hands, and
 -- a task sent before is never replayed. So the record holds the ped's BRAIN, and a slow tick (Every
 -- 'npcs', a quarter second, idle at one second when there are none) sends it again:
 --   * to every new owner (resent each second until that owner says it applied it),
 --   * when who it should fight changes (a target goes down, gets up, leaves, comes online),
---   * when its task has ended while it is alive (GTA would let its own AI walk it off), at most every
+--   * when its task has ended while it is alive (the game would let its own AI walk it off), at most every
 --     2 s and 10 times a minute.
 -- The owner applies it once and says so (spur_core:server:npcApplied, which only the ped's current
 -- owner may send: the `ownerOf` schema key).
@@ -44,7 +44,7 @@
 -- so a record never acts on, or deletes, an entity that is no longer its ped.
 --
 -- REMOVING ONE never deletes it out from under the owner's game, which can send it straight back
--- (FiveM #3989/#2256): the owner is asked to delete it, and the server deletes it itself only when no
+-- (Cfx.re issue #3989/#2256): the owner is asked to delete it, and the server deletes it itself only when no
 -- game holds it (and it is past its first second, while it is still being handed out), or after
 -- three seconds (the HeldProps rule).
 --
@@ -559,7 +559,7 @@ local function tickOne(rec, now)
     -- Its patrol, when nothing else has it (made, revived, a follow or a ride let go).
     if owner and rec.synced and rec.acked == rec.ver and idleReady(rec, now) then startIdle(rec) end
 
-    -- Lost its task while alive: GTA would walk it off. Give the brain again (bounded). Not while its
+    -- Lost its task while alive: the game would walk it off. Give the brain again (bounded). Not while its
     -- tasks run (a step that has finished on its game, it got there, waits for the next one there), nor while
     -- it rides (sitting in a car is no script task).
     if not rec.seq and not rec.ride and rec.alive and rec.synced and owner and rec.acked == rec.ver
@@ -654,7 +654,7 @@ local function readWeapon(w)
     if w == nil or w == false then return nil end
     if type(w) == 'string' then w = { name = w } end
     if type(w) ~= 'table' or type(w.name) ~= 'string' or not w.name:upper():match('^WEAPON_[A-Z0-9_]+$') or #w.name > 64 then
-        return false, 'weapon is the game\'s weapon name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not GTA's WEAPON_PISTOL
+        return false, 'weapon is the game\'s weapon name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
     end
     local ammo = math.tointeger(tonumber(w.ammo) or 250) or 250
     return { name = w.name:upper(), ammo = math.max(0, math.min(9999, ammo)) }
@@ -1336,7 +1336,7 @@ end)
 -- Two short lines from its record, in the order its brain decides (client/npcs.lua's task and idle): dead,
 -- riding, running away, fighting, attacking a thing, playing its tasks or its patrol, following, walking to its
 -- spot, standing there. WHY is what set it: the card that did (Npcs.setState's `because`), else what the record
--- knows (someone hit it, its hostile list, nothing else to do). What only its own game sees (GTA's own reaction,
+-- knows (someone hit it, its hostile list, nothing else to do). What only its own game sees (the game's own reaction,
 -- with Reacts to danger on) that game says over it (client/director_npcdebug.lua).
 
 local AWAY_M = 2.5   -- further than this from its post, with nothing else to do, it is walking back

@@ -298,7 +298,7 @@
 ---@field owner string|nil opened: the resource that asked
 
 --- C  spur_core:nui:capsDetected — spur_core's page has said what the game's browser can do
----   (FiveM's Chromium 103 or 144; html/js/caps.js), or it changed. The same table as GetNuiCaps.
+---   (Cfx.re's Chromium 103 or 144; html/js/caps.js), or it changed. The same table as GetNuiCaps.
 ---@class WhipEvtNuiCaps
 ---@field chrome number the browser's Chrome version (0 when it does not say)
 ---@field has boolean :has()
@@ -313,7 +313,7 @@
 ---@field schedulerYield boolean scheduler.yield()
 ---@field webgpu boolean navigator.gpu is there
 ---@field zoomScreenPx boolean getBoundingClientRect inside CSS zoom is in screen pixels (false on Chromium 103)
----@field gameView boolean FiveM's new game view (CfxGameViewRenderer, gl.CFX_BIND_GAME_VIEW)
+---@field gameView boolean Cfx.re's new game view (CfxGameViewRenderer, gl.CFX_BIND_GAME_VIEW)
 
 -- ============================================
 -- Properties

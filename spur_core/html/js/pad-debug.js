@@ -99,7 +99,7 @@ function buildLayout(groups, axisGroups) {
             const fill  = el('div', 'pd-axis-fill');
             track.appendChild(fill);
 
-            // The half-travel line. This is where GTA starts calling a trigger "pressed", and
+            // The half-travel line. This is where the game starts calling a trigger "pressed", and
             // drawing it is what turns "my half-pull did something odd" into a visible boundary.
             if (typeof g.mark === 'number') {
                 const mark = el('div', 'pd-axis-mark');

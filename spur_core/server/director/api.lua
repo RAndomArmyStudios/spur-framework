@@ -195,7 +195,7 @@ exports('GetScenarioRunOf', function(ref, opts)
     if type(ref) ~= 'table' then return false, 'Ask with { netId = n }, { vehicleId = n }, { npcId = n } or { tag = text }' end
     local netId, vehicleId, npcId, tag = tonumber(ref.netId), tonumber(ref.vehicleId), tonumber(ref.npcId), ref.tag
     -- A netId is the entity there NOW: what whip knows it as (its NPC, its car), read once. A handle's
-    -- own netId is never trusted alone: it outlives the ped or car, and FiveM gives netIds out again.
+    -- own netId is never trusted alone: it outlives the ped or car, and Cfx.re gives netIds out again.
     local rawNet
     if netId then
         local ent = NetworkGetEntityFromNetworkId(netId)
@@ -346,7 +346,7 @@ end
 -- prop (its set is the scenario's).
 local PLACEABLE = { npc = true, vehicle = true, groundItem = true, container = true, spot = true }
 
---- A place as a script may give it: a table, a vector3 / vector4 (FiveM's), or { coords = either }.
+--- A place as a script may give it: a table, a vector3 / vector4 (Cfx.re's), or { coords = either }.
 local function isPoint(v)
     local t = type(v)
     return t == 'table' or t == 'vector3' or t == 'vector4'

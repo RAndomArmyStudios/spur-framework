@@ -4,7 +4,7 @@
 -- takes it out again. CurrentWeapon (client/main.lua) is the drawn weapon, nil when none.
 --
 -- RedM (spur_gunny, 24 Nov 2026): RDR2's weapons, given and taken with RDR2's natives. The gun comes straight into
--- the hand (no GTA draw animation) and goes back with the game's own holster. No magazines and no jerry can: a gun
+-- the hand (no game draw animation) and goes back with the game's own holster. No magazines and no jerry can: a gun
 -- carries its kind of cartridge (`kind`, `ammoType`), and a bow the kind of arrow it shoots. whip_core -> spur_core,
 -- whip_gunny: -> spur_gunny:.
 

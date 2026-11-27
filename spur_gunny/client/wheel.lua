@@ -1,6 +1,6 @@
 -- spur_gunny: RDR2'S WEAPON WHEEL (client)
 --
--- RedM (spur_gunny, 25 Nov 2026): new; whip_gunny (by Whippy and WLVF) has nothing like it, GTA's wheel being switched
+-- RedM (spur_gunny, 25 Nov 2026): new; whip_gunny (by Whippy and WLVF) has nothing like it, the original game's wheel being switched
 -- off there. On RedM the wheel (Tab) is the game's own way to pick a gun, and it shows what the ped carries. gunny
 -- puts a gun on the ped only while it is drawn, so the wheel was empty. With Config.Wheel.enabled:
 --

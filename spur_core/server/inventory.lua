@@ -1398,7 +1398,7 @@ end
 -- Item images — where an icon actually lives
 -- ============================================
 --
--- A resource ships its own item art. FiveM serves any resource's declared files at
+-- A resource ships its own item art. Cfx.re serves any resource's declared files at
 -- `https://cfx-nui-<resource>/<path>`, and an <img> may load across that boundary (no-cors, unlike
 -- fetch). spur_core knows who registered each item (Inventory.itemOwner), so it works out where an
 -- icon lives without being told.

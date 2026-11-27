@@ -9,7 +9,7 @@
 --
 -- A PLACEMENT is where one copy of an interior stands:
 --
---     place = { x, y, z, yaw }      yaw in degrees, GTA heading convention
+--     place = { x, y, z, yaw }      yaw in degrees, game heading convention
 --
 -- and that is ALL the runtime needs. No interior native is called to draw a sign, check a door or
 -- bound furniture — this is pure arithmetic, identical on the server and the client, so both agree
@@ -18,7 +18,7 @@
 --
 -- THE CONVENTION, worked once so nothing downstream has to think about it:
 --
---     GTA heading h faces (-sin h, cos h): 0 is north (+Y), 90 is west. It grows anticlockwise.
+--     Game heading h faces (-sin h, cos h): 0 is north (+Y), 90 is west. It grows anticlockwise.
 --     A placement turned by yaw carries its local +Y axis to heading `yaw`, and its local +X axis
 --     to (cos yaw, sin yaw). So:
 --

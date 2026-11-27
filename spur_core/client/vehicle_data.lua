@@ -70,7 +70,7 @@ end
 
 -- Watchers (WatchVehicleData)
 -- The data twin of WatchVehicleStat (client/vehicle_stats.lua), for things every client must apply to a car
--- itself because GTA replicates none of them (engine sound, wheel stance, handling). Declared above the
+-- itself because the game replicates none of them (engine sound, wheel stance, handling). Declared above the
 -- change handler, which feeds them.
 
 local _watchers = {}   -- [key] = { [watcherId] = watcher }
@@ -177,7 +177,7 @@ local function onDataBlock(entity, value, knownId)
     if next(_holders) ~= nil then updateHolders(entity, vehicleId, value) end
     if next(_listeners) == nil then return end
 
-    -- A car that streamed back in is a new entity and announces everything (GTA replicates none of it).
+    -- A car that streamed back in is a new entity and announces everything (the game replicates none of it).
     local seen = _previous[vehicleId]
     local prev = (seen and seen.entity == entity) and seen.block or {}
 

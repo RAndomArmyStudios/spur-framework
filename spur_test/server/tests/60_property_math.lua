@@ -70,9 +70,9 @@ RegisterTestModule({
             end,
         },
         {
-            name = 'A placement\'s local forward points the way GTA\'s heading does',
+            name = 'A placement\'s local forward points the way the game\'s heading does',
             fn = function()
-                -- GTA heading 90 faces west. A placement at yaw 90 must carry its local +Y there,
+                -- Game heading 90 faces west. A placement at yaw 90 must carry its local +Y there,
                 -- or every interior-relative heading is off by the placement's own turn.
                 local wx, wy = PropertyMath.toWorld({ x = 0, y = 0, z = 0, yaw = 90 }, 0, 1, 0)
                 assertTrue(near(wx, -1) and near(wy, 0), 'local +Y at yaw 90 is west')

@@ -14,7 +14,7 @@
 -- Something only the admin's game has (a map prop) never comes here: its options are the client's own.
 --
 -- WHAT RUNS WHERE. Hiding, invincibility, freezing, exploding, burning and killing only take on the game that owns
--- the entity (no server native does them). A one-off goes to the owner (`toOwner`); on GTA V Enhanced a car's repair,
+-- the entity (no server native does them). A one-off goes to the owner (`toOwner`); on the original game's Enhanced build a car's repair,
 -- tyres and engine are done by the server itself (`carEffect`, CAR_ON_SERVER). A hold (hidden, invincible,
 -- frozen) is kept on the entity as a bitmask (ENTITY_OV_HOLD_KEY), so it follows the entity to whoever owns it next
 -- (client/ov_effects.lua). A player's own holds (frozen, no combat) go to that player's game, which keeps them.
@@ -51,7 +51,7 @@ Sentinel.watch({
 })
 
 --- A removed entity's holds go with it. Listened for only while there are any: the server hears of every entity
---- removed, GTA's traffic and people included (hundreds a minute while someone drives), and every one heard costs the
+--- removed, the game's traffic and people included (hundreds a minute while someone drives), and every one heard costs the
 --- runtime a coroutine (Josh's server profile, 11 Nov: a fifth of the server's time with one player driving).
 local removedHandler = nil
 local function hearRemoved()
@@ -205,7 +205,7 @@ local function describe(source, entity, sid)
         if IsPedAPlayer(entity) then return nil end   -- (a player comes by sid)
         return { kind = 'npc', whip = whipNpc(entity), dead = GetEntityHealth(entity) <= 0 }
     end
-    -- A networked object (another resource's, or GTA's): its holds, as a car's.
+    -- A networked object (another resource's, or the game's): its holds, as a car's.
     local mask = holds[entity] or 0
     return { kind = 'object', whip = false, prop = 'net', holds = { hidden = mask & HIDDEN ~= 0, frozen = mask & FROZEN ~= 0 } }
 end
@@ -230,7 +230,7 @@ local function describeOther(source, o)
 end
 
 --- What made it, when whip did: the card's Source line (tools/objectviewer.lua). nil: not whip's (the card keeps the
---- game's own answer: a GTA spawn, a script).
+--- game's own answer: a game spawn, a script).
 local function originOf(entity)
     local etype = GetEntityType(entity)
     if etype == 2 then
@@ -310,9 +310,9 @@ local function toOwner(source, entity, what)
     TriggerClientEvent('spur_core:client:ovEffect', owner, NetworkGetNetworkIdFromEntity(entity), what)
 end
 
--- On GTA V Enhanced the server does these to a car itself (the vehicle natives it gained in November, citizenfx/rfc
+-- On the original game's Enhanced build the server does these to a car itself (the vehicle natives it gained in November, citizenfx/rfc
 -- #627), so a car nobody's game runs takes them too. On Legacy, and for anything else, it is the owner's (toOwner).
--- The server numbers a car's wheels 0 to its count, not by GTA's tyre numbers (0-5, 45, 47).
+-- The server numbers a car's wheels 0 to its count, not by the game's tyre numbers (0-5, 45, 47).
 local CAR_ON_SERVER = GamePlatform.enhanced and {
     repair = function(veh)
         SetVehicleFixed(veh)
@@ -328,7 +328,7 @@ local CAR_ON_SERVER = GamePlatform.enhanced and {
         if wheels < 1 then error('the server does not know its wheels yet: try again in a moment', 0) end
         for wheel = 0, wheels - 1 do SetVehicleTyreBurst(veh, wheel, true, 1000.0) end
     end,
-    -- Below 0 the engine is dead and burning; -4000 is as far as GTA goes.
+    -- Below 0 the engine is dead and burning; -4000 is as far as the game goes.
     engine = function(veh) SetVehicleEngineHealth(veh, -4000.0) end,
 } or {}
 
@@ -669,7 +669,7 @@ ACTIONS['npc.fire'] = { kind = 'npc', fn = function(source, entity)
     return true, 'On fire'
 end }
 
--- ---- networked objects (another resource's, or GTA's) ----
+-- ---- networked objects (another resource's, or the game's) ----
 
 ACTIONS['obj.remove'] = { kind = 'object', fn = function(_, entity)
     DeleteEntity(entity)
@@ -1018,7 +1018,7 @@ ACTIONS['ply.car'] = { kind = 'player', fn = function(source, ped, sid, arg)
     return false, why or 'There is no room beside them'
 end }
 
--- RedM (spur_core, 24 Nov 2026): RDR2's gangs and guns, in place of GTA's gangs and guns
+-- RedM (spur_core, 24 Nov 2026): RDR2's gangs and guns, in place of the original game's gangs and guns
 -- (whip_core's, another game's). The keys stay, so the Dungeon Master's choices still match:
 -- 'smg' is a repeater, the nearest 1899 has.
 local HUNTERS = { 'g_m_m_unibanditos_01', 'g_m_m_uniduster_01', 'g_m_m_unicriminals_01', 'g_m_y_uniexconfeds_01',

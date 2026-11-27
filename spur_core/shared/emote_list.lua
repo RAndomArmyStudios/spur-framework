@@ -1,6 +1,6 @@
 -- The emotes players can pick (/e and the emote menu on the F1 wheel). RedM version.
 --
--- whip_core's GTA list (GPL 3.0, built from RPEmotes) does not carry over: every animation and scenario in it is GTA V's.
+-- whip_core's original-game list (GPL 3.0, built from RPEmotes) does not carry over: every animation and scenario in it is the original game's.
 -- This list replaces it. It is new, made for spur_core, and is under the LGPL 3.0 like the rest of spur_core.
 --
 -- Every emote here is an RDR2 *scenario*: the game brings its own props, loop and exit. Each name was checked
@@ -13,11 +13,11 @@
 --   category  one of the category keys below
 --   scenario  an RDR2 scenario name (client/rdr_compat.lua plays it with TASK_START_SCENARIO_IN_PLACE_HASH)
 --
--- RDR2 animation dictionaries (dict/anim) also work in the same shape as whip_core's GTA ones, but none are listed
+-- RDR2 animation dictionaries (dict/anim) also work in the same shape as whip_core's original-game ones, but none are listed
 -- yet: add them once each is tested in game.
 --
 -- Walk styles and moods (facial idles) are empty for now. RDR2 changes walks through ped motivation and walk-style
--- natives rather than GTA clipsets; see CONVERSION.md.
+-- natives rather than game clipsets; see CONVERSION.md.
 
 EmoteList = {
     categories = {

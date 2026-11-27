@@ -107,10 +107,10 @@ end
 
 -- ---- Dev tools until the server restarts ----
 --
--- A permanent admin gives a player dev tools from that player's page. It is FiveM's own permission,
+-- A permanent admin gives a player dev tools from that player's page. It is Cfx.re's own permission,
 -- not a whip flag: the license joins TEMP_GROUP, so every whip.devtools check anywhere (core,
 -- satellites, tps_monitor) sees it at once. server.cfg gives that group whip.devtools and /w, not
--- the console, and lets spur_core run add_principal / remove_principal. FiveM does not save a
+-- the console, and lets spur_core run add_principal / remove_principal. Cfx.re does not save a
 -- principal added at runtime, so the restart is what takes it away.
 
 local TEMP_GROUP = 'group.whip_devtools'
@@ -553,7 +553,7 @@ local function rankOfSource(src)
 end
 
 --- An account's rank: by its identifiers, which still answer while its session is leaving (a dropped session stays in
---- Players through its final save, and FiveM's ACE check answers false for it), and by its live sessions, which also
+--- Players through its final save, and Cfx.re's ACE check answers false for it), and by its live sessions, which also
 --- catch a server.cfg line naming an identifier the table doesn't keep (license2, xbl...).
 ---@param account table  a `users` row
 ---@return string|nil
@@ -2612,7 +2612,7 @@ local function jmGetCharNames()
     return charNamesForPage(ResolveCharNames(charIds))
 end
 
---- Convert numeric-keyed nested maps to string keys so FiveM msgpack
+--- Convert numeric-keyed nested maps to string keys so Cfx.re msgpack
 --- doesn't encode them as 0-indexed arrays (breaks JS key lookups)
 local function jmStringifyKeys(tbl)
     local result = {}

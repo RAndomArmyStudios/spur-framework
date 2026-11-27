@@ -2,22 +2,22 @@
 -- MOUSE SPEED PROBE — /mousedebug
 -- ============================================
 --
--- The skill check's dot can be fast for some players and slow for others. It reads GTA's
--- mouse look (1/2), which carries each player's own GTA sensitivity, and FiveM players set that
+-- The skill check's dot can be fast for some players and slow for others. It reads the game's
+-- mouse look (1/2), which carries each player's own game sensitivity, and Cfx.re players set that
 -- anywhere from -60 to 100 (profile_mouseOnFootScale). This measures one five-second sweep three ways,
 -- so the fix is picked from numbers, not a guess:
 --   look     GetDisabledControlNormal 1/2, what the skill check reads now (clamped to -1..1 a frame)
 --   unbound  the same without the clamp
---   cursor   the Windows cursor (239/240), put back in the middle near the edges; GTA's sensitivity
+--   cursor   the Windows cursor (239/240), put back in the middle near the edges; the game's sensitivity
 --            does not touch it, if it moves at all with no menu open
--- Run it twice with very different GTA sensitivities. look / cursor is the multiplier the check
+-- Run it twice with very different game sensitivities. look / cursor is the multiplier the check
 -- inherits, whatever the hand did. Ungated like /paddebug: it reads this client's own input, so any
 -- player with the problem can run it and send the F8 lines.
 
 local SECONDS = 5
 local running = false
 
---- Profile setting ids, from docs.fivem.net/docs/game-references/profile-settings.
+--- Profile setting ids, from Cfx.re's docs (game references: profile settings).
 local PROFILE = { inputMethod = 750, lookSensitivity = 754, smoothing = 761 }
 
 local function measure()

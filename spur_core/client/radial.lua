@@ -162,7 +162,7 @@ end)
 --- condition that errors is treated as "no" (fail closed).
 --- Did a condition say yes?
 ---
---- FiveM-truthy: yes on true or any non-zero number; no on false, nil and 0. Many GTA natives
+--- native-truthy: yes on true or any non-zero number; no on false, nil and 0. Many game natives
 --- answer 1/0 (IsPedInAnyVehicle), so a bare `if` passes 0 and `== true` rejects 1.
 local function isTrue(v)
     if v == nil or v == false then return false end
@@ -489,11 +489,11 @@ RegisterCommand('+whip_radial_pad', function()
 end, false)
 RegisterCommand('-whip_radial_pad', function() padHeld = false end, false)
 
--- F1 by default, and rebindable: Settings -> Key Bindings -> FiveM -> "Radial Menu". The default
+-- F1 by default, and rebindable: Settings -> Key Bindings -> Cfx.re -> "Radial Menu". The default
 -- only applies on a player's FIRST load; after that their own binding is kept.
 --
 -- F2 is the inventory, F3 the phone (whip_phone; the emote menu is on this wheel), F6 chat, F7 the debug overlays,
--- and F8 belongs to the FiveM console.
+-- and F8 belongs to the Cfx.re console.
 RegisterKeyMapping('whip_radial', 'Radial Menu', 'keyboard', 'F1')
 
 -- THE WHEEL FOLLOWS WHAT APPLIES WHILE IT IS UP, as the inventory's glovebox panel follows the seat

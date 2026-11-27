@@ -1,6 +1,6 @@
 -- Director NPC debug in a test (J): over each NPC, what it is doing and why. The server sends the lines once a
 -- second while on (server/director/hub.lua, Npcs.explain); each is drawn when the tester is within NEAR_M of the
--- NPC or looks at it within LOOK_M. What only this game sees (GTA's AI fighting or running) overrides the server's
+-- NPC or looks at it within LOOK_M. What only this game sees (the game's AI fighting or running) overrides the server's
 -- word. Text needs a per-frame loop, run only while on.
 
 DirectorNpcDebug = {}
@@ -28,7 +28,7 @@ local function lookedAt(cam, fwd, at)
     return (dx * fwd.x + dy * fwd.y + dz * fwd.z) / d >= math.cos(cone)
 end
 
---- The server's two lines, or this game's when GTA's own AI has taken it over.
+--- The server's two lines, or this game's when the game's own AI has taken it over.
 local function linesFor(e, ped)
     local what, why = e.what, e.why
     if e.reacts and e.state ~= 'fighting' and e.state ~= 'fleeing' and e.state ~= 'dead' then

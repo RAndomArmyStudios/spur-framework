@@ -261,7 +261,7 @@ function GroundItems.create(item, amount, metaOrCoords, xOrMeta, y, z, heading, 
 
     -- FAILURE IS `false, reason` AND NOT `nil, reason`, AND THE DIFFERENCE IS LOAD-BEARING.
     --
-    -- A FiveM export truncates its return list AT THE FIRST NIL, wherever that nil sits: the
+    -- A Cfx.re export truncates its return list AT THE FIRST NIL, wherever that nil sits: the
     -- caller across the boundary gets everything before it and nothing after. So
     -- `return nil, 'Invalid coordinates'` reached every satellite as a bare nil with the reason
     -- silently dropped — indistinguishable from the swallowed INSERT failure this guard exists

@@ -206,7 +206,7 @@ RegisterTestModule({
                 -- the total is 4 whether the move is allowed or refused. The placement
                 -- assertions below are what actually hold the contract.
                 --
-                -- This DELIBERATELY throws. FiveM prints the stack trace in spur_test's
+                -- This DELIBERATELY throws. Cfx.re prints the stack trace in spur_test's
                 -- context (the callback is a cross-resource reference), and spur_core logs
                 -- that a callback errored. Both lines in the server console are EXPECTED
                 -- output from this test, not a fault.

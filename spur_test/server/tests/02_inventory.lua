@@ -72,7 +72,7 @@ RegisterTestModule({
 
                 -- THE REGRESSION NET FOR THE NIL-TRUNCATION RULE.
                 --
-                -- A FiveM export's return list is truncated at the FIRST NIL, in any position.
+                -- A Cfx.re export's return list is truncated at the FIRST NIL, in any position.
                 -- GiveOrDrop returned `true, nil, 'inventory'` on this path, so the placement was
                 -- dropped at the boundary and every satellite saw nil — while the ground path at
                 -- the bottom of this file worked, purely because its middle slot holds a non-nil

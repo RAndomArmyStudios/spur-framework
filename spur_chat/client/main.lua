@@ -429,7 +429,7 @@ local function onChatKeyUp()
     Whip.core:FocusComposer()
 end
 
--- One default key per mapping is all FiveM allows, so each key gets its own command pair. Each
+-- One default key per mapping is all Cfx.re allows, so each key gets its own command pair. Each
 -- shows up as its own rebindable entry in the game's key binding settings.
 local CHAT_KEYS = {
     { cmd = 'spur_chat',       label = 'Open Chat',           key = 'T' },

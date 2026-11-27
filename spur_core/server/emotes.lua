@@ -6,9 +6,9 @@
 -- system never touches the server. What does:
 --
 --   emoteProps  the props an emote holds, made by the server (server/held_props.lua)
---   setWalk     the walk style, saved on the character (GTA shares a walk with other players itself)
+--   setWalk     the walk style, saved on the character (the game shares a walk with other players itself)
 --   setMood     the facial expression, saved on the character AND put on the player's statebag
---               (PLAYER_MOOD_KEY), because GTA does not share faces — every client applies it to
+--               (PLAYER_MOOD_KEY), because the game does not share faces — every client applies it to
 --               that player's ped (client/emotes.lua)
 
 -- ============================================

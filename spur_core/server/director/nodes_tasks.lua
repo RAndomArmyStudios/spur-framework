@@ -91,7 +91,7 @@ end
 
 --- A take's TRAILERS (its car's page keeps them with it: DirectorTakes.towOf), played with it. Each trailer the run has
 --- made plays its own recorded track, its own take step from the same moment on the same game, so it goes where it went
---- (not where GTA would drag it); the car's step `p` carries the moments it was hitched and let go (p.tow: client/
+--- (not where the game would drag it); the car's step `p` carries the moments it was hitched and let go (p.tow: client/
 --- actors.lua). A trailer the run has not made is left out, and said (Play Take makes them; a car's own Tasks need a
 --- card that does). Each plays beside `car`'s list, and stops with it (Actors.runTasks opts.with).
 local function towTracks(ctx, p, car)

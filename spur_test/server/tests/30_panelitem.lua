@@ -16,7 +16,7 @@
 --
 -- The hooks are FUNCTIONS INSIDE A TABLE crossing a resource export boundary. spur_core's own
 -- source carries the warning — "avoids function-in-table stripping" — which says someone has
--- already been bitten by exactly this. If FiveM does not carry those functions across, no
+-- already been bitten by exactly this. If Cfx.re does not carry those functions across, no
 -- amount of correct logic behind them matters and the API needs a different shape entirely.
 --
 -- So test one asks the cheapest possible version of that question, and every other test in

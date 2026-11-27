@@ -607,7 +607,7 @@ import { openPadKeyboard } from './pad-keyboard.js';   // whip's keyboard (and, 
     const SK_LATE       = 0.3;    // the clock turns red with this much of it left
     // THE MOUSE'S SPEED: reach per unit of the game's mouse look (GetDisabledControlNormal 1/2, the
     // same numbers the cameras turn by — client/camera.lua), times Config.SkillCheckMouseSpeed. It
-    // also follows the player's own GTA mouse sensitivity.
+    // also follows the player's own game mouse sensitivity.
     const SK_MOUSE_GAIN = 0.8;
     const SK_MOUSE_WAKE = 0.02;   // less than this is a hand resting on the mouse, not taking the dot from the pad
 

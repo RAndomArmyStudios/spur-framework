@@ -770,7 +770,7 @@ end)
 
 --- Reserved source ids for phantom players.
 ---
---- FiveM issues sources from 1 upwards and never anywhere near this, so a phantom can never
+--- Cfx.re issues sources from 1 upwards and never anywhere near this, so a phantom can never
 --- collide with, mask, or be mistaken for a connected player.
 local PHANTOM_BASE = 900000
 

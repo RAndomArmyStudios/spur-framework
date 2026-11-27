@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_rope, 24 Nov 2026): RedM, not FiveM. A port of whip_rope 1.0.0 for spur_core (README.md, NOTICE.md).
+-- RedM (spur_rope, 24 Nov 2026): A port of whip_rope 1.0.0 for spur_core (README.md, NOTICE.md).
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 lua54 'yes'
@@ -12,7 +12,7 @@ version '1.0.0-redm.1'
 -- Whip.register re-runs our registrations whenever spur_core starts; Whip.core is safe while it's down;
 -- Whip.configPage puts config.lua in /spur.
 shared_script '@spur_core/lib/satellite.lua'
--- RedM (spur_rope, 24 Nov 2026): spur_core's names for the GTA natives RDR2 lacks (text, visibility and the rest), loaded
+-- RedM (spur_rope, 24 Nov 2026): spur_core's names for the original-game natives RDR2 lacks (text, visibility and the rest), loaded
 -- into this resource as spur_test loads them. Only spur_core runs their threads and commands.
 shared_script '@spur_core/shared/rdr_compat.lua'
 shared_script '@spur_core/shared/rdr_compat_stubs.lua'
@@ -51,7 +51,7 @@ files {
     'html/img/items/*.webp',
 }
 
--- RedM (spur_rope, 24 Nov 2026): no streamed rope piece. whip_rope's (whip_rope_seg, by 3D Clanker) is a GTA V model
+-- RedM (spur_rope, 24 Nov 2026): no streamed rope piece. whip_rope's (whip_rope_seg, by 3D Clanker) is an original-game model
 -- RDR2 can't load, placed with SetEntityMatrix, which RedM lacks; it is kept outside the resource. client/mesh.lua
 -- draws RDR2's own rope instead.
 

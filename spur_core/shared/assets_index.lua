@@ -5,7 +5,7 @@
 -- is the first name in it, in sorted order. shared/assets.lua reads this (WhipAssets.resourceFor).
 
 -- RedM (spur_core, 23 Nov 2026): EMPTY. whip's media packs (whip_media_clothing_*, _props, _previews, _map) hold
--- pictures of GTA V's clothing, props, cars, peds and tattoos, emote videos and GTA's map, so none of them belongs on
+-- pictures of the original game's clothing, props, cars, peds and tattoos, emote videos and the original game's map, so none of them belongs on
 -- an RDR2 server. With no packs, every picture lookup answers "none" (WhipAssets.url is nil) and nothing asks for
 -- the packs.
 WhipAssets = {

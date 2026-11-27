@@ -443,7 +443,7 @@ local WEAPON_NAMES = {
     [GetHashKey('WEAPON_WOLF_MEDIUM')]           = 'Wolf',
     [GetHashKey('WEAPON_WOLF_SMALL')]            = 'Wolf',
     [GetHashKey('WEAPON_UNARMED')]               = 'Fist',
-    -- RedM (spur_core, 26 Nov 2026): whip_core's GTA V guns, knives and throwables were listed here; they were another
+    -- RedM (spur_core, 26 Nov 2026): whip_core's original-game guns, knives and throwables were listed here; they were another
     -- game's and are gone. Every weapon RDR2 or a resource has is named by the weapon catalog below.
 }
 
@@ -480,7 +480,7 @@ function GetLastDamageSource()
     return _lastDamageSource, _lastDamageTime
 end
 
--- Health the server took (a need at empty, an effect, a script: statUpdate above), and when. GTA reports a script's
+-- Health the server took (a need at empty, an effect, a script: statUpdate above), and when. The game reports a script's
 -- SetEntityHealth as a fall with no attacker, so for SCRIPTED_LOSS_MS such a "fall" is read as this cause instead:
 -- a player who starves dies of Starvation, not Fall.
 local _scriptedLoss, _scriptedLossAt = nil, 0
@@ -660,8 +660,8 @@ end)
 --
 -- And this game drowns the player when whip says the breath is gone: whip gives the ped the game's longest breath
 -- (BREATH_GAME, 50 s; the setting is held under it on the server) while whip's lasts, and none once whip's is 0,
--- so GTA drowns the ped as it always does and a death under water still reads as drowning. In a seat whip drowns
--- them itself (drownInCar): GTA's own drowning in a sunk car cannot be counted on.
+-- so the game drowns the ped as it always does and a death under water still reads as drowning. In a seat whip drowns
+-- them itself (drownInCar): the game's own drowning in a sunk car cannot be counted on.
 --
 -- A float, always, to SetPedMaxTimeUnderwater: an integer passed to a float parameter is read as its bits (10
 -- arrives as about 1e-44 seconds). Hence the literals.
@@ -688,9 +688,9 @@ end
 local DROWN_STEP = 4   -- health each look (200 ms) takes in a sunk car: from full to drowned in about 5 s
 local DROWNED_IN_CAR = GetHashKey('WEAPON_DROWNING_IN_VEHICLE')
 
---- Whip's breath gone (past the grace) in a sunk car: the seat drowns them, as the water does. GTA's own drowning
+--- Whip's breath gone (past the grace) in a sunk car: the seat drowns them, as the water does. The game's own drowning
 --- in a seat did not (Josh, 29 Oct: the car pushed in during the login's arrival, while it held him invincible, and
---- he sat on the bottom for good). Read as GTA's 'Drowning (Vehicle)', and never while something holds them
+--- he sat on the bottom for good). Read as the game's 'Drowning (Vehicle)', and never while something holds them
 --- invincible (God Mode, a no-PvP zone, a scene).
 ---@param ped number
 ---@param under boolean  BodyState.underwater's answer this look
@@ -814,7 +814,7 @@ end)
 local STAT_NAMES = { health = 'Health', armour = 'Armour', hunger = 'Hunger', thirst = 'Thirst', developer = 'Developer',
                      oxygen = 'Oxygen' }
 
---- One player's card: their name, charId, and each stat as a bar (health counted from 100, GTA's dead,
+--- One player's card: their name, charId, and each stat as a bar (health counted from 100, the game's dead,
 --- as the HUD does).
 ---@param e table  { s, n, c, stats = { { n, v, m, t, c } } } from server/stats.lua
 local function playerCard(e)

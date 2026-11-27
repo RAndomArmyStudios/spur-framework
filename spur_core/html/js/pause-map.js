@@ -1,5 +1,5 @@
 // ========================================
-// PAUSE MAP — whip's map: GTA's world in 3D, GTA's data drawn over it
+// PAUSE MAP — whip's map: the game's world in 3D, the game's data drawn over it
 //
 // The pause menu's map (pause.js), and the /whip panel's (whip-panel.js). The picture is 3D Clanker's 3D map —
 // js/map3d/map3d.js, its data map/whip-map3d.js in a media pack: the 2D map's shapes and colours standing on the game's
@@ -16,7 +16,7 @@
 // COORDINATES. "px0" is a pixel of the z0 tile (the whole map is 256 x 256 px0). The world maps on
 // to it by a measured line — from the tile set's grid style, whose 100-unit lines sit 33.0 px apart
 // at z4 with the world's 0,0 at z4 px 1877.5 x 2762. A view is a centre in px0 and a zoom: one px0
-// is 2^zoom screen px. Then the 3D map's turn (yaw, GTA's sense: anticlockwise from north) and tilt
+// is 2^zoom screen px. Then the 3D map's turn (yaw, the game's sense: anticlockwise from north) and tilt
 // (pitch, 90 = straight down). Straight down and north up ("flat"), everything is placed by that line, as it always
 // was; turned or tilted, by the 3D map's own camera (project, pick).
 //
@@ -33,7 +33,7 @@
 import { screenRect } from './pad-cursor.js';
 import { assetUrl } from './utils.js';
 
-/** RedM (spur_core, 25 Nov 2026): the 3D map's data, in its media pack's folders (assetUrl). whip's was map/whip-map3d.js (GTA V). */
+/** RedM (spur_core, 25 Nov 2026): the 3D map's data, in its media pack's folders (assetUrl). whip's was map/whip-map3d.js (the original game). */
 export const MAP3D_FILE = 'map/rdr-map3d.js';
 
 /** px0 per world metre (toPx0's slope). Screen px per metre is K0 * 2^zoom. */
@@ -54,7 +54,7 @@ const TILT_MS = 450;
 const DRAG_TURN = 0.3;
 const DRAG_TILT = 0.25;
 
-// RedM (spur_core, 25 Nov 2026): the line moved onto RDR2's world. GTA's (the world's 0,0 at z4 px 1877.5 x 2762) put the 256 px0
+// RedM (spur_core, 25 Nov 2026): the line moved onto RDR2's world. The original game's (the world's 0,0 at z4 px 1877.5 x 2762) put the 256 px0
 // square over x -5689..6722, y -4042..8370, and a pan stops at its edge (drag: 0..256), so New Austin and the
 // south were out of reach. Now its middle (z4 px 2048 x 2048) is RDR2's (-1700, -1350): x -7906..4506, y
 // -7556..4856, the whole of RDR2's map. The slope (0.33 px per metre at z4, K0) is unchanged.
@@ -71,7 +71,7 @@ export function toWorld(px, py) {
 }
 
 const SVGNS = 'http://www.w3.org/2000/svg';
-const WAYPOINT_COLOUR = '#a44cf2';   // GTA's own waypoint and route purple
+const WAYPOINT_COLOUR = '#a44cf2';   // the game's own waypoint and route purple
 const ROUTE_WIDTH = 5;               // px, the GPS line
 const LINE_WIDTH = 4;                // px, a page's own lines (a car's takes on the /whip panel's map)
 
@@ -145,7 +145,7 @@ export function mayDrawMap3D(owner, retry) {
 let tintDefs = null;         // one <svg><defs> for the page's blip colours (blipTint)
 const tintIds = new Map();
 
-/** A blip icon's colour filter: GTA's icons are drawn white with dark detail, and the game colours the white. So this
+/** A blip icon's colour filter: the game's icons are drawn white with dark detail, and the game colours the white. So this
  *  MULTIPLIES — the icon's lightness times the blip's colour — and the dark lines stay dark (not flat silhouettes). */
 export function blipTint(hex) {
     if (!hex) hex = '#ffffff';
@@ -181,7 +181,7 @@ export function blipImage(sprite, colour, number) {
     img.draggable = false;
     img.alt = '';
     img.style.filter = blipTint(colour) + ' drop-shadow(0 1px 2px rgba(0,0,0,.8))';
-    // An icon FiveM's list has no picture for: a dot in the blip's colour instead.
+    // An icon Cfx.re's list has no picture for: a dot in the blip's colour instead.
     img.onerror = () => { img.onerror = null; img.classList.add('pmap-dot'); img.removeAttribute('src'); img.style.background = colour || '#fff'; img.style.filter = ''; };
     if (number == null) return img;
     const mark = document.createElement('span');
@@ -194,7 +194,7 @@ export function blipImage(sprite, colour, number) {
 }
 
 /** Load the data and build the 3D map, once for the page. three.js and the renderer are imported here, not at the
- *  page's load: the data's <script> first (a script, not a fetch, as gtav-map.js was: a media pack is another origin). */
+ *  page's load: the data's <script> first (a script, not a fetch, as whip's 2D map data was: a media pack is another origin). */
 function loadGl() {
     if (glState !== 'idle') return;
     glState = 'loading';
@@ -209,7 +209,7 @@ function loadGl() {
             try { fn(e); } catch (err) { console.error('[pause map] a whenMap3D failed() threw:', err); }
         }
     };
-    // RedM (spur_core, 23 Nov 2026): the 3D map is GTA V's world, from a WHIP media pack. With no pack (always, on
+    // RedM (spur_core, 23 Nov 2026): the 3D map is the original game's world, from a WHIP media pack. With no pack (always, on
     // RedM) there is nothing to load: say so once, quietly, and the callers fall back (failed()).
     // RedM (spur_core, 25 Nov 2026): RDR2's, map/rdr-map3d.js (made by dev/map3d_rdr.py from a survey of the game, in whip's
     // format), in spur_core itself (js/assets-index.js). It sets window.WHIP_MAP3D as whip's did.
@@ -251,7 +251,7 @@ export class PauseMap {
         this.cx = 128; this.cy = 128;    // the view's centre, px0
         this.offsetX = 0;                // where that centre sits, in screen px from the middle
         this.zoom = 3.5;
-        this.yaw = 0;                    // the 3D map's turn, degrees (GTA's sense)
+        this.yaw = 0;                    // the 3D map's turn, degrees (the game's sense)
         this.pitch = 90;                 // ...and tilt: 90 is straight down
         this.turnable = false;           // a right-drag, the stick and setTilt may turn and tilt it (the pause map's)
         this.minZoom = 1.4;
@@ -464,7 +464,7 @@ export class PauseMap {
         this.playerEl.style.display = p ? '' : 'none';
         if (!p) return;
         const [sx, sy] = this.screenOf(p.x, p.y);
-        // GTA's heading turns anticlockwise from north; the screen's rotation clockwise. Less the map's own turn.
+        // The game's heading turns anticlockwise from north; the screen's rotation clockwise. Less the map's own turn.
         this.playerEl.style.transform = 'translate(' + sx + 'px,' + sy + 'px) rotate(' + (this.yaw - p.heading) + 'deg)';
     }
 
@@ -664,7 +664,7 @@ export class PauseMap {
 
     blipImage(sprite, colour, number) { return blipImage(sprite, colour, number); }
 
-    /** A mark drawn from one of whip's own glyphs (an SVG, ours, never data), for what GTA has no blip icon for: a
+    /** A mark drawn from one of whip's own glyphs (an SVG, ours, never data), for what the game has no blip icon for: a
      *  scenario's NPC, car, prop, door. A dark disc with the glyph in white, the size of a blip. */
     glyphMark(svg) {
         const el = document.createElement('span');
@@ -842,7 +842,7 @@ export class PauseMap {
         const end = () => { drag = null; turn = null; this.root.classList.remove('pmap-dragging'); };
         this.root.addEventListener('pointerup', end);
         this.root.addEventListener('pointercancel', end);
-        // A right CLICK clears the waypoint, as GTA's map does; a right-drag turns the map (above), and clears nothing.
+        // A right CLICK clears the waypoint, as the game's map does; a right-drag turns the map (above), and clears nothing.
         this.root.addEventListener('contextmenu', (e) => {
             if (this.turnable || this.interactive) e.preventDefault();
             if (!this.interactive || !this.onWaypoint || !this.data.waypoint) return;
@@ -879,7 +879,7 @@ export class PauseMap {
         });
     }
 
-    /** A waypoint at a screen point — or, on the waypoint itself, none (as GTA does). Above the horizon of a tilted map
+    /** A waypoint at a screen point — or, on the waypoint itself, none (as the game does). Above the horizon of a tilted map
      *  there is no ground, and nothing happens. */
     waypointAt(sx, sy) {
         const wp = this.data.waypoint;

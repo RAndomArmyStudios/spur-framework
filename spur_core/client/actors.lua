@@ -5,7 +5,7 @@
 --   * Speed Up To holds the speed for its time; Everyone Out is said done once every seat is empty.
 --   * Play a Take drives the car along a recording (shared/take_track.lua) by the server's clock (client/clock.lua):
 --     speed and spin are set each frame with a pull back toward place (hard reset only past 3 m or 30 degrees),
---     so GTA moves it. Samples are asked for once (spur_core:server:takeWant) and kept; the version is said
+--     so the game moves it. Samples are asked for once (spur_core:server:takeWant) and kept; the version is said
 --     applied only once they are here.
 --   * When someone sits in a car a take plays, the take has the engine (TakePlayer.on) and the dial gear
 --     (TakePlayer.gearOn).
@@ -105,7 +105,7 @@ STEP.brake = function(veh, w, _, left)
 end
 
 -- Doors, windows, lights, horn, engine and tyres (server/director/tasks.lua).
--- GTA's numbers by place: doors 0-5 (bonnet 4, boot 5), windows 0-3, wheels 0, 1, 4, 5 (a bike's front 0, back 4).
+-- The game's numbers by place: doors 0-5 (bonnet 4, boot 5), windows 0-3, wheels 0, 1, 4, 5 (a bike's front 0, back 4).
 local DOOR_N   = { ['front left'] = 0, ['front right'] = 1, ['back left'] = 2, ['back right'] = 3, ['bonnet'] = 4, ['boot'] = 5 }
 local WINDOW_N = { ['front left'] = 0, ['front right'] = 1, ['back left'] = 2, ['back right'] = 3 }
 local TYRE_N   = { ['front left'] = 0, ['front right'] = 1, ['back left'] = 4, ['back right'] = 5 }
@@ -144,12 +144,12 @@ end
 
 STEP.indicators = function(veh, _, s)
     local side = s.p.side
-    -- (GTA's 1 is the left, 0 the right.)
+    -- (the game's 1 is the left, 0 the right.)
     SetVehicleIndicatorLights(veh, 1, side == 'left' or side == 'hazards')
     SetVehicleIndicatorLights(veh, 0, side == 'right' or side == 'hazards')
 end
 
--- THE HORN FOR ITS TIME, SOUNDED AGAIN AT EACH LOOK (lookAt), a little at a time: given its whole time at once, GTA
+-- THE HORN FOR ITS TIME, SOUNDED AGAIN AT EACH LOOK (lookAt), a little at a time: given its whole time at once, the game
 -- sounded it on after its list was stopped (WLVF's review). Its job ending stops it (endTimed).
 local HORN = GetHashKey('HELDDOWN')
 local HORN_MS = 400   -- each time it is sounded: longer than a look's gap, so it never drops between them
@@ -327,7 +327,7 @@ end
 
 --- While a take plays: a crash may crumple the car but not set it alight or stall it; no radio. Engine on unless the
 --- drive leaves it to the tasks (`skip`). Kept driveable: whip's ignition makes a keyless car undriveable with
---- someone at the wheel, and GTA stops an undriveable car's engine.
+--- someone at the wheel, and the game stops an undriveable car's engine.
 local function crashProof(veh, skip)
     SetVehicleEngineCanDegrade(veh, false)
     SetVehicleExplodesOnHighExplosionDamage(veh, false)
@@ -344,7 +344,7 @@ local function crashProofOff(veh)
     SetDisableVehiclePetrolTankFires(veh, false)
 end
 
--- Gear: GTA's gearbox does not move a car a take plays, so its gear says nothing. While a take plays the gear is
+-- Gear: the game's gearbox does not move a car a take plays, so its gear says nothing. While a take plays the gear is
 -- the take's (TakeTrack.gearOf), or worked out from speed when the take has none (Vehicles.speedGear).
 
 local driving = {}       -- [car] = the take playing on it on this game (its `play`), while one does
@@ -356,7 +356,7 @@ local function gearNow(veh, play)
     return Vehicles.speedGear(veh, play)
 end
 
---- The take no longer plays on its car here: crashProofOff, and GTA's gearbox gets the gear it ended in.
+--- The take no longer plays on its car here: crashProofOff, and the game's gearbox gets the gear it ended in.
 local function takeDone(play)
     local veh = play.veh
     if driving[veh] ~= play then return end   -- (another take took the car: it has it now)

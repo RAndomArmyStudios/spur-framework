@@ -3,7 +3,7 @@
 -- ============================================
 --
 -- A FIXED WEAPON is a prop of a run's set made as its gun's world model (client/prop_sets.lua, shared/
--- gta_weapon_models.lua). Its BARREL is read from the object itself: its muzzle (the model's gun_muzzle bone, or the
+-- rdr_weapons.lua). Its BARREL is read from the object itself: its muzzle (the model's gun_muzzle bone, or the
 -- far end of its longest side), and the way it points along that side. The world builder's aim line
 -- (client/furnish_builder.lua) and the shot both use it, so where the line runs is where the shot goes.
 --

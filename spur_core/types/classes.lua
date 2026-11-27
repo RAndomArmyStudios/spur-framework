@@ -15,7 +15,7 @@
 -- WhipPlayer is the LIVE OBJECT, and it exists only inside spur_core. It has methods.
 --
 -- WhipPlayerData is what every GetPlayer* EXPORT hands back — WhipPlayer:serialize(), a plain
--- table. FiveM copies values across a resource boundary and a metatable does not survive that
+-- table. Cfx.re copies values across a resource boundary and a metatable does not survive that
 -- copy, so a satellite cannot call a method on the result.
 --
 -- THE SHEET IS NOT A SUBSET. It carries `cash` (computed by getCash()), and it drops the four
@@ -58,7 +58,7 @@
 ---@field license string Rockstar license identifier
 ---@field steam string|nil Steam hex identifier
 ---@field discord string|nil Discord identifier
----@field fivem string|nil FiveM identifier
+---@field fivem string|nil Cfx.re identifier
 local WhipPlayer = {}
 
 ---@param key? string Specific key, or nil to get entire metadata table
@@ -144,7 +144,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field image string|nil Icon path inside the registering resource; default 'html/img/items/<key>.png' (needs `files { 'html/img/items/*.png' }` in its fxmanifest)
 ---@field usable boolean|nil Whether the item can be used (right-click)
 ---@field cooldown number|nil Use cooldown in seconds
----@field prop string|nil GTA prop model name for ground/hand
+---@field prop string|nil game prop model name for ground/hand
 ---@field grab '1h'|'2h'|nil How it is picked up off the ground: one hand (the default) or both (a rifle, a duffel bag); also on /whip → Items
 ---@field playerWalk boolean|nil Held out to give or throw, the player keeps their own walk instead of the give walk (default false); also on /whip → Items and in the hand position editor
 ---@field metaFields table[]|nil Array of { key, label, format?, value? } for tooltip display; `value` is shown when the item's metadata has no `key`
@@ -208,7 +208,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field state string 'out', 'garaged', or 'impounded'
 ---@field garage string|nil Garage key where stored
 ---@field fuel number Fuel level (0-100)
----@field properties table|nil GTA vehicle properties JSON (mods, colors, etc.)
+---@field properties table|nil game vehicle properties JSON (mods, colors, etc.)
 ---@field x number|nil World X position (when spawned)
 ---@field y number|nil World Y position
 ---@field z number|nil World Z position
@@ -233,7 +233,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field plate string
 ---@field model string Model name
 ---@field displayName string|nil Name from the vehicle catalog; nil for a model the catalog does not have
----@field class number|nil GTA vehicle class from the catalog; nil for a model the catalog does not have
+---@field class number|nil game vehicle class from the catalog; nil for a model the catalog does not have
 ---@field vehType string 'automobile', 'bike', 'boat', 'heli', ...
 ---@field session boolean True for a car nobody owns: street traffic whip adopted, OR a temporary car
 ---@field temp boolean True for a SpawnTempVehicle car (a rental, a job van) — session is true for these too
@@ -347,7 +347,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field y number World Y
 ---@field z number World Z
 ---@field heading number|nil World heading
----@field prop string|nil GTA prop model
+---@field prop string|nil game prop model
 ---@field allowedItems string[]|table<string, any>|nil Item whitelist: a list of item keys { 'food', 'drink' } (a keyed table's keys also count); nil takes anything
 ---@field createdAt number Epoch timestamp
 ---@field accessCharId number|nil The one character who may open it; nil for anyone
@@ -639,7 +639,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field dict string|nil Animation dictionary
 ---@field clip string|nil Animation name
 ---@field flag number|nil Default 49: upper body, so the player can walk if `disable.move` allows
----@field scenario string|nil Instead of dict/clip: a GTA scenario, e.g. 'WORLD_HUMAN_VEHICLE_MECHANIC'
+---@field scenario string|nil Instead of dict/clip: a game scenario, e.g. 'WORLD_HUMAN_VEHICLE_MECHANIC'
 
 ---@class WhipProgressProp
 ---@field model string|number Prop model

@@ -2,7 +2,7 @@
 -- RDR2'S WORLD, ON WHIP'S PROMPTS — client/rdr_world.lua
 -- ============================================
 --
--- RedM (spur_core, 25 Nov 2026). New with the port: whip_core (by Whippy and WLVF) has no such file, because GTA has
+-- RedM (spur_core, 25 Nov 2026). New with the port: whip_core (by Whippy and WLVF) has no such file, because the original game has
 -- nothing to replace. client/rdr_interactions.lua switches RDR2's own interactions off (the lock-on's Greet and
 -- Antagonize, Loot, Pick Up, the hat); this file gives the same things back as whip prompts (client/actions.lua), on
 -- E, where the player looks:

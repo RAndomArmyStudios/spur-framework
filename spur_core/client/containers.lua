@@ -235,7 +235,7 @@ local function promptFollow(cId)
         w.ax, w.ay, w.tx, w.ty = ax, ay, -nx, -ny
         w.lo, w.hi = -(half + FACE_OFF), half + FACE_OFF
         w.depth = 2 * d
-        -- A sign facing straight out of the wall: GTA's heading for (nx, ny). Not pulled (pull 0). 'side' centres
+        -- A sign facing straight out of the wall: the game's heading for (nx, ny). Not pulled (pull 0). 'side' centres
         -- circle and words on the side's middle (Interactions `centre`); 'face' keeps the circle on its point.
         return bx + nx * d + ax * t, by + ny * d + ay * t, z, math.deg(math.atan(-nx, ny)), 0.0, w, mode == 'side'
     end

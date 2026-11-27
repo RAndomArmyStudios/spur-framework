@@ -11,7 +11,7 @@
    TOKENS FOR COLOUR AND TYPE, literals for the surfaces this screen is made of. --ui-* carries the
    palette, so a theme resource reskins this along with everything else.
 
-   2022-SAFE: FiveM's CEF is Chromium 103. No :has(), no native nesting, no color-mix(), no
+   2022-SAFE: Cfx.re's CEF is Chromium 103. No :has(), no native nesting, no color-mix(), no
    container queries, no @layer.
 
    ONE MODAL STATE. Everything is lit and clickable for the whole session, because the cursor is

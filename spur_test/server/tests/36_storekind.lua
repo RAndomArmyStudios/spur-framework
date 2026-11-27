@@ -11,7 +11,7 @@
 --
 -- THE FAILURE MODE IT WAS WRITTEN AGAINST IS NOT HYPOTHETICAL
 --
--- Every function in a kind definition crosses a resource export boundary, and FiveM does not
+-- Every function in a kind definition crosses a resource export boundary, and Cfx.re does not
 -- carry a Lua `function` across: it arrives as a callable whose `type()` is something else.
 -- spur_core's own source records what that cost — the guard here used to check the type and so
 -- rejected EVERY satellite kind with "missing required function 'resolve'" while resolve was
@@ -41,7 +41,7 @@ local boxes = {}
 --- THE HANDLE CARRIES AN ID, NEVER A LIVE TABLE. This is the trap in the whole API.
 ---
 --- `resolve` runs in THIS resource and its return value crosses the export boundary back into
---- spur_core, so FiveM COPIES it. A handle built as `{ id = id, box = boxes[id] }` therefore
+--- spur_core, so Cfx.re COPIES it. A handle built as `{ id = id, box = boxes[id] }` therefore
 --- hands spur_core a copy of the box — and when spur_core later calls `set(h, ...)`, `h` is
 --- copied again on the way in, so the write lands in a copy of a copy. The satellite's real
 --- storage is never touched.

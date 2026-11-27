@@ -318,12 +318,12 @@ function WhipSatellite.removeTask(t) end
 ---@alias WhipWeaponGroup 'pistol'|'smg'|'rifle'|'machine gun'|'shotgun'|'sniper'|'heavy'|'thrown'|'stun gun'|'melee'
 
 ---@class WhipWeaponDef   one of your own weapons in whip's weapon lists (Whip.weapons)
----@field name string             'WEAPON_' then capitals, digits or _ (64 at most); never one of GTA's own
+---@field name string             'WEAPON_' then capitals, digits or _ (64 at most); never one of the game's own
 ---@field label string            what the lists show (40 at most)
 ---@field group WhipWeaponGroup   exactly one of these (spaces as written)
 ---@field model? string           its world model, a firearm's only: with one it can be a Fixed Weapon
 
---- BOTH SIDES (one call in a file both load). Your own weapons beside GTA's in every weapon list whip has: the
+--- BOTH SIDES (one call in a file both load). Your own weapons beside the game's in every weapon list whip has: the
 --- Director's NPC weapons and Hold a Weapon step, its Fixed Weapons, Dungeon Mode, the Object Viewer's Give a weapon.
 --- Called again, the new list replaces the old; they go when your resource stops. ONE bad entry refuses the WHOLE
 --- list (printed with why). An NPC given one carries the gun itself, never your item: your ammo and reload code is

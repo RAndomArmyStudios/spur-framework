@@ -16,20 +16,20 @@
 --     charId sees it whenever they are on, after a relog too; a job's people as they clock on and off.
 --   * YOURS: ids are your resource's own (another resource's 'dropoff' is another blip). The same id
 --     again MOVES or changes that blip. Yours go when your resource stops, and with your run's tag.
---   * NO FRAME LOOP anywhere: the client makes a GTA blip when told, and remakes it only when told.
+--   * NO FRAME LOOP anywhere: the client makes a game blip when told, and remakes it only when told.
 --
 -- What a blip can say (all but coords optional):
 --   coords      where (a vector3, or { x, y, z })
 --   radius      metres: an AREA (a translucent circle on the map) instead of a point
---   sprite      GTA's blip icon number (1 = the plain dot, the default; 0 = none: an area alone, which
+--   sprite      the game's blip icon number (1 = the plain dot, the default; 0 = none: an area alone, which
 --               then has no name and no route, as those live on the dot)
---   color       GTA's blip colour number (5 = yellow, the objective colour)
+--   color       the game's blip colour number (5 = yellow, the objective colour)
 --   label       what the map's legend calls it (at most 40 characters)
 --   route       true: the GPS route to it, drawn on the map and the radar
 --   shortRange  true: only on the radar when near (like a shop); default false: always shown
 --   scale       its size on the map, 0.3-2 (default 0.9)
 --   flash       true: it flashes
---   number      0-99: a number on the dot (the stops of a route in order: 1, 2, 3), on GTA's map and whip's
+--   number      0-99: a number on the dot (the stops of a route in order: 1, 2, 3), on the game's map and whip's
 
 Blips = {}
 
@@ -69,7 +69,7 @@ local function readSpec(spec)
     w.color = color
     if spec.label ~= nil then
         if type(spec.label) ~= 'string' then return nil, 'label is text' end
-        -- GTA reads ~x~ in a blip's name as a colour or a button: none of that from here.
+        -- The game reads ~x~ in a blip's name as a colour or a button: none of that from here.
         local clean = BubbleText.clean(spec.label, MAX_LABEL):gsub('~', '')
         if clean ~= '' then w.label = clean end
     end
@@ -172,7 +172,7 @@ function Blips.list(owner)
     return out
 end
 
---- The waypoint on one player's map (GTA's own: the purple one the player could set themselves).
+--- The waypoint on one player's map (the game's own: the purple one the player could set themselves).
 --- Answers true, or false and why.
 function Blips.waypoint(source, coords)
     local src = Sanitize.id(source)
@@ -184,7 +184,7 @@ function Blips.waypoint(source, coords)
     return true
 end
 
--- One waypoint per vehicle: GTA Online shares it between a vehicle's occupants; FiveM does not, so whip does: a player in a vehicle who sets or
+-- One waypoint per vehicle: the original game's online mode shares it between a vehicle's occupants; Cfx.re does not, so whip does: a player in a vehicle who sets or
 -- clears their waypoint (client/blips.lua watches) has it set or cleared for every other player in the same one.
 -- The vehicle is read here, from the server's own ped; the client only says what the waypoint is.
 SecureEvent('spur_core:server:vehicleWaypoint', {
@@ -262,7 +262,7 @@ exports('HideBlip', function(id)
     return Blips.remove(owner, id)
 end)
 
---- GTA's waypoint on one player's map: SetPlayerWaypoint(source, coords) -> true | false, why.
+--- The game's waypoint on one player's map: SetPlayerWaypoint(source, coords) -> true | false, why.
 exports('SetPlayerWaypoint', function(source, coords)
     return Blips.waypoint(source, coords)
 end)

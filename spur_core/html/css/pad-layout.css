@@ -170,7 +170,7 @@ html[data-input="pad"] .pl-tab-glyph { display: inline-flex; }
     overflow: visible;
 }
 
-/* GTA's controller page as the reference: a black body with a light grey edge, the
+/* The game's controller page as the reference: a black body with a light grey edge, the
    shells' seam in a darker grey, the sticks, D-pad and buttons as thin white rings. */
 .pl-body {
     fill: rgb(3, 4, 7);
@@ -194,7 +194,7 @@ html[data-input="pad"] .pl-tab-glyph { display: inline-flex; }
     transition: fill 0.12s, stroke 0.12s;
 }
 
-/* The rings round the sticks, the D-pad and the buttons: white, as GTA has them. */
+/* The rings round the sticks, the D-pad and the buttons: white, as the game has them. */
 .pl-part.pl-ring {
     fill: rgb(3, 4, 7);
     stroke: #f2f4f7;
@@ -243,7 +243,7 @@ html[data-input="pad"] .pl-tab-glyph { display: inline-flex; }
 .pl-guide { fill: rgb(48, 50, 55); }
 .pl-guide-mark { fill: none; stroke: rgba(0, 0, 0, 0.45); stroke-width: 3; }
 
-/* The chosen button is lit in Signal Blue (whip's, not GTA's). */
+/* The chosen button is lit in Signal Blue (whip's, not the game's). */
 .pl-btn.on .pl-part,
 .pl-part.pl-btn.on {
     fill: rgba(96, 165, 250, 0.22);
@@ -268,7 +268,7 @@ html[data-input="pad"] .pl-tab-glyph { display: inline-flex; }
 
 .pl-btn.dim { opacity: 0.4; }
 
-/* ---- the lines: GTA's grey, square bends ---- */
+/* ---- the lines: the game's grey, square bends ---- */
 
 .pl-line {
     fill: none;
@@ -303,7 +303,7 @@ html[data-input="pad"] .pl-tab-glyph { display: inline-flex; }
     fill: var(--ui-text);
 }
 
-.pl-label.gta .pl-main {
+.pl-label.game .pl-main {
     fill: rgba(255, 255, 255, 0.55);
     font-weight: 600;
 }

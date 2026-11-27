@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_gunny, 24 Nov 2026): RedM, not FiveM. A rework of whip_gunny 2.0.1 for spur_core and RDR2's own weapons
+-- RedM (spur_gunny, 24 Nov 2026): A rework of whip_gunny 2.0.1 for spur_core and RDR2's own weapons
 -- (README.md, NOTICE.md). No streamed models, metas, animations or sounds: every gun, round and part is the game's.
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
@@ -17,7 +17,7 @@ shared_scripts {
     -- spur_core's satellite helper, first: Whip.register declares to spur_core once it is ready. With the dependency
     -- above, a spur_core restart stops gunny first and starts it again, so nothing here cleans up after spur_core.
     '@spur_core/lib/satellite.lua',
-    -- RedM (spur_gunny, 24 Nov 2026): spur_core's names for the GTA natives RDR2 lacks (GetSelectedPedWeapon and the
+    -- RedM (spur_gunny, 24 Nov 2026): spur_core's names for the original-game natives RDR2 lacks (GetSelectedPedWeapon and the
     -- rest), loaded into this resource as spur_rope loads them.
     '@spur_core/shared/rdr_compat.lua',
     '@spur_core/shared/rdr_compat_stubs.lua',
@@ -65,7 +65,7 @@ files {
     'lib/pack.lua',
 
     -- Item pictures: spur_core looks for an item's picture in the resource that registered it, named after its item
-    -- key. RedM (spur_gunny, 24 Nov 2026): this copy ships none (whip_gunny's are GTA's guns), and a glob that finds
+    -- key. RedM (spur_gunny, 24 Nov 2026): this copy ships none (whip_gunny's are the original game's guns), and a glob that finds
     -- nothing is a warning at every start. To add your own, put them in html/img/items/ (uncomment the .webp line for those):
     -- 'html/img/items/*.webp',
     'html/img/items/*.png',         -- RedM (spur_gunny, 25 Nov 2026): one photograph per gun model, see html/img/items/SOURCES.md
@@ -74,4 +74,4 @@ files {
 }
 
 -- RedM (spur_gunny, 24 Nov 2026): no ui_page (the gunsmith uses spur_core's own dialog), no data_file and no stream/:
--- whip_gunny's add-on GTA weapons, ammo boxes, gun props, clip sets and sounds are not part of this copy.
+-- whip_gunny's add-on weapons, ammo boxes, gun props, clip sets and sounds are not part of this copy.

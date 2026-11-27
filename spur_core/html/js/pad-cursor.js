@@ -56,7 +56,7 @@ const DOUBLE_MS = 400;  // two clicks this close together are a double click
 const AFTER_TYPING_MS = 250;
 
 // THE CEF 103 LESSON (the inventory's padZoom): inside a CSS-zoomed box getBoundingClientRect can come
-// back UNZOOMED in FiveM. A 100px probe in the box says which: about 100 × zoom wide means screen pixels,
+// back UNZOOMED in Cfx.re. A 100px probe in the box says which: about 100 × zoom wide means screen pixels,
 // about 100 means unzoomed. Measured once per box, for every cursor.
 const zoomFix = new WeakMap();
 

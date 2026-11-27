@@ -1,15 +1,15 @@
 -- ============================================
--- GTA'S IDLE CAMERA, OFF
+-- THE GAME'S IDLE CAMERA, OFF
 -- ============================================
 --
--- After about 30 s with no input GTA swings the camera into a slow cinematic pan: on foot, as a
+-- After about 30 s with no input the game swings the camera into a slow cinematic pan: on foot, as a
 -- passenger, and in a parked car. Config.IdleCam.Disable = false keeps it.
 --
--- ON FOOT AND AS A PASSENGER IT IS SWITCHED OFF ONCE: FiveM's DisableIdleCamera and
--- DisableVehiclePassengerIdleCamera turn it off and leave it off. Set again on spawn, in case GTA
+-- ON FOOT AND AS A PASSENGER IT IS SWITCHED OFF ONCE: Cfx.re's DisableIdleCamera and
+-- DisableVehiclePassengerIdleCamera turn it off and leave it off. Set again on spawn, in case the game
 -- rebuilt something under them.
 --
--- THE DRIVER'S HAS NO SWITCH, only a timer to reset (GTA: "calling that in a loop once every few
+-- THE DRIVER'S HAS NO SWITCH, only a timer to reset (the game: "calling that in a loop once every few
 -- seconds is enough"). So while in a car, and only then, its timer is reset every ResetMs.
 
 local function enabled()
@@ -47,7 +47,7 @@ end
 AddEventHandler('spur_core:vehicle:entered', startResetting)
 
 -- Changed in /whip → Settings. Off: switched off now, as at a spawn, and for the car they are in.
--- On: GTA's camera given back now, as at a stop. ResetMs is read at each car and needs nothing.
+-- On: the game's camera given back now, as at a stop. ResetMs is read at each car and needs nothing.
 Settings.onChange('IdleCam.Disable', function()
     if enabled() then
         switchOff()
@@ -58,7 +58,7 @@ Settings.onChange('IdleCam.Disable', function()
     end
 end)
 
--- Stopping spur_core gives GTA its camera back.
+-- Stopping spur_core gives the game its camera back.
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= GetCurrentResourceName() or not enabled() then return end
     DisableIdleCamera(false)

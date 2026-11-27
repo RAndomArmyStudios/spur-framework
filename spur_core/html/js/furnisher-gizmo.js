@@ -47,13 +47,13 @@
 // THE AXES:
 //   arrows  X and Y follow the object's own heading (so "along the sofa" is an arrow, in any room at
 //           any angle); Z is straight up. Grid-locked, X and Y are the world's.
-//   rings   a gimbal on GTA's rotation order 2 (the entity's matrix is Rz · Rx · Ry), so each ring
+//   rings   a gimbal on the game's rotation order 2 (the entity's matrix is Rz · Rx · Ry), so each ring
 //           changes exactly one of the three numbers the object is saved with:
 //             Z  round straight up                      → rz (its heading)
 //             X  round its heading's X                  → rx (tipping forward and back)
 //             Y  round its own forward, after the tip   → ry (tipping side to side)
 //           Positive is the right-hand turn about each. The heading ring is certain; the other two
-//           ASSUME GTA's X and Y turns are right-handed too — unconfirmed until tried in game. If one
+//           ASSUME the game's X and Y turns are right-handed too — unconfirmed until tried in game. If one
 //           turns against the mouse, flip its sign in RING_SIGN.
 // ========================================
 

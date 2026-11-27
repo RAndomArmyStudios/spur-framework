@@ -275,7 +275,7 @@ local powers = {}
 local powerReg   -- made below powerApply, which its hooks call
 
 --- Every frame while held: the product, onto the car. No existence check (half this hook's cost): a vanished
---- car is forgotten within a second by the thread below, and GTA ignores writes to a dead handle.
+--- car is forgotten within a second by the thread below, and the game ignores writes to a dead handle.
 local function powerFrame()
     if not power.held then return end   -- a hook let go earlier in this frame still runs once
     local e = power.entity

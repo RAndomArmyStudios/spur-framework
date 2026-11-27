@@ -3,7 +3,7 @@
 -- ============================================
 --
 -- A car's "Players and NPCs can stand on it while it moves" (its General tab: def.standOn) puts VehicleData directorStandOn
--- on every car the scenario makes for it (server/director/satellite_api.lua). GTA throws a player standing on most
+-- on every car the scenario makes for it (server/director/satellite_api.lua). The game throws a player standing on most
 -- moving cars off (a ragdoll; trucks and trailers are made to be stood on). While this player stands on a car that
 -- carries it, their own game blocks that fall every frame (the ped reset flag BlockRagdollFromVehicleFallOff), and
 -- for a moment after (a bump lifts them off the roof for a frame or two). Nothing else changes: a very sharp turn can

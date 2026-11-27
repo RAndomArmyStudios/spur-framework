@@ -4,10 +4,10 @@
 --
 -- Whip's panels read the keyboard in the browser, and a gamepad produces no keyboard events. The
 -- browser cannot read the pad either: NUI pages are iframes, and the Gamepad API needs a
--- Permissions-Policy only FiveM's parent document can grant. So the pad is read HERE and posted to
+-- Permissions-Policy only Cfx.re's parent document can grant. So the pad is read HERE and posted to
 -- the page.
 --
--- (The 3D prompts need none of this: GTA control ids map to whatever hardware is in the player's
+-- (The 3D prompts need none of this: game control ids map to whatever hardware is in the player's
 -- hands. Options cycle on 16/17, not 14/15, which are also a pad's triggers.)
 --
 -- ============================================
@@ -23,7 +23,7 @@
 -- Which controls, and what they mean
 -- ============================================
 
---- The frontend set, which GTA's own menus use. The keyboard column is for orientation only: nav is
+--- The frontend set, which the game's own menus use. The keyboard column is for orientation only: nav is
 --- sent only while a pad is the active device.
 ---
 ---     nav          control                      keyboard        pad
@@ -73,7 +73,7 @@ local AXIS_X, AXIS_Y = 195, 196
 --- resting noise.
 local STICK_DEADZONE = 0.6
 
---- Which way is up on the Y axis. GTA reports stick-up as NEGATIVE on the frontend axis.
+--- Which way is up on the Y axis. The game reports stick-up as NEGATIVE on the frontend axis.
 ---
 --- If the stick navigates upside down, flip this to 1.
 local STICK_UP_SIGN = -1
@@ -230,7 +230,7 @@ end
 --- That key for a UI.ShowText hint: '[Space]' on a keyboard, the button's PICTURE on a pad — the {pad:x} marker,
 --- which the text band draws from html/img/pad. `button` is a picture's name (a, b, x, y, lb, rb, lt, rt, ls, rs,
 --- l3, r3, dpad, dpad_up ... dpad_right, view, menu), or a list shown side by side ({ 'lt', 'rt' }). Either may be
---- nil: '' on that device. GTA's own help text (BeginTextCommandDisplayHelp) cannot draw a picture.
+--- nil: '' on that device. The game's own help text (BeginTextCommandDisplayHelp) cannot draw a picture.
 ---@param keyText string|nil  the key's name on a keyboard: 'E', 'Space', 'Scroll'
 ---@param button string|string[]|nil
 ---@return string
@@ -248,10 +248,10 @@ function WhipKeyHint(keyText, button)
 end
 
 -- A MODE'S "E" IS THE INTERACT KEY (Josh, 9 Nov 2026). On a keyboard, placing, giving, an emote's spot and the
--- respawn hold confirm on whatever key the Interact binding is on (E unless the player moved it in GTA's Key
+-- respawn hold confirm on whatever key the Interact binding is on (E unless the player moved it in the game's Key
 -- Bindings), as the prompts do, and their hint names that key. Not control 38: that is always E, so a player who
 -- moved Interact had one key for prompts and another for modes. On a pad it is A (201), as the 3D prompts' is:
--- GTA puts E and LB on one control (38), and LB is the combo key. A mode's "C" (cancel, 26, INPUT_LOOK_BEHIND,
+-- The game puts E and LB on one control (38), and LB is the combo key. A mode's "C" (cancel, 26, INPUT_LOOK_BEHIND,
 -- which a pad has on R3) is B (202, the frontend cancel).
 --
 -- The binding is a command (client/interact.lua's +whip_interact), heard on its own thread whenever it fires, so
@@ -335,7 +335,7 @@ function WhipCancelJustPressed() return WhipKeyPressed(26, 202) end
 ---@return string
 function WhipCancelHint() return WhipKeyHint('C', 'b') end
 
----- WhipAcceptKey / WhipCancelKey ('E' / 'A', 'C' / 'B' for GTA's help text) and their exports AcceptKey /
+---- WhipAcceptKey / WhipCancelKey ('E' / 'A', 'C' / 'B' for the game's help text) and their exports AcceptKey /
 ---- CancelKey: DELETED 9 Nov 2026, nothing called them (prompts name their key with Interactions.keyLabel). ----
 
 -- ============================================

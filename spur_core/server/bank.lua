@@ -1524,7 +1524,7 @@ end)
 
 --- Open a bank account.
 ---
---- `false`, not nil, on failure: a FiveM export truncates its return list at the first nil, which
+--- `false`, not nil, on failure: a Cfx.re export truncates its return list at the first nil, which
 --- would take the reason with it. Same rule as CreateGarage.
 ---
 --- Every person here is `source` or `{ charId = n }` (WhoIs): the owner, the grantee, who granted

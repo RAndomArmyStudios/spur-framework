@@ -472,7 +472,7 @@ html[data-input="pad"] .st-grp-pad { display: inline-flex; }
 .st-arr-big { width: 40px; height: 40px; }
 .st-arr-big .st-arr-ico { width: 18px; height: 18px; }
 
-/* A change on its way to GTA: the row breathes until GTA answers. */
+/* A change on its way to the game: the row breathes until the game answers. */
 .st-row.working { animation: st-breathe-ring 0.9s ease-in-out infinite; }
 .st-row.working .st-v { opacity: 0.55; }
 
@@ -736,7 +736,7 @@ html[data-input="pad"] .st-grp-pad { display: inline-flex; }
 html[data-input="pad"] .st-keys { display: none; }
 html[data-input="pad"] .st-z { padding-bottom: 64px; box-sizing: border-box; }
 
-/* ---- GTA's questions (and the page's own before leaving), over the page ---- */
+/* ---- the game's questions (and the page's own before leaving), over the page ---- */
 
 .st-ask {
     position: absolute;

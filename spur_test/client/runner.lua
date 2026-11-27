@@ -305,7 +305,7 @@ RegisterNetEvent('spur_test:leaveVehicle', function(token)
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         local veh = GetVehiclePedIsIn(ped, false)
-        -- RedM (spur_test, 24 Nov 2026): 16 is GTA's "warp out", and an RDR2 tester given it stays aboard. 0 is the
+        -- RedM (spur_test, 24 Nov 2026): 16 is the original game's "warp out", and an RDR2 tester given it stays aboard. 0 is the
         -- ordinary climb down (what an NPC's Everyone Out uses, and it works): up to 4 s for it. If the tester is
         -- still aboard after that, set them down beside the wagon. F8 says which way it went.
         TaskLeaveVehicle(ped, veh, 0)

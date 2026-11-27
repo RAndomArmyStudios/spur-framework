@@ -127,7 +127,7 @@ if (el) {
 // css/curtain.css.
 //
 // client/curtain.lua says when (NUI message `loadingLogo`, { on }): from the first Cover to the
-// Uncover that ends the blackout, across GTA's fade in between. That stretch is the loading, and
+// Uncover that ends the blackout, across the game's fade in between. That stretch is the loading, and
 // only Lua sees all of it — the curtain element itself is lifted part way through the long loads.
 //
 // Notifications wait out a load (ui.js asks loadingNow, and onLoadingEnd lets them through): the

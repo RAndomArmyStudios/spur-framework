@@ -1,5 +1,5 @@
 -- ============================================
--- PED OUTFIT — what a GTA ped wears, part by part
+-- PED OUTFIT — what a game ped wears, part by part
 -- ============================================
 --
 -- A ped model has its own clothes: each of its parts (head, hair, upper body, legs, feet...) comes in a few styles,

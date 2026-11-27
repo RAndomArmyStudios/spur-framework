@@ -1,7 +1,7 @@
 -- spur_gunny: THE GUNSMITH'S PARTS
 --
 -- RedM (spur_gunny, 24 Nov 2026): replaces whip_gunny's items/attachments.lua (suppressors, grips, flashlights and
--- GTA's scopes). A part is an item; the gunsmith fits it to a gun (server/gunsmith.lua), and the gun shows RDR2's own
+-- the original game's scopes). A part is an item; the gunsmith fits it to a gun (server/gunsmith.lua), and the gun shows RDR2's own
 -- weapon component for it while drawn.
 --
 -- RedM (spur_gunny, 24 Nov 2026): every name below is RDR2's as femga's rdr3_discoveries lists it

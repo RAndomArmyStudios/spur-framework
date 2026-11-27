@@ -125,7 +125,7 @@ RegisterTestModule({
                 field(source)
                 local at = DK.at(26, 12, 150.0)
                 at.z = at.z + 0.5
-                -- RedM (spur_test, 24 Nov 2026): GTA's Blow Up doesn't leave an RDR2 wagon read as wrecked (86, Set on
+                -- RedM (spur_test, 24 Nov 2026): the original game's Blow Up doesn't leave an RDR2 wagon read as wrecked (86, Set on
                 -- Fire, and Blow Up), so here the car is lost the other way the rule counts: gone from the world, taken
                 -- by something that is not the run (as the engine or another script would).
                 local car = DK.car('car', at)

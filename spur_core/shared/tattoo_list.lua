@@ -2,8 +2,8 @@
 -- TATTOOS — the ones the character editor offers (TattooList)
 -- ============================================
 --
--- RedM (spur_core, 26 Nov 2026): whip_core listed GTA V's tattoos here (its tattoo shops' names and
--- collections), another game's, and they are gone. The list is empty until RDR2's are gathered, so the
+-- RedM (spur_core, 26 Nov 2026): whip_core listed the original game's tattoos here (its tattoo shops' names and
+-- collections), and they are gone. The list is empty until RDR2's are gathered, so the
 -- editor offers none and the server keeps none (server/events_misc.lua, sanitizeAppearance). Data only.
 --
 -- collections   the decoration collections: { name = <the game's collection name>, label = <shown> }

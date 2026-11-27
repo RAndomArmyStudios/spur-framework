@@ -49,7 +49,7 @@ local function vec(x, y, z)
 end
 
 --- Both spellings of a 32-bit hash, because which one each native returns is one of the things
---- being measured. FiveM Lua usually hands back the signed form; the map packs write unsigned.
+--- being measured. Cfx.re Lua usually hands back the signed form; the map packs write unsigned.
 local function hashForms(h)
     if type(h) ~= 'number' then return { raw = h } end
     local u = h % 4294967296

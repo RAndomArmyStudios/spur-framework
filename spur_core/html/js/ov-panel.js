@@ -151,7 +151,7 @@ function carHtml(list) {
         + `<div class="ov-tiles">${tiles || '<div class="dr-none">No car matches that</div>'}</div>`;
 }
 
-// Change model, Swap for a Dungeon prop: GTA's props whip has pictures of (js/picture-bounds.js), found by name, and
+// Change model, Swap for a Dungeon prop: the game's props whip has pictures of (js/picture-bounds.js), found by name, and
 // any prop this game has by the name as typed (tools/ov_panel.lua checks it is one).
 let propNames = null;
 function loadPropNames() {

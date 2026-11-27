@@ -52,7 +52,7 @@ local function readPed(ped, q, out)
     end
     out.weapon = safe(GetSelectedPedWeapon, ped)
     out.armed = yes(safe(IsPedArmed, ped, 7))
-    -- RedM (spur_test, 24 Nov 2026): RDR2's IS_PED_ARMED flags are not GTA's, so also whether the weapon in its hand
+    -- RedM (spur_test, 24 Nov 2026): RDR2's IS_PED_ARMED flags are not the original game's, so also whether the weapon in its hand
     -- is a gun (IS_WEAPON_A_GUN).
     out.gun = out.weapon ~= nil and out.weapon ~= 0
         and yes(safe(Citizen.InvokeNative, 0x705BE297EEBDB95D, out.weapon, Citizen.ResultAsInteger())) or false

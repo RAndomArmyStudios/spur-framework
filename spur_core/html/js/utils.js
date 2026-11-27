@@ -250,7 +250,7 @@ export function fitPicture(img) {
     if (_bounds) ready(); else pictureBounds().then(ready);
 }
 
-/** A map blip's icon by its GTA sprite id: img/blips/<id>.webp (the pause map's, and the shop wizard's Map
+/** A map blip's icon by its game sprite id: img/blips/<id>.webp (the pause map's, and the shop wizard's Map
  *  step). White, tinted to the blip's colour by an SVG filter where it is drawn. */
 export function blipImageUrl(sprite) {
     return assetUrl('img/blips/' + (Number(sprite) || 0) + '.webp');
@@ -269,7 +269,7 @@ export function emoteVideoUrl(video) {
 
 // ---- Clothing pictures: img/clothing (a media pack per body) ----
 //
-// A folder per body and slot, a file per item and colour, named by the item's GTA collection and its
+// A folder per body and slot, a file per item and colour, named by the item's game collection and its
 // number inside it (client/appearance.lua, clothingIcons, explains why not the card number):
 //     img/clothing/female/p0_hats/female_prop0_mp_f_heist4_002_03.webp
 const CLOTHING_SLOTS = {

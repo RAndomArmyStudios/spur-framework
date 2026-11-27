@@ -36,7 +36,7 @@ local _gen = 0
 -- Timecycle Filters
 -- ============================================
 
--- RedM (spur_core, 26 Nov 2026): whip_core listed GTA V's timecycle modifiers here, another game's; RDR2's have other
+-- RedM (spur_core, 26 Nov 2026): whip_core listed the original game's timecycle modifiers here, another game's; RDR2's have other
 -- names. Add RDR2 timecycle names to offer them.
 Camera.Filters = {
     'none',
@@ -267,7 +267,7 @@ end
 -- 2.39:1 bars on a 16:9 screen, as a share of its height each.
 local LETTERBOX = 0.128
 
---- This frame's cinema bars, and no GTA HUD under them. The Camera Creator draws them too.
+--- This frame's cinema bars, and no game HUD under them. The Camera Creator draws them too.
 function Camera.letterbox()
     HideHudAndRadarThisFrame()
     DrawRect(0.5, LETTERBOX * 0.5, 1.0, LETTERBOX, 0, 0, 0, 255)

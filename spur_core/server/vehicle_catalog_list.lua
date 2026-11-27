@@ -6,9 +6,9 @@
 -- any of them its vehicle catalog does not have yet (server/vehicle_catalog.lua); a vehicle it already has keeps its
 -- name and class.
 --
--- RedM (spur_core, 24 Nov 2026): RDR2's wagons, coaches, carts and boats. whip_core's list was GTA V's 700 cars, none
--- of which RDR2 has; migration 049_redm_gta_vehicle_catalog takes them out of a database seeded with them. RDR2 has
--- no motorbikes, cars or aircraft. The classes are GTA's numbers (GetVehicleClass's), as the catalog keeps them, and
+-- RedM (spur_core, 24 Nov 2026): RDR2's wagons, coaches, carts and boats. whip_core's list was the original game's 700 cars, none
+-- of which RDR2 has; migration 049_redm_vehicle_catalog_rdr2 takes them out of a database seeded with them. RDR2 has
+-- no motorbikes, cars or aircraft. The classes are the game's numbers (GetVehicleClass's), as the catalog keeps them, and
 -- the pickers show the ones used here under 1899 names (Compacts reads "Buggies & carts", Sedans "Coaches", Vans
 -- "Wagons", Emergency "Law", Trains "Rail"). A model this game does not have is never offered (each player's game
 -- checks the list when it joins), so a line here that is wrong costs nothing but its line.

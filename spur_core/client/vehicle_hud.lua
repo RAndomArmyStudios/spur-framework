@@ -53,7 +53,7 @@ local function readHudConfig()
     UNITS        = PlayerPrefs.get('dial.speedUnit') == 'kmh' and 'kmh' or 'mph'
     ATTITUDE     = PlayerPrefs.get('dial.horizon') == 'flat' and 'flat' or 'ball'
     local style  = PlayerPrefs.get('dial.style')
-    DASH_SKINS   = style == 'custom'   -- cars wear their own GTA dashboard's look on the dial
+    DASH_SKINS   = style == 'custom'   -- cars wear their own game dashboard's look on the dial
     DIAL_ON      = style ~= 'none'
     BANK_SIGN    = CFG.flipBank == true and -1 or 1
     RPM_MAX      = tonumber(CFG.rpmMax) or 8
@@ -147,7 +147,7 @@ end
 ---@param veh number
 ---@return number maxRpm  thousands, 2..20 (the dial's range)
 ---@return number redline thousands
----@return number idle    thousands: where GTA's 0.2 lands on the dial
+---@return number idle    thousands: where the game's 0.2 lands on the dial
 local function revRange(veh)
     local set = _revSet[veh]
     local chosenIdle = not IDLE_MEASURED and IDLE_RPM or nil
@@ -200,7 +200,7 @@ local function yes(v) return v == true or v == 1 end
 ---@return boolean
 local function IsReversing(veh, gear)
     if GetEntitySpeedVector(veh, true).y < -0.5 then return true end
-    -- RedM (spur_core, 25 Nov 2026): RDR2 has no gears (GetVehicleCurrentGear is a stub answering 0, GTA's
+    -- RedM (spur_core, 25 Nov 2026): RDR2 has no gears (GetVehicleCurrentGear is a stub answering 0, the original game's
     -- reverse), so only the speed above says a wagon backs up.
     return false
 end
@@ -235,7 +235,7 @@ local function BoatGear(veh)
     return ahead > 0.5 and 'F' or ahead < -0.5 and 'R' or 'N'
 end
 
---- Is a boat's propeller out of the water with the throttle held? The engine revs to its top but GTA's boat rpm
+--- Is a boat's propeller out of the water with the throttle held? The engine revs to its top but the game's boat rpm
 --- follows hull speed, so while this holds the page shows full power (html/js/vehicle-dial.js).
 --- The propeller is the 'prop_1' bone, else the bottom of the stern, against the water height there; a hull clear
 --- of the water counts too. Held PROP_HOLD_MS after it goes back in to avoid flicker. Needs the engine running and
@@ -394,7 +394,7 @@ exports('IsVehicleElectric', function(vehicle)
     return isElectric(set and set.engine or GetEntityModel(entity)) == true
 end)
 
--- A car its gearbox is not moving (a recorded drive): GTA's gear says nothing, so the gear is worked out from speed.
+-- A car its gearbox is not moving (a recorded drive): the game's gear says nothing, so the gear is worked out from speed.
 
 local GEAR_BACK = 0.85   -- worked out: a gear changed up to is left this far under the speed it was changed up at
 
@@ -426,7 +426,7 @@ function Vehicles.speedGear(veh, keep)
     return g
 end
 
---- A car handed back to its gearbox: GTA's gear is set to this one. A car going backwards is left alone.
+--- A car handed back to its gearbox: the game's gear is set to this one. A car going backwards is left alone.
 function Vehicles.gearboxTo(veh, gear)
     if not DoesEntityExist(veh) or GetEntitySpeedVector(veh, true).y < -0.5 then return end
     if type(SetVehicleCurrentGear) ~= 'function' or type(SetVehicleNextGear) ~= 'function' then return end

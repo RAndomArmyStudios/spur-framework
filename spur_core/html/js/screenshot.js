@@ -7,15 +7,15 @@ import { pagePicture } from './page-picture.js';
 // ========================================
 //
 // whip's own screenshots, in place of screenshot-basic: that one's page drew the whole game picture into a texture
-// every frame whether or not anybody wanted a shot, and halved the frame rate on GTA V Enhanced (Josh, 31 Oct). This
+// every frame whether or not anybody wanted a shot, and halved the frame rate on the original game's Enhanced build (Josh, 31 Oct). This
 // draws nothing until asked, reads what it was asked for, and lets everything go again: between shots it costs nothing.
 //
 // The game's picture, without whip's interface (the page sits over it, not in it), unless the shot says `ui`: then
 // js/page-picture.js draws this page over it as it looks at that moment (not other resources' pages). Two ways into
 // the game's picture, whichever this game has (js/caps.js gameView):
-//   CfxGameViewRenderer   FiveM's own game view on new builds: it draws the game into a canvas; its placeholder is
+//   CfxGameViewRenderer   Cfx.re's own game view on new builds: it draws the game into a canvas; its placeholder is
 //                         solid blue, so a shot waits until that is gone
-//   the game-view texture the older builds' way (screenshot-basic's; GTA V Enhanced's Chrome 103): a WebGL texture
+//   the game-view texture the older builds' way (screenshot-basic's; the original game's Enhanced build's Chrome 103): a WebGL texture
 //                         given three wrap modes in a row is bound to the game's picture, drawn through a quad flipped
 //                         the right way up. Drawn a frame at a time until the game's picture is in it: the first draws
 //                         come out black (Josh, 3 Nov: Player Manager pictures black under the HUD on Enhanced)
@@ -84,7 +84,7 @@ function letGo(canvas) {
     } catch (e) { /* no context to let go */ }
 }
 
-/** New builds: FiveM's game view. Its WebGL2 context is made here first, keeping its drawing buffer (the renderer is
+/** New builds: Cfx.re's game view. Its WebGL2 context is made here first, keeping its drawing buffer (the renderer is
  *  handed the same one by getContext), so a copy holds the frame whenever it is taken. Answers { grab, close }:
  *  grab(ctx, x, y) copies the frame showing now. `blackOk` (a burst): a black frame is taken too. */
 async function openGameView(w, h, blackOk) {

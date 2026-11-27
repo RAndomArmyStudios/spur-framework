@@ -833,7 +833,7 @@ end
 --   1. the map waits straight over the place, with the loading logo, while the scene is chosen behind it;
 --   2. the scene starts and is HELD on its first frame, its camera on screen, and the map is sent that camera
 --      (CharSelect.MapReady);
---   3. the map lines up with it exactly, GTA's space 1:1 with the map's, and says so (spawnsel:go);
+--   3. the map lines up with it exactly, the game's space 1:1 with the map's, and says so (spawnsel:go);
 --   4. both hold still for HOLD_MS, then the scene plays on and the map fades in the same frame
 --      (CharSelect.MapStarted, which feeds it the moving camera until it has gone): the map's buildings seem to
 --      turn into the game's.

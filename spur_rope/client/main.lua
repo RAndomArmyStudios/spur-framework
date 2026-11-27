@@ -609,7 +609,7 @@ end, false)
 
 -- RedM (spur_rope, 24 Nov 2026): how many vertices RDR2 gives each of its rope types, in F8. A type with 2 is drawn
 -- as a chain of short ropes (client/mesh.lua); one with more bends by itself. Makes each type 0-18 for a moment, 4 m
--- above you, four ways (our arguments; GTA's usual ones; no winding; _ADD_ROPE_2), and deletes them again.
+-- above you, four ways (our arguments; the usual ones; no winding; _ADD_ROPE_2), and deletes them again.
 -- /ropevertices [length]
 RegisterCommand('ropevertices', function(_, args)
     if not devAllowed() then return end
@@ -618,7 +618,7 @@ RegisterCommand('ropevertices', function(_, args)
         local p = GetEntityCoords(PlayerPedId()) + vector3(0.0, 0.0, 4.0)
         local ways = {
             { 'ours', function(t) return AddRope(p.x, p.y, p.z, 0.0, 0.0, 0.0, len, t, len, 0.5, 0.0, false, false, false, 1.0, false, false) end },
-            { 'gta', function(t) return AddRope(p.x, p.y, p.z, 0.0, 0.0, 0.0, len, t, len, 1.0, 0.5, false, false, true, 1.0, false, false) end },
+            { 'usual', function(t) return AddRope(p.x, p.y, p.z, 0.0, 0.0, 0.0, len, t, len, 1.0, 0.5, false, false, true, 1.0, false, false) end },
             { 'fixed', function(t) return AddRope(p.x, p.y, p.z, 0.0, 0.0, 0.0, len, t, len, len, 0.0, false, false, false, 1.0, false, false) end },
             { 'add2', function(t)
                 return Citizen.InvokeNative(0xE9C59F6809373A99, p.x, p.y, p.z, 0.0, 0.0, 0.0, len, t, false, 0, 0.0,

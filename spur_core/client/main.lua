@@ -82,7 +82,7 @@ RegisterNetEvent('spur_core:client:pmTeleport', function(x, y, z)
     SetEntityCoordsNoOffset(ped, x, y, z + 1.0, false, false, false)
 end)
 
---- The ground under x, y, for a teleport given no height: the world there is streamed in first (GTA only knows the
+--- The ground under x, y, for a teleport given no height: the world there is streamed in first (the game only knows the
 --- ground of what is loaded), then tried from high up down. nil when none was found.
 local function groundUnder(ent, x, y)
     for _, probe in ipairs({ 1000.0, 800.0, 600.0, 400.0, 300.0, 200.0, 150.0, 100.0, 50.0, 25.0, 0.0 }) do
@@ -154,7 +154,7 @@ RegisterNetEvent('spur_core:client:fadeTeleport', fadeTeleport)
 
 -- /tpm: the waypoint is on this game's map only
 RegisterNetEvent('spur_core:client:tpWaypoint', function()
-    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (GTA's was the first blip with sprite 8)
+    local c = RdrCompat.waypoint()   -- RedM: RDR2's waypoint (the original game's was the first blip with sprite 8)
     if not c then return UI.Notify('Set a waypoint on the map first', 'error') end
     fadeTeleport(c.x, c.y, nil, nil, true)
 end)

@@ -5,7 +5,7 @@
     car whose driver's game is not its owner is moved on another game, from a late picture of the car, while the
     driver's own game has it as a solid it cannot move: a towed thing could throw the car it hangs off. So the
     server names a KEEPER for what each rope pulls, and on the keeper's game this file takes control of it, stops
-    GTA handing it on (SetNetworkIdCanMigrate), asks again if it is lost anyway, and lets it go when told.
+    the game handing it on (SetNetworkIdCanMigrate), asks again if it is lost anyway, and lets it go when told.
 
     Until it is ours (a hand-over is a round trip; a server with sv_filterRequestControl set may refuse it for
     good), our car (or ped) does not touch it, so the late copy cannot throw us. A kept car someone sits in, or
@@ -26,7 +26,7 @@ local function entityOf(netId)
     return e
 end
 
---- Whether GTA may hand it on (unlocked) or not, said again at every look while it is ours. Only the game in control
+--- Whether the game may hand it on (unlocked) or not, said again at every look while it is ours. Only the game in control
 --- can say, and the lock is on the THING: it goes with it to whoever gets it, comes back with it, and no native reads
 --- it. Said only on a change, a game could think it unlocked while the lock was still on, and a player at the wheel
 --- would never get control.
@@ -124,7 +124,7 @@ RegisterNetEvent('spur_rope:keep', function(list)
 end)
 
 -- The server: a player has sat at the wheel of this a while and still has no control (server/keep.lua's watch). If
--- this game has it, its lock is lifted, whoever set it, so GTA hands it to the driver. Should this game still keep
+-- this game has it, its lock is lifted, whoever set it, so the game hands it to the driver. Should this game still keep
 -- it, its next look locks it again only once nobody is at the wheel.
 RegisterNetEvent('spur_rope:letGo', function(netId)
     netId = tonumber(netId)
@@ -194,7 +194,7 @@ RegisterNetEvent('spur_rope:theirSpan', function(list)
     end
 end)
 
--- Stopping: GTA may hand everything on again
+-- Stopping: the game may hand everything on again
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for netId in pairs(keeping) do release(netId) end

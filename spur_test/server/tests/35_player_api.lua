@@ -3,7 +3,7 @@
 --
 -- WHY THIS MODULE EXISTS
 --
--- These exports were added when GetPlayer stopped handing out a live object. FiveM copies
+-- These exports were added when GetPlayer stopped handing out a live object. Cfx.re copies
 -- values between resources and a metatable does not survive the copy, so `player:getCash()` —
 -- which the docs taught for a long time — was never going to work for a satellite. The object
 -- became a serialized sheet, and every method it lost was given an export instead.

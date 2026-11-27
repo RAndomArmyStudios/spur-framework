@@ -6,11 +6,11 @@
 --   'black'    the gauges as black discs in a white rim that drains, with no capsule behind them
 --              (it comes back only for a notification or the chat field) —
 --              html/css/hud-skin.css — and, here:
---                * a white frame round the minimap, drawn UNDER GTA's HUD so the N and the blips
+--                * a white frame round the minimap, drawn UNDER the game's HUD so the N and the blips
 --                  that sit on the map's edge are drawn over it;
 --                * the minimap's tiles swapped for whip's own dark map (stream/whipmap_*.ytd, made
 --                  from the pause menu's vector map by dev/map_tiles/minimap_tiles.js);
---                * the waypoint, its blip and the GPS line in whip's blue instead of GTA's purple.
+--                * the waypoint, its blip and the GPS line in whip's blue instead of the game's purple.
 -- The vehicle dial is not part of it. Switched live in /whip → Config.
 --
 -- The frame is not on the page: everything on the NUI page is drawn over the game, radar included,
@@ -26,7 +26,7 @@ local SKIN_DICT = 'whiphud'          -- stream/whiphud.ytd: 'disc', a white circ
 --- One DrawSprite a frame (the vector frame is 18 draws). The vector frame is drawn only while /radardebug is open,
 --- where the frame is being moved; the baked one is made from this file's numbers, so bake again after changing them.
 local FRAME_DICT = 'whipframe_'
---- The black behind the map, as solid as each player likes: the frame's middle is filled black (GTA's radar is
+--- The black behind the map, as solid as each player likes: the frame's middle is filled black (the game's radar is
 --- see-through; the black makes it solid). stream/whipring_<shape>.ytd: 'ring', the same frame
 --- with the middle left clear (dev/map_tiles/hud_frame.js ring). Solid: the frame alone, as ever (one draw). Part
 --- way: the frame at the player's strength, then the ring over it at full, so only the middle fades (two). None: the
@@ -35,7 +35,7 @@ local RING_DICT = 'whipring_'
 local ROUTE_COLOUR = 142             -- HUD_COLOUR_WAYPOINT: the waypoint, its blip and the GPS line
 local ROUTE_BLUE = { 96, 165, 250 }  -- whip's Signal Blue (--ui-accent)
 
---- GTA's radar is six tiles, minimap_sea_<row>_<col>: two columns, three rows, 4500 m square, from
+--- The game's radar is six tiles, minimap_sea_<row>_<col>: two columns, three rows, 4500 m square, from
 --- (-4140, 8400) at the top left (minimap.ymt). Each is swapped for whipmap_<row>_<col>.
 local MAP_TILES = { '0_0', '0_1', '1_0', '1_1', '2_0', '2_1' }
 
@@ -71,7 +71,7 @@ local sentBox = nil       -- the frame's box as the page was last told it
 -- What they were last worked out from that nothing here hears change: the screen, its safe zone, the minimap's shape.
 -- The rest (the tuner's frame and corner, the Map background) clears `layers` when it changes.
 local builtW, builtH, builtSafe, builtMask = nil, nil, nil, nil
-local routeWas = nil      -- GTA's own waypoint colour, before whip changed it
+local routeWas = nil      -- the game's own waypoint colour, before whip changed it
 local mapSwapped = false
 
 -- ---- the frame ----------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ local function buildLayers()
 end
 
 --- Every frame while the black skin is on (held on the ControlBlocks loop: no thread of its own). Five natives a frame:
---- the two radar checks, the draw order there and back, and the one sprite. (IsMinimapRendering is false under GTA's
+--- the two radar checks, the draw order there and back, and the one sprite. (IsMinimapRendering is false under the game's
 --- own pause menu too, so that is not asked separately.)
 local function drawFrame()
     -- Looked at once a second, by the clock rather than a count of frames, for a resolution or safe-zone change.
@@ -234,10 +234,10 @@ end
 
 -- ---- the dark map -------------------------------------------------------------------------------
 
---- Swap GTA's radar tiles for whip's, or give them back. Fails soft: a tile whose dictionary did not
---- stream keeps GTA's (and says so once in F8).
+--- Swap the game's radar tiles for whip's, or give them back. Fails soft: a tile whose dictionary did not
+--- stream keeps the game's (and says so once in F8).
 local function swapMap(on)
-    -- RedM (spur_core, 23 Nov 2026): GTA's minimap_sea_* tiles and whip's whipmap_*.ytd don't exist on RDR2.
+    -- RedM (spur_core, 23 Nov 2026): the original game's minimap_sea_* tiles and whip's whipmap_*.ytd don't exist on RDR2.
     if RdrCompat then return end
     if on == mapSwapped then return end
     mapSwapped = on
@@ -284,7 +284,7 @@ local function applySkin(loaded)
     skinNow = skin
     CreateThread(function()
         local black = skin == 'black'
-        -- GTA's radar is up only for the tuner (/radardebug: whip's own minimap is everyone else's), so its frame and
+        -- The game's radar is up only for the tuner (/radardebug: whip's own minimap is everyone else's), so its frame and
         -- its dark tiles (six 4096 textures) are loaded only then. The page's gauges line up under where the frame
         -- would be either way: keepBoxSent tells it.
         local tuner = RadarDebugOpen == true
@@ -302,16 +302,16 @@ local function applySkin(loaded)
     end)
 end
 
---- The tuner opened or closed (client/radar_debug.lua): GTA's radar dressing on or off with it.
+--- The tuner opened or closed (client/radar_debug.lua): the game's radar dressing on or off with it.
 function HudSkinTunerChanged() applySkin() end
 
 -- The border is each player's own: map.border, declared by client/minimap.lua (the pause menu's Settings → Server
--- → Minimap), whose minimap draws it. This file's game-drawn frame is only for /radardebug, where GTA's radar is up, and
+-- → Minimap), whose minimap draws it. This file's game-drawn frame is only for /radardebug, where the game's radar is up, and
 -- is drawn for any border but none.
 
 -- The black behind the map (RING_DICT, above): each player's own, from solid (100%, the look as it was) to none (0%,
--- GTA's see-through radar). Drawn only with the border. Never shown now: whip's own minimap (client/minimap.lua) is
--- solid, and GTA's radar is up only for /radardebug, where the frame is drawn solid anyway.
+-- the game's see-through radar). Drawn only with the border. Never shown now: whip's own minimap (client/minimap.lua) is
+-- solid, and the game's radar is up only for /radardebug, where the frame is drawn solid anyway.
 PlayerPrefs.define({
     key = 'map.background', group = 'Map & HUD', type = 'slider', label = 'Map background',
     help = 'How solid the black behind the minimap is. Lower lets the world show through the map, as the game\'s own does.',
@@ -340,7 +340,7 @@ RegisterNetEvent('spur_core:client:playerLogout', function()
     keepBoxSent(false)
 end)
 
--- spur_core stopping: GTA's colour and tiles back (the ControlBlocks loop goes with the resource).
+-- spur_core stopping: the game's colour and tiles back (the ControlBlocks loop goes with the resource).
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     blueRoute(false)
@@ -363,7 +363,7 @@ function HudSkinSetFrame(r)
     layers = nil
 end
 
---- Draw the frame on top of GTA's HUD instead of under it (the tuner's switch), for when the radar
+--- Draw the frame on top of the game's HUD instead of under it (the tuner's switch), for when the radar
 --- turns out to be drawn before script graphics.
 ---@param over boolean
 function HudSkinFrameOver(over)

@@ -1,10 +1,10 @@
 -- ============================================
--- RedM COMPATIBILITY LAYER: the GTA V natives RDR2 has no counterpart for
+-- RedM COMPATIBILITY LAYER: the original-game natives RDR2 has no counterpart for
 -- ============================================
 --
 -- New in spur_core (the RedM port of whip_core), 23 Nov 2026. LGPL 3.0.
--- GENERATED from the GTA V natives whip_core calls that RDR2 lacks and shared/rdr_compat.lua does not map.
--- Each does nothing and returns safe values: those of its GTA return type and out-parameters, so callers that
+-- GENERATED from the original-game natives whip_core calls that RDR2 lacks and shared/rdr_compat.lua does not map.
+-- Each does nothing and returns safe values: those of its game return type and out-parameters, so callers that
 -- unpack them still get numbers. A stub says so the first time it is called (shared/rdr_compat.lua);
 -- quiet() ones are cosmetic per-frame calls and never log. CONVERSION.md says what each group turns off.
 
@@ -87,7 +87,7 @@ stub('GetVehicleHighGear', 'client', 0)
 stub('GetVehicleIndicatorLights', 'client', 0)
 stub('GetVehicleInteriorColour', 'client', 0)
 stub('GetVehicleLightsState', 'client', false, false, false)
-stub('GetVehicleMod', 'client', -1)   -- RedM (spur_core, 24 Nov 2026): GTA's "no part"; 0 is its first part, and every report of a wagon's looks
+stub('GetVehicleMod', 'client', -1)   -- RedM (spur_core, 24 Nov 2026): the original game's "no part"; 0 is its first part, and every report of a wagon's looks
                                       -- was held back as a change of mods (server/vehicles.lua sameMod), one log line each
 stub('GetVehicleModelEstimatedMaxSpeed', 'client', 0.0)
 stub('GetVehicleNeonLightsColour', 'client', 0, 0, 0)
@@ -208,14 +208,14 @@ stub('SetPedHeadOverlayColor', 'client')
 stub('SetPedPropIndex', 'client')
 stub('UnregisterPedheadshot', 'client')
 
--- GTA pause menu, scaleform, HUD and frontend
+-- Game pause menu, scaleform, HUD and frontend
 stub('ActivateFrontendMenu', 'client')
 stub('AddReplaceTexture', 'client')
 stub('BeginScaleformMovieMethod', 'client', false)
 stub('BeginScaleformMovieMethodOnFrontend', 'client', false)
 stub('ClearPedInPauseMenu', 'client')
 stub('CreateRuntimeTextureFromDuiHandle', 'client', 0)
--- Runtime textures are FiveM-only (Cfx native reference, docs.fivem.net/natives: game gta5).
+-- Runtime textures are Cfx.re's own natives, listed for the original game only.
 stub('CreateRuntimeTxd', 'client', 0)
 stub('DrawTexturedPoly', 'client')
 stub('EndScaleformMovieMethod', 'client')

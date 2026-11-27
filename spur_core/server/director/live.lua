@@ -380,7 +380,7 @@ end
 --- ground it has there).
 local function besideCar(ent)
     local c, h = GetEntityCoords(ent), math.rad(GetEntityHeading(ent))
-    local rx, ry = math.cos(h), math.sin(h)   -- GTA's right is (cos, sin)
+    local rx, ry = math.cos(h), math.sin(h)   -- the game's right is (cos, sin)
     return vector3(c.x - rx * 1.8, c.y - ry * 1.8, c.z)
 end
 

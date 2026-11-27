@@ -58,7 +58,7 @@ function F.isLore(key) return DirectorLore.isLive(key) end
 --- The lore character a document's empty lore field means, or nil (server/director/lore.lua).
 function F.loreDefault(doc) return DirectorLore.defaultOf(doc) end
 
---- A weapon this server has: GTA's own, or one a running resource adds (shared/weapon_catalog.lua).
+--- A weapon this server has: the game's own, or one a running resource adds (shared/weapon_catalog.lua).
 function F.isWeapon(name) return WeaponCatalog.get(name) ~= nil end
 
 --- What is wrong with a car's plate (whip's one plate rule: Vehicles.normalisePlate), or nil.

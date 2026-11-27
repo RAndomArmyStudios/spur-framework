@@ -1005,7 +1005,7 @@ local runCar = DirectorNodes.runCarId
 local whereNow = DirectorNodes.whereNow
 
 
---- GTA's own street life: a car or a passer-by the game made by itself (population types 1-5), never one a script
+--- The game's own street life: a car or a passer-by the game made by itself (population types 1-5), never one a script
 --- made (this scenario's, another job's, another resource's: "mission", 7).
 local function streetLife(ent)
     local t = GetEntityPopulationType(ent)
@@ -1566,7 +1566,7 @@ define({
 --
 -- A blip marks a placed thing's spot (World tab) for the run's players, by CHARACTER, so somebody who
 -- logs out and back in as someone else does not see it. It is the run's: it goes when the run ends.
--- Only GTA's blip colours whose numbers are certain are offered.
+-- Only the game's blip colours whose numbers are certain are offered.
 
 local COLORS = { yellow = 5, red = 1, green = 2, blue = 3, white = 0 }
 local COLOR_NAMES = { 'yellow', 'red', 'green', 'blue', 'white' }

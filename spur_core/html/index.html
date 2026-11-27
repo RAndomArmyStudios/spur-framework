@@ -45,12 +45,12 @@
 <link rel="stylesheet" href="css/ov-panel.css"> <!-- the object viewer's options and Move's bar (js/ov-panel.js); after director.css, whose classes it wears -->
 <link rel="stylesheet" href="css/hand-edit.css"> <!-- the hand position editor's item list (js/hand-edit.js); after director.css, whose classes it wears -->
 <link rel="stylesheet" href="css/pause.css"> <!-- whip's pause menu and its map (js/pause.js) -->
-<link rel="stylesheet" href="css/minimap.css"> <!-- whip's minimap, the 3D map in GTA's radar's place (js/minimap.js) -->
+<link rel="stylesheet" href="css/minimap.css"> <!-- whip's minimap, the 3D map in the game's radar's place (js/minimap.js) -->
 <link rel="stylesheet" href="css/pad-layout.css"> <!-- its Controller screen (js/pad-layout.js) -->
-<link rel="stylesheet" href="css/settings-page.css"> <!-- its Settings page: GTA's settings and the server's (js/settings-page.js) -->
+<link rel="stylesheet" href="css/settings-page.css"> <!-- its Settings page: the game's settings and the server's (js/settings-page.js) -->
 <link rel="stylesheet" href="css/pad-keyboard.css"> <!-- typing on a controller (js/pad-keyboard.js) -->
 <link rel="stylesheet" href="css/pad-cursor.css"> <!-- a mouse on a controller: the Director, /whip (js/pad-cursor.js) -->
-<!-- What this browser can do (window.WhipCaps, and caps-* classes on <html>): FiveM's Chromium 103 or
+<!-- What this browser can do (window.WhipCaps, and caps-* classes on <html>): Cfx.re's Chromium 103 or
      144. A classic script in <head>, so the classes are there before the first paint. See js/caps.js. -->
 <script src="js/caps.js"></script>
 </head>
@@ -1094,7 +1094,7 @@
         <span class="fz-bp-grip fz-bp-grip-rb" data-grip="rb"></span>
     </div>
 
-    <!-- THE MAP WINDOW (the Director's world builder only): the scenario's things on whip's GTA map, each its own
+    <!-- THE MAP WINDOW (the Director's world builder only): the scenario's things on whip's game map, each its own
          picture, where the builder has it now (director/map.js); the camera is the arrow. A mark clicked: its card
          (Go to, Configure). The Blueprint window's kind: its head drags it, its edges size it, X closes it. -->
     <div id="fz-map" class="fz-bp fz-map">
@@ -1200,7 +1200,7 @@
         <div class="rd-body" id="rd-body"></div>
         <div class="rd-foot">
             <button class="rd-btn rd-btn-p" id="rd-print" type="button">Print table to F8</button>
-            <!-- Back to whip's own values (radarRects in client/hud.lua), NOT to GTA vanilla —
+            <!-- Back to whip's own values (radarRects in client/hud.lua), NOT to the game's own —
                  "reset" during a tuning session means the point you left from. Vanilla is the
                  smaller button beside it, kept because it is a diagnostic in its own right. -->
             <button class="rd-btn" id="rd-reset" type="button">Reset to config</button>

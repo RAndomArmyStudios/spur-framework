@@ -22,8 +22,8 @@ local function setId(ctx, worldId) return ctx:tag() .. ':prop:' .. worldId end
 -- PHYSICS
 -- ============================================
 --
--- One object the server makes (networked): FiveM gives it to one player's game, the nearest, which moves it, and the
--- others follow what that game says. Background physics, so nothing more is sent for it than FiveM sends. It is held
+-- One object the server makes (networked): Cfx.re gives it to one player's game, the nearest, which moves it, and the
+-- others follow what that game says. Background physics, so nothing more is sent for it than Cfx.re sends. It is held
 -- still until a ped or a car in its world is within PHYS_NEAR (with nothing there, the ground under it may not be
 -- loaded on the game moving it, and it would fall through), and held again once none is, where it got to. A run's goes with its run (its tag),
 -- with Hide Prop or Remove, or when a test goes back to before it was shown; a standing one with its scenario's

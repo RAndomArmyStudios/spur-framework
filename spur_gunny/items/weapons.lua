@@ -1,6 +1,6 @@
 -- spur_gunny: THE WEAPONS, one item per RDR2 weapon
 --
--- RedM (spur_gunny, 24 Nov 2026): rewritten. whip_gunny's 100+ GTA weapons (and its remodelled add-on ones) are
+-- RedM (spur_gunny, 24 Nov 2026): rewritten. whip_gunny's 100+ original-game weapons (and its remodelled add-on ones) are
 -- replaced by RDR2's own, by their game names. Nothing is streamed: the game draws every one of them.
 --
 -- Fields:
@@ -124,7 +124,7 @@ melee('gunny_lasso', 'WEAPON_LASSO', 'Lasso', 0.8, 'A rope lasso.')
 melee('gunny_lasso_reinforced', 'WEAPON_LASSO_REINFORCED', 'Reinforced Lasso', 0.9, 'A lasso that holds longer.')
 
 -- Thrown: a stack, and each one thrown is taken from it. RedM (spur_gunny, 24 Nov 2026): dynamite and the fire
--- bottle stand in for GTA's sticky bombs and grenades: a lit fuse, thrown, with no remote detonation.
+-- bottle stand in for the game's sticky bombs and grenades: a lit fuse, thrown, with no remote detonation.
 throwable('gunny_hatchet', 'WEAPON_MELEE_HATCHET', 'Hatchet', 0.8, 5, 'Swing it, or throw it.')
 throwable('gunny_hatchet_hunter', 'WEAPON_MELEE_HATCHET_HUNTER', 'Hunter Hatchet', 0.8, 5, 'A hunter\'s hatchet: swing it, or throw it.')
 throwable('gunny_hatchet_doublebit', 'WEAPON_MELEE_HATCHET_DOUBLE_BIT', 'Double Bit Hatchet', 0.9, 5, 'Two edges: swing it, or throw it.')

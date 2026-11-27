@@ -84,7 +84,7 @@ local SEAT   = { key = 'seat', kind = 'select', label = 'Seat', options = { 'dri
                  default = 'driver' }
 local CAR    = { key = 'car', kind = 'world', worldKind = 'vehicle', label = 'Car', required = true }
 
--- GTA driving-style flags: normal stops for cars and lights, careful also slows round people, rushed swerves through
+-- Game driving-style flags: normal stops for cars and lights, careful also slows round people, rushed swerves through
 -- traffic and runs the lights.
 S.STYLE_N = { normal = 786603, careful = 447, rushed = 1074528293 }
 local STYLE   = { key = 'style', kind = 'select', look = 'seg', label = 'Driving', options = { 'normal', 'careful', 'rushed' }, default = 'normal' }
@@ -184,7 +184,7 @@ T('shootAt', { label = 'Shoot At', group = 'look', kinds = NPC, timing = 'timed'
 -- nearest player, and puts it away after.
 T('throw', { label = 'Throw', group = 'look', kinds = NPC, timing = 'timed', sec = 2, length = true, once = true, faces = true, previewAtCamera = true,
     standingSkip = 'a standing NPC never throws (it would hit whoever is near)',
-    -- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons (client/npcs.lua THROWN), in place of GTA's grenade, molotov, smoke grenade,
+    -- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons (client/npcs.lua THROWN), in place of the original game's grenade, molotov, smoke grenade,
     -- flare, snowball and ball, none of which RDR2 has. A step saved with one of those fails Check (not one of the
     -- choices) until re-picked; a run reads it as dynamite.
     fields = { { key = 'item', kind = 'select', label = 'What', options = { 'dynamite', 'fire bottle', 'poison bottle', 'tomahawk', 'throwing knives', 'bolas' },
@@ -318,7 +318,7 @@ T('weapon', { label = 'Hold a Weapon', group = 'body', kinds = NPC, timing = 'in
     fields = { { key = 'weapon', kind = 'weapon', label = 'Weapon', hint = 'empty: put it away', max = 64 } },
     problem = function(p)
         if p.weapon ~= '' and not tostring(p.weapon):upper():match('^WEAPON_[A-Z0-9_]+$') then
-            return 'a weapon is the game\'s name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not GTA's WEAPON_PISTOL
+            return 'a weapon is the game\'s name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
         end
         return nil
     end })

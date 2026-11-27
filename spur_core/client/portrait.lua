@@ -2,10 +2,10 @@
 -- (spur_core:player:spawned, including the creator closing) and after a revive (not while dead). The page draws it
 -- into a small picture (html/js/portrait.js) and sends it back here, then to the server (server/portraits.lua),
 -- which keeps one per character.
--- The headshot is a TXD the page reads through https://nui-img/ and is freed once read: GTA holds only a few at once.
+-- The headshot is a TXD the page reads through https://nui-img/ and is freed once read: the game holds only a few at once.
 
 local TAKE_AFTER_MS = 6000   -- after the spawn: the ped streamed in, dressed and stood still
-local READY_MS = 5000        -- how long GTA may take to make the headshot
+local READY_MS = 5000        -- how long the game may take to make the headshot
 local HOLD_MS = 4000         -- how long the page may take to read it, before it is freed
 
 local wanted = 0       -- bumped by each spawn: only the newest spawn's headshot is taken

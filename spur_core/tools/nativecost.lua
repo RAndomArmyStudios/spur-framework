@@ -7,7 +7,7 @@
 --
 -- HOW: every frame for FRAMES frames, each call runs a batch of times and the batch is timed. THE CLOCK IS
 -- GetNetworkTimeAccurate: the client's Lua has no os library (os.clock is the server's only), GetGameTimer is read
--- once a frame, and this one is read fresh on every call (FiveM's docs suggest it for
+-- once a frame, and this one is read fresh on every call (Cfx.re's docs suggest it for
 -- benchmarking). It moves in whole milliseconds, so it is the SUM over many frames that is read: a batch starts
 -- anywhere inside a millisecond, so the steps average out. A batch grows while it takes under 2 ms and halves over
 -- 20 ms. The game stutters for a few seconds while it runs. Ungated like /mousedebug: it times this client's own
@@ -17,7 +17,7 @@ local FRAMES = 60
 local MAX_BATCH = 4000
 local running = false
 
---- Draws GTA keeps a frame are limited, and a draw past the limit may be dropped on a cheaper path: kept well under it.
+--- Draws the game keeps a frame are limited, and a draw past the limit may be dropped on a cheaper path: kept well under it.
 local MAX_DRAWS = 250
 
 local function cases(dict, tex)

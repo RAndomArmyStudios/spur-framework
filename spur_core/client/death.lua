@@ -91,7 +91,7 @@ end)
 -- Which death EnterDeathState is working on. See the checks after its waits.
 local deathGen = 0
 
--- How the body is dead: 'seat' is GTA's own death slumped in a vehicle seat (the ped really is dead),
+-- How the body is dead: 'seat' is the game's own death slumped in a vehicle seat (the ped really is dead),
 -- 'ground' is whip's (brought back, locked down, in the death pose). nil while changing from one to the
 -- other. followSeat swaps them as the body is put into or taken out of vehicles.
 local deathMode = nil
@@ -109,7 +109,7 @@ local function deathFrame()
     deathScreenSay({ hidden = screenHidden })
 end
 
---- Dead on the ground: brought back (a ped GTA has killed can't be held), locked down and laid in the death
+--- Dead on the ground: brought back (a ped the game has killed can't be held), locked down and laid in the death
 --- pose where the body is, or at `at`. Answers false if the death ended or a respawn began meanwhile.
 ---@param gen number
 ---@param at vector3|nil
@@ -161,7 +161,7 @@ local function layDown(gen, at)
     return still()
 end
 
---- Dead in a vehicle seat: GTA's own death, slumped where they sit. Whip's ground lockdown comes off, and a
+--- Dead in a vehicle seat: the game's own death, slumped where they sit. Whip's ground lockdown comes off, and a
 --- ped brought back on the ground dies again in the seat. Still the one death: isDead stands, so nothing is
 --- announced or reported twice.
 ---@param ped number
@@ -173,7 +173,7 @@ local function takeSeat(ped)
     deathMode = 'seat'
 end
 
---- A ped GTA has killed (dead in a seat) brought back where it is, for a death that ends without a revive
+--- A ped the game has killed (dead in a seat) brought back where it is, for a death that ends without a revive
 --- or respawn (a logout, spur_core stopping).
 local function bringBackDeadPed()
     local ped = PlayerPedId()
@@ -210,7 +210,7 @@ local function leaveSeat(gen)
 end
 
 --- For as long as this death lasts, follow the body into and out of vehicles, however many times: dead in a
---- seat is GTA's, dead anywhere else is whip's (deathMode). A respawn under way is left to DoRespawn.
+--- seat is the game's, dead anywhere else is whip's (deathMode). A respawn under way is left to DoRespawn.
 local SEAT_CHECK_MS = 250
 local function followSeat(gen)
     while isDead and deathGen == gen do
@@ -293,7 +293,7 @@ local function EnterDeathState(skipRagdoll, reason)
         if not stillThisDeath() then return end
     end
 
-    -- In a vehicle, GTA's own death stands: slumped in the seat. Anywhere else, whip's on the ground.
+    -- In a vehicle, the game's own death stands: slumped in the seat. Anywhere else, whip's on the ground.
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         takeSeat(ped)
@@ -324,9 +324,9 @@ local function ExitDeathState()
 
     local ped = PlayerPedId()
 
-    -- A ped GTA counts dead is brought back first, wherever it is: still falling (a revive in the first seconds,
+    -- A ped the game counts dead is brought back first, wherever it is: still falling (a revive in the first seconds,
     -- before layDown has brought it back), killed again where it lay, or slumped in a seat (put back in that seat
-    -- if the resurrect took them out). Health alone on a dead ped can leave it standing but still dead to GTA,
+    -- if the resurrect took them out). Health alone on a dead ped can leave it standing but still dead to the game,
     -- so it can't be hurt, and the server's copy still reads it dead.
     if IsEntityDead(ped) then
         local veh = GetVehiclePedIsIn(ped, false)
@@ -402,7 +402,7 @@ local function DoRespawn()
     -- would put the respawned ped straight back on the holder.
     if EscortReleaseSelf then EscortReleaseSelf() end
 
-    -- Fade to black. The death screen fades with it: GTA's fade is drawn under the page.
+    -- Fade to black. The death screen fades with it: the game's fade is drawn under the page.
     deathScreenSay({ state = 'off' })
     DoScreenFadeOut(500)
     Wait(600)
@@ -451,7 +451,7 @@ local function DoRespawn()
     ClearPedBloodDamage(ped)
     ResetPedVisibleDamage(ped)
 
-    -- Re-disable GTA health regen (resets on death)
+    -- Re-disable game health regen (resets on death)
     SetPlayerHealthRechargeMultiplier(PlayerId(), 0.0)
     SetPlayerHealthRechargeLimit(PlayerId(), 0.0)
 

@@ -1902,7 +1902,7 @@ function cancelDrag() {
 /** The slot a controller is pointing the drag at (the D-pad's highlight), set only while the pad's
  *  own mousemove / mouseup is being handled (padAimAt below). It is the answer for that event: a
  *  slot's measured position and the screen's points need not agree under the inventory's CSS zoom
- *  in FiveM's Chromium 103, so the pad names the slot instead of pointing at where it thinks it is. */
+ *  in Cfx.re's Chromium 103, so the pad names the slot instead of pointing at where it thinks it is. */
 let padAim = null;
 
 function getSlotUnderCursor(x, y) {
@@ -2956,7 +2956,7 @@ function hideTooltip() {
 //
 // WHERE THE CIRCLE IS, THE SCREEN SAYS: what is under it is a real hit test at its point. A slot's
 // measured position is used only to place things (the circle's start, the carried item, the menu),
-// corrected by padZoom for FiveM's Chromium 103, whose CSS zoom can measure in other pixels. The D-pad
+// corrected by padZoom for Cfx.re's Chromium 103, whose CSS zoom can measure in other pixels. The D-pad
 // names its slot to the drag outright (padAim), so a move never depends on that correction.
 // ========================================
 
@@ -3067,7 +3067,7 @@ function padFocusEl() {
 }
 
 /** How a measured position inside the inventory becomes a screen point: 1 where they agree, the
- *  inventory's zoom where FiveM's Chromium 103 measures in unzoomed pixels. Once per open.
+ *  inventory's zoom where Cfx.re's Chromium 103 measures in unzoomed pixels. Once per open.
  *
  *  MEASURED ON A PROBE OF KNOWN SIZE (hit-testing a big slot can pass in both cases): a 100px box
  *  inside the zoomed container is measured: about 100 × zoom wide where measurements are on
@@ -3233,7 +3233,7 @@ function padCarryDraw() {
 }
 
 /** The carried tile over its slot, in the wrapper's own pixels. Both are measured, and the wrapper's
- *  measured width over its layout width turns a measured distance into those pixels, whichever FiveM's
+ *  measured width over its layout width turns a measured distance into those pixels, whichever Cfx.re's
  *  browser measures in (padZoom: Chromium 103 measures inside the zoom unzoomed). Hidden while the right
  *  stick has scrolled its slot out of its list. */
 function padCarryPlace(host) {

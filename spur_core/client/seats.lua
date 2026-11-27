@@ -2,18 +2,18 @@
 -- SEATS — passengers stay in their seat, and the wheel's Seats page
 -- ============================================
 --
--- Two GTA habits, two fixes (Config.Seats.NoAutoShuffle):
+-- Two game habits, two fixes (Config.Seats.NoAutoShuffle):
 --
 --   1. A passenger slides into the driver's seat when it goes empty. Ped config flag 184
---      (PreventAutoShuffleToDriversSeat) stops it, as GTA Online uses it, and 360 does the same for a
+--      (PreventAutoShuffleToDriversSeat) stops it, as the original game's online mode uses it, and 360 does the same for a
 --      gun turret seat. A flag lives on the PED, and a new ped (a model change, a respawn) starts
 --      without it, so the vehicle tick asks every 200 ms and sets it when it is missing: one native,
 --      on a wake that already runs. Reset flag 216 (a downed driver is shoved over to) clears every
---      frame, so it rides whip's one per-frame loop while seated, which also holds GTA's own shuffle
+--      frame, so it rides whip's one per-frame loop while seated, which also holds the game's own shuffle
 --      button off (104: H, D-pad right). Neither flag stops the slide in (2).
 --
 --   2. F at the passenger door of an empty car gets in there and slides across to drive. That slide
---      is part of GTA's get-in task. 'retask' (the default) watches the task start: heading for the
+--      is part of the game's get-in task. 'retask' (the default) watches the task start: heading for the
 --      driver's seat from the side away from it, with the front passenger seat free, it is told
 --      again to get into the passenger seat by that door, with no sliding (TaskEnterVehicle flag
 --      1048576, BlockSeatShuffling). The walk to the door is the same, so it looks like nothing.
@@ -27,11 +27,11 @@
 -- The Seats page, inside the wheel. Seats on the F1 wheel does not close
 -- it: the ring gives way to the vehicle's seats as slabs laid out like the car round the centre disc,
 -- two to a row (one behind another on a bike), each Free, Occupied or You (client/radial.lua's
--- RadialPage; html/js/ui.js §5 draws it). /seats opens the wheel straight on it. GTA has no native
+-- RadialPage; html/js/ui.js §5 draws it). /seats opens the wheel straight on it. The game has no native
 -- that says where a seat is, so the rows come from the seat count, as every seat menu does. Picking a
 -- free seat closes the wheel and moves the player. The move is claimed on the server first
 -- (server/seats.lua: two players picking one seat). Then, to a seat in the same row, the ped slides
--- across with GTA's own animation; to any other seat (front to back, a bus's seat 9) GTA has none,
+-- across with the game's own animation; to any other seat (front to back, a bus's seat 9) the game has none,
 -- and the ped is put there. A slide that lands somewhere else is remembered for that model and
 -- pair, and that pair is a teleport from then on.
 --
@@ -72,7 +72,7 @@ local function say(text, kind)
 end
 
 --- Is `seat` free, counting a seat someone is getting into or sliding into as taken? The third
---- argument is the "task" half, a parameter FiveM's own wrapper may not pass, so it goes by hash.
+--- argument is the "task" half, a parameter Cfx.re's own wrapper may not pass, so it goes by hash.
 ---@return boolean
 local function seatFree(veh, seat)
     local r = Citizen.InvokeNative(NATIVE_SEAT_FREE, veh, seat, true, Citizen.ReturnResultAnyway())
@@ -130,7 +130,7 @@ local function clearFlags()
     SetPedConfigFlag(ped, FLAG_FORCE_DIRECT_ENTRY, false)
 end
 
---- Every frame while seated (the 'seats' block): GTA's push of a passenger over a downed driver off.
+--- Every frame while seated (the 'seats' block): the game's push of a passenger over a downed driver off.
 local function seatedFrame()
     if not held then return end   -- a hook let go earlier in this frame still runs once
     local ped = PlayerPedId()
@@ -150,11 +150,11 @@ local function hold(want)
     end
 end
 
---- Walking away cancels the get-in, as in GTA. The get-in below is whip's, a SCRIPT task, which GTA's
---- player input never interrupts. GTA's own get-in stops when the stick pushes away from the car, so
+--- Walking away cancels the get-in, as in the game. The get-in below is whip's, a SCRIPT task, which the game's
+--- player input never interrupts. The game's own get-in stops when the stick pushes away from the car, so
 --- while whip's runs, this does the same: pushing away from the car, or F / Y again, stops it — until the
 --- ped starts onto the seat (IsPedInAnyVehicle with atGetIn: true from the moment the door is open and
---- it climbs in), from where GTA's own carries on too. Every frame, only while that get-in runs, and
+--- it climbs in), from where the game's own carries on too. Every frame, only while that get-in runs, and
 --- never past its own 10 s. `grace`: ms a get-in just asked for (Seats.enter) has to begin.
 local function watchCancel(ped, veh, grace)
     CreateThread(function()
@@ -167,7 +167,7 @@ local function watchCancel(ped, veh, grace)
                 if GetGameTimer() - start > (grace or 0) then return end
                 goto continue
             end
-            if IsPedInAnyVehicle(ped, true) then return end   -- climbing in: committed, as GTA's is
+            if IsPedInAnyVehicle(ped, true) then return end   -- climbing in: committed, as the game's is
             local stop = IsControlJustPressed(0, CONTROL_ENTER) or IsDisabledControlJustPressed(0, CONTROL_ENTER)
             if not stop then
                 local lr, ud = GetControlNormal(0, CONTROL_MOVE_LR), GetControlNormal(0, CONTROL_MOVE_UD)
@@ -208,11 +208,11 @@ local function checkEntry(ped)
     local veh = GetVehiclePedIsTryingToEnter(ped)
     if veh == 0 then retasked = 0 return end
     if veh == retasked or GetSeatPedIsTryingToEnter(ped) ~= -1 then return end
-    -- Somebody driving it is GTA's to settle (getting in beside them, or pulling them out).
+    -- Somebody driving it is the game's to settle (getting in beside them, or pulling them out).
     if not IsVehicleSeatFree(veh, -1) then return end
     if GetVehicleMaxNumberOfPassengers(veh) < 1 or not seatFree(veh, 0) then return end
     -- Only a car with a door of its own on each side: a bus's one door IS the driver's way in, and a
-    -- boat or an aircraft has no such doors at all. Those are GTA's to settle.
+    -- boat or an aircraft has no such doors at all. Those are the game's to settle.
     local class = GetVehicleClass(veh)
     if class == 14 or class == 15 or class == 16 then return end   -- boats, helicopters, planes
     if GetEntityBoneIndexByName(veh, 'door_dside_f') == -1 or GetEntityBoneIndexByName(veh, 'door_pside_f') == -1 then
@@ -223,7 +223,7 @@ local function checkEntry(ped)
     local seatAt, pedAt = GetWorldPositionOfEntityBone(veh, bone), GetEntityCoords(ped)
     local driverX = GetOffsetFromEntityGivenWorldCoords(veh, seatAt.x, seatAt.y, seatAt.z).x
     local pedX = GetOffsetFromEntityGivenWorldCoords(veh, pedAt.x, pedAt.y, pedAt.z).x
-    if driverX * pedX >= 0 then return end   -- at the driver's side: GTA's own door, no slide
+    if driverX * pedX >= 0 then return end   -- at the driver's side: the game's own door, no slide
     retasked = veh
     local speed = (IsPedRunning(ped) or IsPedSprinting(ped)) and 2.0 or 1.0
     TaskEnterVehicle(ped, veh, CANCEL_WATCH_MS, 0, speed, ENTER_RESUME | ENTER_NO_SLIDE, 0)
@@ -265,7 +265,7 @@ end)
 
 -- ---- moving seat --------------------------------------------------------------
 
---- GTA's slide across to the seat beside, waited out. True when the ped landed in `to`.
+--- The game's slide across to the seat beside, waited out. True when the ped landed in `to`.
 local function slide(ped, veh, to)
     local lift = to == -1 and on()   -- flag 184 may stop a slide into the driver's seat, even ours
     if lift then SetPedConfigFlag(ped, FLAG_NO_SHUFFLE_TO_DRIVER, false) end
@@ -291,7 +291,7 @@ local function move(ped, veh, from, to)
     if not inline and rowOf(from, false) == rowOf(to, false) and not noSlide[key]
        and not IsTurretSeat(veh, from) and not IsTurretSeat(veh, to) then
         if slide(ped, veh, to) then return end
-        noSlide[key] = true   -- GTA's slide from here goes elsewhere, or nowhere: teleport next time
+        noSlide[key] = true   -- the game's slide from here goes elsewhere, or nowhere: teleport next time
     end
     if GetVehiclePedIsIn(ped, false) == veh and seatOf(veh, ped) ~= to and seatFree(veh, to) then
         WeaponLock.beforeSeat(ped, veh, to)   -- a turret seat's gun comes only with the lock already off
@@ -436,5 +436,5 @@ end, false)
 
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
-    if on() then clearFlags() end   -- GTA's own way while spur_core is down
+    if on() then clearFlags() end   -- the game's own way while spur_core is down
 end)

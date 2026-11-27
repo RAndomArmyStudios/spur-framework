@@ -74,7 +74,7 @@ local _originShapeReported = false
 -- strict mode on for all its callbacks (fxmanifest.lua); the origin check stays anyway, as the one
 -- callback that can end in a command, so it does not depend on a manifest line.
 --
--- On Legacy the origin is `requestData.resource`. On FiveM for GTAV Enhanced that field is nil and
+-- On Legacy the origin is `requestData.resource`. On the original game's Enhanced build that field is nil and
 -- the name is in the Origin header with a `cfx-nui-` prefix:
 --
 --     Origin = https://cfx-nui-spur_core

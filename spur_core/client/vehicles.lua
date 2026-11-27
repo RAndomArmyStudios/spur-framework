@@ -145,7 +145,7 @@ local IGNITION_REASSERT_MS = 500
 --- The car a recorded drive had at the last look (AssertIgnition): the ignition picks up from it when the drive is over.
 local ignitionTakeCar = nil
 
---- The throttle is held off while the engine is off: GTA starts an engine itself on accelerate, and the car
+--- The throttle is held off while the engine is off: the game starts an engine itself on accelerate, and the car
 --- stays driveable so it can roll. Accelerate (71) is held off for the driver; brake/reverse (72) only while
 --- the car is all but stopped. Aircraft use 87 (up) and 88 (down, only while all but still). Bicycles are never held.
 local ENGINE_OFF_REVERSE_SPEED = 1.0   -- m/s: below this, brake / reverse is held off too
@@ -153,7 +153,7 @@ local throttleVeh = nil                -- the car whose throttle is held, or nil
 local throttleAir = false              -- it is a plane or a helicopter (87/88 as well)
 
 -- RedM (spur_core, 24 Nov 2026): a wagon's horses go on RDR2's draft controls (W, Shift for the whip, S), not on
--- GTA's accelerate (71), so with its key out a wagon still went on W. While a wagon's throttle is held, so are they.
+-- the game's accelerate (71), so with its key out a wagon still went on W. While a wagon's throttle is held, so are they.
 -- S (MOVE_DOWN_ONLY) is held only while it's all but stopped, as whip does with the brake (72): it backs a stopped
 -- wagon but slows a moving one. Tried in game on a wagon02x, W and forward held by script for 5 s: 0 m with these
 -- held, 5.4 m without. Control hashes from femga's rdr3_discoveries (Controls).
@@ -1289,7 +1289,7 @@ RegisterNetEvent('spur_core:client:sessionVehicleRegistered', function(vehicleId
     end
 end)
 
--- Pin or unpin a street car whip holds, asked of the network owner (server's pinOnOwner): pinned so GTA does not
+-- Pin or unpin a street car whip holds, asked of the network owner (server's pinOnOwner): pinned so the game does not
 -- cull it. Only the owner can set it.
 RegisterNetEvent('spur_core:client:pinStreetCar', function(netId, pin)
     if type(netId) ~= 'number' or not NetworkDoesEntityExistWithNetworkId(netId) then return end
@@ -1565,7 +1565,7 @@ end
 
 local function createGarageBlip(key, g)
     removeGarageBlip(key)
-    -- No blip for a private garage, one whose resource is not running, or one with icon 0 (GTA draws an arrow).
+    -- No blip for a private garage, one whose resource is not running, or one with icon 0 (the game draws an arrow).
     if g.private or g.ownerAway or g.blipSprite == 0 then return end
     local blip = AddBlipForCoord(g.x, g.y, g.z)
     SetBlipSprite(blip, g.blipSprite or 357)
@@ -1575,7 +1575,7 @@ local function createGarageBlip(key, g)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentSubstringPlayerName(g.name or 'Garage')
     EndTextCommandSetBlipName(blip)
-    WhipBlipSetLabel(blip, g.name or 'Garage')   -- for the pause map's legend (GTA can't read it back)
+    WhipBlipSetLabel(blip, g.name or 'Garage')   -- for the pause map's legend (the game can't read it back)
     garageBlips[key] = blip
 end
 
@@ -2165,7 +2165,7 @@ CreateThread(function()
 
             announceSeat(seatOf(veh, ped))
 
-            -- Inherit the engine state GTA has.
+            -- Inherit the engine state the game has.
             engineOn = GetIsVehicleEngineRunning(veh) == true
             lastReportedEngine = nil   -- a new vehicle reports afresh
 
@@ -2657,7 +2657,7 @@ end
 -- The boot: one implementation for both ways in (the aim-target "Open Trunk" and View Trunk Inventory in
 -- client/vehicle_prompts.lua). Here because it touches drawVehicleStorage, vehicleStoragePending and trunkDoorEntity.
 
---- Can this vehicle's boot be opened right now? Uses GTA's lock status (2 is locked), so it answers for any car.
+--- Can this vehicle's boot be opened right now? Uses the game's lock status (2 is locked), so it answers for any car.
 ---@param entity number
 ---@return boolean
 function Vehicles.canOpenTrunk(entity)
@@ -2759,7 +2759,7 @@ end
 -- Locks and lockpicking: one implementation for the aim-target menu and the door circle. None of these decide
 -- anything; the lock toggle and lockpick are server events that re-run their own authorization.
 
---- Is this vehicle locked, by GTA's reckoning (2 is locked)? Answers for any car.
+--- Is this vehicle locked, by the game's reckoning (2 is locked)? Answers for any car.
 ---@param entity number
 ---@return boolean
 ---@diagnostic disable-next-line: duplicate-set-field -- the server's Vehicles is a different table

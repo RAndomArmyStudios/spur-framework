@@ -125,7 +125,7 @@ define({
     },
     check = function(props)
         if props.specific and not weaponName(props.weapon) then
-            return 'Enter the game\'s weapon name, for example WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not GTA's WEAPON_PISTOL
+            return 'Enter the game\'s weapon name, for example WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
         end
     end,
     run = function(ctx)
@@ -392,7 +392,7 @@ define({
 -- Car Destroyed / Car Damaged
 -- ============================================
 --
--- The server reads what a player's game last sent of the car, and answers 0 until one has (FiveM: no
+-- The server reads what a player's game last sent of the car, and answers 0 until one has (Cfx.re: no
 -- health node yet), so a reading counts only while a player's game owns the car, and a few in a row
 -- (as Car Delivered's "blown up").
 

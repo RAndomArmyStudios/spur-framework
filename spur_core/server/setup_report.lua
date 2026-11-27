@@ -200,7 +200,7 @@ local function gather()
     end
 
     -- What fights whip.
-    -- A real chat resource, not spur_chat's own `provide 'chat'` (which FiveM lists as running too).
+    -- A real chat resource, not spur_chat's own `provide 'chat'` (which Cfx.re lists as running too).
     if running('chat') and running('spur_chat') and ProviderOf('chat') == nil then
         add('fix', 'chat is running beside spur_chat: two chat boxes on one key. Remove "ensure chat" from server.cfg')
     end

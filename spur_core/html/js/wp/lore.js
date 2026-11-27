@@ -14,7 +14,7 @@
 // The picture saves on its own: Edit picture turns it into its frame (drag it, zoom with the slider) with Save under
 // it. New lore character opens an empty one on Details, and Create makes it.
 //
-// THEIR LOOK: a GTA ped (its spawn name), or one MADE IN THE CHARACTER EDITOR: Male or Female puts the builder in
+// THEIR LOOK: a game ped (its spawn name), or one MADE IN THE CHARACTER EDITOR: Male or Female puts the builder in
 // the editor wearing a new look (a new one is made first), Edit look in the one they have, and Copy my look gives them
 // the builder's own character as it is now, no editor. Either way a headshot of the look is kept with it, which is
 // their face wherever they have no picture link (lore-faces.js).
@@ -120,7 +120,7 @@ function initials(name) {
 }
 
 /** Their face: their picture, framed, when they have one; else their headshot (a look made in the character
- *  editor); else their GTA ped's, closed in on the head; else their initials. `cls` sizes it (wl-face-xl: the
+ *  editor); else their game ped's, closed in on the head; else their initials. `cls` sizes it (wl-face-xl: the
  *  profile's). */
 function loreFace(c, cls) {
     const el = WP.el('span', 'wp-avatar wl-face' + (cls ? ' ' + cls : ''));
@@ -567,7 +567,7 @@ function detailsTab(b) {
     two.appendChild(WP.field('Bank name', input('bankName', 50, 'Same as their name')));
     fields.appendChild(two);
     const two2 = WP.el('div', 'wp-cols-2');
-    // A look made in the character editor is its own ped: nothing to type (Use a GTA ped, beside, goes back to one).
+    // A look made in the character editor is its own ped: nothing to type (Use a game ped, beside, goes back to one).
     let model = null;
     if (isLook) {
         const ped = WP.el('div', 'wl-key');
@@ -590,7 +590,7 @@ function detailsTab(b) {
         two2.appendChild(key);
     }
     fields.appendChild(two2);
-    // Their hat: GTA puts none on by itself, so whip puts this one on every NPC that is them. (A look made in the
+    // Their hat: the game puts none on by itself, so whip puts this one on every NPC that is them. (A look made in the
     // character editor has its own.)
     if (!isLook && (!st.data || st.data.props !== false)) {
         const two3 = WP.el('div', 'wp-cols-2');
@@ -629,7 +629,7 @@ function detailsTab(b) {
     }
     grid.appendChild(fields);
 
-    // Their look beside the fields: the GTA ped standing, or the portrait of the look made in the character editor,
+    // Their look beside the fields: the game ped standing, or the portrait of the look made in the character editor,
     // and under it the character editor's way in.
     const side = WP.el('div', 'wl-look');
     const card = WP.el('figure', 'wl-ped-card' + (isLook ? ' wl-look-card' : ''));
@@ -649,9 +649,9 @@ function detailsTab(b) {
         side.appendChild(card);
         side.appendChild(WP.btn('Edit look', 'wlLookEdit', 'primary'));
         side.appendChild(WP.btn('Copy my look', 'wlLookCopy'));
-        const gta = WP.btn('Use a game ped', 'wlLookClear', 'ghost');
-        gta.classList.add('wp-btn-sm');
-        side.appendChild(gta);
+        const gameBtn = WP.btn('Use a game ped', 'wlLookClear', 'ghost');
+        gameBtn.classList.add('wp-btn-sm');
+        side.appendChild(gameBtn);
     } else {
         const showPed = () => {
             const m = trim(d.model);

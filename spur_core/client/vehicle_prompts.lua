@@ -218,7 +218,7 @@ local function hasTrunkLid(veh)
 end
 local function trunkLid(veh) return askCar(veh, 'lid', hasTrunkLid) end
 
--- Back doors: on a van such as the Boxville or the Burrito, GTA's rear doors (2 and 3) are the doors across its back,
+-- Back doors: on a van such as the Boxville or the Burrito, the game's rear doors (2 and 3) are the doors across its back,
 -- not doors down its sides. There the back is the trunk: its circle sits between them and opens both, and the doors
 -- have no circles of their own. Told from where the doors hang, once per model, on the classes
 -- Config.VehicleBackDoorClasses names; Config.VehicleBackDoors corrects a model told wrong.
@@ -466,7 +466,7 @@ local PARTS = {
     -- A car's filler, where a pump's nozzle goes (client/vehicle_points.lua fillerSpot; Config.VehicleFillers
     -- sets the side). No options of its own, so it shows only while a resource's is on offer.
     pointPart('fuel',    { car = true },   'fuel', {}),
-    -- RedM (spur_core, 25 Nov 2026): a wagon. RDR's wagons, buggies and carts have none of GTA's door or boot
+    -- RedM (spur_core, 25 Nov 2026): a wagon. RDR's wagons, buggies and carts have none of the original game's door or boot
     -- bones, so not one of the parts above lands on them and a wagon had no prompt at all (tried in game: a
     -- buggy parked in a house's bay could not be locked, looked in or put away from the wagon itself). This is
     -- one circle at the middle of its back (client/vehicle_points.lua's 'storage' place) with what a car's

@@ -227,7 +227,7 @@ local function groundAt(x, y, refZ)
     return refZ
 end
 
---- Draw a guard's cone this frame: round (x, y, z), facing `heading` (GTA's degrees). `v` is its extra.vision:
+--- Draw a guard's cone this frame: round (x, y, z), facing `heading` (the game's degrees). `v` is its extra.vision:
 --- { range, cone, spotS, farS, sneak } (client/director.lua extraOf).
 function VisionCone.draw(x, y, z, heading, v)
     if type(v) ~= 'table' then return end

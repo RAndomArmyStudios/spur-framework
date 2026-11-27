@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_voice, 24 Nov 2026): RedM, not FiveM. A rebuild of whip_voice 1.0.0 for spur_core on RedM's own Mumble
+-- RedM (spur_voice, 24 Nov 2026): A rebuild of whip_voice 1.0.0 for spur_core on RedM's own Mumble
 -- voice (README.md, NOTICE.md): no LiveKit, no voice ports or downloads, nothing in a page.
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'

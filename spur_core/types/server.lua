@@ -23,7 +23,7 @@ local spur_core = {}
 -- Player
 -- ============================================
 
--- THESE RETURN DATA, NOT AN OBJECT WITH METHODS. FiveM copies values across a resource boundary
+-- THESE RETURN DATA, NOT AN OBJECT WITH METHODS. Cfx.re copies values across a resource boundary
 -- and a metatable does not survive the copy, so these return WhipPlayer:serialize(); the methods
 -- are exports of their own further down this section.
 --
@@ -168,7 +168,7 @@ function spur_core:ShowBlip(audience, id, spec) end
 ---@return string|nil reason
 function spur_core:HideBlip(id) end
 
---- GTA's own waypoint (the one a player can set on the map), set on one player's map.
+--- The game's own waypoint (the one a player can set on the map), set on one player's map.
 ---@param source number
 ---@param coords vector3|table
 ---@return boolean ok
@@ -559,7 +559,7 @@ function spur_core:SetPlayerMetadata(who, key, value) end
 function spur_core:GetPlayerCoords(source) end
 
 --- The character's full name, or nil for a player not in a character — the name alone, where
---- GetPlayer copies the whole sheet. (FiveM's own GetPlayerName is the account's name.)
+--- GetPlayer copies the whole sheet. (Cfx.re's own GetPlayerName is the account's name.)
 ---@param source number
 ---@return string|nil
 function spur_core:GetPlayerFullName(source) end
@@ -668,7 +668,7 @@ function spur_core:LogoutPlayer(source) end
 ---@return boolean
 function spur_core:IsReady() end
 
---- Which GTA V this server runs on: server.cfg's `set whip_platform enhanced` on an Enhanced server, else
+--- Which build of the original game this server runs on: server.cfg's `set whip_platform enhanced` on an Enhanced server, else
 --- 'legacy'. One whip runs on both: ask here where the two differ (the same result on the client).
 ---@return 'legacy'|'enhanced'
 function spur_core:GetPlatform() end
@@ -765,7 +765,7 @@ function spur_core:TrackInvocationLock(releaseFn, eventName, src) end
 ---@param reason? string Why it was refused
 function spur_core:RecordEventRejection(eventName, src, reason) end
 
---- The ACE one of spur_core's commands needs beyond FiveM's own, or nil. Its in-game admin
+--- The ACE one of spur_core's commands needs beyond Cfx.re's own, or nil. Its in-game admin
 --- commands (/whip_giveitem, /whip_revive, ...) answer 'whip.devtools'. For a chat resource's
 --- command suggestions (whip_chat asks it).
 ---@param name string Command name, without the slash
@@ -863,7 +863,7 @@ function spur_core:GetCharacterBankAccounts(charId) end
 ---@async
 function spur_core:GetDefaultBankAccount(who) end
 
---- Is this player standing at a cash machine? GTA's own machines (from the game's map) and Config.AtmExtraPositions.
+--- Is this player standing at a cash machine? The map's machines (none on RDR2) and Config.AtmExtraPositions.
 --- Measured across the ground from the machine's base, within 3 m of height. For a resource that wants the
 --- standing-at-a-machine rule; whip's own ATMs find machines by model and do not ask this.
 ---@param source number
@@ -872,7 +872,7 @@ function spur_core:GetDefaultBankAccount(who) end
 ---@return vector3|string atOrWhy The machine's base, or why not
 function spur_core:IsNearAtm(source, range) end
 
---- The cash machine nearest a place (GTA's own and Config.AtmExtraPositions), within 3 m of its height.
+--- The cash machine nearest a place (the map's and Config.AtmExtraPositions), within 3 m of its height.
 ---@param coords vector3|{ x: number, y: number, z: number }
 ---@return vector3|nil at The machine's base
 ---@return number|nil distance Across the ground
@@ -1580,7 +1580,7 @@ function spur_core:FlushActivityLog() end
 --- saveAppearance event enforces: structural wrongness rejects, out-of-range
 --- values clamp. Returns a NEW table; the input is never mutated.
 ---
---- BOOLEAN FIRST: FiveM truncates a cross-resource return that leads with nil, so
+--- BOOLEAN FIRST: Cfx.re truncates a cross-resource return that leads with nil, so
 --- `ok` is false on refusal and the second value is the reason.
 --- Tattoos are optional: `tattoos = { { collection = 'mpBiker_overlays', overlay = 'MP_MP_Biker_Tat_000_M' }, ... }`,
 --- in the order put on. Kept only if shared/tattoo_list.lua names it for that body (in the list's spelling,
@@ -1963,7 +1963,7 @@ function spur_core:SpawnVehicle(vehicleId, coords) end
 --- A car that was already out of the world is in the state you asked for, so that reports success.
 --- It fails for an unknown vehicleId, a car busy being spawned, stored or deleted ('Vehicle is busy';
 --- try again), or a garage save that did not go through. A temporary car (SpawnTempVehicle) is
---- removed for good; a street car is handed back to GTA (left where it is) and forgotten, its
+--- removed for good; a street car is handed back to the game (left where it is) and forgotten, its
 --- storage logged as lost.
 ---
 --- `opts.garage` puts the car away in that garage instead of its own. Then only an owned car that is `out` is taken:
@@ -2096,7 +2096,7 @@ function spur_core:ClearAllVehicleData(vehicleId) end
 --
 -- TWO WORDS, TWO MEANINGS, AND THE DIFFERENCE IS REAL.
 --
---   PROPERTIES — the raw GTA block, applied to an ENTITY. Client-side only, because paint and mods
+--   PROPERTIES — the raw game block, applied to an ENTITY. Client-side only, because paint and mods
 --                are client natives. GetVehicleProperties / SetVehicleProperties.
 --   APPEARANCE — what whip has STORED for a vehicle, keyed by vehicleId. Server-side authority.
 --
@@ -2328,7 +2328,7 @@ function spur_core:ClearVehicleStat(vehicleId, name) end
 --- which only the game running it can do (SetVehicleFixed and friends).
 ---
 --- The damage itself is five stats, read with GetVehicleStat: `engineHealth` and `bodyHealth`
---- (0-1000, GTA's scale), and the masks `doorsOff`, `tyresFlat` and `tyresRim`.
+--- (0-1000, the game's scale), and the masks `doorsOff`, `tyresFlat` and `tyresRim`.
 ---
 --- ```lua
 --- exports.spur_core:ClearVehicleDamage(vehicleId)
@@ -2483,7 +2483,7 @@ function spur_core:HasVehicleImage(model) end
 --- Create a ground item (3D world drop): CreateGroundItem({ item, amount, coords, metadata, heading, reason }).
 --- The item must be registered and the amount a whole number (nil = 1). `reason` goes in the activity log.
 ---
---- Failure is `false, reason` and NOT `nil, reason`: a FiveM export truncates its return list at a
+--- Failure is `false, reason` and NOT `nil, reason`: a Cfx.re export truncates its return list at a
 --- leading nil, so a nil first value would deliver the reason to nobody. `false` is still falsy,
 --- so `if not created then` reads the same either way.
 ---@param def { item: string, amount?: number, coords: vector3|vector4, metadata?: table, heading?: number, reason?: string, createdBy?: number }  createdBy: the charId it is logged against

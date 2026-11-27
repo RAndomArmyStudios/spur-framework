@@ -49,7 +49,7 @@ Config.Holding = {
     Speed = 'jog',
 
     -- The walk while holding: a movement clipset. 'none': the player's own walk.
-    -- RedM (spur_rope, 24 Nov 2026): whip_rope's 'missfbi4prepp1_garbageman' is GTA's, and spur_core has no walk
+    -- RedM (spur_rope, 24 Nov 2026): whip_rope's 'missfbi4prepp1_garbageman' is the original game's, and spur_core has no walk
     -- override on RedM (SetPedMovementClipset is stubbed), so 'none'.
     WalkStyle = 'none',
 }
@@ -132,7 +132,7 @@ Config.Visuals = {
     -- How the rope is drawn:
     --   'rdr'       RDR2's own rope, every vertex pinned along this one
     --   'balls'     a small prop per node
-    -- RedM (spur_rope, 24 Nov 2026): whip_rope's 'segments' (a GTA V model) and 'gta' are drawn as 'rdr'. Should RDR2's
+    -- RedM (spur_rope, 24 Nov 2026): whip_rope's other looks, and any other name, are drawn as 'rdr'. Should RDR2's
     -- rope not follow its pins, spur_rope says so in the console and draws 'balls' (client/mesh.lua).
     Style = 'rdr',
 
@@ -148,7 +148,7 @@ Config.Visuals = {
     SegmentOverlap = 0.0,
 
     -- 'balls': an RDR2 model, a prop per node (backticks = its hash). Not one RDR2 has: a small RDR2 prop instead
-    -- (Rope.PropModel, client/visuals.lua). RedM (spur_rope, 24 Nov 2026): was GTA's prop_tennis_ball.
+    -- (Rope.PropModel, client/visuals.lua). RedM (spur_rope, 24 Nov 2026): was the original game's prop_tennis_ball.
     PropModel = `p_baitbread01x`,
     RotateProps = false,              -- turn each prop along the rope (not needed for a ball)
 
@@ -233,7 +233,7 @@ Config.PlayerHang = {
     Point = 'frozen',
     -- Which bone number of the hand the hold uses: 'ped' or 'ragdoll'. 'ped' is right; 'ragdoll' is there to try.
     TieBone = 'ped',
-    -- GTA's Euphoria "grab" (hands closed on the rope) and "dangle" (body hanging) message numbers. 0: not sent, and
+    -- The game's Euphoria "grab" (hands closed on the rope) and "dangle" (body hanging) message numbers. 0: not sent, and
     -- only the right hand holds. RedM (spur_rope, 24 Nov 2026): RDR2 has no CREATE_NM_MESSAGE, so these are never sent.
     GrabMessage = 0,
     DangleMessage = 0,
@@ -338,7 +338,7 @@ Config.Coupling = {
 
 -- Who moves what a rope pulls: the player pulling a rope (driving the car at one end, or holding it) is given what it
 -- pulls and keeps it while they pull, so a towed thing follows their car at once. A driver beats a hand. false:
--- whoever GTA picked moves it.
+-- whoever the game picked moves it.
 -- Two driven cars on one rope are each moved by their own game, and each sees the other late. Between them the rope is
 -- a strap: it pulls as it is stretched and gives nothing back once the two come together faster than SplitRelease.
 -- Each game works out the pull from where the other car is by now: moved on by its speed over GuessShare of the lag

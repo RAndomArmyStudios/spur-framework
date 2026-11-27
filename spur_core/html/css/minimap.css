@@ -1,7 +1,7 @@
 /* ========================================
    THE MINIMAP — css/minimap.css (js/minimap.js; client/minimap.lua feeds it)
 
-   whip's 3D map in GTA's radar's place, in the HUD's map box at the bottom left (the black skin's frame box,
+   whip's 3D map in the game's radar's place, in the HUD's map box at the bottom left (the black skin's frame box,
    client/hud_skin.lua: minimap.js places it in px). At body level, not in #status-hud: that layer is zoomed, and the
    box is in the screen's own px. It follows #status-hud's fade (minimap.js), on the same 0.5s.
 
@@ -31,7 +31,7 @@
     --pmap-blip: calc(16px * var(--mm-s));       /* a blip's icon (pause-map.js blipImage, css/pause.css .pmap-blip) */
     background: rgb(8, 14, 23);   /* the deep sea, and the box before the map has drawn */
     pointer-events: none;
-    /* GTA's 'rounded' mask: 46 px corners on a 512 x 396 mask stretched over the box (hud_skin.lua MASK_CORNERS). */
+    /* The game's 'rounded' mask: 46 px corners on a 512 x 396 mask stretched over the box (hud_skin.lua MASK_CORNERS). */
     border-radius: 8.984% / 11.616%;
 }
 
@@ -83,7 +83,7 @@
     height: 100%;
 }
 
-/* Over north: a blip or the waypoint due north, pinned to the edge where N is, shows over it (as on GTA's radar). */
+/* Over north: a blip or the waypoint due north, pinned to the edge where N is, shows over it (as on the game's radar). */
 .mm-marks {
     position: absolute;
     inset: 0;
@@ -136,7 +136,7 @@
     stroke-linejoin: round;
 }
 
-/* North, pinned to the edge the way north lies (GTA's radar's N). */
+/* North, pinned to the edge the way north lies (the game's radar's N). */
 .mm-north {
     position: absolute;
     left: calc(-8px * var(--mm-s));

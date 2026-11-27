@@ -22,9 +22,9 @@
 --
 -- THE PARKED ONES AND TRAILERS. The scenario's other placed cars with no take (the page's `parked`: a trailer, a car
 -- in the way) stand where they are placed, held through the count and free from the GO. Backed into, a trailer hooks on
--- as GTA hooks one; the car's own trailer (its page's Tows) is hitched before the count. Each moment one of them is
+-- as the game hooks one; the car's own trailer (its page's Tows) is hitched before the count. Each moment one of them is
 -- hitched or let go is kept ({ t, w, on }), and so is every frame of each one: a trailer the car hitched is saved as a
--- take of its own (its own placed thing's), beside the car's, so a run plays it where it went, not as GTA would drag it
+-- take of its own (its own placed thing's), beside the car's, so a run plays it where it went, not as the game would drag it
 -- (server/director/nodes_tasks.lua). The car's take keeps both: { tow = { tracks = { [trailer] = take id }, events } }.
 --
 -- WATCH IT. The take driven on a copy of the car, the player riding in the passenger seat, then put back; its trailers'

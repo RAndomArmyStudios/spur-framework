@@ -1248,7 +1248,7 @@ local function BindNav(name, command, label, kbMapper, kbParam, padParam)
         navPressedAt[name] = GetGameTimer()
         if WhipPadDebugFire then WhipPadDebugFire('bind', 'prompt option ' .. name) end
 
-        -- Scrolling opens GTA's weapon wheel, so up and down arm the suppressor.
+        -- Scrolling opens the game's weapon wheel, so up and down arm the suppressor.
         if (name == 'up' or name == 'down') and Inventory.suppressWeaponWheel then
             Inventory.suppressWeaponWheel()
         end
@@ -1284,7 +1284,7 @@ function Interactions.keyName()
     local now = GetGameTimer()
     if keyLabelAt == nil or now - keyLabelAt >= KEY_LABEL_MS then
         keyLabelAt = now
-        -- GTA's help text names a key 't_E'.
+        -- The game's help text names a key 't_E'.
         local s = GetControlInstructionalButton(0, GetHashKey('+whip_interact') | 0x80000000, true)
         local key = type(s) == 'string' and s:match('^t_(.+)$') or nil
         keyLabelCache = (key and #key <= 6) and key:upper() or 'E'
@@ -1325,7 +1325,7 @@ local promptHeld = {}
 local PROMPT_BLOCKS = {
     promptScroll = { controls = { 14, 15, 16, 17 } },
     -- RedM (spur_core, 24 Nov 2026): RDR2's grapple is on E, the prompts' key, so E at a prompt beside an NPC (the
-    -- Director's Talk) also grabbed the NPC by the collar. Held off while a prompt has the focus. 141 is GTA's
+    -- Director's Talk) also grabbed the NPC by the collar. Held off while a prompt has the focus. 141 is the game's
     -- MELEE_ATTACK_HEAVY, which shared/rdr_compat.lua sends to RDR2's INPUT_MELEE_GRAPPLE (0x2277FAE9).
     promptUse = { controls = { 141 } },
 }

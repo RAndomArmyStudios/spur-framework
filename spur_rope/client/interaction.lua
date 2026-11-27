@@ -411,7 +411,7 @@ end
 
 -- Hanging off it
 
--- What hanging changes on the ped beyond spur_core's ped hold, put back as it was when they let go. GTA's ped config flags,
+-- What hanging changes on the ped beyond spur_core's ped hold, put back as it was when they let go. The game's ped config flags,
 -- by the names in citizenfx's natives list (SetPedConfigFlag).
 local HANG_PED_FLAGS = {
     60,    -- IsStanding
@@ -419,7 +419,7 @@ local HANG_PED_FLAGS = {
     104,   -- OpenDoorArmIK
     72,    -- ClearRadarBlipOnDeath
 }
--- RedM (spur_rope, 24 Nov 2026): those are GTA's numbers. RDR2 numbers its ped config flags its own way, so on RedM none
+-- RedM (spur_rope, 24 Nov 2026): those are the original game's numbers. RDR2 numbers its ped config flags its own way, so on RedM none
 -- is set (the ped hold, the ragdoll and collision switches below still are).
 if GetGameName() == 'redm' then HANG_PED_FLAGS = {} end
 local LET_GO_MS = 1000   -- our own ragdoll let go of the rope: limp this long as it falls, then up
@@ -572,7 +572,7 @@ end
 -- its shot passed through a stand-in with nothing solid in the way and tells the server, which checks again and
 -- knocks them off. The shot itself does no damage.
 
-local SHOT_RANGE  = 300.0   -- metres a shot's line is followed (about GTA's longest gun; server/main.lua's too)
+local SHOT_RANGE  = 300.0   -- metres a shot's line is followed (about the game's longest gun; server/main.lua's too)
 local SHOT_REACH  = 0.45    -- metres from a stand-in's body line (hands to feet) a shot counts as hitting them
 local SHOT_REPEAT = 1000    -- ms: one word to the server a second for each player, however fast the gun fires
 local shotTold = {}         -- [serverId] = when we last told the server

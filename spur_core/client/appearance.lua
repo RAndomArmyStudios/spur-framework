@@ -63,7 +63,7 @@ local function GetDefaultAppearance(gender)
     }
 end
 
--- Overlay index mapping (GTA overlay IDs)
+-- Overlay index mapping (game overlay IDs)
 local OVERLAY_IDS = {
     blemishes  = 0,
     beard      = 1,
@@ -144,7 +144,7 @@ end
 -- Stored as a list of { collection, overlay } names, drawn in order (list: shared/tattoo_list.lua).
 -- No native removes one decoration, so changing the list clears all and re-applies the new list.
 -- The hair fade (`hairFade`, shared/hair_fades.lua) is a decoration too and goes on first. With no fade
--- chosen, a freemode ped gets the decoration GTA Online puts under its haircut (shared/hair_decor.lua), so
+-- chosen, a freemode ped gets the decoration the original game's online mode puts under its haircut (shared/hair_decor.lua), so
 -- the hair does not look glued on; it follows the cut and is never saved.
 
 --- The body letter HairDecor and the fades use for this ped, or nil for a non-freemode ped.
@@ -155,7 +155,7 @@ local function freemodeBody(ped)
     return nil
 end
 
--- The game's own answer (what GTA Online's barber reads): a shop haircut lists its decoration among its
+-- The game's own answer (what the original game's online barber reads): a shop haircut lists its decoration among its
 -- "forced components" (type 10, a decal), by overlay hash only; the collection is found from HairFades,
 -- which names every hair decoration of the newest game.
 local DECAL_TYPE = 10
@@ -613,7 +613,7 @@ local function ComputeCamPose()
     local cpitch, cyaw = rotFromDir(lx - cx, ly - cy, lz - cz)
 
     -- camShiftX: slide the camera sideways without turning it. The screen's half-width at the ped's distance
-    -- is dist x tan(fov/2) x aspect (GTA's fov is vertical); sliding left by that times camShiftX puts the ped right.
+    -- is dist x tan(fov/2) x aspect (the game's fov is vertical); sliding left by that times camShiftX puts the ped right.
     if camShiftX ~= 0.0 then
         local dx, dy = lx - cx, ly - cy
         local flat = sqrt(dx * dx + dy * dy)

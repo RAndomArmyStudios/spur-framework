@@ -10,7 +10,7 @@
 -- WHERE IT COMES FROM. The box fit is whip_autos' showroom camera's; the curve through points is the old
 -- Camera Creator's (client/camera.lua).
 --
--- A ROTATION is GTA's camera rotation, order 2: pitch (x, up is positive), roll (y), yaw (z, heading,
+-- A ROTATION is the game's camera rotation, order 2: pitch (x, up is positive), roll (y), yaw (z, heading,
 -- counter-clockwise). As a matrix that is Rz(yaw) * Rx(pitch) * Ry(roll) on the axes right = +x,
 -- forward = +y, up = +z: a camera at pitch p, yaw h looks along (-sin h cos p, cos h cos p, sin p).
 -- Blending two rotations goes through quaternions (w, x, y, z as q[1..4]), so it never flips or wobbles
@@ -156,7 +156,7 @@ end
 -- Rotations as quaternions
 -- ============================================
 
---- q = qz(yaw) * qx(pitch) * qy(roll), from GTA's degrees.
+--- q = qz(yaw) * qx(pitch) * qy(roll), from the game's degrees.
 ---@return table q  { w, x, y, z }
 function CamMath.quatFromEuler(pitch, roll, yaw)
     local hp, hr, hy = rad(pitch) * 0.5, rad(roll) * 0.5, rad(yaw) * 0.5
@@ -167,7 +167,7 @@ function CamMath.quatFromEuler(pitch, roll, yaw)
     return { cy * w1 - sy * z1, cy * x1 - sy * y1, cy * y1 + sy * x1, cy * z1 + sy * w1 }
 end
 
---- Back to GTA's degrees: pitch, roll, yaw.
+--- Back to the game's degrees: pitch, roll, yaw.
 ---@param q table
 ---@return number pitch, number roll, number yaw
 function CamMath.quatToEuler(q)

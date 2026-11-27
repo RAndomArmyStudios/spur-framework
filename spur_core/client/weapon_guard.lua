@@ -12,12 +12,12 @@ WeaponGuard = {}
 --- Every weapon a ped can carry (those with a world model, plus the parachute); damage causes and vehicle guns
 --- are left out. A weapon missing here is never swept.
 local WEAPON_NAMES = {}
--- RedM (spur_core, 24 Nov 2026): whip_core listed GTA V's weapons here (gone 26 Nov 2026: another game's). It guards
+-- RedM (spur_core, 24 Nov 2026): whip_core listed the original game's weapons here (gone 26 Nov 2026: another game's). It guards
 -- RDR2's instead: the 55 in shared/rdr_weapons.lua (spur_gunny's items, the lasso among them; unarmed is not one).
 -- spur_gunny permits each gun before it gives it (PermitNativeWeapon), and sweeps its own as well. Anything else
 -- that hands a player an RDR2 weapon must permit it too, or name it in Config.WeaponGuard.Allow.
 WEAPON_NAMES = {}
-for _, w in ipairs(GtaWeapons.list) do WEAPON_NAMES[#WEAPON_NAMES + 1] = w.name end
+for _, w in ipairs(GameWeapons.list) do WEAPON_NAMES[#WEAPON_NAMES + 1] = w.name end
 
 --- A weapon hash as one number however it arrives (GetHashKey answers signed; other sources can be unsigned).
 ---@param h number|string
@@ -135,7 +135,7 @@ Settings.onChange('WeaponGuard.Enabled', function(on)
 end)
 
 -- A vehicle's reward (police shotgun, aircraft parachute) lands as you sit: checked then, and twice more in case
--- GTA hands it over later.
+-- the game hands it over later.
 AddEventHandler('spur_core:vehicle:entered', function()
     WeaponGuard.sweep('vehicle')
     SetTimeout(1000, function() WeaponGuard.sweep('vehicle') end)

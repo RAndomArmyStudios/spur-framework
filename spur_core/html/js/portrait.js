@@ -2,7 +2,7 @@ import { NuiRouter } from './router.js';
 import { nuiCallback } from './utils.js';
 
 // ========================================
-// PORTRAIT — GTA's headshot of the player, made into a small picture (client/portrait.lua)
+// PORTRAIT — the game's headshot of the player, made into a small picture (client/portrait.lua)
 // ========================================
 //
 // The game hands over a TXD name; https://nui-img/<txd>/<txd> serves it with a CORS header, so it can

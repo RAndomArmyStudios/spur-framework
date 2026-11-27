@@ -2,8 +2,8 @@
 -- ACTION MODE — kept off, every frame
 -- ============================================
 --
--- GTA's combat stance after firing or being shot at. Nothing switches it off for good: no ped config
--- flag does, the reset flag that does (200, PRF_DisableActionMode) clears every frame, and GTA forces
+-- The game's combat stance after firing or being shot at. Nothing switches it off for good: no ped config
+-- flag does, the reset flag that does (200, PRF_DisableActionMode) clears every frame, and the game forces
 -- the stance back every frame for about 4 s after a punch.
 --
 -- Every frame (any slower lets it show), on whip's one per-frame loop (ControlBlocks, an empty spec: no

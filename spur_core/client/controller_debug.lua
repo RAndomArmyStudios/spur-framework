@@ -2,7 +2,7 @@
 -- PAD OVERLAY — /paddebug
 -- ============================================
 --
--- Controller input passes through four layers (a physical button, a GTA control ID, whip's read,
+-- Controller input passes through four layers (a physical button, a game control ID, whip's read,
 -- then an action), and every layer fails the same way: nothing happens. This draws the whole chain
 -- live: which controls are down, which button each one is on a pad, which whip has claimed and for
 -- what, and a running log of the actions that actually fired.
@@ -35,7 +35,7 @@ local open = false
 --- `claim` is whip's own use of that control, or nil for one the framework does not read. Those are
 --- still listed: a row that stays dark says the press produced NOTHING.
 ---
---- `pad` and `kb` are what the control is on each device, as GTA ships it. A blank means that
+--- `pad` and `kb` are what the control is on each device, as the game ships it. A blank means that
 --- device has no binding for it — which is the most valuable cell in the table, because a scroll
 --- control with an EMPTY pad column is a scroll control that cannot be fired by a trigger.
 local GROUPS = {
@@ -125,7 +125,7 @@ local GROUPS = {
 --- The analog inputs, drawn as bars rather than lights.
 ---
 --- TRIGGERS ARE SLIDERS AND THE BUTTON LIST LIES ABOUT THEM. A row in GROUPS above can only say
---- down or up, but a trigger has a position — and GTA's own digital reading of one flips at
+--- down or up, but a trigger has a position — and the game's own digital reading of one flips at
 --- HALF TRAVEL (the docs say so explicitly of L2_INDEX/R2_INDEX: "considered pressed half way
 --- through the travel"). So a trigger appears here as well as there, deliberately: the bar shows
 --- where it actually is, the row shows where the game decided to call it pressed, and seeing both
@@ -325,7 +325,7 @@ end
 
 --- What is in the way of a press, all at once: the device, the panel, the NUI focus and every
 --- control block — 'padRead' among them is client/pad.lua reading the pad (only while it is the
---- device). The pad does not use FiveM key bindings (they never fired from a pad).
+--- device). The pad does not use Cfx.re key bindings (they never fired from a pad).
 local function DumpState()
     local st = ControllerDebugState()
     print(('[spur_core:pad] ---- detector %s | pad active %s | panel scope %s | driving %s | NUI focused %s'):format(

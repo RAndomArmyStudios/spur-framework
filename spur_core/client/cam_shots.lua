@@ -17,7 +17,7 @@
 -- caller hands an entity or a point for (PlayCameraSequence's `subjects`). A subject that has gone
 -- answers nil, and the sequence holds the camera where it last was.
 --
--- A pose is { x, y, z, pitch, roll, yaw, fov } in GTA's camera rotation (shared/cam_math.lua), with
+-- A pose is { x, y, z, pitch, roll, yaw, fov } in the game's camera rotation (shared/cam_math.lua), with
 -- `ax, ay, az` and `subject` when it looks at a subject (a move between two such shots keeps looking).
 
 CamShots = {}

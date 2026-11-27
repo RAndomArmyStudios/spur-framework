@@ -145,7 +145,7 @@ end
 
 --- What the ped holds of the drawn weapon's kind, clip and all. RedM (spur_gunny, 24 Nov 2026): in RDR2 the pool is that
 --- total: in game the pool stayed the same while the game's own reload filled the clip (/gunnyammolab). (whip_gunny's
---- GTA build learned this per weapon; RDR2 answered the same for the revolver, so it is taken as the rule.)
+--- original-game build learned this per weapon; RDR2 answered the same for the revolver, so it is taken as the rule.)
 ---@param ped number
 ---@return integer
 function GunnyAmmo.total(ped)

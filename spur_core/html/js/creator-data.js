@@ -1,7 +1,7 @@
 // ========================================
 // CHARACTER CREATOR — STATIC DATA
 //
-// Pure data, no DOM: the category tree the rail renders, the GTA Online-style
+// Pure data, no DOM: the category tree the rail renders, the online-mode-style
 // face-pad pairings, the swatch palettes, and the placeholder card glyphs.
 // creator.js imports all of it; nothing else does. Keeping it out of creator.js
 // keeps that file about behavior and this one about content — when a category
@@ -63,7 +63,7 @@ export const GLYPHS = {
 
 // ---- Face feature pads ----
 //
-// GTA Online's Features screen: eleven elements, most edited as a 2-axis
+// the original game's online mode's Features screen: eleven elements, most edited as a 2-axis
 // "scatter graph" you drag a point across. Same idea here — each pad drives two
 // SetPedFaceFeature indices at once, with fine sliders underneath for exact
 // values (pads for feel, sliders for precision).
@@ -72,12 +72,12 @@ export const GLYPHS = {
 // array; Lua reads them 1-based at the apply site). Y is authored so dragging
 // UP means "more / higher" — creator.js flips screen coordinates.
 //
-// `neg`/`pos` label the pad's left/bottom and right/top. Where GTA's own +1
+// `neg`/`pos` label the pad's left/bottom and right/top. Where the game's own +1
 // runs the other way to them, the pad and its sliders show the value negated
 // (featureSign); where it runs the labels' own way, the feature is listed in
 // FEATURE_SAME_WAY by its index. Each was checked in game (Josh) by dragging
 // it to both ends. Saved values are the game's, untouched.
-//   negated (GTA's +1 is the label's neg end):  1 nose height, 2 nose length,
+//   negated (the game's +1 is the label's neg end):  1 nose height, 2 nose length,
 //     3 nose bridge, 5 nose twist, 6 brow height, 8 cheekbone height, 15 chin height
 //   the labels' own way:  0 nose width, 4 nose tip, 7 brow depth,
 //     9 cheekbone width, 13 jaw width, 14 jaw shape, 16 chin length,
@@ -134,7 +134,7 @@ export const FEATURE_GROUPS = [
 //   hair      — style cards, texture + color swatch options; a Fade sub-tab (shared/hair_fades.lua): the
 //               stubble drawn on the scalp under the style, one or None
 //   overlays  — one sub-tab per overlay key; type cards; opacity/color options
-//   component — drawable cards + texture options (comp = GTA component id)
+//   component — drawable cards + texture options (comp = game component id)
 //   prop      — drawable cards with a leading None + texture options
 //   tattoos   — one part of the body's tattoos (zone, client/appearance.lua tattoosFor): cards that
 //               go on and come off, any number at once, with a leading None that takes them all off

@@ -1,8 +1,8 @@
 -- The furniture catalog that ships with spur_core: every prop the furnisher offers out of the box.
 --
 -- RedM (spur_core, 24 Nov 2026): RDR2's props, 13294 of them, made by dev/prop_catalog_rdr.py from femga's
--- object list (github.com/femga/rdr3_discoveries, objects/object_list.lua). whip_core's list was GTA V's and
--- none of it exists in RDR2 (migration 048_redm_gta_prop_seed takes it out of a database seeded with it). The
+-- object list (github.com/femga/rdr3_discoveries, objects/object_list.lua). whip_core's list was the original game's and
+-- none of it exists in RDR2 (migration 048_redm_prop_seed_emptied takes it out of a database seeded with it). The
 -- categories and names are guessed from each model's archive and the words in its name: a wrong one is one
 -- /prop add <category> away, and /prop remove takes a prop out for good. Do not edit by hand: run the script.
 --

@@ -1031,7 +1031,7 @@ function show(d) {
     fzBuilder = d && d.builder && typeof d.builder === 'object' ? d.builder : null;
     if (fzBuilder) {
         const v = fzBuilder.vehicles && typeof fzBuilder.vehicles === 'object' ? fzBuilder.vehicles : null;
-        // More's Weapons: a Fixed Weapon, each GTA firearm this game has (client/director.lua weapons), after the places.
+        // More's Weapons: a Fixed Weapon, each firearm this game has (client/director.lua weapons), after the places.
         const wp = fzBuilder.weapons && typeof fzBuilder.weapons === 'object' && Array.isArray(fzBuilder.weapons.props)
             && fzBuilder.weapons.props.length ? fzBuilder.weapons : null;
         npcSrc = null;   // (the Director's NPCs, its lore characters with them, made again for this session: npcSource)

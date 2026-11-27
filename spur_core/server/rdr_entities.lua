@@ -2,11 +2,11 @@
 -- RDR ENTITIES — making world things from the server on RedM
 -- ============================================
 --
--- RedM (spur_core, 23 Nov 2026). A new file: whip_core made its entities on the server with FiveM's server-side
+-- RedM (spur_core, 23 Nov 2026). A new file: whip_core made its entities on the server with Cfx.re's server-side
 -- natives, and on RedM those work differently (probed on the server, 23 Nov 2026):
 --
 --   * CreateVehicleServerSetter answers 0: there is no server-side setter for RDR2's entities.
---   * CreateObject, CreateObjectNoOffset and CreateVehicle are FiveM's older natives that hand the job to the
+--   * CreateObject, CreateObjectNoOffset and CreateVehicle are Cfx.re's older natives that hand the job to the
 --     nearest player's game. The handle they answer names nothing yet: the entity is there 100 to 500 ms later,
 --     owned by that player and in that player's routing bucket. Until then every native on it fails ("Tried to
 --     access invalid entity").

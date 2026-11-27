@@ -264,7 +264,7 @@ local function playCar(r, s, left)
     elseif s.t == 'blowUp' then
         -- (Seen, never felt: no damage, as the copy is right here.)
         local c = GetEntityCoords(veh)
-        AddExplosion(c.x, c.y, c.z, 5, 0.0, true, false, 1.0)   -- RedM (spur_core, 24 Nov 2026): RDR2's EXP_TAG_CAR (GTA's was 7, RDR2's petrol pump)
+        AddExplosion(c.x, c.y, c.z, 5, 0.0, true, false, 1.0)   -- RedM (spur_core, 24 Nov 2026): RDR2's EXP_TAG_CAR (the original game's was 7, RDR2's petrol pump)
         SetVehicleEngineHealth(veh, 0.0)
     elseif s.t == 'everyoneOut' then
         ActorSteps.run(veh, s, left)

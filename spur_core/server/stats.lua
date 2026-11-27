@@ -1,7 +1,7 @@
 -- ============================================
 -- PlayerStats — Unified stat & effect system
 -- Server-authoritative for framework changes.
--- GTA ped native owns combat damage.
+-- The game's ped natives own combat damage.
 -- ============================================
 
 Stats = {}
@@ -592,7 +592,7 @@ end
 --- True only inside Stats.showDeveloper: the one writer the `developer` stat takes.
 local developerWrite = false
 
---- What a death from a health loss WHIP made reads as. The player's game reports what killed them, and GTA calls any
+--- What a death from a health loss WHIP made reads as. The player's game reports what killed them, and the game calls any
 --- health a script takes a fall (WEAPON_FALL), so the cause goes with the loss: an empty need by its name, anything
 --- else (an effect, a script) by its reason in the Stats change log.
 local LOSS_NAMES = { ['threshold:hunger'] = 'Starvation', ['threshold:thirst'] = 'Dehydration' }

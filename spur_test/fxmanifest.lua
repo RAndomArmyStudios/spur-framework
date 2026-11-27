@@ -1,5 +1,5 @@
 fx_version 'cerulean'
--- RedM (spur_test, 23 Nov 2026): RedM, not FiveM. whip_test 1.0.0 ported for spur_core (README.md, NOTICE.md).
+-- RedM (spur_test, 23 Nov 2026): whip_test 1.0.0 ported for spur_core (README.md, NOTICE.md).
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 lua54 'yes'
@@ -20,7 +20,7 @@ whip_interior_themes 'v1'
 -- runs its modules by section, and so does the client.
 shared_scripts {
     -- RedM (spur_test, 23 Nov 2026): spur_core's compat layer, first, so a test reads a native the way spur_core
-    -- writes it (GetEntityProofs gives GTA's nine values from RDR2's bitset) and a GTA-only call is a quiet stub
+    -- writes it (GetEntityProofs gives the original game's nine values from RDR2's bitset) and a call RDR2 doesn't have is a quiet stub
     -- here as it is there, not a nil call. Only spur_core registers its commands.
     '@spur_core/shared/rdr_compat.lua',
     '@spur_core/shared/rdr_compat_stubs.lua',
@@ -44,7 +44,7 @@ server_scripts {
 
 client_scripts {
     -- RedM (spur_test, 23 Nov 2026): spur_core's emote list (EmoteList), so module 16 tests the emotes, walks and
-    -- moods spur_core actually has rather than GTA's.
+    -- moods spur_core actually has rather than the game's.
     '@spur_core/shared/emote_list.lua',
     'client/runner.lua',
     -- What the Director modules ask this game: where things are, what they do.

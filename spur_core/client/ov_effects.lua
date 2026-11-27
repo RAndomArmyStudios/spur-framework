@@ -6,7 +6,7 @@
 -- player's game:
 --
 --   ovEffect   an entity this game owns: explode, kill, fire, repair (the server picks the owner); and the /whip
---              Vehicles page's tyres, fling and engine (server/vehicle_manager.lua). On GTA V Enhanced a car's
+--              Vehicles page's tyres, fling and engine (server/vehicle_manager.lua). On the original game's Enhanced build a car's
 --              repair, tyres and engine are the server's own (server/object_viewer.lua CAR_ON_SERVER)
 --   ovSelf     this player: fire, the character editor, a model, a walk, an emote; into a car's free seat
 --              (warpInto, the Vehicles page's Teleport players into vehicle)
@@ -15,10 +15,10 @@
 
 local HIDDEN, INVINCIBLE, FROZEN = 1, 2, 4
 
--- Every wheel a car can have, by GTA's tyre numbers: the six, and a six-wheeler's middle pair.
+-- Every wheel a car can have, by the game's tyre numbers: the six, and a six-wheeler's middle pair.
 local TYRES = { 0, 1, 2, 3, 4, 5, 45, 47 }
 
--- How long a fire an admin starts burns. GTA puts out a player's by itself, but an NPC (dead or alive) burned on for
+-- How long a fire an admin starts burns. The game puts out a player's by itself, but an NPC (dead or alive) burned on for
 -- good: so every one is put out after this, by whichever game owns the ped by then.
 local FIRE_MS = 8000
 
@@ -64,7 +64,7 @@ RegisterNetEvent('spur_core:client:ovEffect', function(netId, what)
         elseif what == 'fling' and GetEntityType(ent) == 2 then
             SetEntityVelocity(ent, 0.0, 0.0, 30.0)
         elseif what == 'engine' and GetEntityType(ent) == 2 then
-            -- Below 0 the engine is dead and burning; -4000 is as far as GTA goes.
+            -- Below 0 the engine is dead and burning; -4000 is as far as the game goes.
             SetVehicleEngineHealth(ent, -4000.0)
         end
     end)

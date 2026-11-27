@@ -352,7 +352,7 @@ RegisterTestModule({
                 -- THE REFUSAL IS REAL, AND SO IS THE REASON NOW.
                 --
                 -- These used to answer `(nil, 'Shop is not stocked mode')`, and the string never
-                -- arrived: a FiveM export truncates its return list at the FIRST NIL IN ANY
+                -- arrived: a Cfx.re export truncates its return list at the FIRST NIL IN ANY
                 -- POSITION, so a satellite got nil in both variables and could not tell "wrong
                 -- kind of shop" from "no such shop" from "empty shelves".
                 --

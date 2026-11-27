@@ -415,7 +415,7 @@ local function gridNext(v, step, dir)
     return k * step
 end
 
---- Did a ray hit? FiveM hands `hit` back as 1 on some builds and true on others.
+--- Did a ray hit? Cfx.re hands `hit` back as 1 on some builds and true on others.
 local function isHit(hit) return hit == 1 or hit == true end
 
 -- ---- What a thing is (its kind) ----

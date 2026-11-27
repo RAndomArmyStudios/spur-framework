@@ -573,7 +573,7 @@ local function showMenuPed()
         Wait(200)
         for _ = 1, 10 do
             if superseded() then return end
-            -- (RedM: GTA's SET_MOUSE_CURSOR_VISIBLE dropped; RDR2 has no such native. NUI focus keeps the cursor.)
+            -- (RedM: the original game's SET_MOUSE_CURSOR_VISIBLE dropped; RDR2 has no such native. NUI focus keeps the cursor.)
             Wait(50)
         end
     end)
@@ -1936,7 +1936,7 @@ end
 
 --- The offered item in the hand is a server-made held prop (like an emote's bottle), shown a moment after give mode starts.
 --- This game picks the model (Inventory.itemPropModel) and requests it so a throw finds it loaded.
---- The hand GTA throws with: the right on foot; in a vehicle the one at its window (the side the seat is on).
+--- The hand the game throws with: the right on foot; in a vehicle the one at its window (the side the seat is on).
 ---@return 'left'|'right'
 local function throwHand()
     local ped = PlayerPedId()
@@ -1946,7 +1946,7 @@ local function throwHand()
     return GetOffsetFromEntityGivenWorldCoords(veh, pos.x, pos.y, pos.z).x < 0.0 and 'left' or 'right'
 end
 
---- Which hand holds give mode's ball (the nearer hand bone), or nil. In a car GTA throws with the hand on the side it aims at, not the seat's, so it is watched while aiming.
+--- Which hand holds give mode's ball (the nearer hand bone), or nil. In a car the game throws with the hand on the side it aims at, not the seat's, so it is watched while aiming.
 local BALL_IN_HAND_M = 0.35   -- further than this from both hands, the ball is in neither
 local function ballHand(ped)
     local ball = GetCurrentPedWeaponEntityIndex(ped)
@@ -2003,7 +2003,7 @@ local function HideGiveText()
     end
 end
 
--- Weapon lock and gun turret seats: GTA hands a turret seat's gun to the ped as it sits down, and not while the weapon
+-- Weapon lock and gun turret seats: the game hands a turret seat's gun to the ped as it sits down, and not while the weapon
 -- lock (ped flag 48, ApplyWeaponLock) is on. So the lock is off while getting into and sitting in a turret seat
 -- (WeaponLock.tick; seat moves lift it first via WeaponLock.beforeSeat). A player put straight into a turret seat
 -- is caught on spur_core:vehicle:entered and sat down again with the lock off.
@@ -2157,7 +2157,7 @@ RegisterNUICallback('giveItem', function(data, cb)
     ThrowModeActive = false
     throwArmed    = false
 
-    -- RedM (spur_core, 24 Nov 2026): GTA equipped WEAPON_BALL here and read its throw. RDR2 has no ball, so whatever
+    -- RedM (spur_core, 24 Nov 2026): the original game equipped WEAPON_BALL here and read its throw. RDR2 has no ball, so whatever
     -- is in hand is put away (the attack button now throws, and must not fire a gun) and giveTick reads the button.
     local ped = PlayerPedId()
     SetPedConfigFlag(ped, 48, false)
@@ -2211,7 +2211,7 @@ RegisterNetEvent('spur_core:client:throwRefused', function(netId)
     if t then t.groundId = false end
 end)
 
--- Knocked over by a thrown item (Config.ThrowKnockdown). The item is not a GTA projectile, so the hit is looked for here:
+-- Knocked over by a thrown item (Config.ThrowKnockdown). The item is not a game projectile, so the hit is looked for here:
 --   * a player is knocked down by their own game when the item reaches them on screen (watchThrows);
 --   * the thrower's game runs the flight, bounces the item off whoever it hits and knocks down people of the street.
 -- A script's throw (ThrowGroundItem) has no thrower: the player whose game flies it is hit like anyone else.
@@ -2436,7 +2436,7 @@ local THROW_SPEED   = 18.0   -- m/s as it leaves the hand: a player's power
 local THROW_TWIST_MIN = 0.8
 local THROW_TWIST_MAX = 4.0
 
---- Let a thrown object go: physics on (it flies and bounces), GTA's heavy air drag off, at this velocity, with a
+--- Let a thrown object go: physics on (it flies and bounces), the game's heavy air drag off, at this velocity, with a
 --- little tumble (THROW_TWIST_*). A player's throw and a script's (throwFor) leave the hand the same way.
 local function letFly(obj, vx, vy, vz)
     SetEntityDynamic(obj, true)
@@ -2487,7 +2487,7 @@ local function TrackThrow(obj, launchVel, launch, own, lost, kg)
         end
         local netId = NetworkGetNetworkIdFromEntity(obj)
         SetNetworkIdCanMigrate(netId, false)
-        -- Every game nearby: hide GTA's tennis ball and watch this object (watchThrows), at once; the pile below reaches
+        -- Every game nearby: hide the game's tennis ball and watch this object (watchThrows), at once; the pile below reaches
         -- them later.
         if own then TriggerServerEvent('spur_core:server:throwStarted', netId) end
         -- A script's: this player is also watched for it as every other player near is, so a close pass counts the same
@@ -2512,7 +2512,7 @@ local function TrackThrow(obj, launchVel, launch, own, lost, kg)
             -- Gone: picked out of the air or lost.
             if not DoesEntityExist(obj) then break end
 
-            SetEntityMaxSpeed(obj, 100.0)   -- GTA clamps an object's speed mid-flight otherwise
+            SetEntityMaxSpeed(obj, 100.0)   -- the game clamps an object's speed mid-flight otherwise
             local vel = GetEntityVelocity(obj)
             if #vel < STILL_THRESHOLD then still = still + 1 else still = 0 end
             -- Flying into someone hard bounces off them (throwHitCheck)
@@ -2600,7 +2600,7 @@ local function giveTick()
         end
 
         if giveMode then
-            -- RedM (spur_core, 24 Nov 2026): GTA's ball threw on its own and this watched its ammo drop to 0. RDR2 has no
+            -- RedM (spur_core, 24 Nov 2026): the original game's ball threw on its own and this watched its ammo drop to 0. RDR2 has no
             -- ball: the attack button (LMB / RT, held off by the give block) throws. throwArmed waits for the button to be
             -- up first, so a click still held from the inventory doesn't throw at once.
             local ped = PlayerPedId()
@@ -2610,7 +2610,7 @@ local function giveTick()
                     throwArmed = true
                 end
             elseif IsDisabledControlJustPressed(0, 24) then
-                -- Threw: make our own physics prop and launch it (GTA's ball entity cannot be found by natives).
+                -- Threw: make our own physics prop and launch it (the game's ball entity cannot be found by natives).
 
                 -- Aim at the world point under the crosshair, which corrects for the third-person camera offset.
                 local camCoords = GetGameplayCamCoord()
@@ -2650,7 +2650,7 @@ local function giveTick()
                 -- No longer holding the item: its hand prop goes.
                 DropHandProp()
 
-                -- (RedM, spur_core, 24 Nov 2026: GTA's ball projectile was removed here; RDR2 throws none.)
+                -- (RedM, spur_core, 24 Nov 2026: the original game's ball projectile was removed here; RDR2 throws none.)
 
                 -- The item's ground prop (requested when give mode started): the pile's model, and what the server checks the flying object against.
                 local model = Inventory.loadItemProp(giveItemKey, 2000)
@@ -2798,7 +2798,7 @@ end
 --- Another client threw an item: watch what flies.
 RegisterNetEvent('spur_core:client:playerThrew', function(throwerServerId, netId, kg)
     if GetPlayerServerId(PlayerId()) == throwerServerId then return end
-    -- (RedM, spur_core, 24 Nov 2026: GTA removed the thrower's ball projectile here; RDR2's throw makes none.)
+    -- (RedM, spur_core, 24 Nov 2026: whip removed the thrower's ball projectile here, which the original game makes; RDR2's throw makes none.)
     -- ...and watch what flies (watchThrows).
     -- (`kg` comes with a script's throw; a player's own brings it with its pile, groundItemCreated)
     if tonumber(netId) then Inventory.watchThrow(tonumber(netId), throwerServerId, kg) end
@@ -2835,7 +2835,7 @@ RegisterNetEvent('spur_core:client:playGiveAnim', function(otherServerId, isGive
     end
 end)
 
--- GTA weapon wheel off, in three parts: ped config flag 48 blocks switching (ApplyWeaponLock); the wheel's UI is hidden
+-- Game weapon wheel off, in three parts: ped config flag 48 blocks switching (ApplyWeaponLock); the wheel's UI is hidden
 -- as HUD components 19/20 (client/hud.lua); the wheel still opens and plays a sound, so a suppressor below calls
 -- BlockWeaponWheelThisFrame each frame, armed only after a TAB or scroll press and expiring on its own.
 
@@ -2974,7 +2974,7 @@ RegisterCommand('+tabhotbar', function()
     -- RedM (spur_core, 25 Nov 2026): Tab is RDR2's weapon wheel, which whip cannot block on RedM, so the hotbar came up
     -- under it. With Config.RdrWeaponWheel the wheel has Tab to itself; the hotbar still shows on the keys 1-5.
     if Config.RdrWeaponWheel ~= false then return end
-    -- Armed before the UI guard: TAB is GTA's weapon-wheel key whatever is open.
+    -- Armed before the UI guard: TAB is the game's weapon-wheel key whatever is open.
     Inventory.suppressWeaponWheel(10000)
 
     if not IsGameInputFree() then return end   -- the world-key question, as the slot keys

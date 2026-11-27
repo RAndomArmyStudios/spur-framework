@@ -128,7 +128,7 @@ end)
 --- and can be moved by anyone who wants G for something else.
 RegisterKeyMapping('whip_coords_copy', 'Dev: Copy Coords', 'keyboard', 'g')
 
---- The key the copy binding is on, for the readout's keycap: 'G' unless it was moved. Asked as GTA's
+--- The key the copy binding is on, for the readout's keycap: 'G' unless it was moved. Asked as the game's
 --- help text names it ('t_G'), as Interactions.keyLabel does for Interact; a key with no short name
 --- (a mouse button) shows as 'G'.
 ---@return string

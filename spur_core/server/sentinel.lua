@@ -2,7 +2,7 @@
 -- Sentinel — statebag integrity guard
 -- ============================================
 --
--- FiveM lets a client write its own player bag and the bags of entities it owns, and
+-- Cfx.re lets a client write its own player bag and the bags of entities it owns, and
 -- sv_stateBagStrictMode (which would forbid that globally) is off on purpose. whip is a
 -- framework, and a server built on it must be free to run whatever needs client bag writes
 -- — voice resources are the classic case — so whip has to be safe WITH strict mode off.
@@ -35,7 +35,7 @@
 --
 -- The re-stamp itself re-fires the handler once; the re-fire compares equal and stops.
 -- A cheater who re-writes in a loop is fighting cfx's own client bag-write rate limiters
--- long before they inconvenience us. From FiveM's StateBagPacketHandler.cpp: past 75 writes
+-- long before they inconvenience us. From Cfx.re's StateBagPacketHandler.cpp: past 75 writes
 -- a second (burst 125) their writes are DROPPED (`sbag-update-dropped` in the console); past
 -- 150 a second (burst 175), or 128 KB a second (burst 256 KB), they are KICKED with
 -- "Reliable state bag packet overflow." (This said 75/125 was the kick. It is the drop.)
@@ -189,7 +189,7 @@ end
 
 --- Put the truth back on the NEXT server tick, not from inside the change handler.
 ---
---- FiveM runs change handlers BEFORE it stores the incoming value (StateBagComponent.cpp:
+--- Cfx.re runs change handlers BEFORE it stores the incoming value (StateBagComponent.cpp:
 --- SetKey calls OnStateBagChange, then the continuation that stores the data), and its docs say
 --- "the old value is still stored in the state bag at the time this callback executes". A set
 --- made inside the handler therefore compared against the old value, changed nothing, and was

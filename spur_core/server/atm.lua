@@ -7,7 +7,7 @@
 -- and if not, why not, in words it can put on the badge) rather than firing a toast.
 --
 -- About proximity: these have no `near` clause. WHIP's machines are found from their MODEL on the client
--- (client/atm.lua), so any map works; the position list below holds GTA's own machines only.
+-- (client/atm.lua), so any map works; the position lists below hold only the machines they name.
 -- A client could call these from anywhere. That does NOT let anyone create money: the permission,
 -- balance and cash-held checks and the chk_balance_nonneg constraint all run here on the server.
 -- What it costs is the ROLEPLAY constraint of standing at a machine.
@@ -17,7 +17,7 @@
 -- ============================================
 --
 -- For a resource that wants the standing-at-a-machine rule whip's own callbacks above leave out (an ATM resource of
--- its own): GTA's own machines (server/atm_positions.lua, from the game's map) and config.lua's AtmExtraPositions. A
+-- its own): the map's machines (server/atm_positions.lua, none on RDR2) and config.lua's AtmExtraPositions. A
 -- machine's point is its base on the floor, so the distance is measured across the ground, with the height held to
 -- ATM_HEIGHT_SLACK (a machine on the floor below is not this one).
 

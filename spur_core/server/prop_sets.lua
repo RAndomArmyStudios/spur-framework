@@ -15,11 +15,11 @@
 --   })
 --   exports.spur_core:HidePropSet('camp')
 --
---   * CLIENT-MADE, NOT NETWORKED: no entity on the server, nothing for FiveM to sync or migrate, no
+--   * CLIENT-MADE, NOT NETWORKED: no entity on the server, nothing for Cfx.re to sync or migrate, no
 --     population budget used. Each game makes them as it comes within range (client/prop_sets.lua,
 --     on the one prop streamer) and removes them as it leaves. They are scenery: collision is each
 --     game's own, they cannot be picked up, and a prop nobody can see costs nothing.
---   * EXACTLY WHERE THEY ARE PUT: no snap to the ground. `rot` is GTA's rotation order 2 (x tilts
+--   * EXACTLY WHERE THEY ARE PUT: no snap to the ground. `rot` is the game's rotation order 2 (x tilts
 --     forward, y tilts sideways, z is the heading), as the furnisher saves furniture.
 --   * INSIDE AN MLO, `interior = true` makes each game wait for the interior to be there before it
 --     makes the prop (the game's loader brings interiors in and out), and files it in its room;
@@ -37,7 +37,7 @@
 --     sent to says it has it (spur_core:server:propMotions); one that has not is sent it again each
 --     second, and one still without it after five seconds is said in the console.
 --   * A GUN (`weapon = 'WEAPON_RIFLE_SPRINGFIELD'`): the prop is that firearm's world model (the game's, or one a running resource adds:
---     RedM (spur_core, 24 Nov 2026): RDR2's, shared/rdr_weapons.lua; the example was GTA's WEAPON_RPG
+--     RedM (spur_core, 24 Nov 2026): RDR2's, shared/rdr_weapons.lua; the example was the original game's WEAPON_RPG
 --     shared/weapon_catalog.lua), each
 --     game making it from the weapon itself; the Director's Fire Weapon fires it (client/director_weapons.lua).
 --   * ATTACHED (`attach = { net = netId } | { set = id, index = n } | { index = n }` (a prop of this same set),

@@ -3,7 +3,7 @@
 -- ============================================
 --
 -- A Director car playing a take is driven by one game, the take's PIN (server/actors.lua). Every other game sees it as
--- the network sends it: late (half the driver's ping, half this game's, the gap between updates, and GTA drawing a
+-- the network sends it: late (half the driver's ping, half this game's, the gap between updates, and the game drawing a
 -- remote car a little in the past to blend it), and, when an update is late, guessed and then put right. With
 -- Config.ExperimentalDriveSync on, the server tells every game in the car's world which take the car plays and from
 -- when on the shared clock (spur_core:client:takeShow), and a take is only where the car is at each moment: so every

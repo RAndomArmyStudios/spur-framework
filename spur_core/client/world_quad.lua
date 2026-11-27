@@ -93,7 +93,7 @@ end
 --- The basis for a quad lying FLAT ON THE GROUND, rotated to a world heading.
 ---
 --- Both vectors stay in the XY plane, which is the entire difference between a decal on the
---- tarmac and a billboard that turns to face you. `heading` is GTA's: degrees, 0 = north (+Y),
+--- tarmac and a billboard that turns to face you. `heading` is the game's: degrees, 0 = north (+Y),
 --- increasing anticlockwise — the same figure `garage_spots` stores and `GetEntityHeading`
 --- returns, so a caller never has to convert.
 ---
@@ -105,7 +105,7 @@ function WorldQuad.groundBasis(heading)
     local rad = math.rad(heading or 0.0)
     local s, c = math.sin(rad), math.cos(rad)
 
-    -- GTA headings turn anticlockwise from +Y, so forward is (-sin, cos) and right is its
+    -- Game headings turn anticlockwise from +Y, so forward is (-sin, cos) and right is its
     -- clockwise perpendicular, (cos, sin). Getting these the wrong way round does not fail
     -- visibly — it draws a rectangle of the right size lying at ninety degrees to the bay.
     return c, s, 0.0,   -s, c, 0.0

@@ -5,7 +5,7 @@
 --
 -- DisableControlAction lasts one frame, so one shared Wait(0) loop runs while anything is blocked (spur_core's
 -- pause keys and action mode keep it running). The blocked set is worked out when a block changes.
--- Switches are whole functions GTA can turn off and leave off (shooting from a vehicle): off with the first
+-- Switches are whole functions the game can turn off and leave off (shooting from a vehicle): off with the first
 -- block, back on with the last. Blocks are keyed per resource ('<resource>:<id>', shared/registry.lua) and swept
 -- when it stops; the same id replaces a block, and UnblockControls on an unheld id is fine. /whipcontrols prints
 -- who blocks what.
@@ -15,7 +15,7 @@ ControlBlocks = {}
 
 local SELF = GetCurrentResourceName()
 
---- The groups: a word for a set of GTA controls. A new group goes here, never in a satellite.
+--- The groups: a word for a set of game controls. A new group goes here, never in a satellite.
 local GROUPS = {
     -- On foot: walk, sprint, jump, duck, cover.
     move          = { 30, 31, 21, 22, 36, 44 },
@@ -33,7 +33,7 @@ local GROUPS = {
     weaponWheel   = { 14, 15, 16, 17, 99, 100 },
 }
 
---- The switches: functions GTA can turn off and leave off, named in `groups`. Called with false to turn off, true to restore.
+--- The switches: functions the game can turn off and leave off, named in `groups`. Called with false to turn off, true to restore.
 local SWITCHES = {
     -- Shooting or aiming out of a vehicle (drive-by).
     driveBy = function(allowed) SetPlayerCanDoDriveBy(PlayerId(), allowed) end,

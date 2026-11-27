@@ -1,5 +1,5 @@
 // ========================================
-// THE WORLD BUILDER'S MAP — the scenario's things on whip's GTA map, in a window over the world (js/furnisher.js
+// THE WORLD BUILDER'S MAP — the scenario's things on whip's game map, in a window over the world (js/furnisher.js
 // #fz-map, opened by its Map button), as /whip's Scenarios page shows them (wp/places.js: each thing's own picture,
 // a mark's card, a car's takes as lines). Read from the scenario open here, saved or not, at where the builder has
 // each thing now (client/property_furnish.lua furnishWhere, asked twice a second while the window is open; one put

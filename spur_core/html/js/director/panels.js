@@ -1342,7 +1342,7 @@ function taskFields(ed, w, def, s, i, count, n) {
         else if (f.kind === 'weapon') {
             html += ed.weapons && ed.weapons.length
                 ? selectField(t, f.key, weaponValue(ed, v), ed.weapons.map((x) => [x.name, weaponText(x)]), { label: f.label, none: '— put it away —' })
-                : textField(t, f.key, v, { label: f.label, max: 64, placeholder: f.hint || 'WEAPON_REVOLVER_CATTLEMAN' });   // RedM (spur_core, 24 Nov 2026): RDR2's, not GTA's WEAPON_PISTOL
+                : textField(t, f.key, v, { label: f.label, max: 64, placeholder: f.hint || 'WEAPON_REVOLVER_CATTLEMAN' });   // RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
         } else if (f.kind === 'world') {
             html += selectField(t, f.key, v, worldOptions(ed, f.worldKind), { label: f.label, none: '— pick a placed thing —' });
         } else if (f.kind === 'take') {
@@ -1971,7 +1971,7 @@ function carModelsGroup(ed, w) {
             html += `<button class="dr-add" data-act="car-model-pick" data-id="${e(w.id)}">${ICON.plus}Add a model from Vehicles</button>`;
         }
         html += '<div class="dr-row dr-carmodel-add">'
-            + `<input class="dr-field dr-carmodel-input" type="text" maxlength="64" spellcheck="false" placeholder="or type its name: wagon02x"`   // RedM (spur_core, 24 Nov 2026): was GTA's adder
+            + `<input class="dr-field dr-carmodel-input" type="text" maxlength="64" spellcheck="false" placeholder="or type its name: wagon02x"`   // RedM (spur_core, 24 Nov 2026): was the original game's adder
             + ` data-id="${e(w.id)}" aria-label="A model, by its name">`
             + `<button class="dr-btn" data-act="car-model-add" data-id="${e(w.id)}">Add</button></div>`;
     }
@@ -2211,7 +2211,7 @@ function generalFields(ed, w, i) {
             + switchField(c, 'reacts', cond.reacts, { label: 'Reacts to danger', fallback: false })
             + switchField(d, 'fightBack', w.def.fightBack, { label: 'Fights back', fallback: false })
             + '<div class="dr-pair narrow">'
-            // A weapon this game has, GTA's or one another resource adds (an NPC carries the gun, never a whip item).
+            // A weapon this game has, the game's or one another resource adds (an NPC carries the gun, never a whip item).
             + (ed.weapons && ed.weapons.length
                 ? selectField(d, 'weapon', weaponValue(ed, w.def.weapon), ed.weapons.map((x) => [x.name, weaponText(x)]),
                     { label: 'Weapon', none: '— no weapon —' })

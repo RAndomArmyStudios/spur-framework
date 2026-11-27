@@ -405,7 +405,7 @@ RegisterTestModule({
         },
         {
             -- WHERE NOTHING CAN WAIT (audit 7, SEC-4 / DX-1). Whip.call's "it STARTED" answer for a
-            -- waiting export could never be reached: FiveM's export call waits by itself and throws
+            -- waiting export could never be reached: Cfx.re's export call waits by itself and throws
             -- "attempt to yield" before Whip.call saw the export's answer, so the caller heard
             -- "failed" while the export ran on. A sort comparator is such a place.
             name = 'Whip.call where nothing can wait: a plain export answers, a waiting one says it STARTED',

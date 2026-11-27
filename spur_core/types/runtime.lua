@@ -1,10 +1,10 @@
 ---@meta
 -- ============================================
--- spur_core — corrections to the FiveM runtime's own annotations
+-- spur_core — corrections to the Cfx.re runtime's own annotations
 -- ============================================
 --
 -- The CfxLua natives extension types an export's function as `fun(...): any`, one value. whip's exports return
--- `ok, why` (and some a third value), and FiveM hands every one of them across, so with that annotation every
+-- `ok, why` (and some a third value), and Cfx.re hands every one of them across, so with that annotation every
 -- `return false, why` in an exports('Name', function ... end) was a redundant-return-value warning. This overload
 -- lets the function return as many values as it gives. It adds to the extension's `exports`; it replaces nothing.
 

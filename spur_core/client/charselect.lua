@@ -823,7 +823,7 @@ end
 --- Is a character loading from the map? (client/player.lua asks: no black anywhere.)
 function CharSelect.ViaMap() return _viaMap end
 
---- Where the game's camera is this frame, as the page takes it: GTA's rotation order 2, vertical fov.
+--- Where the game's camera is this frame, as the page takes it: the game's rotation order 2, vertical fov.
 local function renderedCam()
     local c, r = GetFinalRenderedCamCoord(), GetFinalRenderedCamRot(2)
     return { x = c.x, y = c.y, z = c.z, rotX = r.x, rotY = r.y, rotZ = r.z, fov = GetFinalRenderedCamFov() }

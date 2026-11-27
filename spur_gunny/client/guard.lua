@@ -1,7 +1,7 @@
 -- spur_gunny: THE GUARD (client)
 --
 -- RedM (spur_gunny, 24 Nov 2026): new. RDR2 hands out weapons and ammunition by itself: a gun picked up off a body,
--- cartridges looted, arrows pulled out of a deer, a kit, a cheat. spur_core's weapon guard knows only GTA's weapons,
+-- cartridges looted, arrows pulled out of a deer, a kit, a cheat. spur_core's weapon guard knows only the game's weapons,
 -- so this one looks after RDR2's. Every Config.Guard.intervalMs, as the weapon in hand changes, and after every draw and
 -- holster:
 --   * a weapon from items/weapons.lua on the ped that was not drawn from the inventory is taken away

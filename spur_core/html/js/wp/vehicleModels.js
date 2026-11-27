@@ -1,7 +1,7 @@
 // ========================================
 // /whip SECTION — Vehicle Adjustments
 //
-// Trunk and glovebox for a whole CATEGORY of vehicles (`vehicle_class_meta`: GTA's vehicle class, so every
+// Trunk and glovebox for a whole CATEGORY of vehicles (`vehicle_class_meta`: the game's vehicle class, so every
 // motorbike, every industrial) and for one MODEL over its category (`vehicle_meta`). A car's storage is its own
 // size (given when it was made) first, then its model's, then its category's, then config.lua. Either can turn the
 // trunk or glovebox off (a motorbike with no trunk); a model's on or off is over its category's (an emergency

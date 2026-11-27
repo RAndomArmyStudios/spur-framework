@@ -14,7 +14,7 @@
       THE HAND     PlayerHang.Hand: 'free' (a ball joint: it turns about the rope), 'settle' (free until the arm has
                    swung up the rope and the hand stops turning, then locked at that natural angle) or 'locked' (as
                    it is the moment it is tied: the arm still hanging down from standing, so the wrist kinks).
-      KEPT HOLD    GTA ends a ragdoll and stands the ped up, and the tie goes with it: the ragdoll's timer is reset
+      KEPT HOLD    the game ends a ragdoll and stands the ped up, and the tie goes with it: the ragdoll's timer is reset
                    every frame, the ragdoll started again the moment it ends, the tie made again if it breaks.
       THE ROPE     the body never pushes the rope (Rope.OnRope), and the rope's probes look through the anchor
                    (rope.probeIgnore): either would make the node by the hand kink and snap (client/collision.lua).
@@ -23,16 +23,16 @@
                    GrabHands = 'both' needs the grab.
 
     RedM (spur_rope, 24 Nov 2026): RDR2 has no NM messages for scripts (no CREATE_NM_MESSAGE), so the grab and dangle are
-    never sent; the anchor is an RDR2 prop (GTA's golf ball isn't there); the hand is found by its bone's name (57005
-    is GTA's number for it); GET_ENTITY_BONE_ROTATION is missing, so 'settle' holds as 'free'.
+    never sent; the anchor is an RDR2 prop (the original game's golf ball isn't there); the hand is found by its bone's name (57005
+    is the original game's number for it); GET_ENTITY_BONE_ROTATION is missing, so 'settle' holds as 'free'.
 ]]
 
 Rope.HangRig = {}
 
--- RedM (spur_rope, 24 Nov 2026): whip_rope's was GTA's prop_golf_ball. Any small RDR2 prop with a physics body does: it
+-- RedM (spur_rope, 24 Nov 2026): whip_rope's was the original game's prop_golf_ball. Any small RDR2 prop with a physics body does: it
 -- is never seen. The first of these RDR2 has (anchorModel).
 local ANCHOR_MODELS = { `p_canteen01x`, `p_baitbread01x`, `p_package01x` }
-local R_HAND = 57005               -- SKEL_R_Hand (GTA's number: RedM finds the hand by name, handIndex)
+local R_HAND = 57005               -- SKEL_R_Hand (the original game's number: RedM finds the hand by name, handIndex)
 
 local anchorModelCache = nil
 local function anchorModel()
@@ -48,7 +48,7 @@ local function anchorModel()
 end
 
 --- RedM (spur_rope, 24 Nov 2026): the right hand's bone index on this ped, by its name (RDR2 numbers its bones its own
---- way), or by GTA's number where the name isn't found.
+--- way), or by the original game's number where the name isn't found.
 local function handIndex(ped)
     return Rope.BoneIndex(ped, 'SKEL_R_Hand')
 end

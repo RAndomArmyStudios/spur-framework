@@ -49,7 +49,7 @@ let hideState   = HIDE_WHEN_ACTIVE;
 /* ========================================
    COLOUR CODES
 
-   ^0-^9, the GTA convention, mapped to whip's tokens (^1 error red, ^2 success green, ^3 warning amber).
+   ^0-^9, the usual convention, mapped to whip's tokens (^1 error red, ^2 success green, ^3 warning amber).
    ======================================== */
 const COLOR_CODES = {
     '0': 'rgba(255,255,255,0.85)',   // reset / default

@@ -153,7 +153,7 @@ function Page:ensure()
         return false, self.failed
     end
     local o = self.opts
-    -- A browser bigger than the game allows throws ("Invalid Width [1, 8192]" on GTA V Enhanced): said to the owner,
+    -- A browser bigger than the game allows throws ("Invalid Width [1, 8192]" on the original game's Enhanced build): said to the owner,
     -- which can make a smaller one.
     local made, handle = pcall(CreateDui, urlOf(o.url), asked(o.width), asked(o.height))
     if not made or not handle then

@@ -329,8 +329,8 @@ Config.MinimapMask = 'rounded'
 --   'classic'  the gauges as discs that fill white, inside the capsule
 Config.HudSkin = 'black'
 
--- true: while a player aims, GTA's reticle is replaced by a small dot where the weapon points (red against a wall).
--- Not for melee weapons or the petrol can. false: GTA's own reticle.
+-- true: while a player aims, the game's reticle is replaced by a small dot where the weapon points (red against a wall).
+-- Not for melee weapons or the petrol can. false: the game's own reticle.
 Config.AimDot = true
 
 -- true: a player in developer mode (/w switch) has its gauge on the HUD, the terminal prompt in amber.
@@ -380,8 +380,8 @@ Config.WeaponGuard = {
     SweepMs = 5000,
 }
 
--- GTA's combat stance after you fire or are shot at; whip keeps it off.
---   Disable   false keeps GTA's action mode
+-- The game's combat stance after you fire or are shot at; whip keeps it off.
+--   Disable   false keeps the game's action mode
 Config.ActionMode = {
     Disable = true,
 }
@@ -431,8 +431,8 @@ Config.RdrWorld = {
     },
 }
 
--- GTA's slow cinematic pan after about 30 seconds with no input; whip turns it off.
---   Disable   false keeps GTA's idle camera
+-- The game's slow cinematic pan after about 30 seconds with no input; whip turns it off.
+--   Disable   false keeps the game's idle camera
 --   ResetMs   in a car, how often the driver's idle timer is reset (milliseconds)
 Config.IdleCam = {
     Disable = true,
@@ -440,7 +440,7 @@ Config.IdleCam = {
 }
 
 -- A chase camera each player can switch on for themselves (pause menu: Server Settings → Vehicles): it follows the
--- car on a spring, leans into slides, widens with speed and shakes a little. C looks behind; first person stays GTA's.
+-- car on a spring, leans into slides, widens with speed and shakes a little. C looks behind; first person stays the game's.
 --   Enabled   false: nobody can switch it on
 --   Default   what a player who never chose gets
 --   Shake     how much it shakes (0 never, 1 normal, up to 3)
@@ -466,7 +466,7 @@ Config.DrivingCamera = {
 --               Each action goes on one button. lb_ buttons are pressed with LB held. veh_a is A in a vehicle.
 --   RadialHoldMs        how long to hold the radial's button (milliseconds)
 --   SprintDoubleClickMs the most time between the two presses (milliseconds)
---   SprintOnA           true lets A sprint as well, as GTA has it
+--   SprintOnA           true lets A sprint as well, as the game has it
 --   VehicleControls     taking a driver's seat shows the vehicle's buttons (engine, headlights, nitrous) over the
 --                       rev dial for a few seconds. false: off for everyone who has not turned it on themselves
 --   VehicleControlsMs   how long they stay before they fade (milliseconds)
@@ -498,8 +498,8 @@ Config.Controller = {
 -- The on-screen keyboard controller players type on. It suggests how to finish the word, in the player's language.
 -- Each language is a pack in html/keyboard/.
 --   Languages  the languages players may type in, by code: { 'en' }, { 'en', 'fr' }. With more than one the keyboard
---              has a switch key and players pick theirs in the pause menu; until then they get GTA's language if listed.
---   Default    the language for a player whose GTA language is not in the list
+--              has a switch key and players pick theirs in the pause menu; until then they get the game's language if listed.
+--   Default    the language for a player whose game language is not in the list
 Config.Keyboard = {
     Languages = { 'en' },
     Default   = 'en',
@@ -604,7 +604,7 @@ Config.TimeScale = 1.0   -- 1.0 is the game's own speed: a full day passes in 48
 Config.StartTime    = { hour = 12, minute = 0 }   -- Clock when the server boots
 Config.StartWeather = 'SUNNY'
 
--- The weather choices offered in the /w admin menu. RedM (spur_core): RDR2's own weather names. A GTA name used
+-- The weather choices offered in the /w admin menu. RedM (spur_core): RDR2's own weather names. An original-game name used
 -- anywhere else is turned into the nearest RDR2 one (shared/rdr_compat.lua).
 Config.WeatherTypes = {
     'SUNNY', 'HIGHPRESSURE', 'CLOUDS', 'OVERCAST', 'OVERCASTDARK', 'MISTY', 'FOG',
@@ -621,7 +621,7 @@ Config.WeatherTypes = {
 --   the dial     rpm, speed, gear and four lights, read off the car by the player's own game; never saved or shared.
 -- No dial on bicycles or trains. Helicopters and planes get flight instruments, boats read engine power.
 -- A player can switch the HUD off with /vehiclehud.
--- The dial goes by the engine, not the body: GTA has no readable rev counter, so the top of the dial is the engine's
+-- The dial goes by the engine, not the body: the game has no readable rev counter, so the top of the dial is the engine's
 -- model in rpmByModel, else rpmElectric for an electric motor, else its kind in rpmByClass.
 Config.VehicleHud = {
     -- 'mph' or 'kmh'. The number on the dial and the label under it.
@@ -678,8 +678,8 @@ Config.VehicleHud = {
     -- If the horizon tips the wrong way when an aircraft banks, set this to true.
     flipBank = false,
 
-    -- Each car's dial wears that car's own GTA dashboard look (its face colour, fonts and needle).
-    -- false: every car gets the dial as designed. Cars with no dashboard art in GTA, and every
+    -- Each car's dial wears that car's own game dashboard look (its face colour, fonts and needle).
+    -- false: every car gets the dial as designed. Cars with no dashboard art in the game, and every
     -- aircraft, keep the dial as designed either way.
     dashSkins = true,
 }
@@ -717,7 +717,7 @@ Config.VehiclePositionSaveInterval = 30   -- Seconds
 Config.VehiclePositionEpsilon      = 2.0  -- Metres of movement before a write is worth doing
 
 -- An owned car remembers the damage it took (engine and body health, torn-off doors, burst tyres) and gets it back
--- when it leaves a garage or after a restart. Dents are not kept. Health is GTA's 0 to 1000 scale: below 400 the
+-- when it leaves a garage or after a restart. Dents are not kept. Health is the game's 0 to 1000 scale: below 400 the
 -- engine smokes, at 0 it is dead. Every repair whip has clears it.
 Config.VehicleDamage = {
     -- false: every car comes back like new.
@@ -794,8 +794,8 @@ Config.VehicleLockRange  = 8.0   -- How far away you can still lock/unlock with 
 Config.UnlockOnExit = true
 
 -- Who sits where. Players change seat with Seats on the F1 wheel (or /seats).
---   NoAutoShuffle   true keeps a passenger in their seat: GTA no longer slides them into an empty driver's seat.
---                   false is GTA's own way.
+--   NoAutoShuffle   true keeps a passenger in their seat: the game no longer slides them into an empty driver's seat.
+--                   false is the game's own way.
 Config.Seats = {
     NoAutoShuffle = true,
 }
@@ -807,7 +807,7 @@ Config.VehicleTrunkRange = 2.5   -- How close to the back you must stand to open
 -- Nothing below VehicleTrunkRange + 3.0 has any effect, because the boot opens at that distance.
 Config.VehicleStorageKeepRange = 5.5   -- metres
 
--- A helmet on a bike. true: GTA puts a helmet on a character when they get on a motorbike. false: they ride in
+-- A helmet on a bike. true: the game puts a helmet on a character when they get on a motorbike. false: they ride in
 -- what they have on.
 Config.BikeAutoHelmet = false
 
@@ -884,7 +884,7 @@ Config.VehiclePartHingeTopFrac = 0.52
 --     }
 Config.VehiclePartHinges = {}
 
--- Vans whose back doors are GTA's rear doors (2 and 3), such as the Boxville and the Burrito: their back is the trunk,
+-- Vans whose back doors are the game's rear doors (2 and 3), such as the Boxville and the Burrito: their back is the trunk,
 -- one circle between the doors that opens both and the trunk inventory, and those doors have no circles of their own.
 -- Found from where the doors hang, on the classes below only; set a model true (it has back doors) or false (it has
 -- not) when it is found wrong. true also works for a model of another class.
@@ -987,7 +987,7 @@ Config.GarageWizardReach = 250.0
 
 -- Seed data, read once on the very first server start, then kept in the database. Manage garages in game with
 -- /whip > Garages; editing this list later has no effect on a server that has already run.
--- RedM (spur_core, 23 Nov 2026): no seed. whip_core's GTA car park has no RDR2 counterpart: make a wagon yard
+-- RedM (spur_core, 23 Nov 2026): no seed. whip_core's original-game car park has no RDR2 counterpart: make a wagon yard
 -- with /whip > Garages, standing where it should be.
 Config.Garages = {}
 
@@ -1324,7 +1324,7 @@ Config.PropertySignPlaceRange = 12.0
 
 -- Sign posts: the outside sign can stand on a for-sale sign post in the garden instead of floating (/spur >
 -- Properties > Signs step > Put up a sign post), with the listing printed on its board.
--- RedM (spur_core, 25 Nov 2026): none are listed, so the option is not offered. whip's two posts are GTA props that
+-- RedM (spur_core, 25 Nov 2026): none are listed, so the option is not offered. whip's two posts are original-game props that
 -- RDR2 does not have, and the printed listing needs a DUI browser, which RedM does not have either. The floating
 -- sign (name, garage bays, price) is what a property for sale shows. The list is kept for a server that adds its own.
 -- Each line is a prop and its board's blank panel: where its middle is, in metres from the bottom of the prop
@@ -1560,7 +1560,7 @@ Config.Conversations = {
 -- A script picks one by name: exports.spur_core:SkillCheck('hard'). Add your own name here and scripts can use it.
 Config.SkillCheckHoldMs      = 196    -- How long the dot must stay on the lit part to fill it (ms)
 Config.SkillCheckMouseSpeed  = 1.0    -- How fast the mouse moves the dot: 2.0 is twice as fast.
-                                      -- The player's own GTA mouse sensitivity counts too.
+                                      -- The player's own game mouse sensitivity counts too.
 
 Config.SkillCheckDifficulty = {
     -- 6 parts, three quarters down to a quarter: 3.9 s
@@ -1715,7 +1715,7 @@ Config.Creator = {
     -- The pose a new character holds while the creator is open: an /e name from shared/emote_list.lua, or false to
     -- stand as the game leaves them. It plays even where /e would be refused, and stops when the creator closes.
     -- An emote with props plays without them.
-    pose = false,   -- RedM (spur_core): the /e list is GTA's animations, so the character just stands
+    pose = false,   -- RedM (spur_core): the /e list is the original game's animations, so the character just stands
 
     -- The sky a new character is made under: this player's alone, back to the server's once Save is pressed. Same
     -- shape as a hero shot's look (Config.CharSelect.slots). Frozen, so the light on the face does not change.
@@ -1812,7 +1812,7 @@ Config.ZoneCellSize            = 50     -- Search grid size in metres
 Config.Experimental = {
     cameraCreator    = false,   -- the Camera Creator: camera shots and paths, a row at the end of /w
     systemsCreator   = false,   -- the Systems Creator: /systems
-    combinedSettings = false,   -- one Settings page in the pause menu, GTA's settings and this server's together
+    combinedSettings = false,   -- one Settings page in the pause menu, the game's settings and this server's together
 }
 
 

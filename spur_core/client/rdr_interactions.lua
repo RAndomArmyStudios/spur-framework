@@ -2,7 +2,7 @@
 -- RDR2'S OWN INTERACTIONS, OFF — client/rdr_interactions.lua
 -- ============================================
 --
--- RedM (spur_core, 25 Nov 2026). New with the port: whip_core (by Whippy and WLVF) has no such file, because GTA has
+-- RedM (spur_core, 25 Nov 2026). New with the port: whip_core (by Whippy and WLVF) has no such file, because the original game has
 -- no such thing. RDR2 lets a player lock on to anyone with the right mouse button (Greet, Antagonize, Rob), search
 -- drawers and bodies, and pick up hats and whatever lies about, each with a prompt of its own at the bottom right.
 -- On a whip server those are whip's to offer, on E (client/interact.lua), so RDR2's are switched off here.
@@ -18,7 +18,7 @@
 --     a prompt type above 40: 41 and up crashed the game.
 --   whip's prompts are NUI and its E a key mapping; neither is an RDR2 prompt, so both carry on.
 --
--- And RDR2's idle cinematic camera, which client/idle_cam.lua cannot reach (FiveM's DisableIdleCamera is not in
+-- And RDR2's idle cinematic camera, which client/idle_cam.lua cannot reach (Cfx.re's DisableIdleCamera is not in
 -- RedM): the letterboxed pan after a while with no input. Off every frame while Config.IdleCam.Disable is not false.
 
 local INPUT_INTERACT_LOCKON = 0xF8982F00

@@ -253,7 +253,7 @@ end)
 -- Client reports death (with optional killing blow context from damage tracker)
 --
 -- The report is a claim; the ped is the evidence (otherwise died-then-respawned is a free full
--- heal). A dead GTA ped reports health 0 (anything at or under 100 is dying), and a report about a
+-- heal). A dead game ped reports health 0 (anything at or under 100 is dying), and a report about a
 -- ped demonstrably alive changes nothing.
 --
 -- Replication lag: the client detects the death a beat before the server's copy of the ped catches

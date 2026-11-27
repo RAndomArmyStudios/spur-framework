@@ -18,11 +18,11 @@
 --
 -- Words and languages (html/js/keyboard-words.js): the keyboard suggests how to finish
 -- the word being typed, in the player's language, from that language's pack in html/keyboard/. Which
--- languages there are is Config.Keyboard; this file tells the page those, and the one GTA is set to. Each
+-- languages there are is Config.Keyboard; this file tells the page those, and the one the game is set to. Each
 -- player's own choice of language, and suggestions on or off, are theirs (Settings → Server → Controller).
 --
 -- It is whip's page that shows it, over any resource's own page: the focus is taken here while it is
--- up and given back after (FiveM keeps one focus vote per resource, so a satellite's own focus stands
+-- up and given back after (Cfx.re keeps one focus vote per resource, so a satellite's own focus stands
 -- under it). While it is up the pad is the keyboard's alone (its page scope): spur_core:keyboard:opened and
 -- spur_core:keyboard:closed say so, and a Whip.padScreen stops reading the pad between them by itself; any other
 -- resource that reads the pad itself leaves it alone until this answers. One at a time: asking again closes the one before,
@@ -110,7 +110,7 @@ end)
 -- Languages
 -- ============================================
 
---- GTA's language (GetCurrentLanguage) as a pack's code.
+--- The game's language (GetCurrentLanguage) as a pack's code.
 local GAME_LANGUAGE = { [0] = 'en', [1] = 'fr', [2] = 'de', [3] = 'it', [4] = 'es', [5] = 'pt', [6] = 'pl', [7] = 'ru',
                         [8] = 'ko', [9] = 'zh', [10] = 'ja', [11] = 'es', [12] = 'zh' }
 

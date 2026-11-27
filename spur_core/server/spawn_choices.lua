@@ -20,7 +20,7 @@ SpawnChoices = {}
 -- point's 'res:<resource>:<id>' is the longest, and is refused at registering when it would be longer.
 SpawnChoices.ID_MAX = 96
 
---- GTA's heading (degrees, 0 = north, counter-clockwise) for a direction on the ground.
+--- The game's heading (degrees, 0 = north, counter-clockwise) for a direction on the ground.
 local function headingOf(dx, dy)
     if dx == 0 and dy == 0 then return 0.0 end
     return (math.deg(math.atan(-dx, dy)) + 360.0) % 360.0

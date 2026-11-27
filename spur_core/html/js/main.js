@@ -64,7 +64,7 @@ import './vehstat-debug.js';
 import './ground-debug.js'; // Ground Items Debug, a section of the debug panel (tools/ground_debug.lua)
 import './dev-menu.js';
 import './coords.js';
-import './portrait.js';      // GTA's headshot of the player, made into a picture (client/portrait.lua)
+import './portrait.js';      // the game's headshot of the player, made into a picture (client/portrait.lua)
 import './cam-editor.js';     // the Camera Creator's timeline (tools/camera.lua)
 import './zone-editor.js';   // the in-world editor HUDs — NOT sections; they show
 import './door-editor.js';   // while the /whip panel is suspended
@@ -79,7 +79,7 @@ import './hand-edit.js';   // the hand position editor's item list, beside Move 
 import './property-themes.js';   // a home's Theme, from its sign (client/property_themes.lua)
 import './emotes.js';      // the emote menu (client/emotes.lua)
 import './pause.js';       // whip's pause menu and its map (client/pause.lua)
-import './minimap.js';     // whip's minimap, the 3D map in GTA's radar's place (client/minimap.lua)
+import './minimap.js';     // whip's minimap, the 3D map in the game's radar's place (client/minimap.lua)
 import './renderer-loader.js';
 import './director-loader.js';   // the Director's screen, imported on first open (client/director.lua)
 import './systems-loader.js';    // the Systems Creator's, the same way (client/systems_editor.lua)
@@ -106,18 +106,18 @@ import './wp/uitester.js';
 import './wp/config.js';     // Settings → Config: config.lua's settings, edited in game
 import './wp/director.js';   // the Director's management tab; its editor loads apart (director-loader.js)
 
-// ONLY WHAT FIVEM SENDS. Every resource's page is a frame under one root page, and a
+// ONLY WHAT THE GAME SENDS. Every resource's page is a frame under one root page, and a
 // sibling frame can postMessage straight into this one — re-label a pending dialog, run a clipboard
 // copy that drops the mouse. SendNUIMessage arrives from this page itself, with no source, or from
-// the root page that hosts the frames, depending on the FiveM build; a sibling frame is none of
+// the root page that hosts the frames, depending on the Cfx.re build; a sibling frame is none of
 // those, and the browser sets `source`, so it cannot pretend. Anything else is dropped.
-function fromFiveM(event) {
+function fromGame(event) {
     const s = event.source;
     return s === null || s === window || s === window.parent || s === window.top;
 }
 
 window.addEventListener('message', (event) => {
-    if (!fromFiveM(event)) return;
+    if (!fromGame(event)) return;
     NuiRouter.dispatch(event.data);
 });
 

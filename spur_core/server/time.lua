@@ -34,7 +34,7 @@ TimeWeather._anchor = {
 TimeWeather._layers      = {}  -- [source] = { [name] = { priority, hour, minute, weather, ... } }
 TimeWeather._layerOwners = {}  -- [source] = { [name] = resource }: who set it, cleared when they stop
 
---- Game minutes per real millisecond at scale 1.0. GTA runs 30 in-game seconds per real second,
+--- Game minutes per real millisecond at scale 1.0. The game runs 30 in-game seconds per real second,
 --- so 0.5 game minutes per real second, so 0.0005 per millisecond.
 local MINUTES_PER_MS = 30 / 60 / 1000
 

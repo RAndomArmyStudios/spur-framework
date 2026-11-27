@@ -12,7 +12,7 @@ local DEV_COMMANDS = {}
 
 --- An admin command a player can type: allowed to the console and to whip.devtools.
 ---
---- One permission: FiveM lets the command through (not `RegisterCommand(..., true)`, which gates on
+--- One permission: Cfx.re lets the command through (not `RegisterCommand(..., true)`, which gates on
 --- its own `command.<name>` ACE) and the handler asks whip.devtools, and says so when refused.
 ---@param name string
 ---@param fn fun(source: number, args: table, raw: string)
@@ -40,7 +40,7 @@ local function reply(source, msg, kind)
     end
 end
 
---- The ACE a spur_core command needs beyond FiveM's own, or nil. For chat suggestions (whip_chat).
+--- The ACE a spur_core command needs beyond Cfx.re's own, or nil. For chat suggestions (whip_chat).
 ---@param name string
 ---@return string|nil
 exports('GetCommandAce', function(name)

@@ -54,7 +54,7 @@ RegisterTestModule({
             name = 'The canonical shape passes through intact',
             fn = function()
                 -- BOOLEAN FIRST, since 19 Sep 2026. The export used to answer (table|nil, err),
-                -- and the err never arrived: FiveM truncates a cross-resource return that leads
+                -- and the err never arrived: Cfx.re truncates a cross-resource return that leads
                 -- with nil, so a rejection was indistinguishable from no answer. It now answers
                 -- (ok, resultOrReason) — see the wrapper in spur_core/server/events_misc.lua.
                 local a = canonical()

@@ -615,7 +615,7 @@ local function rowOf(t)
              extra = extraOf(t) }
 end
 
--- Vehicles tab: every vehicle this game has (add-ons too), by GTA class.
+-- Vehicles tab: every vehicle this game has (add-ons too), by the game's class.
 
 local VEHICLE_CLASS = { [0] = 'compacts', 'sedans', 'suvs', 'coupes', 'muscle', 'classics', 'sports', 'super', 'motorcycles',
     'offroad', 'industrial', 'utility', 'vans', 'cycles', 'boats', 'helicopters', 'planes', 'service', 'emergency', 'military',
@@ -666,7 +666,7 @@ end
 
 -- More, Weapons: a Fixed Weapon, each firearm this game has, by group.
 
--- RedM (spur_core, 24 Nov 2026): RDR2's firearm groups (shared/rdr_weapons.lua), in place of GTA's.
+-- RedM (spur_core, 24 Nov 2026): RDR2's firearm groups (shared/rdr_weapons.lua), in place of the original game's.
 local WEAPON_GROUP_LABEL = { revolver = 'Revolvers', pistol = 'Pistols', repeater = 'Repeaters', rifle = 'Rifles',
                              sniper = 'Sniper rifles', shotgun = 'Shotguns' }
 
@@ -675,7 +675,7 @@ local weaponTileList, weaponTilesAt
 local function weaponTiles()
     if weaponTileList and weaponTilesAt == WeaponCatalog.version then return weaponTileList end
     local categories, props = {}, {}
-    for _, g in ipairs(GtaWeaponModels.groups) do
+    for _, g in ipairs(GameWeaponModels.groups) do
         categories[#categories + 1] = { key = 'weapons_' .. g:gsub(' ', '_'), label = WEAPON_GROUP_LABEL[g] or g, cluster = 'weapons', glyph = 'gun' }
     end
     for _, w in ipairs(WeaponCatalog.list()) do
@@ -992,7 +992,7 @@ end)
 --- Checks a typed random-vehicle model is a vehicle this game has. { ok, model } (lower case), or { ok = false, why }.
 RegisterNUICallback('directorVehicleModel', function(d, cb)
     local name = type(d) == 'table' and type(d.model) == 'string' and d.model:lower():match('^%s*([%w_]+)%s*$') or nil
-    if not name or #name > 64 then cb({ ok = false, why = 'A model name is letters, digits and _ (wagon02x)' }) return end   -- RedM (spur_core, 24 Nov 2026): was GTA's adder
+    if not name or #name > 64 then cb({ ok = false, why = 'A model name is letters, digits and _ (wagon02x)' }) return end   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
     local hash = GetHashKey(name)
     if not IsModelInCdimage(hash) then cb({ ok = false, why = name .. ' is not a model this game has: check the spelling' }) return end
     if not IsModelAVehicle(hash) then cb({ ok = false, why = name .. ' is not a vehicle' }) return end

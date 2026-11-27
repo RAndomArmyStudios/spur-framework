@@ -817,7 +817,7 @@ end
 --- The twin is a convenience, not part of the promise: the door named is locked, and a twin that
 --- fails is reported rather than undoing the one that worked.
 ---@param doorId number
----@param locked any  FiveM-truthy: nil, false and 0 mean unlocked
+---@param locked any  native-truthy: nil, false and 0 mean unlocked
 ---@param why table|nil  { cause, source } for the 'lockChanged' hook ('code' when not said)
 ---@return boolean ok, string|nil err
 function Doors.setLocked(doorId, locked, why)

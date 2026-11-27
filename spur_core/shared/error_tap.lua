@@ -7,7 +7,7 @@
 -- (export GetErrorLog: whip_devlink's whip_errors, and a test checking nothing broke):
 --
 --   spur_core's threads, timeouts and event handlers   caught as they fail, kept, and printed as before
---   its NUI callbacks, commands, statebag handlers     kept, then raised again: FiveM reports them as before
+--   its NUI callbacks, commands, statebag handlers     kept, then raised again: Cfx.re reports them as before
 --   a handler spur_core runs for others                a SecureEvent / SecureCallback handler that throws (secure.lua),
 --                                                      kept under its owner's name (ErrorTap.caught)
 --   spur_core's own catches and warnings               a print in red (^1), and a '[spur_core...]' line that reports
@@ -19,7 +19,7 @@
 -- NOT KEPT: an export's error (caught inside the runtime and handed to its caller, as before: the caller's own catch
 -- is what reports it), and a plain print a catch site words some other way.
 --
--- HOW. FiveM's Lua runtime runs every event handler through Citizen.CreateThreadNow, and looks it up each time, so the
+-- HOW. Cfx.re's Lua runtime runs every event handler through Citizen.CreateThreadNow, and looks it up each time, so the
 -- function wrapped here catches errors in all of them; threads and timeouts are wrapped as they are made. NUI callbacks,
 -- commands and statebag handlers have a pcall of the runtime's own around them, so their handlers are wrapped as they
 -- are registered.
@@ -70,7 +70,7 @@ local function guard(fn)
     return function(...) return runCaught(fn, ...) end
 end
 
---- guard() for a thread, named as the function it wraps. FiveM names a thread after the function it was started with
+--- guard() for a thread, named as the function it wraps. Cfx.re names a thread after the function it was started with
 --- ('thread <file>[first..last]': the profiler, resmon), and with one catch round every thread, all of spur_core's
 --- loops were one row named after this file (Josh, 11 Nov: "error_tap.lua is eating 50% of the CPU", which was every
 --- loop together). So the catch is compiled once for each function a thread starts with, as a function of that file
@@ -143,7 +143,7 @@ function ErrorTap.threadLike(like, fn)
     return nativeThread(caughtAs(fn, like))
 end
 
---- A handler the runtime catches itself: kept, then raised again, so FiveM's own report and the caller see it as before.
+--- A handler the runtime catches itself: kept, then raised again, so Cfx.re's own report and the caller see it as before.
 --- `label` names it in /whipcost's count ('state bag whipLive', 'NUI pauseSwap', 'command whip'): the runtime calls each
 --- through this one wrapper, so by where it lives they would all be one row (tools/whipcost.lua leaves that row out).
 local function rethrow(fn, label)

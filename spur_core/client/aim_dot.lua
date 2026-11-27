@@ -2,7 +2,7 @@
 -- THE AIM DOT: whip's crosshair, for any weapon
 -- ============================================
 --
--- While the player aims, GTA's reticle gives way to a dot (Config.AimDot). It sits where the weapon points: the
+-- While the player aims, the game's reticle gives way to a dot (Config.AimDot). It sits where the weapon points: the
 -- middle of the screen, or, with the muzzle up against something the camera sees past, on that, in red. A melee
 -- weapon and the petrol can get none; a thrown weapon (give mode's ball too) gets the middle, as it arcs.
 --
@@ -96,7 +96,7 @@ local function loop()
                 frame = 0
                 Wait(kind and 0 or IDLE_MS)
             else
-                HideHudComponentThisFrame(14)   -- GTA's reticle
+                HideHudComponentThisFrame(14)   -- the game's reticle
                 if kind == 'muzzle' then
                     frame = frame + 1
                     if not shown or frame >= RAY_EVERY then

@@ -365,7 +365,7 @@ refreshCommandsFor = function(player)
         -- Key-mapping commands (`+name` / `-name`, `~!` alternates) aren't typed; the client drops them anyway.
         local allowed = not command.name:find('^[+-]') and not command.name:find('^~!')
             and IsPlayerAceAllowed(player, ('command.%s'):format(command.name))
-        -- spur_core's admin commands are open to FiveM's ACE and check their own permission, so ask
+        -- spur_core's admin commands are open to Cfx.re's ACE and check their own permission, so ask
         -- spur_core which ACE each one needs.
         if allowed and command.resource == 'spur_core' then
             local ok, ace = pcall(function() return exports.spur_core:GetCommandAce(command.name) end)

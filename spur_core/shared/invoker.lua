@@ -5,7 +5,7 @@
 -- spur_core asks GetInvokingResource() which resource is calling it, and files what that resource registers under its
 -- name: secure events and callbacks, registries, panels, vehicles (some 50 places). While spur_core's own files load,
 -- nothing is calling it. But when another resource started it (StartResource: whip_devlink's restart, a resource's
--- restart button), FiveM names that resource as the caller until the load ends. On 31 Oct spur_core then refused 403
+-- restart button), Cfx.re names that resource as the caller until the load ends. On 31 Oct spur_core then refused 403
 -- of its own events as whip_devlink's ("names starting spur_core: belong to spur_core") and came up half working.
 --
 -- So while spur_core is still starting there is no caller, and every one of those places reads spur_core.
@@ -27,11 +27,11 @@ end
 -- ============================================
 --
 -- Every name given to exports() on this side is noted as it is made, so a resource can ask whether this spur_core
--- has a call before it uses one newer than the oldest whip it supports. The global works as FiveM's still:
+-- has a call before it uses one newer than the oldest whip it supports. The global works as Cfx.re's still:
 -- exports(name, fn) makes an export, exports.other:Call() reaches another resource.
 local nativeExports = exports
 local exported = {}
--- And where each one's function is, as FiveM names a call to it ('ref call [file[first..last]]'): /whipcost counts
+-- And where each one's function is, as Cfx.re names a call to it ('ref call [file[first..last]]'): /whipcost counts
 -- the calls spur_core is asked by that name (tools/whipcost.lua), and shows the export's.
 WhipExportsAt = {}
 exports = setmetatable({}, {

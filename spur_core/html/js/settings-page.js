@@ -1,23 +1,23 @@
 // ========================================
 // SETTINGS — the pause menu's Settings page (client/game_settings.lua, client/player_prefs.lua)
 //
-// The rail on the left has two groups of tabs: Game, GTA's own settings (read from GTA and changed through it, kept
+// The rail on the left has two groups of tabs: Game, the game's own settings (read from the game and changed through it, kept
 // for every server), and Server, each player's own choices for this server (kept on their PC). Game is there only
 // with the experimental Combined Settings page on (pause.js): off, the page is Server Settings, the Server tabs alone,
-// and the pause menu's Game Settings is GTA's own settings menu. In the middle the
+// and the pause menu's Game Settings is the game's own settings menu. In the middle the
 // chosen tab's rows, each with what it is set to, to scan; on the right the inspector: the chosen row's whole control
 // (every choice side by side, or a slider), what it does, and what the tab can show beside it: on Graphics the video
 // memory and the changes waiting for Apply, on Minimap the minimap itself, on Audio the mix.
 //
 // THE MARKS MEAN ONE THING EACH. A blue dot is a game change not applied yet: graphics changes wait for Apply, as in
-// GTA (Apply changes, or Discard, in the head). A hollow ring is a server row set differently from the server's
-// default. Greyed, "Not available" is GTA not letting it change; "Disabled by server admin" is the server's config.
+// the game (Apply changes, or Discard, in the head). A hollow ring is a server row set differently from the server's
+// default. Greyed, "Not available" is the game not letting it change; "Disabled by server admin" is the server's config.
 //
-// LUA OWNS EVERY VALUE. A game change goes to client/game_settings.lua, which makes it in GTA's own menu under this
-// page as a player would, and answers with the tab as GTA now has it; it takes a moment, so the row says it is
+// LUA OWNS EVERY VALUE. A game change goes to client/game_settings.lua, which makes it in the game's own menu under this
+// page as a player would, and answers with the tab as the game now has it; it takes a moment, so the row says it is
 // changing and the next change waits for it. A server change goes to client/player_prefs.lua, which answers with every
-// server row. GTA's own questions (keep these display settings?) come up over the page and are answered from it;
-// leaving with changes not applied asks first. Key Bindings is GTA's own screen: its tab opens it.
+// server row. The game's own questions (keep these display settings?) come up over the page and are answered from it;
+// leaving with changes not applied asks first. Key Bindings is the game's own screen: its tab opens it.
 //
 // Keyboard, mouse and pad: up / down choose a row, left / right change it, Enter or A does a row that does something
 // (or steps a choice on), Q / E or LB / RB the tabs, R or Y apply (Game) or reset the tab (Server), Esc or B back to
@@ -32,7 +32,7 @@ import { setPref } from './prefs.js';
 import { ICON_PATH } from './ui-icons.js';
 import { MinimapPreview, previewSpeedRange, minimapAspect } from './minimap.js';
 
-/** GTA's tabs in this order, by GTA's menu id; one GTA has that is not here comes after them, in GTA's order. */
+/** The game's tabs in this order, by the game's menu id; one the game has that is not here comes after them, in the game's order. */
 const GAME_ORDER = [1023, 1137, 1138, 1022, 1136, 1140, 1024, 1131, 1146];
 const GRAPHICS = new Set([1137, 1138]);
 const AUDIO = 1022;
@@ -81,7 +81,7 @@ function serverNumber(row, v) {
     return row.unit === '%' ? s + '%' : s + ' ' + row.unit;
 }
 
-/** A game row as the page shows it. GTA's kinds: slider, list (its choices known, or filled by GTA as it goes),
+/** A game row as the page shows it. The game's kinds: slider, list (its choices known, or filled by the game as it goes),
  *  button (something to do), info. */
 function gameRow(r) {
     const row = { src: 'game', id: r.id, label: r.label, locked: !!r.locked, pending: !!r.changed };
@@ -138,7 +138,7 @@ function valueAt(row, frac) {
     return Math.max(min, Math.min(max, Math.round(v * 1000) / 1000));
 }
 
-/** A change GTA has to make (a row moving in its menu) or the server's (instant). */
+/** A change the game has to make (a row moving in its menu) or the server's (instant). */
 const changeable = (row) => row && !row.locked && (row.kind === 'slider' || row.kind === 'choice' || row.kind === 'stepper');
 
 export class SettingsPage {
@@ -147,15 +147,15 @@ export class SettingsPage {
         this.onBack = onBack;
         this.isOpen = false;
         this.withGame = false;       // the Game tabs are here (the Combined Settings page), from open()
-        this.tabKey = null;          // 'g:<GTA menu id>' or 's:<server group>': kept for next time
+        this.tabKey = null;          // 'g:<game menu id>' or 's:<server group>': kept for next time
         this.sel = 0;
         this.game = { state: 'idle', tabs: [], tab: null, loading: false, unapplied: false, pending: [], failed: '' };
         this.server = null;          // player_prefs.lua's page state: { groups: [{ id, label, rows }] }
         this.note = '';              // a change refused: why
         this.working = null;         // the game row being changed ('apply', 'undo': those)
-        this.question = null;        // up over the page: GTA's question, or the page's own before leaving
+        this.question = null;        // up over the page: the game's question, or the page's own before leaving
         this.questionSel = 0;
-        this.answering = false;      // an answer to GTA's question being pressed: the pad's input is Lua's press, not the player's
+        this.answering = false;      // an answer to the game's question being pressed: the pad's input is Lua's press, not the player's
         this.confirmReset = false;   // "Reset this tab?" in the head, for a server tab
         this.confirmSel = 1;
         this.drag = null;            // the inspector's slider being dragged: { row, track, value }
@@ -214,7 +214,7 @@ export class SettingsPage {
             const b = e.target.closest('[data-tab]');
             if (b && !this.question) this.setTab(b.dataset.tab);
             else if (e.target.closest('[data-act="retry"]')) this.openGame();
-            else if (e.target.closest('[data-act="gta"]')) this.openGtaSettings();
+            else if (e.target.closest('[data-act="game"]')) this.openGameSettings();
         });
         // MOUSEMOVE, NOT MOUSEOVER: every draw rebuilds the rows, and a fresh mouseover on the row under a still mouse
         // would take the choice back from the keys and pad.
@@ -227,7 +227,7 @@ export class SettingsPage {
         this.rowsEl.addEventListener('click', (e) => {
             if (this.question) return;
             if (e.target.closest('[data-act="retry"]')) { this.openGame(); return; }
-            if (e.target.closest('[data-act="gta"]')) { this.openGtaSettings(); return; }
+            if (e.target.closest('[data-act="game"]')) { this.openGameSettings(); return; }
             const r = e.target.closest('.st-row');
             if (!r) return;
             this.sel = Number(r.dataset.i);
@@ -286,7 +286,7 @@ export class SettingsPage {
         });
         addEventListener('resize', () => { if (this.isOpen) { this.placePreview(); this.syncMore(); } });
 
-        // GTA asking (or done asking: `refresh`, its answer may have changed the tab).
+        // The game asking (or done asking: `refresh`, its answer may have changed the tab).
         NuiRouter.register('gameSettingsQuestion', (d) => {
             if (!this.isOpen) return;
             if (d && d.question) this.ask(d.question);
@@ -300,7 +300,7 @@ export class SettingsPage {
 
     // ---- open and close ----
 
-    /** @param {{ game?: boolean }} [opts]  game: GTA's tabs too (the Combined Settings page); without, the server's alone */
+    /** @param {{ game?: boolean }} [opts]  game: the game's tabs too (the Combined Settings page); without, the server's alone */
     open(opts) {
         this.isOpen = true;
         this.withGame = !!(opts && opts.game);
@@ -314,12 +314,12 @@ export class SettingsPage {
         if (this.withGame) this.openGame();
     }
 
-    /** GTA's settings menu opened under the page: its tabs, and the game tab shown (if one is). */
+    /** The game's settings menu opened under the page: its tabs, and the game tab shown (if one is). */
     openGame() {
         this.game = { state: 'loading', tabs: [], tab: null, loading: true, unapplied: false, pending: [], failed: '' };
         this.draw();
         const seq = ++this.seq;
-        // The tab shown, or with none yet the first in this page's order: GTA opens on it.
+        // The tab shown, or with none yet the first in this page's order: the game opens on it.
         const cur = this.current();
         const want = cur ? (cur.section === 'game' && !cur.keys ? cur.id : null) : GAME_ORDER[0];
         nuiCallback('gameSettingsOpen', { tab: want }).then((st) => {
@@ -354,7 +354,7 @@ export class SettingsPage {
         if (this.withGame) nuiCallback('gameSettingsClose', {});
     }
 
-    /** game_settings.lua's answer: the tab as GTA has it (kept when it is the one shown), the changes waiting. */
+    /** game_settings.lua's answer: the tab as the game has it (kept when it is the one shown), the changes waiting. */
     setGame(st) {
         if (!st) return;
         if (st.error) this.note = 'Not changed: ' + st.error;
@@ -403,7 +403,7 @@ export class SettingsPage {
         });
     }
 
-    /** The game tab shown, read again (GTA answered a question, which may have changed it). */
+    /** The game tab shown, read again (the game answered a question, which may have changed it). */
     reloadGame() {
         const cur = this.current();
         if (cur && cur.section === 'game' && !cur.keys && this.game.state === 'ready') {
@@ -508,7 +508,7 @@ export class SettingsPage {
         if (this.game.state === 'loading') game = '<div class="st-railnote st-breathe">Opening the game\'s settings</div>';
         else if (this.game.state === 'failed') {
             game = '<div class="st-railnote">Didn\'t open <button type="button" class="st-link" data-act="retry">Try again</button>'
-                + ' <button type="button" class="st-link" data-act="gta">The game\'s own</button></div>';
+                + ' <button type="button" class="st-link" data-act="game">The game\'s own</button></div>';
         }
         const server = tabs.filter((t) => t.section === 'server').map(item).join('')
             || '<div class="st-railnote st-breathe">Loading</div>';
@@ -531,7 +531,7 @@ export class SettingsPage {
                 this.rowsEl.innerHTML = '<div class="st-empty"><h2>The game\'s settings didn\'t open</h2>'
                     + `<p>${escapeHtml(this.game.failed)}. If it keeps happening after a game update, WHIP's copy of the game's settings page needs building again. The game's own settings menu still works meanwhile.</p>`
                     + '<div class="st-empty-btns"><button type="button" class="st-btn st-pill" data-act="retry">Try again</button>'
-                    + '<button type="button" class="st-btn" data-act="gta">Open the game\'s own settings</button></div></div>';
+                    + '<button type="button" class="st-btn" data-act="game">Open the game\'s own settings</button></div></div>';
             } else {
                 this.rowsEl.innerHTML = Array.from({ length: 9 }, (_, i) =>
                     `<div class="st-row st-skel"><span class="st-skelbar" style="width:${[46, 32, 54, 38, 50, 28, 44, 36, 48][i]}%"></span></div>`).join('');
@@ -569,7 +569,7 @@ export class SettingsPage {
         const cur = this.current();
         const row = this.row();
         if (!cur || (cur.section === 'game' && !cur.keys && this.game.state !== 'ready')) {
-            // Server Settings alone, its rows still coming: nothing of GTA's to wait for.
+            // Server Settings alone, its rows still coming: nothing of the game's to wait for.
             this.inspEl.innerHTML = !this.withGame ? ''
                 : this.game.state === 'failed'
                 ? '<div class="st-ihold"><h2 class="st-ititle st-small">Server tabs still work</h2>'
@@ -784,8 +784,8 @@ export class SettingsPage {
 
     // ---- doing ----
 
-    /** A game change: to GTA, the row marked as changing until GTA answers. One at a time. Apply and Discard work
-     *  from any tab (Lua finds the changes); only a Game tab GTA can read is named, never Key Bindings (its own screen). */
+    /** A game change: to the game, the row marked as changing until the game answers. One at a time. Apply and Discard work
+     *  from any tab (Lua finds the changes); only a Game tab the game can read is named, never Key Bindings (its own screen). */
     async gameChange(row, callback, args, working) {
         const cur = this.current();
         const tab = cur?.section === 'game' && !cur.keys ? cur.id : undefined;
@@ -864,22 +864,22 @@ export class SettingsPage {
         this.gameChange(null, 'gameSettingsUndo', which ? { tab: which.tab, id: which.id } : { all: true }, 'undo');
     }
 
-    /** GTA's key bindings, after the question Back asks when graphics changes wait for Apply (leaving drops them). */
+    /** The game's key bindings, after the question Back asks when graphics changes wait for Apply (leaving drops them). */
     openKeys() {
         if (this.game.unapplied && !this.question) { this.ask({ ...LEAVE_QUESTION, then: 'keys' }); return; }
         this.openKeysNow();
     }
 
-    /** This page and the pause menu shut, and pause.lua opens GTA's key bindings once GTA's settings menu under this
+    /** This page and the pause menu shut, and pause.lua opens the game's key bindings once the game's settings menu under this
      *  page has gone. */
     openKeysNow() {
         this.close();
         nuiCallback('pauseKeyBindings', {});
     }
 
-    /** GTA's own settings menu in the pause menu's place: the way in when this page cannot read GTA's (a game update
-     *  WHIP's copy of GTA's settings page is not built for yet). */
-    openGtaSettings() {
+    /** The game's own settings menu in the pause menu's place: the way in when this page cannot read the game's (a game update
+     *  WHIP's copy of the game's settings page is not built for yet). */
+    openGameSettings() {
         this.close();
         nuiCallback('pauseSettings', {});
     }
@@ -913,8 +913,8 @@ export class SettingsPage {
         this.follow();
     }
 
-    /** GTA's menu put on the row chosen here once the choice settles (not every row passed on the way), as GTA's own
-     *  follows the mouse and pad: a change after is then one press to GTA. */
+    /** The game's menu put on the row chosen here once the choice settles (not every row passed on the way), as the game's own
+     *  follows the mouse and pad: a change after is then one press to the game. */
     follow() {
         clearTimeout(this.followTimer);
         const cur = this.current();
@@ -955,11 +955,11 @@ export class SettingsPage {
 
     ask(q) {
         this.question = q;
-        this.questionSel = 0;   // the first: what GTA suggests (Apply, Keep, OK)
+        this.questionSel = 0;   // the first: what the game suggests (Apply, Keep, OK)
         this.draw();
     }
 
-    /** A button of the question up: GTA's go to GTA; the page's own apply, leave or stay. */
+    /** A button of the question up: the game's go to the game; the page's own apply, leave or stay. */
     answer(i) {
         const q = this.question;
         if (!q) return;
@@ -972,8 +972,8 @@ export class SettingsPage {
             } else this.draw();
             return;
         }
-        // GTA's: put away until GTA asks again or is done, so a second tap lands on nothing, never on GTA's next
-        // question. It names the question it answers; Lua shows it again if GTA did not take the press. The pad reads
+        // The game's: put away until the game asks again or is done, so a second tap lands on nothing, never on the game's next
+        // question. It names the question it answers; Lua shows it again if the game did not take the press. The pad reads
         // Lua's press as well (an A or B the player did not make), so no pad input is taken until it is over.
         this.question = null;
         this.answering = true;
@@ -1001,8 +1001,8 @@ export class SettingsPage {
 
     /** A pad (or key) intent. Answers false for "back" out of the page. */
     nav(n) {
-        // Lua's presses to GTA reach the pad too, as an A, B, X or direction the player did not make: none is taken
-        // while an answer is pressed, and none that changes something while a change is made (bar answering GTA's
+        // Lua's presses to the game reach the pad too, as an A, B, X or direction the player did not make: none is taken
+        // while an answer is pressed, and none that changes something while a change is made (bar answering the game's
         // question, which the change waits on).
         if (this.answering) return true;
         if (this.question) {
@@ -1027,7 +1027,7 @@ export class SettingsPage {
         else if (n === 'select') this.press();
         else if (n === 'tabPrev') this.stepTab(-1);
         else if (n === 'tabNext') this.stepTab(1);
-        else if (n === 'buttonX' && this.game.state === 'failed') this.openGtaSettings();
+        else if (n === 'buttonX' && this.game.state === 'failed') this.openGameSettings();
         else if (n === 'buttonY') {
             if (this.current()?.section === 'server') this.askReset(); else this.apply();
         } else if (n === 'back') {
@@ -1053,8 +1053,8 @@ export class SettingsPage {
     }
 }
 
-/** Asked before leaving with graphics changes not applied: the page's own question, not GTA's. Leaving drops them:
- *  GTA's menu under the page shuts with it. */
+/** Asked before leaving with graphics changes not applied: the page's own question, not the game's. Leaving drops them:
+ *  The game's menu under the page shuts with it. */
 const LEAVE_QUESTION = {
     title: 'Apply graphics changes?',
     body: 'Some graphics changes are not applied yet. Leaving drops them.',

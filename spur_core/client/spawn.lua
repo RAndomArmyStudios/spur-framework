@@ -51,7 +51,7 @@ local function floorAt(x, y, z)
     return false, nil
 end
 
---- The player's game-wide rules: no wanted level, no AI police or emergency dispatch, PvP on (FiveM turns friendly
+--- The player's game-wide rules: no wanted level, no AI police or emergency dispatch, PvP on (Cfx.re turns friendly
 --- fire off by default). Set at each spawn, and after a death, which resurrects the player and never fires
 --- 'spawned': cheap to say again in case a resurrect put any of them back.
 local function worldRules()
@@ -179,7 +179,7 @@ end
 -- The join spawn, then character select
 -- ============================================
 
---- Complete FiveM's join handshake and dismiss the loading screen (what spawnmanager would do;
+--- Complete Cfx.re's join handshake and dismiss the loading screen (what spawnmanager would do;
 --- SpawnCharacterAt above owns the real work). Four natives and an event:
 ---
 ---     NetworkResurrectLocalPlayer   the handshake itself — without it the client never finishes

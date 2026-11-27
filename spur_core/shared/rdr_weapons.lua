@@ -2,11 +2,11 @@
 -- RDR2 WEAPONS — the game's own weapons an NPC can be given, and each firearm's world model
 -- ============================================
 --
--- RedM (spur_core, 24 Nov 2026): NEW, in place of shared/gta_weapons.lua and shared/gta_weapon_models.lua (GTA's 108
--- weapons, none of which RDR2 has, so every Director weapon list was empty). The fxmanifest loads this instead of them;
--- they stay in the folder as upstream had them.
+-- RedM (spur_core, 24 Nov 2026): NEW, in place of whip_core's two weapon lists (the original game's 108
+-- weapons, none of which RDR2 has, so every Director weapon list was empty). The fxmanifest loads this instead; the
+-- two lists are not in this copy.
 --
--- The tables keep GTA's names, GtaWeapons and GtaWeaponModels, because shared/weapon_catalog.lua (which everything
+-- The tables keep the game's names, GameWeapons and GameWeaponModels, because shared/weapon_catalog.lua (which everything
 -- reads weapons through: the Director's NPC weapons, its Hold a Weapon step, its Fixed Weapons, Dungeon Mode, the
 -- Object Viewer's Give a weapon) reads them by those names.
 --
@@ -18,7 +18,7 @@
 
 local function w(name, label, group) return { name = name, label = label, group = group } end
 
-GtaWeapons = {
+GameWeapons = {
     list = {
     -- Revolvers
     w('WEAPON_REVOLVER_CATTLEMAN', 'Cattleman Revolver', 'revolver'),
@@ -88,9 +88,9 @@ GtaWeapons = {
     },
     byName = {},
 }
-for _, x in ipairs(GtaWeapons.list) do GtaWeapons.byName[x.name] = x end
+for _, x in ipairs(GameWeapons.list) do GameWeapons.byName[x.name] = x end
 
-GtaWeaponModels = {
+GameWeaponModels = {
     -- The groups a Fixed Weapon may be, in the builder's order.
     groups = { 'revolver', 'pistol', 'repeater', 'rifle', 'sniper', 'shotgun' },
     byName = {
@@ -122,14 +122,14 @@ GtaWeaponModels = {
 }
 
 --- A firearm's world model, or nil when the name is no firearm here.
-function GtaWeaponModels.modelOf(name)
-    return type(name) == 'string' and GtaWeaponModels.byName[name:upper()] or nil
+function GameWeaponModels.modelOf(name)
+    return type(name) == 'string' and GameWeaponModels.byName[name:upper()] or nil
 end
 
 local byModel = {}
-for name, m in pairs(GtaWeaponModels.byName) do byModel[m] = name end
+for name, m in pairs(GameWeaponModels.byName) do byModel[m] = name end
 
 --- The firearm a world model is, or nil (a Fixed Weapon placed before its gun was kept with it is known again by this).
-function GtaWeaponModels.weaponOf(model)
+function GameWeaponModels.weaponOf(model)
     return type(model) == 'string' and byModel[model:lower()] or nil
 end

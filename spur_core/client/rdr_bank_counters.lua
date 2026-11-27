@@ -8,7 +8,7 @@
 -- (Config.AtmProps, through client/prop_prompts.lua). So at each teller window in Config.BankCounters this file puts
 -- a hidden marker prop of the first Config.AtmProps model while the player is near it. It is made on this client only
 -- (not networked), with no collision, and is deleted again when the player walks away. The teller window then has the
--- prompt a GTA ATM had: Check Balance, then Deposit and Withdraw.
+-- prompt an ATM had in the original game: Check Balance, then Deposit and Withdraw.
 --
 -- The marker model is a cutscene prop (p_cs_ledger01x) so that no copy of it already in the world turns into a bank.
 -- RedM (spur_core, 24 Nov 2026): all four windows walked in game, the badge over the counter in front of the customer.

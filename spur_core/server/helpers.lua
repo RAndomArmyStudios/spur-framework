@@ -408,7 +408,7 @@ local function providerIn(group, name)
     return nil
 end
 
---- The resources by folder: FiveM lists a provided name (whip_chat's `provide 'chat'`) as a resource too, with its
+--- The resources by folder: Cfx.re lists a provided name (whip_chat's `provide 'chat'`) as a resource too, with its
 --- provider's state, metadata and folder.
 local function resourcesByFolder()
     local names, byPath = {}, {}

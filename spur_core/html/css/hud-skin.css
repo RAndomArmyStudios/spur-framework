@@ -14,7 +14,7 @@
                   faint track (--sh-p, written by updateStat). No rising fill.
      the capsule  gone behind the gauges. It comes back — black, in a white rim — only while it has
                   something to hold: a notification or the chat field.
-   The minimap's frame is drawn in the game, under GTA's HUD (client/hud.lua), not here: anything on
+   The minimap's frame is drawn in the game, under the game's HUD (client/hud.lua), not here: anything on
    this page is drawn OVER the radar, and would cover the N and the blips that sit on its edge.
    ======================================== */
 

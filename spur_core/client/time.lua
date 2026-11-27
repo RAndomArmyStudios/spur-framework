@@ -254,7 +254,7 @@ CreateThread(function()
             local frozen = resolve('frozen')
 
             if frozen then
-                -- Re-applied each tick because GTA drifts the clock on its own.
+                -- Re-applied each tick because the game drifts the clock on its own.
                 ApplyTime(clientHour, clientMinute, 0)
             else
                 local scale = twServer.timeScale or 1.0

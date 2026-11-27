@@ -20,7 +20,7 @@
 local spur_core = {}
 
 --- Register this resource's label for an existing blip in WHIP's pause map. Nil removes it.
---- The label is cleared when this resource stops. Does not change GTA's blip name or delete the blip.
+--- The label is cleared when this resource stops. Does not change the game's blip name or delete the blip.
 ---@param handle number Existing client blip handle; clear the label when removing the blip
 ---@param label string|nil Non-empty label, or nil to remove this resource's registration
 ---@return boolean ok
@@ -158,7 +158,7 @@ function spur_core:DropOwnHeldProp(model, tag) end
 
 --- Your own held prop sat another way in this player's hand, seen by everyone: a different grip for a while.
 --- `pose` = { bone?, offset = { x, y, z }, rot = { x, y, z } } (lists of three;
---- rot in GTA's order 2, as AttachEntityToEntity takes it; bone: the server's when left out), or nil to put it back
+--- rot in the game's order 2, as AttachEntityToEntity takes it; bone: the server's when left out), or nil to put it back
 --- where the server put it. Only while this game is in control of the prop (nearly always: it is made under the
 --- holder's feet).
 ---@param model string|number
@@ -377,7 +377,7 @@ function spur_core:IsAnyScreenOpen() end
 ---@return boolean
 function spur_core:IsGameInputFree() end
 
---- Say the local player may hold a GTA weapon your resource gives (on = true), or no longer
+--- Say the local player may hold a game weapon your resource gives (on = true), or no longer
 --- (false). whip takes away every native weapon nothing permits (Config.WeaponGuard): a dead NPC's
 --- gun, a police car's shotgun. Call it BEFORE GiveWeaponToPed and after RemoveWeaponFromPed. Your
 --- permits go when your resource stops.
@@ -409,7 +409,7 @@ function spur_core:PermitNativeWeapon(weapon, on) end
 ---@return boolean accepted False if there was no calling resource to attribute this to
 function spur_core:SetScreenOpen(open, key, opts) end
 
---- Nothing on screen but the game's picture, for filming: GTA's HUD and map, whip's page, and the
+--- Nothing on screen but the game's picture, for filming: the game's HUD and map, whip's page, and the
 --- prompts, /me bubbles and bay marks in the world all go (chat stays: F6). Held per resource under
 --- your `id`, and released when your resource stops.
 ---@param id? string Your name for this hold
@@ -428,7 +428,7 @@ function spur_core:ReleaseCleanScreen(id) end
 --- cannot leave the player stuck. The same id again replaces that block.
 ---
 --- Groups: move, combat, driving, vehicleCombat, look, radio, weaponWheel — and the switch driveBy
---- (shooting from a vehicle, turned off once rather than every frame). `controls` adds raw GTA ids;
+--- (shooting from a vehicle, turned off once rather than every frame). `controls` adds raw game ids;
 --- name 200 when Esc is your way out, and the pause menu leaves Esc to you while you hold it.
 --- A blocked control can still be READ with the disabled readers (IsDisabledControlPressed,
 --- GetDisabledControlNormal). GetRegistrations() lists who holds a block (registry 'controlBlocks').
@@ -1107,7 +1107,7 @@ function spur_core:GetVehicleProperties(vehicle) end
 ---@return string|nil why  a bare entity handle is refused with a hint (a bare number is a vehicleId)
 function spur_core:SetVehicleProperties(vehicle, props) end
 
---- Switch a vehicle's extras (light bars, roof racks, covers) KEEPING ITS DAMAGE. GTA's SetVehicleExtra repairs
+--- Switch a vehicle's extras (light bars, roof racks, covers) KEEPING ITS DAMAGE. The game's SetVehicleExtra repairs
 --- the car (health, doors, tyres, fuel, dirt); this reads them first and puts them back, and switches only the
 --- extras not already as asked. Local and unsaved like SetVehicleProperties (take control first); stored with
 --- the car through SetVehicleAppearance's `extras`, which merges one extra at a time.
@@ -1641,7 +1641,7 @@ function spur_core:ClearVehicleHandlingLayer(name) end
 
 --- Ask for engine torque on the car this player drives: a multiplier, 1.0 being the engine as it is.
 --- A turbo, a shot of nitrous. The car gets the PRODUCT of every resource's ask, written every frame
---- through GTA's torque multiplier: no gearing change, so top speed comes from the physics. Ask again
+--- through the game's torque multiplier: no gearing change, so top speed comes from the physics. Ask again
 --- as often as the amount changes; clear it when the feature stops (a driverOnly watcher's onStop).
 ---@param vehicle WhipVehicleRef|number { entity = veh } or a vehicleId
 ---@param name string Your ask's name, one per feature ('turbo', 'nitrous')
@@ -1666,17 +1666,17 @@ function spur_core:ClearVehiclePower(name) end
 ---@return string|nil why Why not
 function spur_core:SetVehicleRevRange(vehicle, engine) end
 
---- Is this vehicle's engine electric? GTA's own flag on its engine's model (its own, or the one
+--- Is this vehicle's engine electric? The game's own flag on its engine's model (its own, or the one
 --- SetVehicleRevRange says it carries). False for a vehicle that is not here, or a build without the flag.
 ---@param vehicle WhipVehicleRef|number { entity = veh } or a vehicleId
 ---@return boolean
 function spur_core:IsVehicleElectric(vehicle) end
 
 --- Say which forward gear the rev dial shows for a vehicle, when your resource drives the gears itself
---- (whip_autos' gearbox computer gives GTA one gear and changes its ratio, so GTA's own gear stays 1).
+--- (whip_autos' gearbox computer gives the game one gear and changes its ratio, so the game's own gear stays 1).
 --- Reverse and N stay the game's. Dropped when your resource stops; another running resource's is refused.
 --- 'speed': your resource moves the car itself (a recorded drive), not its gearbox, so the dial works the gear out
---- from its speed, R going backwards. Cleared, GTA's gearbox is put in that gear for whoever drives on.
+--- from its speed, R going backwards. Cleared, the game's gearbox is put in that gear for whoever drives on.
 ---@param vehicle WhipVehicleRef|number { entity = veh } or a vehicleId
 ---@param gear integer|'speed'|nil 1 to 20, 'speed', or nil for the game's gear again
 ---@return boolean ok
@@ -1865,8 +1865,8 @@ function spur_core:RegisterPadAction(id, def) end
 ---@return string|nil why
 function spur_core:RemovePadAction(id) end
 
---- Can your pad action do anything right now? Not ready, its button is GTA's again (the press reaches the
---- game, and GTA's action there is not held off); it keeps its button.
+--- Can your pad action do anything right now? Not ready, its button is the game's again (the press reaches the
+--- game, and the game's action there is not held off); it keeps its button.
 ---@param id string
 ---@param ready boolean
 ---@return boolean ok
@@ -1883,7 +1883,7 @@ function spur_core:SetPadActionReady(id, ready) end
 function spur_core:GetPadActionButton(id) end
 
 --- A mode of your own (placing, aiming a tool, a minigame) confirms the way whip's do: on a keyboard the Interact
---- key (E unless the player moved it in GTA's Key Bindings, as the prompts follow it), A on a pad, never LB + A.
+--- key (E unless the player moved it in the game's Key Bindings, as the prompts follow it), A on a pad, never LB + A.
 --- Read it every frame of the mode (a press made before the mode started asking does not count), and hold
 --- BlockControls(id, { controls = { 26, 45, 140 }, mode = true }) while it runs: mode stands whip's E prompts down,
 --- or a prompt in focus takes the same E.
@@ -1911,7 +1911,7 @@ function spur_core:CancelHint() end
 --- Any other key of your mode, the way Accept and Cancel work: `key` went down this frame on a keyboard, or `button`
 --- on a pad, whichever device is in the player's hands (never both: a pad's buttons are keys on a keyboard too), and
 --- on a pad never with LB held (LB + a button is whip's combo). Either may be nil: that device has no such key.
---- Controls are GTA's numbers; a pad's are the frontend ones (201 A, 202 B, 203 X, 204 Y, 206 RB, 199 Start, the
+--- Controls are the game's numbers; a pad's are the frontend ones (201 A, 202 B, 203 X, 204 Y, 206 RB, 199 Start, the
 --- D-pad 187-190). Read through a block: hold your keys off with BlockControls. Never LB (205).
 ---@param key number|nil
 ---@param button number|nil
@@ -1959,7 +1959,7 @@ function spur_core:IsEmoting() end
 --- nil. While any override is set the newest wins; when the last is cleared the walk the player
 --- chose with /walk comes back — not the game's default. Keyed by your resource, and cleared when
 --- it stops.
----@param clipset string|nil A GTA movement clipset, e.g. 'MOVE_M@DRUNK@VERYDRUNK'
+---@param clipset string|nil A game movement clipset, e.g. 'MOVE_M@DRUNK@VERYDRUNK'
 ---@return boolean ok
 function spur_core:SetWalkOverride(clipset) end
 
@@ -1969,7 +1969,7 @@ function spur_core:SetWalkOverride(clipset) end
 ---@return { runId: number, scenario: string, name: string, objective: string|nil, countdown: number|nil }[]
 function spur_core:GetPlayerScenarioRuns() end
 
---- What the game's browser can do (FiveM's Chromium 103 or 144), as spur_core's page reported it: a
+--- What the game's browser can do (Cfx.re's Chromium 103 or 144), as spur_core's page reported it: a
 --- copy. Before the page has reported: false, 'not_detected_yet' — spur_core:nui:capsDetected says when.
 ---@return WhipEvtNuiCaps|false caps
 ---@return string|nil err
@@ -2039,7 +2039,7 @@ function spur_core:MeasureFrames(opts) end
 ---@return { entries: { seq: number, at: number, side: string, resource: string, kind: 'error'|'warning'|'page', text: string, count: number }[], last: number, side: string }
 function spur_core:GetErrorLog(opts) end
 
---- Which GTA V this server runs on, as the server says (server.cfg's whip_platform): 'legacy' or 'enhanced'.
+--- Which build of the original game this server runs on, as the server says (server.cfg's whip_platform): 'legacy' or 'enhanced'.
 ---@return 'legacy'|'enhanced'
 function spur_core:GetPlatform() end
 

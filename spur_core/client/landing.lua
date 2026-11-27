@@ -1,7 +1,7 @@
 -- The landing page: one camera shot with the whip logo and "Press any button to continue", shown between the
 -- loading screen and character select (on joining and on a spur_core restart; /logout skips it). Settings:
--- Config.Landing. A plain GTA camera, since every fade is whip's curtain (client/curtain.lua):
---   arrives  GTA's fade is down (spawn.lua)
+-- Config.Landing. A plain game camera, since every fade is whip's curtain (client/curtain.lua):
+--   arrives  the game's fade is down (spawn.lua)
 --   build    TakeFromGame: the curtain holds the black while the shot is built and streamed
 --   show     Uncover: the shot and the logo come up
 --   press    Cover: the curtain falls and stays down; ShowCharacterSelect carries on from there
@@ -72,7 +72,7 @@ local function run(cfg)
     PedHold.set('charselect', { frozen = true, hidden = true })
     DisplayRadar(false)
 
-    -- If the page never answered, go straight on; GTA's fade still holds the black ShowCharacterSelect expects.
+    -- If the page never answered, go straight on; the game's fade still holds the black ShowCharacterSelect expects.
     if not Curtain.TakeFromGame() then return end
 
     if cfg.look and WeatherLayer then WeatherLayer.set('landing', cfg.look) end
@@ -106,7 +106,7 @@ local function run(cfg)
     Focus.release('landing')
     Curtain.Cover(cfg.fadeOut or 500)
 
-    -- Behind the black now. The logo goes first: the page draws over GTA's fade, so it would show through.
+    -- Behind the black now. The logo goes first: the page draws over the game's fade, so it would show through.
     SendNUIMessage({ action = 'landingHide' })
     endShot()
     if WeatherLayer then WeatherLayer.set('landing', nil) end
