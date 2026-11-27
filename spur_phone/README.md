@@ -80,7 +80,7 @@ a bank counter).
   of letting a bird go, so it is built from parts: the sender takes the bird from the satchel (the Naturalist's
   herb clip), a real pigeon sits in the hands, then flies off and is removed. Players near see it. It is skipped on a
   horse, in a wagon and in the water. Other resources can call `exports.spur_phone:ReleasePigeon()`.
-- **No prop, no animation.** whip_phone held a GTA phone. No RDR2 notebook animation has been tried in game yet, so
+- **No prop, no animation.** whip_phone held a modern phone. No RDR2 notebook animation has been tried in game yet, so
   `Config.Emotes` holds nothing: name a spur_core emote there once one has been.
 
 ## Requirements

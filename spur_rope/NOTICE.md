@@ -19,9 +19,9 @@ Whippy allowed the port on two conditions: no one makes money from it, and it cr
 - The resource and the names it uses are spur_ ones: `spur_rope`, `spur_core`, and their events and exports.
 - `fxmanifest.lua` says `game 'rdr3'`, a new name, author and description. It loads spur_core's RedM compatibility
   files, and it no longer streams the rope-piece model.
-- The rope piece `whip_rope_seg` (by 3D Clanker, a GTA V model that RDR2 can't load) is not part of this copy. It is
+- The rope piece `whip_rope_seg` (by 3D Clanker, a model made for another game that RDR2 can't load) is not part of this copy. It is
   kept outside the resource, unchanged. The rope is drawn with RDR2's own rope instead (`client/mesh.lua`).
-- The GTA props, bone numbers, ped flags, markers and Euphoria messages are replaced or turned off for RDR2, and the
+- whip_rope's props, bone numbers, ped flags, markers and Euphoria messages are replaced or turned off for RDR2, and the
   text says wagon where it said car.
 - Hanging works around RDR2: a stand-in made by `ClonePed` hangs in place of your own body, a ragdoll RDR2 refuses is
   asked again, and one pulled 6 m off the rope lets go (`client/visuals.lua`, `client/hang_ragdoll.lua`).

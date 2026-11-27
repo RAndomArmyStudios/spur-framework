@@ -95,7 +95,7 @@ Not themeable: `--ui-scale`. It looks like a token but JavaScript writes it as a
 style on the root element (the UI-scale setting), and inline styles out-rank any `:root`
 declaration — a theme override of it silently does nothing.
 
-Constraint: FiveM's browser is Chromium 103. Write 2022-safe CSS — custom properties are
+Constraint: the NUI browser is Chromium 103. Write 2022-safe CSS — custom properties are
 fine; `:has()`, native nesting, `color-mix()` and container queries silently do nothing.
 Derive tints as explicit rgba values, the way base.css itself does. The failure mode is
 nasty precisely because it is silent: the rule parses, drops, and your theme just looks

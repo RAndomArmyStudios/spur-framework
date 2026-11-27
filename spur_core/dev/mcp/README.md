@@ -137,7 +137,7 @@ Environment variables, set where you registered the server:
 - **Never reconnect from inside the game.** RedM crashes. Use `game_quit`, restart the server, then `game_launch`.
 - **"Press any button to continue"** has no control to press. Use `game_lua` with `Landing.Continue()`.
 - **Screenshots come from Windows.** RedM hands its pages no game picture, so `game_screenshot` reads the window
-  with PrintWindow. The window can be behind others, but not minimized. `source: 'page'` is the in-game way and works on FiveM only.
+  with PrintWindow. The window can be behind others, but not minimized. `source: 'page'` is the in-game way, which doesn't work on RedM.
 - **World prompts are hidden while Dev Tools (`w`) is open.** Close it before walking up to a shop counter or a door.
 - **A world prompt can't be pressed with `game_press`.** Call it instead: `Interactions.getAll()[id]` gives each
   prompt, and its `callback` or `options[1].callback` does what E does.

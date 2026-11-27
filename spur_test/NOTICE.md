@@ -23,9 +23,9 @@ Whippy allowed the port on two conditions: no one makes money from it, and it cr
   releases.
 - The runner also writes each failure and skip, and the totals, to the server console.
 - Tests of what RDR2 doesn't have are skipped on RedM, with the reason.
-- RDR2's things replace GTA's in the tests, named once in `shared/redm.lua`: the test vehicles, people, props,
-  weapons, the Director tests' field (GTA's airport is empty sky on RDR2's map), `mp_male`/`mp_female` and the
-  `SUNNY` weather. The emote, voice and progress-bar tests watch RDR2 scenarios instead of GTA clips and props.
+- RDR2's things replace the original game's in the tests, named once in `shared/redm.lua`: the test vehicles, people, props,
+  weapons, the Director tests' field (the original field, an airport, is empty sky on RDR2's map), `mp_male`/`mp_female` and the
+  `SUNNY` weather. The emote, voice and progress-bar tests watch RDR2 scenarios instead of the original game's clips and props.
 - spur_core's compat layer and emote list are loaded here too, so a test reads a native, and the emotes, the way
   spur_core does.
 - Some tests that had fallen behind spur_core's own API are brought up to date: `CreateGroundItem`'s one table,

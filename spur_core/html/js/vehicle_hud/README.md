@@ -1,6 +1,7 @@
 # whip_vehicle_hud
 
-The 3D rev dial from the vehicle HUD mock, as a FiveM NUI resource:
+The 3D rev dial from the vehicle HUD mock, written as a standalone NUI resource. spur_core embeds this folder's page
+files; the standalone wrapper (`html/index.html`, `html/main.js`) and `client.lua` aren't in this copy. The dial:
 - **Position:** the bottom-right corner, at the reference screenshot's size, a little lower than its position
   (`bottom` 1.35 dial radii from the screen's edge to the dial's centre; it was 1.575).
 - **Dial:** status lights (each with the segment under it), a rev range scalable from 2,000 to 20,000 rpm, and up to
@@ -25,7 +26,6 @@ The 3D rev dial from the vehicle HUD mock, as a FiveM NUI resource:
 | `html/vendor/three.module.min.js` | three.js r170 (MIT), the same file whip_phone ships |
 | `html/fonts/*.woff2` | Roboto (open-licence Google Font), cut to the characters the dial draws, one variable file per style; registered by `hud.js` as `whip-hud-roboto` |
 | `client.lua` | Reference feeder + exports (`SetGauge`, `RemoveGauge`, `SetLayout`) |
-| `rpm_by_model.lua` | Measured rev range per vanilla model, plus per-class tops (see Rev ranges) |
 
 To avoid shipping three.js twice, the import map in `index.html` can point at whip_phone's copy instead:
 `https://cfx-nui-whip_phone/html/vendor/three/three.module.min.js`. That makes whip_phone a dependency.
@@ -64,10 +64,10 @@ screen's frame rate. When nothing moves (parked, idling), the dial skips renderi
 
 ## State
 
-| Field | Type | GTA source (client.lua) |
+| Field | Type | Native (client.lua) |
 |---|---|---|
-| `rpm` | thousand rpm | `GetVehicleCurrentRpm` (0.2 idle .. 1.0 limiter) mapped onto the model's measured idle .. limiter (see Rev ranges); 0 with the engine off |
-| `maxRpm` | 2-20, thousand rpm | per model or class from `rpm_by_model.lua`; send on entering a vehicle |
+| `rpm` | thousand rpm | `GetVehicleCurrentRpm` (0.2 idle .. 1.0 limiter) mapped onto the dial's idle .. limiter (see Rev ranges); 0 with the engine off |
+| `maxRpm` | 2-20, thousand rpm | per class, or set by a resource (see Rev ranges); send on entering a vehicle |
 | `redline` | thousand rpm, optional | per model; defaults to 87% of `maxRpm` (the reference's 6.5 of 7.5) |
 | `speed` | km/h | `GetEntitySpeed` x 3.6 |
 | `units` | `'kmh'` / `'mph'` | `ShouldUseMetricMeasurements()` |
@@ -102,22 +102,16 @@ the `hack` gauge icon in gauges.js) have a full shackle — straight legs and an
 19 Oct 2026, hud.js: a launch's needle bounce follows the needle, not the flash. It starts the moment the needle
 reaches the top and stops as soon as the revs drop under 95% of it (`atTop`, `BOUNCE_OUT`); the flash keeps its 0.15 s
 hold and 0.25 s release. Before, the needle waited out the hold at the top and bounced on its way down.
-23 Oct 2026, data: mule3, mule4 and mule5 wear the Mule's `generic_truck_dial_detail` (added to skins3d.js `SKIN_OF`
-and data/dash_skins.lua; they were missing, so they got the default dial). 1 Nov 2026, data: coquette6 wears the
-Banshee's `banshee_detail` (Josh; added to both the same way).
+whip's dial skins (a dashboard look per car model) aren't in this copy: every dial is as designed.
 
-## Rev ranges (`rpm_by_model.lua`)
+## Rev ranges (`data/rpm_by_model.lua`)
 
-GTA has no rpm figure at runtime: `GetVehicleCurrentRpm` is 0.2 at idle and 1.0 at the limiter for every vehicle, and
-handling.meta has no rev range. The engine recordings do. Each granular engine's accel sweep is cut into one grain
-per engine cycle, and the AWC stores each grain's rate in Hz. A 4-stroke cycle is 2 revolutions, so rpm = Hz x 120.
-The vehicles.meta audio name leads to the car's audio settings, then its granular engine, then its accel sound, then
-the recording.
+`GetVehicleCurrentRpm` is 0.2 at idle and 1.0 at the limiter for every vehicle, so a dial's range has to come from
+somewhere else. whip measured an idle and a limiter for each car model of its original game; that list isn't in this
+copy (26 Nov 2026). What's left:
 
-- `models`: `{ idle, limiter }` in thousand rpm for 596 vanilla models (build 3407), keyed by spawn name.
-  Examples: Adder 0.90 / 8.18, Zentorno 1.20 / 8.24, Daemon 1.15 / 5.58, APC 0.65 / 2.11.
-- `classMax`: the top of the dial for anything not listed (add-on cars included). It is the class's median limiter
-  / 0.97, rounded up to 0.5k:
+- `models`: empty. Give a vehicle a range of its own as `{ idle, limiter }` in thousand rpm under its spawn name.
+- `classMax`: the top of the dial for anything not listed:
 
   | Class | Top of dial |
   |---|---|
@@ -133,21 +127,12 @@ the recording.
   | openwheel | 9k |
   | motorcycles | 12k |
 
-- Not listed, so they use `classMax`:
-  - old-style engine audio, which has no grains: most trucks, buses, plant, and the Faggio;
-  - electric cars;
-  - sport and dirt bikes: their recordings top out at 5.5-8.5k, while real ones rev 11-15k;
-  - 12 cars whose recordings stop near 3.5k (Buffalo, Gauntlet, Sabre GT...).
-- How `client.lua` uses a listed model:
-  - `maxRpm` = limiter / 0.975, so the limiter lands at 97.5%, inside the dial's limiter zone (97% and up). The
-    default redline (87%) then starts at about 89% of the limiter;
-  - `rpm` = idle + (raw - 0.2) / 0.8 x (limiter - idle);
-  - a raw reading of 0.99 or more counts as the limiter, because the game hovers just under 1.0 there.
-- spur_core sizes its dial differently. The top comes from the vehicle's engine: the model's own, or an engine-swap
-  donor set by a resource through `SetVehicleRevRange`. From that engine, whip uses its configured class tops, with
-  electrics at 20k. Only the measured idle is used there; the steps above describe this resource's reference feeder.
-- The mapping assumes the sweep plays linearly with the rev ratio. Not yet checked in game.
-- Rebuild the table with `work/vehicle_hud/rpm_research/build_rpm_table.py` and then `make_rpm_lua.py`.
+- spur_core takes a range from the vehicle's engine (its own, or the one a resource gives it through
+  `SetVehicleRevRange`), first match wins: config.lua's `rpmByModel`, `rpmElectric` for an electric engine, then
+  `rpmByClass`, the class top above and `rpmMax`. The idle is 0 for an electric engine, else config.lua's
+  `idleRpm`, or about 11% of the dial.
+- `rpm` = idle + (raw - 0.2) / 0.8 x (limiter - idle). A raw reading of 0.99 or more counts as the limiter, because
+  the game hovers just under 1.0 there.
 
 ## Aircraft mode (`kind: 'air'`)
 

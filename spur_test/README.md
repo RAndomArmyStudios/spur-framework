@@ -38,7 +38,7 @@ console when you want it (`ensure spur_test`) and stop it afterwards (`stop spur
 
 ## On RedM
 
-The suite was written for GTA V. Tests of what RDR2 doesn't have (GTA's cars and their parts, for example) report as
+The suite was written for another game. Tests of what RDR2 doesn't have (cars and their parts, for example) report as
 skipped on RedM with the reason, rather than failing. The rest test spur_core itself: a failure there is a bug in
 the port.
 

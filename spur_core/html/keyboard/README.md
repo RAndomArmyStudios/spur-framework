@@ -15,7 +15,7 @@ English (`en`) comes with whip. To offer another language:
 3. Restart spur_core.
 
 Players then pick it in the pause menu (Server Settings → Controller → Keyboard language), or switch with
-the language key on the keyboard. With the setting on "Game language" they get the language GTA is set to,
+the language key on the keyboard. With the setting on "Game language" they get the language the game is set to,
 when the server offers it.
 
 ## The .json file

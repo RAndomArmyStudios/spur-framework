@@ -23,7 +23,7 @@ money from it, and it credits Whippy and WLVF. It isn't WHIP and doesn't come fr
 
 ## On RedM
 
-- **The look.** whip_rope drew its rope with a custom GTA V model placed by `SetEntityMatrix`. RDR2 can't load that
+- **The look.** whip_rope drew its rope with a custom model placed by `SetEntityMatrix`. RDR2 can't load that
   model and RedM has no `SetEntityMatrix`. spur_rope draws RDR2's own ropes instead, pinned along the simulated rope
   (`Config.Visuals.Style = 'rdr'`, `RdrRopeType`). The pin native is unnamed in RDR2's list, so the first rope checks
   that its ends follow. If they don't, the console says so and ropes are drawn as a small prop per node (`'balls'`).
@@ -44,14 +44,14 @@ money from it, and it credits Whippy and WLVF. It isn't WHIP and doesn't come fr
   per 0.4 m, 16 at most), each pinned at both ends. The default, type 0, is drawn that way. `/ropevertices` prints
   the table above for your own game.
 - **Hanging.** RedM has no Euphoria grab or dangle messages for scripts, so the ragdoll hangs by its right hand
-  only. RDR2 refuses GTA's "balance" ragdoll, so `RagdollTask = 'balance'` is a limp ragdoll there. On whip_rope, your
+  only. RDR2 refuses whip_rope's "balance" ragdoll, so `RagdollTask = 'balance'` is a limp ragdoll there. On whip_rope, your
   own body hangs on your own screen, hidden from everyone else. On RedM that would need `SET_PLAYER_VISIBLE_LOCALLY`
   every frame, and in testing that left the player unseen for good, even after letting go. So on RedM a stand-in
   hangs on your screen too, as everyone else sees you, and your hidden character waits under it. A stand-in is made
   with `ClonePed`: RDR2's `ClonePedToTarget` leaves the copy with no clothes or body at all, so nobody saw it. RDR2
   sometimes won't ragdoll a fresh stand-in at the first ask, so it is asked again every 10 frames for up to a second;
   one that still won't stands under the rope in its idle pose instead, as in the `'animation'` style. The stand-in's
-  `'animation'` style uses a GTA animation RDR2 doesn't have, so in that style a stand-in keeps its idle pose.
+  `'animation'` style uses an animation RDR2 doesn't have, so in that style a stand-in keeps its idle pose.
   - If a ragdoll is ever pulled more than 6 m from the rope, it lets go and is put back under the rope. Ragdoll
     hanging is then off on that game until the player rejoins.
 - **Walking with an end.** The holding walk style is off (`'none'`): spur_core has no walk override on RedM.

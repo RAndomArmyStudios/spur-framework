@@ -43,7 +43,7 @@ changes:
 - Calls go through spur_core's voice system and use only what it offers: on a voice system without a speaker (or
   without picking up the people near one), only the one holding the receiver hears the call. A lore character's call
   with a recording needs a voice bot; without one, the character sends a telegram instead (`server/lore.lua`).
-- GTA's phone props and animations are gone (`Config.Emotes` holds nothing), controller rumble uses RDR2's
+- whip_phone's phone props and animations are gone (`Config.Emotes` holds nothing), controller rumble uses RDR2's
   `SET_CONTROL_SHAKE`, and the key bindings say Notebook.
 - The inventory images (`html/img/items/phone.webp`, `html/img/items/sim_card.webp`) are new, drawn for this copy by
   a script; their lettering is set in Georgia and Courier New.

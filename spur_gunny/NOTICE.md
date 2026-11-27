@@ -19,7 +19,7 @@ Whippy allowed the port on two conditions: no one makes money from it, and it cr
 - The resource and the names it uses are spur_ ones: `spur_gunny`, `spur_core`, and their events and exports.
 - `fxmanifest.lua` says `game 'rdr3'`, a new name, author, description and version (`2.0.1-redm.1`), and has no
   `whip_updates`. It loads spur_core's RedM compatibility files. It has no `ui_page`, no `data_file` and no `stream/`.
-- whip_gunny's GTA weapons, its remodelled add-on weapons, and their models, metas, animations, sounds, props and item
+- whip_gunny's original weapons, its remodelled add-on weapons, and their models, metas, animations, sounds, props and item
   pictures are not part of this copy. The items are RDR2's own weapons by their game names (`items/weapons.lua`): 28
   guns, 2 bows, 11 blades, torches and lassos, and 14 throwables.
 - There are no magazines. A gun keeps the cartridges loaded in it in its own metadata, and **R** loads loose
@@ -36,7 +36,7 @@ Whippy allowed the port on two conditions: no one makes money from it, and it cr
   the items say after every shot, on every reload, on a short timer and when the weapon changes, and a weapon nobody
   drew from the inventory is taken away (`client/ammo.lua`, `client/guard.lua`).
 - Shooting from vehicles became shooting from the saddle and from a wagon (`client/mounted.lua`, in place of
-  `client/vehicle.lua`). The GTA double tap on **RB** that started aiming is gone.
+  `client/vehicle.lua`). The double tap on **RB** that started aiming is gone.
 - Gunny Debug draws with RDR2's text natives and also shows the game's ammunition pool, what the game handed out and
   gunny took back, and the weapons the guard took. A new admin command, `/gunnyammoprobe`, prints what the game says
   about the drawn weapon's ammunition.

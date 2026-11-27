@@ -1,7 +1,7 @@
 # spur_core
 
 A non-commercial RedM (Red Dead Redemption 2) port of [whip_core](https://github.com/WHIPFX/whip_core) 1.3.0, the
-core of Whippy's WHIP framework for FiveM. It provides characters, inventory, money and banks, jobs, shops, homes,
+core of Whippy's WHIP framework. It provides characters, inventory, money and banks, jobs, shops, homes,
 the UI, the Director and an in-game admin panel, now running on RDR2's natives.
 
 > **Not WHIP.** spur_core is a fork. It isn't made, endorsed or supported by WHIP's author. Whippy allowed the port
@@ -29,12 +29,12 @@ the UI, the Director and an in-game admin panel, now running on RDR2's natives.
 - **Admin panel.** `/spur` manages players, items, shops, jobs, banks, homes, doors, zones and every setting.
 - **Security.** The server validates what a player's game sends before any resource's code runs.
 
-GTA's cars, clothing, emotes, scaleform pause menu and minimap features don't exist on RDR2. Their natives are safe
-no-ops, listed in CONVERSION.md.
+Some of whip_core's features (its cars, clothing, emotes, pause menu and minimap) are built on things RDR2 doesn't
+have. Their natives are safe no-ops, listed in CONVERSION.md.
 
 ## Requirements
 
-- FXServer (a recent artifact) started as RedM (`set gamename rdr3`; docs.fivem.net, Setting Up a Vanilla FXServer),
+- FXServer (a recent artifact) started as RedM (`set gamename rdr3`; see the Cfx.re docs, Setting Up a Vanilla FXServer),
   with **OneSync** on.
 - MariaDB 10.2.3+ or MySQL 8.0.16+, and [oxmysql](https://github.com/overextended/oxmysql) started before spur_core.
 
@@ -124,11 +124,12 @@ on your PC without taking your mouse or keyboard.
 
 Resources built on spur_core declare `dependency 'spur_core'`, load
 `shared_script '@spur_core/lib/satellite.lua'`, and call it through its exports (`exports.spur_core:AddItem(...)`).
-The API is whip_core's, so [WHIP's documentation](https://github.com/WHIPFX/whip_core) applies to everything except
-the GTA-specific parts. `types/` gives your editor autocomplete.
+The API is whip_core's, so [WHIP's documentation](https://github.com/WHIPFX/whip_core) applies, except for what
+CONVERSION.md lists as doing nothing on RDR2. `types/` gives your editor autocomplete.
 
-WHIP's other resources (whip_gunny, whip_fuel, whip_phone, whip_autos and the rest) are GTA V resources and aren't
-part of this port.
+Some of WHIP's other resources have RedM ports of their own beside spur_core (spur_chat, spur_loadingscreen,
+spur_gunny, spur_rope, spur_voice, spur_phone and spur_test). The rest (whip_fuel, whip_autos and others) aren't
+ported.
 
 ## Credits and licence
 
@@ -136,8 +137,9 @@ part of this port.
   the permission to port it.
 - **whip_core** is by **Whippy** and licensed under the GNU LGPL 3.0. spur_core keeps that licence: see
   `COPYING.LESSER`, and `COPYING` for the GPL 3.0 it builds on.
-- `shared/emote_list.lua` is GPL 3.0, because it comes from RPEmotes.
-- `NOTICE.md` (whip_core's, unchanged) lists the third-party code, fonts and data under their own licences, and what the
+- `shared/emote_list.lua` is new for spur_core and under the LGPL 3.0 too: whip_core's emote list (GPL 3.0, from
+  RPEmotes) isn't part of this copy.
+- `NOTICE.md` (whip_core's, shortened to what this copy contains) lists the third-party code, fonts and data under their own licences, and what the
   licence doesn't cover.
 
 **Modified by:** the RedM port, 23 Nov 2026. The conversion is described in CONVERSION.md. Every hand-edited place

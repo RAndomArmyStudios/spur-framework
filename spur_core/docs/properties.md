@@ -37,7 +37,7 @@ the house.
    model and position (`client/rdr_door_hashes.lua`). A door that is not in that list (one added by a map mod)
    registers but does not hold its lock, and F8 says so once.
 4. **Signs.** Place the for-sale sign outside by the front door and the manager sign inside. A sign is read from
-   the side it faces. **RedM:** the sign is a floating prompt. WHIP's for-sale sign posts are GTA props, so none
+   the side it faces. **RedM:** the sign is a floating prompt. WHIP's for-sale sign posts are props RDR2 doesn't have, so none
    are listed (`Config.PropertySignPosts`).
 5. **Garage.** Optional. Aim at the ground where a wagon should stand and add a bay. Up to 8.
 6. **Name & settings.** Name, number, building (a group in the admin list, such as the town), price, most
