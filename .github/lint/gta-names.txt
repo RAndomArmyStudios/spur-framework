@@ -1,0 +1,75 @@
+# Names from GTA V that must not come back into SPUR (see the 26 Nov 2026 cleanup, commits a469112 to 344aabc).
+# Rockstar's mod guidelines don't allow content from one of its games in another.
+#
+# One regular expression per line (Python syntax), matched case-insensitively against every tracked text file.
+# Blank lines and lines starting with # are skipped. A known, allowed hit goes in gta-names-allow.txt, not here.
+
+# The game and the GTA-only platform name (Cfx.re's `fivem:` identifier is allowed: lowercase, it is an identifier)
+\bGTA\s?(V|5|IV|4|O|Online)?\b
+\bGTA[:_-]?(V|5|Online)\b
+\bGrand\s+Theft\s+Auto\b
+(?-i:\bFive[Mm]\b)(?!:)
+
+# Places
+\bLos\s+Santos\b
+\bSan\s+Andreas\b
+\bBlaine\s+County\b
+\bSandy\s+Shores\b
+\bPaleto(\s+Bay)?\b
+\bVinewood\b
+\bVespucci\b
+\bDel\s+Perro\b
+\bRockford\s+Hills\b
+\bMirror\s+Park\b
+\bGrapeseed\b
+\bLiberty\s+City\b
+\bMount\s+Chiliad\b
+\bAlamo\s+Sea\b
+\bFort\s+Zancudo\b
+\bLegion\s+Square\b
+\bPillbox\s+Hill\b
+\bCayo\s+Perico\b
+\bMission\s+Row\b
+
+# Shops, brands and banks
+\bBurger\s?Shot\b
+\bCluckin'?\s+Bell\b
+\bAmmu-?Nation\b
+\bLS\s+Customs\b
+\bMaze\s+Bank\b
+\bFleeca\b
+\bPacific\s+Standard\b
+\bLifeinvader\b
+\bWeazel\b
+\bPisswasser\b
+\bSprunk\b
+\beCola\b
+\bUp-n-Atom\b
+\bBean\s+Machine\b
+
+# Police, gangs and people
+\bLSPD\b
+\bBCSO\b
+\bSAHP\b
+\bLSSD\b
+\bBallas\b
+\bVagos\b
+\bMarabunta\b
+\bMichael\s+De\s+Santa\b
+\bFranklin\s+Clinton\b
+\bTrevor\s+Philips\b
+\bLamar\s+Davis\b
+\bLester\s+Crest\b
+
+# Vehicle models
+\b(adder|zentorno|kuruma|blista|faggio|oppressor|entityxf|turismor|buzzard2?|insurgent|police[2-4]|policeb|firetruk|bati801|akuma)\b
+
+# Ped models from GTA Online (RDR2's are mp_male and mp_female)
+\bmp_[mf]_freemode_01\b
+
+# Weapons (RDR2's are WEAPON_REVOLVER_*, WEAPON_PISTOL_VOLCANIC and so on; \b stops at the underscore)
+\bWEAPON_(PISTOL|COMBATPISTOL|APPISTOL|PISTOL50|SNSPISTOL|HEAVYPISTOL|STUNGUN|CARBINERIFLE|ASSAULTRIFLE|SPECIALCARBINE|BULLPUPRIFLE|SMG|MICROSMG|ASSAULTSMG|COMBATPDW|PUMPSHOTGUN|SAWNOFFSHOTGUN|MINIGUN|RPG|GRENADELAUNCHER|STICKYBOMB|PETROLCAN|NIGHTSTICK|FLASHLIGHT|GOLFCLUB|SWITCHBLADE|PARACHUTE)\b
+\bGADGET_PARACHUTE\b
+
+# Prop and interior name families GTA V uses (RDR2's props start p_ or s_)
+\b(v_ilev|v_res|hei_prop|ba_prop|ex_prop|apa_prop|bkr_prop|gr_prop|xm_prop|ch_prop|vw_prop|h4_prop)_\w+

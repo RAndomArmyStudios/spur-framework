@@ -84,7 +84,7 @@ end
 exports('SetVehiclePrices', function(prices)
     local owner = Registry.caller()
     if type(prices) ~= 'table' then
-        return false, 'prices must map a vehicle model to its price, e.g. { adder = 1000000 }'
+        return false, 'prices must map a vehicle model to its price, e.g. { wagon05x = 450 }'
     end
     local clean = {}
     for model, price in pairs(prices) do

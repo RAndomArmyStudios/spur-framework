@@ -43,7 +43,7 @@
 --   onDuty = true        ...and is on duty there (or anywhere, when no job is named)
 --   jobPermission = 'canManage'            ...and that role may do this (no job named: any job that grants it)
 --   item = 'toolkit' | { item = 'lockpick', count = 2 } | { 'toolkit', 'gloves' }
---   held = 'jerry_can' | { 'jerry_can', 'weapon_pistol' }   that item in the hand (SetHeldItem)
+--   held = 'jerry_can' | { 'jerry_can', 'weapon_revolver_cattleman' }   that item in the hand (SetHeldItem)
 --   zone = 'zone_id' | { ... }             standing inside one of these zones
 --   charId = 12 | { 12, 40 }               one of these characters
 --   ace = 'whip.devtools'                  holds this ACE (asked of the server once, then remembered)

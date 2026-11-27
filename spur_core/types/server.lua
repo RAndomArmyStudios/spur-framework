@@ -3201,7 +3201,7 @@ function spur_core:CreateDoor(data) end
 ---@class WhipDoorManager
 ---@field id any          the set: 'doors', your EnsureDoors opts.id, or 'door:<key>' (EnsureDoor)
 ---@field key? string     the door's name within it ('entrance', 'garage')
----@field label? string   what the Door Manager shows ("Business #4 · Bean Machine")
+---@field label? string   what the Door Manager shows ("Business #4 · Saloon")
 
 --- Hold a door while you need it (a heist's vault): the door at the spot, saved or not (a temporary
 --- one, never saved, where there is none). In memory only. Nobody may press it until you say who; it

@@ -1,0 +1,48 @@
+name: Lint
+
+# Three quick checks on every push to main and every pull request:
+#   - no GTA V names or content (SPUR follows Rockstar's mod guidelines; see .github/lint/gta-names.txt)
+#   - every Lua file parses, Cfx.re's backtick hashes and compound assignments included
+#   - the LuaLS stubs in spur_core/types type check cleanly
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-names:
+    name: No GTA V names
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/lint/check_gta_names.py
+
+  lua:
+    name: Lua lint and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LUALS_VERSION: 3.13.6
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lua-language-server
+        run: |
+          mkdir -p "$RUNNER_TEMP/luals"
+          curl -fsSL "https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/lua-language-server-${LUALS_VERSION}-linux-x64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/luals"
+          echo "$RUNNER_TEMP/luals/bin" >> "$GITHUB_PATH"
+
+      - name: Every Lua file parses
+        # Error level only: syntax errors and broken annotations. The game's natives have no stubs here, so
+        # warnings (undefined globals and the like) would drown the real problems.
+        run: lua-language-server --check=. --configpath="$PWD/.github/lint/luarc.json" --checklevel=Error --logpath="$RUNNER_TEMP/luals-log"
+
+      - name: spur_core/types type checks
+        run: lua-language-server --check=spur_core/types --configpath="$PWD/.github/lint/luarc.types.json" --checklevel=Warning --logpath="$RUNNER_TEMP/luals-log"
