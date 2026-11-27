@@ -68,7 +68,7 @@ local WEATHER = { type = 'string', maxLen = 20, pattern = '^[%u%d_]+$', patternW
                   choicesFrom = 'WeatherTypes' }
 
 -- One of the arrival scenes' four lists (Config.ArrivalScenes, client/arrival.lua): its scene lines, edited by the
--- page's arrivalScenes widget, which adds scenes from GTA's own (client/arrival_list.lua) and plays one where the admin
+-- page's arrivalScenes widget, which adds scenes from the catalogue (client/arrival_list.lua) and plays one where the admin
 -- stands (Watch). A line's other fields (a `prop`) are kept as they are.
 local ARRIVAL_ON = { path = 'ArrivalScenes.enabled', equals = true }
 local ANIM = { type = 'string', maxLen = 96, pattern = '^[%w_@%.%-]+$', patternWhy = 'must be a game animation name' }
@@ -426,7 +426,7 @@ ConfigSchema = {
               label = 'Arrive at their car within',
               help = 'Someone who left on foot with a car of theirs at most this near arrives at it.' },
             arrivalList('onFoot', 'Arrival scenes: on foot',
-                'Played where they arrive, one picked at random each time. A scene whose walk would go through a wall is skipped for another, and inside a building only those marked Indoors too play. Add an animation and its camera move; Watch plays one where you stand.'),
+                'Played where they arrive, one picked at random each time. A scene whose walk would go through a wall is skipped for another, and inside a building only those marked Indoors too play. Add scenes picks from client/arrival_list.lua, which is empty on RedM, so a scene is added in config.lua for now; Watch plays one where you stand.'),
             arrivalList('inVehicle', 'Arrival scenes: in a car seat',
                 'Played in the seat of the car they left in. A scene made with a car is lined up with it; Ends in the seat finishes with them in the seat.'),
             arrivalList('onBike', 'Arrival scenes: by a motorbike',

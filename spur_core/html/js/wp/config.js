@@ -886,7 +886,7 @@ export function makeSettingsSection(def) {
         return card;
     }
 
-    /** Add scenes: GTA's own, searched and ticked; the ones the list has already are shown, ticked and fixed. */
+    /** Add scenes: the catalogue's, searched and ticked; the ones the list has already are shown, ticked and fixed. */
     async function arrivalAdd(s) {
         const have = new Set(arrivalLines(s).map(sceneKey));
         const picked = new Set();
