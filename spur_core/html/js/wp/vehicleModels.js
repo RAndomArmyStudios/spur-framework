@@ -2,9 +2,9 @@
 // /whip SECTION — Vehicle Adjustments
 //
 // Trunk and glovebox for a whole CATEGORY of vehicles (`vehicle_class_meta`: the game's vehicle class, so every
-// motorbike, every industrial) and for one MODEL over its category (`vehicle_meta`). A car's storage is its own
+// wagon, every coach) and for one MODEL over its category (`vehicle_meta`). A car's storage is its own
 // size (given when it was made) first, then its model's, then its category's, then config.lua. Either can turn the
-// trunk or glovebox off (a motorbike with no trunk); a model's on or off is over its category's (an emergency
+// trunk or glovebox off (a cart with no trunk); a model's on or off is over its category's (an emergency
 // truck with a trunk where the category has none).
 //
 // Josh's layout (his mock, 12 Nov): the vehicles on the left half, each category a row that opens to its vehicles
@@ -354,9 +354,9 @@ function renderPane() {
     els.preview = null;
     if (!pick) {
         p.appendChild(WP.el('div', 'wp-pane-title', 'Vehicle Adjustments'));
-        p.appendChild(WP.el('div', 'wp-hint', 'The trunk and glovebox of a whole category (every motorbike, every SUV), '
+        p.appendChild(WP.el('div', 'wp-hint', 'The trunk and glovebox of a whole category (every wagon, every coach), '
             + 'or of one model over its category. Pick a category to set it for all of them, or open it and pick a '
-            + 'vehicle. A car\'s own size (given when it was made) comes first, then its model\'s, then its category\'s, '
+            + 'vehicle. A vehicle\'s own size (given when it was made) comes first, then its model\'s, then its category\'s, '
             + 'then config.lua.'));
         const set = [...byClass.keys()].filter((cls) => classRows[cls] && classRows[cls].row);
         if (set.length) {

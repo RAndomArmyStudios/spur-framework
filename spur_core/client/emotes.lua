@@ -296,7 +296,11 @@ end)
 -- back, not the game's default. The latest override wins when there are several.
 
 local walkByCmd, moodByCmd = {}, {}
-for _, w in ipairs(EmoteList and EmoteList.walks or {}) do walkByCmd[w.cmd] = w end
+local knownLoco = {}           -- [loco] = true, for overrides that name one
+for _, w in ipairs(EmoteList and EmoteList.walks or {}) do
+    walkByCmd[w.cmd] = w
+    if w.loco then knownLoco[w.loco] = true end
+end
 for _, m in ipairs(EmoteList and EmoteList.moods or {}) do moodByCmd[m.cmd] = m end
 
 local chosenWalk = nil        -- the player's own choice (a walk cmd), from the character's metadata
@@ -305,31 +309,45 @@ local overrideSeq = 0
 local walkApplying = false
 local walkAgain = false
 
---- The clipset that should be on the ped now: the newest override, else the chosen walk, else nil.
-local function wantedClipset()
+--- The walk that should be on the ped now: the newest override, else the chosen walk, else nil.
+--- An override is a /walk name, or the loco of one in the list ('very_drunk'). Anything else (an original-game
+--- clipset, 'x@y', which RDR2 can't play, or an old name such as 'trash') puts nothing on.
+local function wantedLoco()
     local best
     for _, o in pairs(overrides) do
         if not best or o.seq > best.seq then best = o end
     end
-    if best then return best.clipset end
+    if best then
+        local w = walkByCmd[best.clipset]
+        if w then return w.loco end
+        return knownLoco[best.clipset] and best.clipset or nil
+    end
     local w = chosenWalk and walkByCmd[chosenWalk]
-    return w and w.clipset or nil
+    return w and w.loco or nil
 end
 
---- Put the wanted walk on the ped. May be called any time; never waits (the clipset loads in a
---- thread), and a call that lands while one is loading is honoured when it finishes.
+-- RDR2's walk natives (see shared/emote_list.lua). The motion type takes only on the 'default' stance, so that is
+-- set first; clearing both gives the ped its model's own walk back.
+local SET_LOCO_FOR_MODEL   = 0x923583741DC87BCE
+local SET_LOCO_MOTION_TYPE = 0x89F5E7ADECCCB49C
+local CLEAR_LOCO_FOR_MODEL = 0x4FD80C3DD84B817B
+local CLEAR_LOCO_MOTION    = 0x58F7DB5BD8FA2288
+
+--- Put the wanted walk on the ped. May be called any time; never waits.
 local function applyWalk()
     if walkApplying then walkAgain = true return end
     walkApplying = true
     CreateThread(function()
         repeat
             walkAgain = false
-            local clipset = wantedClipset()
+            local loco = wantedLoco()
             local ped = PlayerPedId()
-            if clipset then
-                if LoadAnimSet(clipset, 1000) then SetPedMovementClipset(PlayerPedId(), clipset, 0.25) end
+            if loco then
+                Citizen.InvokeNative(SET_LOCO_FOR_MODEL, ped, IsPedMale(ped) and 'default' or 'default_female')
+                Citizen.InvokeNative(SET_LOCO_MOTION_TYPE, ped, loco)
             else
-                ResetPedMovementClipset(ped, 0.25)
+                Citizen.InvokeNative(CLEAR_LOCO_FOR_MODEL, ped)
+                Citizen.InvokeNative(CLEAR_LOCO_MOTION, ped)
             end
         until not walkAgain
         walkApplying = false
@@ -350,13 +368,13 @@ end
 --- The chosen walk's /walk name, or nil.
 function Emotes.walk() return chosenWalk end
 
---- A walk's clipset: a /walk name from the walks list ('trash'), or a clipset as it is ('clipset@move@...').
+--- What an override takes for a walk: a /walk name from the walks list ('drunk') or a loco from it ('very_drunk').
+--- Passed on as it is: applyWalk looks it up, and puts nothing on for a name it doesn't know.
 ---@param walk string
 ---@return string|nil
 function Emotes.walkClipset(walk)
     if type(walk) ~= 'string' or walk == '' then return nil end
-    local w = walkByCmd[walk]
-    return w and w.clipset or walk
+    return walk
 end
 
 --- Take over the walk for a while under `key` (spur_core's own: give mode), or give it back with nil. The same layer

@@ -109,6 +109,44 @@ local function deathFrame()
     deathScreenSay({ hidden = screenHidden })
 end
 
+-- The camera on a body lying indoors. The death camera is the game's own, behind the body, and in a small room that
+-- puts it against the wall behind them (seen in game, 24 Nov 2026). So once the body is down, eight rays go out
+-- level from it, and if the side behind has less than OPEN_M free, the camera is turned to the side with the most
+-- room, looking back at the body from above. A guess at the cause, not yet tried in game (27 Nov 2026).
+local OPEN_M      = 2.5    -- this much room behind the body: the camera is left as it is
+local PROBE_M     = 5.0    -- how far each ray looks
+local DOWN_PITCH  = -25.0  -- the camera looks down at the body this much
+
+--- Free distance from `c` along world heading `h` (degrees, the game's: 0 north, anticlockwise), at chest height.
+local function roomAlong(c, h, ped)
+    local r = math.rad(h)
+    local dx, dy = -math.sin(r), math.cos(r)
+    local z = c.z + 0.6
+    local probe = StartExpensiveSynchronousShapeTestLosProbe(c.x, c.y, z, c.x + dx * PROBE_M, c.y + dy * PROBE_M, z,
+        1 + 16, ped, 7)
+    local _, hit, at = GetShapeTestResult(probe)
+    if hit ~= 1 and hit ~= true then return PROBE_M end
+    return math.sqrt((at.x - c.x) ^ 2 + (at.y - c.y) ^ 2)
+end
+
+--- Turn the game's camera to the open side of a body lying where there is little room behind it.
+local function aimDeathCamera(ped)
+    local c = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+    local behind = (heading + 180.0) % 360.0
+    if roomAlong(c, behind, ped) >= OPEN_M then return end
+    local best, bestRoom = behind, -1
+    for i = 0, 7 do
+        local h = (behind + i * 45.0) % 360.0
+        local room = roomAlong(c, h, ped)
+        if room > bestRoom + 0.25 then best, bestRoom = h, room end
+    end
+    -- The camera sits on `best`'s side and looks the other way, at the body.
+    local look = (best + 180.0) % 360.0
+    SetGameplayCamRelativeHeading((look - heading + 540.0) % 360.0 - 180.0)
+    SetGameplayCamRelativePitch(DOWN_PITCH, 1.0)
+end
+
 --- Dead on the ground: brought back (a ped the game has killed can't be held), locked down and laid in the death
 --- pose where the body is, or at `at`. Answers false if the death ended or a respawn began meanwhile.
 ---@param gen number
@@ -157,6 +195,7 @@ local function layDown(gen, at)
 
     -- Show in death pose
     Wait(200)
+    aimDeathCamera(ped)
     PedHold.release('deathHide')
     return still()
 end

@@ -272,16 +272,34 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   (What changed: Doors). A door with no listed door of its model within 1.5 m (a door added by a map mod, or one
   femga's list misses) registers but its locks don't hold it, and F8 says so once with its id, model and position.
   Add it to the list by hand or rerun `dev/door_hashes_rdr.py` on a newer copy of femga's file (25 Nov 2026).
-- **Seen in game, not fixed yet** (24 Nov 2026):
-  - indoors, the death camera frames the wall;
-  - the admin panel's place maps are the original game's;
-  - Capture Player's Game shows no picture;
-  - the Vehicle Adjustments text still talks of motorbikes and SUVs;
-  - Walks lists only Normal;
+- **Seen in game, not fixed yet** (24 Nov 2026; gone through 27 Nov 2026, see below):
   - the server's `GetPedScriptTaskCommand` reads "none";
   - the Director's live sparks (`ent_amb_robot_sparks`) show nothing in daylight, and the other spark effects tried
-    from femga's looped list didn't either (smoke, flames and steam do show);
-  - the container wizard's size presets say kg while the rest of the page says lb.
+    from femga's looped list didn't either (smoke, flames and steam do show).
+- **Seen in game, changed in code, not yet tried in game** (27 Nov 2026). Each needs a look in game before it
+  leaves this list:
+  - *Indoors, the death camera frames the wall.* spur_core has no death camera of its own: it is RDR2's follow camera
+    behind the body, so in a small room it sits against the wall behind them. A guess: once the body is down,
+    `client/death.lua` (aimDeathCamera) sends eight level rays out from it and, when there is less than 2.5 m behind,
+    turns the camera to the side with the most room, looking down at the body. Not tried in game.
+  - *The admin panel's place maps are the original game's.* Probably fixed already by The map (25 Nov 2026):
+    `WP.place` draws through the same PauseMap, which loads `map/rdr-map3d.js` since then. No code changed; look at
+    a place map (a container's or a Player Manager page's) to confirm.
+  - *Capture Player's Game shows no picture.* Not fixable from here: RedM hands its pages no picture of the game
+    (js/screenshot.js, 24 Nov 2026), so every shot ends "the game view never showed the game". The Player Manager now
+    says so in plain words in the picture's place rather than as a fault of the player's game.
+  - *The Vehicle Adjustments text talks of motorbikes and SUVs.* It says "every wagon, every coach" now, and "a
+    vehicle's own size" for "a car's" (`html/js/wp/vehicleModels.js`).
+  - *Walks lists only Normal.* The list was empty, and whip's clipset walks did nothing anyway (SetPedMovementClipset is
+    a stub on RedM). `shared/emote_list.lua` lists 18 walks (drunk, hurt, limps, sad, angry, nervous, sneaking ...),
+    each an RDR2 loco motion type put on with _SET_PED_DESIRED_LOCO_MOTION_TYPE after _SET_PED_DESIRED_LOCO_FOR_MODEL
+    'default' ('default_female' for women), from the rdr2mods.com thread on changing walk styles. None tried in
+    game: take out any that shows nothing. `SetWalkOverride` and give mode take a walk's name or its loco; an
+    original-game clipset puts nothing on. Give mode's default walk was whip's 'trash' and is none now
+    (`Config.GiveModeStyle`).
+  - *The container wizard's size presets say kg while the rest of the page says lb.* The presets and the summary's
+    Holds line are in the player's weight unit now (js/weight.js); the Max kg box is still typed in kilograms, and
+    the hint says so (`html/js/wp/containers.js`).
 - **The aim dot and RDR2's reticle.** whip hides the original game's reticle (HUD component 14) while it draws its dot, and that
   call does nothing on RDR2, whose own small dot stays in the middle of the screen, aiming or not. Verified in game
   (24 Nov 2026): aiming a Cattleman sends the dot to the middle, letting go hides it, and the page draws it (a red

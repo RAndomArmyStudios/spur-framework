@@ -32,6 +32,7 @@ import { WhipPanel, WP } from '../whip-panel.js';
 import { nuiCallback, propImageUrl, itemImageUrl } from '../utils.js';
 import { propPicker, propPortrait, itemPicker, personList, knownCharName, avatar, inventoryPreview, iconInput } from './pickers.js';
 import { plural, fixed } from './format.js';
+import { weightText } from '../weight.js';
 
 let containers = {};     // keyed by String(containerId)
 let selectedId = null;   // the container whose page is open
@@ -277,7 +278,7 @@ function summaryRows(body, d, rowOpts, changed, then, noMap) {
         d.noProp && !d.prop ? 'no prop: only its prompt' : propName(d.prop) + (propName(d.prop) !== d.prop ? '  ·  ' + d.prop : ''));
     row('Where', 'where', d.spot ? 'ok' : 'err', d.spot ? spotText(d.spot) : 'not set');
     if (d.spot && !noMap) body.appendChild(WP.place({ x: d.spot.x, y: d.spot.y, name: d.name.trim() || 'The container' }));
-    row('Holds', 'holds', 'ok', plural(Number(d.slots), 'slot') + ', up to ' + fixed(d.maxWeight, 0) + ' kg');
+    row('Holds', 'holds', 'ok', plural(Number(d.slots), 'slot') + ', up to ' + weightText(Number(d.maxWeight) || 0));
     row('Who can open it', 'access', d.openBy === 'one' && !d.access.length ? 'err' : d.openBy === 'nobody' ? 'warn' : 'ok', openText(d, then));
     row('Belongs to', 'access', d.owner ? 'ok' : 'off', d.owner ? personText(d.owner, then) : 'nobody in particular');
     row('Takes', 'items', d.onlyItems && !d.allowed.length ? 'err' : 'ok', itemsText(d));
@@ -598,7 +599,7 @@ function stepHolds(body) {
     body.appendChild(split);
 
     const size = SIZES.find((s) => s.slots === Number(draft.slots) && s.weight === Number(draft.maxWeight));
-    choices(left, SIZES.map((s) => ({ key: s.key, title: s.title, text: s.slots + ' slots, up to ' + s.weight + ' kg' })),
+    choices(left, SIZES.map((s) => ({ key: s.key, title: s.title, text: s.slots + ' slots, up to ' + weightText(s.weight) })),
         size ? size.key : '', 'cwSize');
     const cols = WP.el('div', 'wp-cols-2');
     const slots = WP.input({ type: 'number', value: draft.slots, inputAction: 'cwSlots' });
@@ -608,7 +609,9 @@ function stepHolds(body) {
     cols.appendChild(WP.field('Slots', slots));
     cols.appendChild(WP.field('Max kg', weight));
     left.appendChild(cols);
-    hint(left, 'Or set your own: 1 to 1,000 slots, up to 10,000 kg.');
+    // The presets and the preview are in the player's weight unit; the box is typed in kg, as the server keeps it.
+    hint(left, 'Or set your own: 1 to 1,000 slots, up to 10,000 kg. Max kg is typed in kilograms, whatever the weight '
+        + 'unit; the sizes above and the preview show it in yours.');
 
     right.appendChild(WP.el('div', 'wp-section-title', 'Opened, it looks like this'));
     els.cwPreview = WP.el('div');

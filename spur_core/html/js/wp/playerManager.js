@@ -647,6 +647,16 @@ function takeShot(p) {
     }
 }
 
+/** Why there is no picture, as an admin reads it. RedM hands its pages no picture of the game (js/screenshot.js: the
+ *  game view stays blue), so every shot ends "the game view never showed the game": say that plainly, not as a fault
+ *  of this player's game. */
+function shotWhy(why) {
+    if (/game view never showed the game/.test(String(why))) {
+        return 'RedM gives the panel no picture of the game, so a player\'s game can\'t be pictured from here yet';
+    }
+    return why;
+}
+
 /** The preview: on its way (the logo's light), the picture, or why there is none. Online pages only. */
 function renderShot() {
     const u = detail;
@@ -670,7 +680,7 @@ function renderShot() {
         shotShown = pic;
         els.shotImg.src = pic.data;
     }
-    els.shotMsg.textContent = state === 'failed' ? 'No picture: ' + fail.why : 'No picture yet';
+    els.shotMsg.textContent = state === 'failed' ? 'No picture: ' + shotWhy(fail.why) : 'No picture yet';
     els.shotWhen.textContent = state === 'pic' ? 'Taken at ' + timeOfDay(pic.at)
         : state === 'waiting' ? 'Taking a picture…' : '';
     els.btnShot.disabled = state === 'waiting';
