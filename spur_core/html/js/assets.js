@@ -3,8 +3,8 @@
 // ============================================
 //
 // The same answer as shared/assets.lua (WhipAssets.url), from the same index (js/assets-index.js, made by
-// dev/assets_index.mjs): whipAssetUrl('img/props/prop_bench_01a.webp') is
-// 'https://cfx-nui-whip_media_props/img/props/prop_bench_01a.webp', or null when no area holds it. A plain script, as
+// dev/assets_index.mjs): whipAssetUrl('img/props/p_bench03x.webp') is
+// 'https://cfx-nui-whip_media_props/img/props/p_bench03x.webp', or null when no area holds it. A plain script, as
 // the index is: a page loads both with <script> (assets-index.js first); a module imports both (js/utils.js).
 
 (function () {

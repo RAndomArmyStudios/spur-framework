@@ -259,7 +259,7 @@ export function propPortrait(model, hasImage, glyph) {
  *   const pick = propPicker({
  *       id: 'cw-props',                 // unique in the panel (the chips are a WP.tabs)
  *       catalog: { categories, props }, // the furnisher's (Furnisher.catalog, via a section's call)
- *       value: 'prop_box_wood02a',      // the one picked, or ''
+ *       value: 'p_crate03x',            // the one picked, or ''
  *       first: 'crates',                // the chip it opens on, the first time
  *       lead: el,                       // optional: on the search's row, with the model's box after them (the
  *                                       //   container wizard's Name); without it, the model's box is in the side
@@ -469,7 +469,7 @@ const VEHICLE_TILE_MIN = 200;
  *       state: {},                               // optional: the chip and the search, kept by the caller (else
  *                                                //   by id, for as long as the page lives)
  *       vehicles: [{ model, name, cls, img }],   // the catalog (vmCatalog)
- *       value: 'adder',                          // the one picked, or ''
+ *       value: 'wagon02x',                       // the one picked, or ''
  *       side: [el, ...],                         // under the picture: the caller's
  *       onPick(model),
  *   });

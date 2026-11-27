@@ -76,8 +76,6 @@ local GROUPS = {
     {
         title = 'Scroll — other candidates, unverified',
         rows = {
-            { control = 180, pad = '', kb = 'Wheel down', name = 'CELLPHONE_SCROLL_FWD',    claim = nil },
-            { control = 181, pad = '', kb = 'Wheel up',   name = 'CELLPHONE_SCROLL_BACK',   claim = nil },
             { control = 241, pad = '', kb = 'Wheel up',   name = 'CURSOR_SCROLL_UP',        claim = nil },
             { control = 242, pad = '', kb = 'Wheel down', name = 'CURSOR_SCROLL_DOWN',      claim = nil },
             { control = 99,  pad = '', kb = 'Wheel down', name = 'VEH_SELECT_NEXT_WEAPON',  claim = nil },

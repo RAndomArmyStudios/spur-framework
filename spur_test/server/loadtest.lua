@@ -287,12 +287,12 @@ local function createOneVehicle(i, ox, oy, oz)
     local ok, vehicleId = pcall(function()
         -- Made garaged; SpawnVehicle below takes it out. (`state = 'out'` without spawnAt is
         -- refused since audit 6, VEH-4.)
-        return exports.spur_core:CreateOwnedVehicle(load.source, { model = 'blista' })
+        return exports.spur_core:CreateOwnedVehicle(load.source, { model = 'wagon02x' })
     end)
 
     if ok and type(vehicleId) == 'number' then
         -- THE MARKER /testloadclean FINDS IT BY. A run that crashes before its stop leaves these
-        -- rows in the operator's garage, and a plain blista is indistinguishable from a real one.
+        -- rows in the operator's garage, and a plain wagon02x is indistinguishable from a real one.
         pcall(function() exports.spur_core:SetVehicleData(vehicleId, '_loadtest', true) end)
         pcall(function() exports.spur_core:SpawnVehicle(vehicleId, vector4(x, y, oz, 0.0)) end)
         -- Returned whether or not the SPAWN landed: the database row exists either way, and an
@@ -496,7 +496,7 @@ local function createOneDoor(i, ox, oy, oz)
     local ok, door = pcall(function()
         return exports.spur_core:CreateDoor({
             label = ('_loadtest_door_%d'):format(i),
-            model = GetHashKey('v_ilev_gc_door01'),
+            model = GetHashKey('p_door06xl_static'),
             x = x, y = y, z = oz, heading = 0.0, locked = true,
         })
     end)

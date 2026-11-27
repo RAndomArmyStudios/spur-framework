@@ -11,7 +11,7 @@
 -- The settings page offers it as Place (tools/place_point.lua). OvMove is a tool's (tools/ov_move.lua, loaded after
 -- this file): asked only when a point is placed.
 
-local GHOSTS = { 'prop_mp_placement_sm', 'prop_mp_cone_02', 'prop_roadcone02a' }   -- the first this game has
+local GHOSTS = { 'mp001_s_fasttravelmarker01x', 'p_crate03x' }   -- the first this game has
 local REACH = 30.0
 local placing = false
 

@@ -147,7 +147,7 @@ local KEY_TO = { 'their pocket', 'in the ignition', 'nobody' }
 define({
     type = 'car.spawnTemp', category = 'cars', kind = 'wait', title = 'Spawn Temporary Car', api = 'SpawnTempVehicle', makes = 'vehicle',
     desc = 'Makes a car that is not anyone\'s to keep (a rental, a test drive): at a place, its key in a player\'s pocket, in the ignition, or nowhere. It goes when the system is switched off, after its minutes, or when left alone.',
-    props = { { key = 'model', kind = 'text', label = 'Model', required = true, default = 'buggy01', maxLength = 60 },   -- RedM (spur_core, 24 Nov 2026): RDR2's buggy; was the original game's faggio scooter
+    props = { { key = 'model', kind = 'text', label = 'Model', required = true, default = 'buggy01', maxLength = 60 },
               { key = 'key', kind = 'select', label = 'The key', options = KEY_TO, default = 'their pocket' },
               { key = 'locked', kind = 'bool', label = 'Locked', default = true },
               { key = 'secure', kind = 'bool', label = 'Cannot be lockpicked', default = true },

@@ -42,7 +42,7 @@ local function draft(ctx, over)
     local d = {
         place = ctx.place,
         space = { box(0, 0, 6, 4) },
-        doors = { { key = 'entrance1', role = 'entrance', model = GetHashKey('prop_door_01'),
+        doors = { { key = 'entrance1', role = 'entrance', model = GetHashKey('p_door02xl_static'),
                     pos = { x = 3, y = 0, z = 0 }, heading = 90 } },
         sign = { pos = { x = 3.4, y = -1.2, z = 1.5 }, heading = 270 },
         manager = { pos = { x = 2.2, y = 0.8, z = 1.5 }, heading = 90 },

@@ -992,7 +992,7 @@ end)
 --- Checks a typed random-vehicle model is a vehicle this game has. { ok, model } (lower case), or { ok = false, why }.
 RegisterNUICallback('directorVehicleModel', function(d, cb)
     local name = type(d) == 'table' and type(d.model) == 'string' and d.model:lower():match('^%s*([%w_]+)%s*$') or nil
-    if not name or #name > 64 then cb({ ok = false, why = 'A model name is letters, digits and _ (wagon02x)' }) return end   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
+    if not name or #name > 64 then cb({ ok = false, why = 'A model name is letters, digits and _ (wagon02x)' }) return end
     local hash = GetHashKey(name)
     if not IsModelInCdimage(hash) then cb({ ok = false, why = name .. ' is not a model this game has: check the spelling' }) return end
     if not IsModelAVehicle(hash) then cb({ ok = false, why = name .. ' is not a vehicle' }) return end

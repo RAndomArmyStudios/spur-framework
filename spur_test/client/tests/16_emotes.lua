@@ -4,8 +4,8 @@
 --
 -- Runs in the player's own game: it plays real emotes on the player's ped.
 --
--- RedM (spur_test, 23 Nov 2026): reworked for RDR2. whip_test played the original game's 'drink' (the mp_player_intdrink clip
--- and a prop_ld_flow_bottle the server put in the hand); on RedM every emote in spur_core/shared/emote_list.lua is
+-- RedM (spur_test, 23 Nov 2026): reworked for RDR2. whip_test played the original game's 'drink' (a clip
+-- and a bottle the server put in the hand); on RedM every emote in spur_core/shared/emote_list.lua is
 -- an RDR2 SCENARIO, which brings its own props, loop and exit, and spur_core makes no props for it. So these
 -- tests watch the scenario, read from that same list (loaded by fxmanifest.lua), and the spam test checks the
 -- ped is left holding nothing new. The walk and mood tests use the list's first walk and mood, and are skipped,

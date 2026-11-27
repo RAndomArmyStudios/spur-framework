@@ -572,7 +572,7 @@ function stepKeeper(body) {
     body.appendChild(tabs.root);
 
     if (draft.keeper === 'prop') {
-        const prop = WP.input({ placeholder: 'e.g. p_register01x', value: draft.prop, inputAction: 'swProp' });   // RedM (spur_core, 24 Nov 2026): RDR2's till; was the original game's prop_till_01
+        const prop = WP.input({ placeholder: 'e.g. p_register01x', value: draft.prop, inputAction: 'swProp' });   // RDR2's till
         prop.maxLength = 60;
         const cols = WP.el('div', 'wp-cols-2');
         cols.appendChild(WP.field('Prop model', prop));

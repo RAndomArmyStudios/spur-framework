@@ -14,7 +14,7 @@
 -- Config.EnableTestSeams for the teardown.
 
 local PACK_ID = '_test.pack'
-local DOOR = 'prop_door_01'
+local DOOR = 'p_door02xl_static'
 
 local function toWorld(place, lx, ly, lz)
     local t = math.rad(place.yaw)

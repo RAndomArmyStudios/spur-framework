@@ -2361,9 +2361,9 @@ end
 --- Declare your doors: the list is the whole set, by key. See Doors.ensureSet.
 ---
 ---     exports.spur_core:EnsureDoors({
----         { key = 'lobby_l', model = 'v_ilev_ph_gendoor004', coords = vector4(-868.84, -1275.53, 5.10, 110.0), link = 'lobby_r' },
----         { key = 'lobby_r', model = 'v_ilev_ph_gendoor004', coords = vector4(-867.60, -1273.20, 5.10, 110.0) },
----         { key = 'office',  model = 'v_ilev_ph_gendoor', coords = vector3(-870.1, -1280.4, 5.1), requirements = { jobs = { 'realestate' } } },
+---         { key = 'lobby_l', model = 'p_door13xl_static', coords = vector4(-868.84, -1275.53, 5.10, 110.0), link = 'lobby_r' },
+---         { key = 'lobby_r', model = 'p_door13xl_static', coords = vector4(-867.60, -1273.20, 5.10, 110.0) },
+---         { key = 'office',  model = 'p_door06xl_static', coords = vector3(-870.1, -1280.4, 5.1), requirements = { jobs = { 'realestate' } } },
 ---     }, { label = 'Pink Lady' })
 ---
 --- opts: { id = 'doors' (several sets per resource), label = <resource> (the Door Manager's name for

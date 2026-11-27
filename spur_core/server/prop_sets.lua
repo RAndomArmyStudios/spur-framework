@@ -7,8 +7,8 @@
 --
 --   exports.spur_core:ShowPropSet('camp', {
 --       props = {
---           { model = 'prop_box_wood02a', coords = vector3(x, y, z), rot = vector3(0.0, 0.0, 90.0) },
---           { model = 'prop_worklight_03a', coords = vector3(x2, y2, z2), light = true },
+--           { model = 'p_crate03x', coords = vector3(x, y, z), rot = vector3(0.0, 0.0, 90.0) },
+--           { model = 'p_lantern05x', coords = vector3(x2, y2, z2), light = true },
 --       },
 --       audience = 'everyone',   -- or { people = { 3, { charId = 12 } } }
 --       tag = 'run:42',
@@ -36,9 +36,8 @@
 --     prop later (it came near, it logged in) puts it where the timeline has it by now. Every game it is
 --     sent to says it has it (spur_core:server:propMotions); one that has not is sent it again each
 --     second, and one still without it after five seconds is said in the console.
---   * A GUN (`weapon = 'WEAPON_RIFLE_SPRINGFIELD'`): the prop is that firearm's world model (the game's, or one a running resource adds:
---     RedM (spur_core, 24 Nov 2026): RDR2's, shared/rdr_weapons.lua; the example was the original game's WEAPON_RPG
---     shared/weapon_catalog.lua), each
+--   * A GUN (`weapon = 'WEAPON_RIFLE_SPRINGFIELD'`): the prop is that firearm's world model (the game's, from
+--     shared/rdr_weapons.lua, or one a running resource adds: shared/weapon_catalog.lua), each
 --     game making it from the weapon itself; the Director's Fire Weapon fires it (client/director_weapons.lua).
 --   * ATTACHED (`attach = { net = netId } | { set = id, index = n } | { index = n }` (a prop of this same set),
 --     `attachOffset = { x, y, z }`, `attachRot =

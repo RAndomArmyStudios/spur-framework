@@ -6,8 +6,8 @@
 -- 2026): a player downloads each once, and again only when something in that one changes. Which holds what is
 -- shared/assets_index.lua, made by dev/assets_index.mjs from the packs. Ask here, never name a pack:
 --
---     WhipAssets.resourceFor('img/props/prop_bench_01a.webp')   -> 'whip_media_props'
---     WhipAssets.url('img/props/prop_bench_01a.webp')           -> 'https://cfx-nui-whip_media_props/img/props/...'
+--     WhipAssets.resourceFor('img/props/p_bench03x.webp')   -> 'whip_media_props'
+--     WhipAssets.url('img/props/p_bench03x.webp')           -> 'https://cfx-nui-whip_media_props/img/props/...'
 --
 -- The NUI asks html/js/assets.js the same (whipAssetUrl). Shared: both sides ask.
 

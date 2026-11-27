@@ -654,7 +654,7 @@ local function readWeapon(w)
     if w == nil or w == false then return nil end
     if type(w) == 'string' then w = { name = w } end
     if type(w) ~= 'table' or type(w.name) ~= 'string' or not w.name:upper():match('^WEAPON_[A-Z0-9_]+$') or #w.name > 64 then
-        return false, 'weapon is the game\'s weapon name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
+        return false, 'weapon is the game\'s weapon name, like WEAPON_REVOLVER_CATTLEMAN'
     end
     local ammo = math.tointeger(tonumber(w.ammo) or 250) or 250
     return { name = w.name:upper(), ammo = math.max(0, math.min(9999, ammo)) }
@@ -752,7 +752,7 @@ local function readAnim(a)
     if type(a) ~= 'table' then return nil, 'anim is { dict, clip }, { scenario } or false' end
     if a.scenario ~= nil then
         if type(a.scenario) ~= 'string' or #a.scenario > 64 or not a.scenario:match('^[%w_]+$') then
-            return nil, 'anim.scenario is a game scenario name, like WORLD_HUMAN_SMOKING'
+            return nil, 'anim.scenario is a game scenario name, like WORLD_HUMAN_SMOKE'
         end
         return { scenario = a.scenario }
     end

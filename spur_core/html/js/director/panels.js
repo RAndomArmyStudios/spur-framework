@@ -637,7 +637,7 @@ function cardsTab(ed) {
 }
 
 /** The scenario's placed things for a picker: each its picture (an NPC's ped, a lore character's own, a car) and a line
- *  under it (its model). A car is named by its model alone ("sultan", Josh 10 Nov 2026), with its name under it only
+ *  under it (its model). A car is named by its model alone ("wagon02x", Josh 10 Nov 2026), with its name under it only
  *  when another car has that model too. `weaponsOnly`: only its Fixed Weapons (props that are a gun: Fire Weapon's). */
 function worldOptions(ed, worldKind, weaponsOnly) {
     const modelOf = (w) => (w.def && typeof w.def.model === 'string' ? w.def.model : '');
@@ -1342,7 +1342,7 @@ function taskFields(ed, w, def, s, i, count, n) {
         else if (f.kind === 'weapon') {
             html += ed.weapons && ed.weapons.length
                 ? selectField(t, f.key, weaponValue(ed, v), ed.weapons.map((x) => [x.name, weaponText(x)]), { label: f.label, none: '— put it away —' })
-                : textField(t, f.key, v, { label: f.label, max: 64, placeholder: f.hint || 'WEAPON_REVOLVER_CATTLEMAN' });   // RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
+                : textField(t, f.key, v, { label: f.label, max: 64, placeholder: f.hint || 'WEAPON_REVOLVER_CATTLEMAN' });
         } else if (f.kind === 'world') {
             html += selectField(t, f.key, v, worldOptions(ed, f.worldKind), { label: f.label, none: '— pick a placed thing —' });
         } else if (f.kind === 'take') {
@@ -1728,7 +1728,7 @@ function routeGroups(ed, w) {
             if ((Number(p.wait) || 0) > 0) {
                 body += segField(t, 'act', p.act, ACTS, { label: 'While it waits', fallback: 'stand' });
                 if (p.act === 'emote') body += textField(t, 'emote', p.emote, { label: 'Emote', max: 40, placeholder: 'smoke', hint: '/e name' });
-                if (p.act === 'scenario') body += textField(t, 'scenario', p.scenario, { label: 'Scenario', max: 64, placeholder: 'WORLD_HUMAN_SMOKING' });
+                if (p.act === 'scenario') body += textField(t, 'scenario', p.scenario, { label: 'Scenario', max: 64, placeholder: 'WORLD_HUMAN_SMOKE' });
             }
             return body + placeButtons(ed, w, p, i, pts.length, 'points');
         });
@@ -1971,7 +1971,7 @@ function carModelsGroup(ed, w) {
             html += `<button class="dr-add" data-act="car-model-pick" data-id="${e(w.id)}">${ICON.plus}Add a model from Vehicles</button>`;
         }
         html += '<div class="dr-row dr-carmodel-add">'
-            + `<input class="dr-field dr-carmodel-input" type="text" maxlength="64" spellcheck="false" placeholder="or type its name: wagon02x"`   // RedM (spur_core, 24 Nov 2026): was the original game's adder
+            + `<input class="dr-field dr-carmodel-input" type="text" maxlength="64" spellcheck="false" placeholder="or type its name: wagon02x"`
             + ` data-id="${e(w.id)}" aria-label="A model, by its name">`
             + `<button class="dr-btn" data-act="car-model-add" data-id="${e(w.id)}">Add</button></div>`;
     }

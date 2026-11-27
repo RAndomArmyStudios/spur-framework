@@ -661,7 +661,7 @@ SecureEvent('spur_core:server:vmCreate', {
 
     local def, createErr = Vehicles.create({
         ownerCharId = ownerCharId,
-        model       = Sanitize.key(data.model, 60) or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder, which fails the model check
+        model       = Sanitize.key(data.model, 60) or 'wagon02x',
         plate       = Sanitize.string(data.plate, 8),   -- 8, as Vehicles.create allows
         state       = Sanitize.enum(data.state, { 'garaged', 'out', 'impounded' }, 'garaged'),
         garage      = garageKeyOf(data.garage),

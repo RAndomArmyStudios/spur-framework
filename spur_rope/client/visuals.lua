@@ -48,7 +48,7 @@ function Rope.RdrRopeType()
     return math.tointeger(tonumber(Config.Visuals.RdrRopeType)) or 0
 end
 
--- RedM (spur_rope, 24 Nov 2026): whip_rope's ball was the original game's prop_tennis_ball. Config.Visuals.PropModel where RDR2 has
+-- RedM (spur_rope, 24 Nov 2026): whip_rope's ball was the original game's tennis ball. Config.Visuals.PropModel where RDR2 has
 -- it, else the first of these it has (small RDR2 props), said once in the console.
 local PROP_FALLBACKS = { `p_baitbread01x`, `p_baitcheese01x`, `p_canteen01x` }
 local propModel = nil

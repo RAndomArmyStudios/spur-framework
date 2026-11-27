@@ -43,7 +43,6 @@ local NPC_LABELS = { failed = 'Could not' }
 define({
     type = 'npc.spawn', category = 'npcs', kind = 'action', title = 'Make NPC', api = 'SpawnNpc', makes = 'npc',
     desc = 'Makes an NPC at a place: a guard, a shopkeeper, a fence. It stands (or guards) there until moved; it goes when the system is switched off. Its group\'s NPCs defend each other.',
-    -- RedM (spur_core, 24 Nov 2026): an RDR2 ped and gun in the defaults (were the original game's s_m_y_dealer_01 and WEAPON_PISTOL)
     props = { { key = 'model', kind = 'text', label = 'Ped model', required = true, default = 's_m_m_valdealer_01', maxLength = 64 },
               { key = 'behaviour', kind = 'select', label = 'It', options = { 'stand', 'guard' }, default = 'stand' },
               { key = 'weapon', kind = 'text', label = 'Weapon (WEAPON_REVOLVER_CATTLEMAN, empty: none)', maxLength = 64 },

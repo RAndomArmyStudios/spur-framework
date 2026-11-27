@@ -911,8 +911,7 @@ Config.VehicleFillers = {}
 -- maps a make whose name and logo file disagree, keyed by the lowercased label. A make with no logo shows a generic
 -- car icon and is printed to the console once.
 --     Config.VehicleMakeLogos = {
---         ['emperor'] = 'emporer',       -- the game's own file is misspelled
---         ['western'] = 'westernmotorcycle',
+--         ['my wagons'] = 'mywagons',    -- a make whose logo file is named without its space
 --     }
 Config.VehicleMakeLogos = {}
 
@@ -1287,7 +1286,7 @@ Config.DoorHandleHeight = 1.05
 -- keyed by model hash. x runs along the door from its origin, y is half the panel thickness (the sign is mirrored
 -- onto both faces), z is height from the origin.
 --     Config.DoorPromptOffsets = {
---         [GetHashKey('v_ilev_ph_gendoor004')] = { x = 0.5, y = 0.06, z = 1.1 },
+--         [GetHashKey('p_door13xl_static')] = { x = 0.5, y = 0.06, z = 1.1 },
 --     }
 Config.DoorPromptOffsets = {}
 
@@ -1379,7 +1378,7 @@ Config.LoreVoice = {
     ByeRange = 10,           -- a player it said hello to walking this far away hears its Goodbye line
     GreetAgainMinutes = 3,   -- after this long (and having walked off), a player is greeted again
     ReactAgainSeconds = 6,   -- the same reaction again only after this long
-    Gestures = true,         -- it moves its hands as it talks (the game's own talking gestures, without a voice)
+    Gestures = false,        -- it moves its hands as it talks. RedM: no RDR2 gestures are set yet (client/lore_reactions.lua)
 }
 
 -- Prop catalog: every prop in the game is placeable in the furnisher, filed under the categories below (RedM, 24 Nov
@@ -1662,7 +1661,7 @@ Config.CharSelect = {
                 fov = 40.0,
             },
             pos      = vector4(-723.95, -1242.84, 44.73, 270.00),
-            scenario = 'WORLD_HUMAN_STAND_WAITING',
+            scenario = 'WORLD_HUMAN_WAITING_IMPATIENT',
             look     = { weather = 'SUNNY', hour = 13, minute = 0, frozen = true, priority = 1000 },
         },
 

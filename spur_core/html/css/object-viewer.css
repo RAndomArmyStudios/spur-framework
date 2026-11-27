@@ -4,9 +4,9 @@
    THE HOUSE LOOK. One element per entity: a quiet tag when idle, and the one you look at opens into the house card — the editor card's
    family (css/editor-hud.css, css/dev-menu.css), sized for the world:
 
-       •  prop_gas_pump_1a                       idle: the kind's dot on the entity, the name on night glass
+       •  p_barrel02x                            idle: the kind's dot on the entity, the name on night glass
 
-       • (box)  prop_gas_pump_1a                 focused: the disc (its kind's glyph, ringed in its colour —
+       • (box)  p_barrel02x                      focused: the disc (its kind's glyph, ringed in its colour —
                                                  all that says what kind it is) and the name as the title,
           HASH      0x1A2B3C4D                   the readings,
           POSITION  -360.92, 51.44, 54.40

@@ -211,8 +211,8 @@ function clusterArt(c) {
 }
 
 /** A prop's display name: whatever the catalog recorded, else the model with its underscores
- *  opened out. Model names are the only name most props will ever have — `v_res_tre_sofa` reads as
- *  "v res tre sofa", which is not beautiful and is honest. */
+ *  opened out. Model names are the only name most props will ever have — `p_sofa01x` reads as
+ *  "p sofa01x", which is not beautiful and is honest. */
 function propLabel(p) {
     if (p.name) return p.name;
     return String(p.model).replace(/_/g, ' ');

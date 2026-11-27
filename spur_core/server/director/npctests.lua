@@ -19,8 +19,8 @@ local function around(src, dist, side)
 end
 
 local function npcDef(at, over)
-    local d = { model = 's_m_m_valdealer_01', coords = at, behaviour = 'stand', conditions = { canMove = true },   -- RedM (spur_core, 24 Nov 2026): was the original game's s_m_y_dealer_01
-                weapon = 'WEAPON_REVOLVER_CATTLEMAN' }   -- RedM (spur_core, 24 Nov 2026): RDR2 has no WEAPON_PISTOL
+    local d = { model = 's_m_m_valdealer_01', coords = at, behaviour = 'stand', conditions = { canMove = true },
+                weapon = 'WEAPON_REVOLVER_CATTLEMAN' }
     for k, v in pairs(over or {}) do d[k] = v end
     return d
 end

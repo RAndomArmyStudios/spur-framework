@@ -26,7 +26,7 @@
 --
 -- WHEN: one test per metadata field, and all of them must pass.
 --   ammo = 0                       equal to this (a number, text, true or false)
---   model = { 'adder', 't20' }     one of these
+--   model = { 'cart01', 'cart02' } one of these
 --   ammo = { above = 0 }           a number above / below / atLeast / atMost (several: all of them)
 --   slots = { empty = false }      has something in it. Empty is nothing, false, '', 0, or a table with
 --                                  nothing in it.

@@ -21,7 +21,7 @@
 -- name, mode or job, its prompt is changed in place (no keeper popping out and back).
 
 local CORE = GetCurrentResourceName()
-local SCENARIO = 'WORLD_HUMAN_STAND_IMPATIENT'   -- what the keeper does behind the counter
+local SCENARIO = 'WORLD_HUMAN_SHOPKEEPER'   -- what the keeper does behind the counter
 local PROP_LIFT = 1.0                             -- a prop shop's prompt, this far above its spot
 local counters = {}   -- [shopId] = { tag, sig, npcId, netId, pointId }
 local serial = 0

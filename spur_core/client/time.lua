@@ -285,7 +285,7 @@ end)
 --- or clear it, and it comes off when your resource stops. Returns `true`, or `false, why`.
 ---
 --- ```lua
---- exports.spur_core:SetWeatherLayer('zone:swamp', { weather = 'FOGGY', priority = 10 })
+--- exports.spur_core:SetWeatherLayer('zone:swamp', { weather = 'FOG', priority = 10 })
 --- exports.spur_core:ClearWeatherLayer('zone:swamp')
 --- ```
 exports('SetWeatherLayer', function(name, opts) return setLayer(name, opts, Registry.caller()) end)

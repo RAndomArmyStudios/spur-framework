@@ -1038,7 +1038,7 @@ end
 function Vehicles.create(data)
     -- A model the game has (Vehicles.modelExists), before anything is written: a dealership sale
     -- refunds on this answer, and /whip shows it.
-    local missing = Vehicles.missingModel(data.model or 'wagon02x')   -- RedM (spur_core, 24 Nov 2026): RDR2's wagon when none is given; the original game's adder fails the model check
+    local missing = Vehicles.missingModel(data.model or 'wagon02x')   -- RDR2's wagon when none is given
     if missing then return nil, missing end
 
     -- The plate rule is Vehicles.normalisePlate. A taken plate is refused with the reason instead of
@@ -1084,7 +1084,7 @@ function Vehicles.create(data)
         query  = 'INSERT INTO `vehicles` (`ownerCharId`,`model`,`plate`,`state`,`garage`,`vehStats`,`properties`,`x`,`y`,`z`,`heading`,`trunkSlots`,`trunkMaxWeight`,`gloveboxSlots`,`gloveboxMaxWeight`,`vehType`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         values = {
             data.ownerCharId,
-            data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
+            data.model or 'wagon02x',
             plate,
             data.state or 'garaged',
             garage,
@@ -1152,7 +1152,7 @@ function Vehicles.loadCreated(insertId, data, plate, garage, stats, props, vehTy
     local def = {
         vehicleId        = insertId,
         ownerCharId      = data.ownerCharId,
-        model            = data.model or 'wagon02x',   -- RedM (spur_core, 24 Nov 2026): was the original game's adder
+        model            = data.model or 'wagon02x',
         plate            = plate,
         state            = data.state or 'garaged',
         garage           = garage,
@@ -4198,10 +4198,10 @@ end
 --- Create a vehicle owned by a player's character (a dealership, a heist reward, a job vehicle; a row written
 --- straight to the database is invisible until a restart). ownerCharId comes from the player record, not `data`.
 --- Returns `(vehicleId, err)`, with `false` rather than nil on failure. The plate is a field of the vehicle:
----     local vehicleId, err = exports.spur_core:CreateOwnedVehicle(source, { model = 'adder' })
+---     local vehicleId, err = exports.spur_core:CreateOwnedVehicle(source, { model = 'wagon02x' })
 ---     local plate = exports.spur_core:GetVehicle(vehicleId).plate
 --- One call for a whole sale, undo included:
----     exports.spur_core:CreateOwnedVehicle(source, { model = 'bati' }, {
+---     exports.spur_core:CreateOwnedVehicle(source, { model = 'buggy01' }, {
 ---         giveKey = true,                                -- put a key in their pockets
 ---         spawnAt = vector4(-45.0, -1098.0, 26.4, 70.0), -- and bring it out here
 ---     })

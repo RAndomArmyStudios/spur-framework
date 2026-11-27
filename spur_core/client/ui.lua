@@ -156,7 +156,7 @@ end
 -- Loads go through client/streaming.lua's LoadAnimDict / LoadModel, two seconds each.
 
 --- Start the bar's animation (`{ dict, clip, flag }`, flag 49 by default: upper body, looping) and answer how to stop it.
---- Or a scenario (`{ scenario = 'WORLD_HUMAN_VEHICLE_MECHANIC' }`): a task with its own loop and props.
+--- Or a scenario (`{ scenario = 'WORLD_HUMAN_CROUCH_INSPECT' }`): a task with its own loop and props.
 local function _startAnim(anim)
     if type(anim) ~= 'table' then return nil end
     if type(anim.scenario) == 'string' and anim.scenario ~= '' then

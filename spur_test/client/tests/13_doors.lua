@@ -79,7 +79,7 @@ RegisterClientTestModule({
             fn = function()
                 local pos = GetEntityCoords(PlayerPedId())
                 local door = createTestDoor({
-                    label = '_test_wire_proj', model = GetHashKey('prop_door_01'),
+                    label = '_test_wire_proj', model = GetHashKey('p_door02xl_static'),
                     x = pos.x + 2.0, y = pos.y + 2.0, z = pos.z, heading = 0,
                     requirements = { ace = '_test_wire' },
                 })
@@ -121,7 +121,7 @@ RegisterClientTestModule({
             fn = function()
                 local pos = GetEntityCoords(PlayerPedId())
                 local door = createTestDoor({
-                    label = '_test_far_door', model = GetHashKey('prop_door_01'),
+                    label = '_test_far_door', model = GetHashKey('p_door02xl_static'),
                     x = pos.x + 300.0, y = pos.y + 300.0, z = pos.z, heading = 0,
                 })
 
@@ -144,7 +144,7 @@ RegisterClientTestModule({
                 local origin = GetEntityCoords(ped)
 
                 local door = createTestDoor({
-                    label = '_test_cell_refresh', model = GetHashKey('prop_door_01'),
+                    label = '_test_cell_refresh', model = GetHashKey('p_door02xl_static'),
                     x = origin.x - 3.0, y = origin.y - 3.0, z = origin.z, heading = 0,
                 })
                 local doorId = door and door.doorId

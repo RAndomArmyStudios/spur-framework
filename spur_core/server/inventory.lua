@@ -2528,7 +2528,7 @@ end
 --     exports.spur_core:RegisterUseHandler('alcohol', {
 --         label = 'Drinking...', duration = 5000,
 --         anim  = { dict = 'your_anim_dict', clip = 'your_clip' },
---         prop  = { model = 'prop_amb_beer_bottle' },
+--         prop  = { model = 'p_bottlebeer01x' },
 --         disable = { move = false },                          -- they can walk while they drink
 --         canUse = function(source, player, item, addr) ... end, -- optional: false, 'why' refuses
 --         onComplete = function(source, player, item, addr)      -- the bar finished and it is taken
@@ -2837,7 +2837,7 @@ exports('RegisterContextAction', function(actionKey, handler)
 end)
 
 --- Options added to items by resources that do not own them: one per item and action, the
---- adder's, gone when it stops. Any change is a new definition for every client.
+--- adding resource's, gone when it stops. Any change is a new definition for every client.
 local _addedOptions = Registry.new('ItemOption', {
     label = 'item option',
     store = Inventory.AddedOptions,

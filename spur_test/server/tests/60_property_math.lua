@@ -53,7 +53,7 @@ RegisterTestModule({
                 assertEqual(PropertyMath.signedHash(2455748208), -1839219088, 'unsigned -> signed')
                 assertEqual(PropertyMath.signedHash(-1839219088), -1839219088, 'signed stays signed')
                 assertEqual(PropertyMath.signedHash('2455748208'), -1839219088, 'numeric string')
-                assertEqual(PropertyMath.signedHash('adder'), GetHashKey('adder'), 'a name is hashed')
+                assertEqual(PropertyMath.signedHash('wagon02x'), GetHashKey('wagon02x'), 'a name is hashed')
                 assertNil(PropertyMath.signedHash(''), 'empty string refused')
             end,
         },

@@ -1,10 +1,9 @@
 -- ============================================
--- Voice Items — the voice system's megaphone and radio, as whip knows them
+-- Voice Items — which voice system runs, and what it says it can do
 -- ============================================
 --
--- The keys belong to "the voice system" (spur_voice/server/items.lua, spur_voice_simple/server/items.lua):
--- whichever voice system runs registers them the same, so these checks hold for either. What they DO is
--- tested in the player's game ('Client: Voice') and by spur_voice's own harnesses.
+-- RedM (spur_test, 26 Nov 2026): whip_voice's megaphone and radio items, their pictures, the megaphone model and the
+-- 3D radio were the original game's or made for it, and spur_voice ships without them, so their tests are gone.
 --
 -- WHICH ONE RUNS is spur_core's answer (GetVoiceSystem, 13 Oct 2026): spur_voice or spur_voice_simple.
 
@@ -30,63 +29,6 @@ RegisterTestModule({
                 assertType(v.features, 'table', 'its features')
                 assertTrue(v.features.lines == true, 'it carries voice lines (spur_phone\'s calls)')
                 assertTrue(v.features.sounds == 'full' or v.features.sounds == 'basic', 'sounds is full or basic')
-            end,
-        },
-        {
-            name = 'The megaphone is a usable, single tool that drops as a megaphone',
-            fn = function()
-                voiceRes()
-                local def = exports.spur_core:GetItemDef('megaphone')
-                assertNotNil(def, 'megaphone is registered')
-                assertEqual(def.name, 'Megaphone', 'its name')
-                assertTrue(def.usable == true, 'usable (the use holds it up and puts it down)')
-                assertTrue(def.stack == false, 'one to a slot')
-                assertEqual(def.prop, 'prop_megaphone_01', 'what it looks like on the ground')
-            end,
-        },
-        {
-            name = 'The radio is a usable, single tool that drops as a walkie-talkie',
-            fn = function()
-                voiceRes()
-                local def = exports.spur_core:GetItemDef('radio')
-                assertNotNil(def, 'radio is registered')
-                assertEqual(def.name, 'Radio', 'its name')
-                assertTrue(def.usable == true, 'usable (the use opens the radio)')
-                assertTrue(def.stack == false, 'one to a slot')
-                assertEqual(def.prop, 'prop_cs_walkie_talkie', 'what it looks like on the ground')
-            end,
-        },
-        {
-            name = 'The items\' pictures and the megaphone model are in the voice resource',
-            fn = function()
-                local res = voiceRes()
-                -- whip finds a picture named after the item in the resource that registered it.
-                assertNotNil(LoadResourceFile(res, 'html/img/items/radio.png'), 'html/img/items/radio.png')
-                assertNotNil(LoadResourceFile(res, 'html/img/items/megaphone.png'), 'html/img/items/megaphone.png')
-                assertNotNil(LoadResourceFile(res, 'stream/prop_megaphone_01.ydr'), 'stream/prop_megaphone_01.ydr (the megaphone in the hand)')
-            end,
-        },
-        {
-            name = 'Every file the 3D radio loads is on the server and sent to players (spur_voice)',
-            fn = function()
-                if voiceRes() ~= 'spur_voice' then skip('only spur_voice has the 3D radio') end
-                -- A file missing from the manifest's files {} 404s inside the page: the radio would
-                -- not come up. These are the ones html/index.html and js/walkie.js load.
-                local listed = {}
-                for i = 0, GetNumResourceMetadata('spur_voice', 'file') - 1 do
-                    listed[GetResourceMetadata('spur_voice', 'file', i)] = true
-                end
-                for _, f in ipairs({
-                    'html/index.html', 'html/js/walkie.js', 'html/radio3d/radio.js', 'html/radio3d/lcd.js',
-                    'html/radio3d/radio.glb', 'html/radio3d/lib/build/three.module.min.js',
-                    'html/radio3d/lib/examples/jsm/controls/OrbitControls.js',
-                    'html/radio3d/lib/examples/jsm/environments/RoomEnvironment.js',
-                    'html/radio3d/lib/examples/jsm/loaders/GLTFLoader.js',
-                    'html/radio3d/lib/examples/jsm/utils/BufferGeometryUtils.js',
-                }) do
-                    assertTrue(listed[f] == true, f .. ' is in the manifest\'s files')
-                    assertNotNil(LoadResourceFile('spur_voice', f), f .. ' is there')
-                end
             end,
         },
     },

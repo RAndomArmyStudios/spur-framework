@@ -18,7 +18,7 @@
 --   * a client finding a saved zone by its key (IsInZone, require = { zone = key }): the zone
 --     reaches the client by broadcast, and no client seam reads it back yet.
 
-local DOOR_MODEL = GetHashKey('prop_door_01')
+local DOOR_MODEL = GetHashKey('p_door02xl_static')
 local SET_ID     = '_test_world'
 local PAIR_SET   = '_test_world_pair'   -- the WLD-7 test's own set, so it cannot touch SET_ID's doors
 local ZONE_KEY   = '_test_world_zone'

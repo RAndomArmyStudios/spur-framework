@@ -36,9 +36,8 @@ end)
 -- again. Checked every FX_MS, only while the list has any; a glow is a light, drawn every frame while near.
 
 local FX_RANGE, FX_MS = 120.0, 500
--- RDR2's looped effects, in its core set. RedM (spur_core, 24 Nov 2026): RDR2 has none of the original game's four
--- (ent_amb_smoke_foundry, ent_amb_sparking_wires, ent_amb_barrel_fire, ent_amb_steam); these are its nearest, from
--- femga's rdr3_discoveries ptfx_assets_looped.lua. The scales are the game's, not yet tuned in game.
+-- RDR2's looped effects, in its core set. RedM (spur_core, 24 Nov 2026): RDR2 has none of the original game's four;
+-- these are its nearest, from femga's rdr3_discoveries ptfx_assets_looped.lua. The scales are the game's, not yet tuned in game.
 local FX = {
     smoke  = { asset = 'core', name = 'ent_amb_smoke_chimney', scale = 0.4 },
     sparks = { asset = 'core', name = 'ent_amb_robot_sparks', scale = 1.0 },

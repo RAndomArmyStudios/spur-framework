@@ -55,39 +55,35 @@ local function clientGetNearbyCellKeys(x, y, range)
 end
 
 -- ============================================
--- The grab (Josh, 2 Nov): Rockstar's generic grab, as a pile is picked up
+-- The grab (Josh, 2 Nov), as a pile is picked up
 -- ============================================
 --
--- Picking a pile up from its prompt plays Rockstar's own grab (the Drug Wars pack's gen_grab, in every game build
--- from 2802), not the hand press. Like the press it plays WHERE THE PLAYER STANDS (no walk, no turn: a pile further
--- off is grabbed at the air, as Rockstar's own pick ups are) and the pick up is not held for it: the server is asked
--- on E. The pile's prop stays on the ground until the hand closes on it (each clip's grab moment, below), then goes
--- (`grabbing`, DespawnGroundProp).
+-- Picking a pile up from its prompt plays a grab, not the hand press. Like the press it plays WHERE THE PLAYER
+-- STANDS (no walk, no turn: a pile further off is grabbed at the air) and the pick up is not held for it: the server
+-- is asked on E. The pile's prop stays on the ground until the hand closes on it (each clip's grab moment,
+-- GRAB_CLOSE), then goes (`grabbing`, DespawnGroundProp).
 --
--- WHICH ONE (3D Clanker measured them, 2 Nov): its height by the pile's height above the player's feet (low below
--- 0.65 m, high above 1.6 m, else med); the right hand, or the left when the pile is more than 30 degrees to the
--- left; both hands when the item says so (its `grab` setting, '2h', on its /whip Items page; one hand by default).
--- high and med are upper body with the player in control; low bends the knees, so it is full body: it plays until the
--- hand has closed on the pile, even for a player who is moving or pushing the stick (Josh: a pick up on the move was
--- cut before it showed), and from then on moving lets them go. Women play the @heeled@ set (the only female one; 9 cm higher at the hips: in
--- flat shoes her feet may float during it).
+-- WHICH ONE: its height by the pile's height above the player's feet (low below 0.65 m, high above 1.6 m, else
+-- med); the right hand, or the left when the pile is more than 30 degrees to the left; both hands when the item says
+-- so (its `grab` setting, '2h', on its /whip Items page; one hand by default). high and med are upper body with the
+-- player in control; low bends the knees, so it is full body: it plays until the hand has closed on the pile, even
+-- for a player who is moving or pushing the stick (Josh: a pick up on the move was cut before it showed), and from
+-- then on moving lets them go.
+--
+-- RedM (spur_core, 26 Nov 2026): whip's grab clips were the original game's and RDR2 has none of them, so GRAB_DICT
+-- is empty and a pile is picked up with no grab (PlayGrab answers nil, and the pile goes at once). An RDR2 set goes
+-- in GRAB_DICT (male, and heeled for women), its clips named high_rh, high_lh, high_2h, med_*, low_*, with each
+-- clip's ms in GRAB_CLOSE and GRAB_DONE.
 
-local GRAB_DICT = {
-    male   = 'anim@scripted@player@freemode@gen_grab@male@',
-    heeled = 'anim@scripted@player@freemode@gen_grab@heeled@',
-}
+local GRAB_DICT = {}
 local GRAB_MS = 2000
 local FEET_BELOW = 1.0                         -- a ped's feet below GetEntityCoords
 local GRAB_LOW_BELOW, GRAB_HIGH_ABOVE = 0.65, 1.6
 local GRAB_LEFT = -math.rad(30)
--- When the hand closes on it (each clip's own grab tag, which plays Rockstar's grab sound by itself), ms.
-local GRAB_CLOSE = {
-    high_rh = 612, high_lh = 654, high_2h = 522,
-    med_rh  = 516, med_lh  = 594, med_2h  = 740,
-    low_rh  = 694, low_lh  = 454, low_2h  = 720,
-}
--- When it may end early (low: the hips back up; med_rh: the arm back at the side); the rest run their 2 s.
-local GRAB_DONE = { low_rh = 1133, low_lh = 1100, low_2h = 1233, med_rh = 1066 }
+-- When the hand closes on it, ms, by clip (an RDR2 set's own; none yet).
+local GRAB_CLOSE = {}
+-- When it may end early (low: the hips back up); the rest run their GRAB_MS.
+local GRAB_DONE = {}
 local GRAB_STICK = 0.35
 
 --- [id] = the game time the hand closes on that pile: its prop stays until then (DespawnGroundProp).
@@ -97,6 +93,7 @@ local grabbing = {}
 -- the hand reaches it. Only theirs: another player's grab reaches this game as their own task. Looked at again every
 -- few seconds, for a new character or model.
 CreateThread(function()
+    if not next(GRAB_DICT) then return end
     while true do
         local want = GetEntityModel(PlayerPedId()) == `mp_female` and GRAB_DICT.heeled or GRAB_DICT.male
         for _, dict in pairs(GRAB_DICT) do
@@ -275,6 +272,7 @@ local function PlayGrab(T, item)
     end
     local clip = band .. '_' .. hand
     local dict = GetEntityModel(ped) == `mp_female` and GRAB_DICT.heeled or GRAB_DICT.male
+    if not dict then return nil end   -- no grab clips (RDR2 has none of whip's yet)
     -- Full body (the knees bend) only out of cover; in cover even a low grab is the upper body's.
     local low = band == 'low' and not inCover
 
@@ -294,7 +292,7 @@ local function PlayGrab(T, item)
         end
         if GRAB_DONE[clip] and IsEntityPlayingAnim(ped, dict, clip, 3) then StopAnimTask(ped, dict, clip, 4.0) end
     end)
-    local closeMs = GRAB_CLOSE[clip]
+    local closeMs = GRAB_CLOSE[clip] or 0
     return closeMs, low and GRAB_DONE[clip] or (closeMs + 100)
 end
 

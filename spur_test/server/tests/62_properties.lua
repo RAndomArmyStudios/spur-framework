@@ -13,7 +13,7 @@
 -- __TestPropertyFixture seam, because the Configurator that will normally make them does not exist
 -- yet. It needs Config.EnableTestSeams.
 
-local DOOR_MODEL = GetHashKey('prop_door_01')
+local DOOR_MODEL = GetHashKey('p_door02xl_static')
 
 local function near(a, b, eps) return math.abs(a - b) <= (eps or 0.01) end
 
@@ -309,7 +309,7 @@ RegisterTestModule({
             fn = function(source, ctx)
                 local _, oldId = doorOf(ctx.idA, 'front')
                 assertNotNil(oldId, 'A has its front door')
-                local other = GetHashKey('v_ilev_ph_door01')
+                local other = GetHashKey('p_door13xl_static')
                 local doors = {
                     { key = 'front', role = 'entrance', model = other, pos = { x = 3.0, y = 0.0, z = 0.0 }, heading = 90 },
                 }

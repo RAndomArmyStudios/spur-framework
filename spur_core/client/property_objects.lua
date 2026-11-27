@@ -259,7 +259,7 @@ local rebuiltAt = {}     -- [propertyId] = when its set was last made again (int
 local PLACE_MATCH_M = 2.0      -- same-design flats sit 4-6 m apart in Mega; a dead copy sits on the spot
 local TEST_EVERY_MS = 1000     -- a test object at most this often, per property
 -- Small, and checked against the game's object list (server/prop_catalog_seed.lua).
-local TEST_MODEL = GetHashKey('prop_soap_disp_01')
+local TEST_MODEL = GetHashKey('p_soap01x')
 local tested = {}              -- [propertyId] = { at, id }: the last test object's interior
 local saidOff = {}             -- [propertyId] = true: its design found off its placement, said once
 local saidStale = {}           -- [propertyId] = true: another design at its placement, said once

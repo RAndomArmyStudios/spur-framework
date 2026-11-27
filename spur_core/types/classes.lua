@@ -639,7 +639,7 @@ function WhipPlayer:removeCash(amount, why, withNext) end
 ---@field dict string|nil Animation dictionary
 ---@field clip string|nil Animation name
 ---@field flag number|nil Default 49: upper body, so the player can walk if `disable.move` allows
----@field scenario string|nil Instead of dict/clip: a game scenario, e.g. 'WORLD_HUMAN_VEHICLE_MECHANIC'
+---@field scenario string|nil Instead of dict/clip: a game scenario, e.g. 'WORLD_HUMAN_CROUCH_INSPECT'
 
 ---@class WhipProgressProp
 ---@field model string|number Prop model

@@ -46,7 +46,7 @@ function Containers.ensureTable()
             `y`            FLOAT            NOT NULL,
             `z`            FLOAT            NOT NULL,
             `heading`      FLOAT            NOT NULL DEFAULT 0.0,
-            `prop`         VARCHAR(60)      NOT NULL DEFAULT 'p_package01x',   -- RedM (spur_core, 24 Nov 2026): was prop_cs_cardbox_01 (the original game)
+            `prop`         VARCHAR(60)      NOT NULL DEFAULT 'p_package01x',
             -- How far its prop reaches out from its spot, in metres (half its footprint's diagonal, as the
             -- admin's game measured it): the open range is counted from there, where its prompt is
             -- (Containers.openFor). NULL: from its spot. Migration 045 adds it to an existing table.

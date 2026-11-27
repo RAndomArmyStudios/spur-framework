@@ -4,7 +4,7 @@
 --
 -- One way to wait for the game to load something, bounded, and exported for satellites:
 --
---     local hash = exports.spur_core:LoadModel('prop_beer_bottle')     -- hash, or nil
+--     local hash = exports.spur_core:LoadModel('p_bottlebeer01x')      -- hash, or nil
 --     if not hash then return end
 --     local obj = CreateObject(hash, x, y, z, true, true, false)
 --     SetModelAsNoLongerNeeded(hash)                                   -- yours to release

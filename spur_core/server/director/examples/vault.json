@@ -65,7 +65,7 @@
     { "id": "safePress", "type": "point.press", "v": 1, "x": 3360, "y": -192, "props": {
         "at": "safespot", "label": "Drill the safe", "reach": 2 } },
     { "id": "drill", "type": "player.progress", "v": 1, "x": 3696, "y": -192, "props": {
-        "label": "Drilling the safe...", "seconds": 20, "at": "safespot", "range": 3, "emote": "hammer", "canCancel": true } },
+        "label": "Drilling the safe...", "seconds": 20, "at": "safespot", "range": 3, "emote": "inspect", "canCancel": true } },
     { "id": "money", "type": "container.create", "v": 1, "x": 4032, "y": -192, "props": {
         "container": "safe", "loot": [ { "slot": 1, "item": "cash", "min": 25000, "max": 25000, "chance": 100 } ] } },
     { "id": "grab", "type": "player.objective", "v": 1, "x": 4368, "y": -192, "props": {

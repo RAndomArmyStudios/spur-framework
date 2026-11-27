@@ -381,7 +381,7 @@ function spur_core:IsGameInputFree() end
 --- (false). whip takes away every native weapon nothing permits (Config.WeaponGuard): a dead NPC's
 --- gun, a police car's shotgun. Call it BEFORE GiveWeaponToPed and after RemoveWeaponFromPed. Your
 --- permits go when your resource stops.
----@param weapon number|string A hash or a name ('WEAPON_PETROLCAN')
+---@param weapon number|string A hash or a name ('WEAPON_REVOLVER_CATTLEMAN')
 ---@param on boolean
 ---@return boolean ok False for a weapon that is not a hash or a name
 function spur_core:PermitNativeWeapon(weapon, on) end
@@ -1959,7 +1959,7 @@ function spur_core:IsEmoting() end
 --- nil. While any override is set the newest wins; when the last is cleared the walk the player
 --- chose with /walk comes back — not the game's default. Keyed by your resource, and cleared when
 --- it stops.
----@param clipset string|nil A game movement clipset, e.g. 'MOVE_M@DRUNK@VERYDRUNK'
+---@param clipset string|nil A movement clipset the game has
 ---@return boolean ok
 function spur_core:SetWalkOverride(clipset) end
 

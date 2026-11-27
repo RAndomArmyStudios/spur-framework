@@ -140,7 +140,7 @@ end)
 -- does, and a camera in front of it. ←/→ (or the wheel, or the d-pad) shows the next one in the list
 -- the wizard was showing; the mouse turns the camera round them; E keeps the one shown.
 
-local PREVIEW_SCENARIO = 'WORLD_HUMAN_STAND_IMPATIENT'   -- the real keeper's (server/shop_counters.lua)
+local PREVIEW_SCENARIO = 'WORLD_HUMAN_SHOPKEEPER'   -- the real keeper's (server/shop_counters.lua)
 local PREVIEW_LOAD_MS = 5000                              -- a model that takes longer is called missing
 local PREVIEW_DISTANCE = 3.0                              -- metres, camera to keeper: the whole body in view
 

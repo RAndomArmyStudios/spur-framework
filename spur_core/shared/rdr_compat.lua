@@ -623,12 +623,9 @@ def('IsUsingKeyboard', function(c) return truthy(N(0xA571D46727E2B718, c or 0, C
 -- The game's IsInputDisabled(2) is "the player is on keyboard and mouse".
 def('IsInputDisabled', function(c) return truthy(N(0xA571D46727E2B718, 0, Citizen.ResultAsInteger())) end)
 
--- Original-game weather names -> RDR2's (RDR2 names pass through).
-local WEATHER = {
-    EXTRASUNNY = 'SUNNY', CLEAR = 'HIGHPRESSURE', NEUTRAL = 'SUNNY', SMOG = 'MISTY', FOGGY = 'FOG',
-    CLOUDS = 'CLOUDS', OVERCAST = 'OVERCAST', RAIN = 'RAIN', THUNDER = 'THUNDERSTORM', CLEARING = 'DRIZZLE',
-    SNOW = 'SNOW', BLIZZARD = 'BLIZZARD', SNOWLIGHT = 'SNOWLIGHT', XMAS = 'SNOW', HALLOWEEN = 'OVERCASTDARK',
-}
+-- Two names the time system has always used, kept as aliases: CLEAR (its default) and THUNDER, which plays as
+-- THUNDERSTORM. Every other name is RDR2's own and passes through.
+local WEATHER = { CLEAR = 'HIGHPRESSURE', THUNDER = 'THUNDERSTORM' }
 function C.weatherHash(name)
     if type(name) ~= 'string' then return name end
     local up = name:upper()
@@ -686,23 +683,13 @@ force('GetEntityProofs', function(entity)
     return table.unpack(r, 1, 9)
 end)
 
--- The original game: (soundId, name, soundset, p3); RDR2: (name, soundset, p2, p3), with its own sounds. The original-game sounds whip
--- plays -> RDR2 menu sounds (femga audio/frontend_soundsets); others are skipped.
-local FRONTEND = {
-    ['HUD_FRONTEND_DEFAULT_SOUNDSET/NAV_UP_DOWN'] = { 'NAV_DOWN', 'HUD_PLAYER_MENU' },
-    ['HUD_FRONTEND_DEFAULT_SOUNDSET/NAV_LEFT_RIGHT'] = { 'NAV_RIGHT', 'HUD_PLAYER_MENU' },
-    ['HUD_FRONTEND_DEFAULT_SOUNDSET/SELECT'] = { 'SELECT', 'HUD_PLAYER_MENU' },
-    ['HUD_FRONTEND_DEFAULT_SOUNDSET/BACK'] = { 'BACK', 'HUD_PLAYER_MENU' },
-    ['HUD_FRONTEND_DEFAULT_SOUNDSET/WAYPOINT_SET'] = { 'INFO_SHOW', 'Ledger_Sounds' },
-    ['HUD_MINI_GAME_SOUNDSET/3_2_1'] = { 'round_start_countdown_tick', 'RDRO_Poker_Sounds' },
-    ['HUD_MINI_GAME_SOUNDSET/GO'] = { 'CHECKPOINT_PERFECT', 'HUD_MINI_GAME_SOUNDSET' },
-}
+-- The original game: (soundId, name, soundset, p3); RDR2: (name, soundset, p2, p3), with its own sounds. spur_core
+-- plays RDR2's (femga audio/frontend_soundsets); a call in the original game's form plays nothing and is noted.
 force('PlaySoundFrontend', function(a, b, c, d)
-    if type(a) == 'string' then                             -- already RDR2's form
+    if type(a) == 'string' then                             -- RDR2's form
         return N(0x67C540AA08E4A6F5, a, b, c == true, d or 0)
     end
-    local s = FRONTEND[tostring(c) .. '/' .. tostring(b)]
-    if s then N(0x67C540AA08E4A6F5, s[1], s[2], true, 0) else noteHit('PlaySoundFrontend ' .. tostring(c) .. '/' .. tostring(b)) end
+    noteHit('PlaySoundFrontend ' .. tostring(c) .. '/' .. tostring(b))
 end)
 
 -- RDR2's ambient speech takes a struct of speech parameters, not the original game's line name.

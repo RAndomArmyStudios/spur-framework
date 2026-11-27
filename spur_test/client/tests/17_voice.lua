@@ -6,7 +6,7 @@
 -- shared/emote_list.lua `megaphone`, which spur_voice's megaphone item plays).
 --
 -- RedM (spur_test, 23 Nov 2026): the megaphone and its model come from spur_core's emote list (loaded by
--- fxmanifest.lua), not the original game's prop_megaphone_01. RDR2's list has no megaphone yet, so the test is skipped, with
+-- fxmanifest.lua), not the original game's megaphone. RDR2's list has no megaphone yet, so the test is skipped, with
 -- the reason, until one is added.
 
 local function megaphoneEmote()

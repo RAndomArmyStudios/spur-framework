@@ -19,8 +19,8 @@
 -- Also here: a door model written unsigned, the way the map packs list them, is stored signed,
 -- because the game only ever answers signed.
 
-local DOOR_MODEL  = GetHashKey('prop_door_01')
-local OTHER_MODEL = GetHashKey('v_ilev_gc_door01')
+local DOOR_MODEL  = GetHashKey('p_door02xl_static')
+local OTHER_MODEL = GetHashKey('p_door06xl_static')
 local UNMET_ACE   = '_test_nonexistent_ace_permission'
 local ME          = 'resource:' .. GetCurrentResourceName()
 

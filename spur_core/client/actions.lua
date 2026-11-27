@@ -1145,7 +1145,7 @@ local function mountAimBox(entry)
     return true
 end
 
---- `at = { model = 'prop_vend_soda_01' }` (or a list): the action on every prop of that model near the
+--- `at = { model = 'p_barrel02x' }` (or a list): the action on every prop of that model near the
 --- player, found by client/prop_prompts.lua. `offset` is in the prop's own space (x across, y out of its
 --- face, z up); `heading` makes the badge a sign at that yaw from the prop's facing (without one it faces
 --- the player); `faces = 2` for a prop used from both sides; `perModel` places one model differently.
@@ -1430,7 +1430,7 @@ local function kindOf(at)
         for _, m in ipairs(models) do
             if type(m) ~= 'string' or m == '' then bad = true end
         end
-        if bad then return nil, "at.model is a prop's model name ('prop_vend_soda_01'), or a list of them" end
+        if bad then return nil, "at.model is a prop's model name ('p_barrel02x'), or a list of them" end
         return 'props'
     end
     if at.vehiclePart ~= nil then return 'part' end

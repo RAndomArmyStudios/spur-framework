@@ -1631,17 +1631,6 @@ RegisterNetEvent('spur_core:client:garageStoreConfirmed', function(vehicleId)
     end
 end)
 
--- Key fob animation
-
-local function PlayKeyFobAnim()
-    local ped = PlayerPedId()
-    local dict = 'anim@mp_player_intmenu@key_fob@'
-    if LoadAnimDict(dict, 2000) then
-        -- Flag 49 = upper body only + allow movement
-        TaskPlayAnim(ped, dict, 'fob_click', 3.0, 3.0, 750, 49, 0, false, false, false)
-    end
-end
-
 -- L-key lock / unlock (RegisterKeyMapping)
 
 local lockTogglePressed = false
@@ -1746,7 +1735,6 @@ CreateThread(function()
             end
 
             if closestVeh and closestVId then
-                PlayKeyFobAnim()
                 TriggerServerEvent('spur_core:server:toggleVehicleLock', closestVId)
             end
         end
@@ -2836,7 +2824,6 @@ end
 function Vehicles.toggleLock(entity)
     local vId = Vehicles.idByEntity(entity)
     if not vId then return end
-    PlayKeyFobAnim()
     -- The same event as the L key, so the server's checks apply identically.
     TriggerServerEvent('spur_core:server:toggleVehicleLock', vId)
 end

@@ -350,7 +350,7 @@ end)
 --- local done, why = exports.spur_core:Progress(source, {
 ---     label = 'Drinking...', duration = 5000,
 ---     anim = { dict = 'your_anim_dict', clip = 'your_clip' },
----     prop = { model = 'prop_amb_beer_bottle' },
+---     prop = { model = 'p_bottlebeer01x' },
 ---     disable = { move = false },   -- they may walk while they drink
 --- })
 --- if not done then return end   -- why: 'cancelled', 'refused', 'busy', 'timeout', 'too fast', 'too far', 'dead', 'player left'

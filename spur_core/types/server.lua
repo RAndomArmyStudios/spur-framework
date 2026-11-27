@@ -1867,7 +1867,7 @@ function spur_core:RemoveVehicleKey(who, vehicleId) end
 ---
 --- THE SECOND RETURN IS THE ERROR, ALWAYS. The plate is a field of the vehicle:
 ---
----     local vehicleId, err = exports.spur_core:CreateOwnedVehicle(source, { model = 'adder' })
+---     local vehicleId, err = exports.spur_core:CreateOwnedVehicle(source, { model = 'wagon02x' })
 ---     if not vehicleId then return end
 ---     local plate = exports.spur_core:GetVehicle(vehicleId).plate
 ---

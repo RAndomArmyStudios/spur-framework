@@ -1095,7 +1095,7 @@ local function misfit(kind, entity, sid, other)
     return nil
 end
 
---- What it was done to, for the log: "Jo Bloggs (player 3)", "a car (sultan)", "an NPC".
+--- What it was done to, for the log: "Jo Bloggs (player 3)", "a wagon (wagon02x)", "an NPC".
 local function logName(entity, sid)
     if sid then
         local p = Players[sid]

@@ -9,8 +9,8 @@
 --   the markers      the furnisher's arrows and rings (the Object Viewer's Move, tools/ov_move.lua): drag the
 --                    arrows to slide it, R for the rings to turn it
 --   right mouse      held: fly the camera (WASD, mouse) for a close look; let go and the cursor is back
---   H                the next pose (POSES): aiming, in a car at the left window, at the right window. The hand
---                    you leave is kept as you left it, so you can set each pose in turn
+--   H                the next pose (POSES): standing, walking, jogging. The hand you leave is kept as you
+--                    left it, so you can set each pose in turn
 --   Confirm & Exit   save every hand you set and go back to the panel
 --   Esc              back without saving (Backspace too)
 --   the list         another item. With changes not saved the page asks first: Cancel, Save & swap, Disregard &
@@ -23,12 +23,11 @@
 --
 -- Move's bar at the top shows only those keys (KEYS); nothing at the bottom (Josh, 12 Nov 2026).
 --
--- THE POSES. Each is the game's own clip for holding a thrown thing (WEAPON_BALL's: weapons@projectile@, and a
--- car's drive-by throw), stopped on its last frame (the arm all the way out: how an item is held, aimed). Played
--- on a copy of you, never you: a clip stopped on a frame does not move, where your own ped's idle never stops
--- moving, and the car poses sit it in a car only this game has, made for the car poses and gone again with them.
--- A pose says its hand: a car's left seat throws left-handed (client/inventory.lua's throwHand), so that one is
--- the left hand's hold and the other two share the right's.
+-- THE POSES. A copy of you, never you, held still: your own ped's idle never stops moving. whip's were the original
+-- game's clips for holding a thrown thing out (a throw, and two drive-by throws in a car). RedM (spur_core, 26 Nov
+-- 2026): RDR2 has none of them, so the copy stands still with the item in its right hand, as give mode holds it,
+-- and the walking poses show it on the move. A pose with a clip (`dict`, `clip`, `phase`) is stopped on that frame,
+-- and one with a `seat` sits the copy in CAR, a vehicle only this game has: RDR2 poses go in POSES that way.
 --
 -- Saved on the item (server/item_holds.lua), it is where give mode holds it from then on, and a thrown one
 -- leaves the hand turned that way (client/inventory.lua).
@@ -51,19 +50,14 @@ local DEFAULT_L = { offset = { 0.06, 0.035, 0.0 }, rot = { -90.0, 0.0, 0.0 } }
 -- `phase` is where the clip stops (0 its first frame, 0.99 its last); `cam` is where the camera starts, in the
 -- copy's own space (right, forward, up), looking at the hand; `seat` sits it in the car.
 local POSES = {
-    { label = 'Aiming', hand = 'right', dict = 'weapons@projectile@', clip = 'aim_intro', phase = 0.99,
-      cam = vector3(1.0, 0.8, 0.5) },
-    { label = 'In a car, left window', hand = 'left', dict = 'veh@drivebystd_ds_grenades', clip = 'intro_90l',
-      phase = 0.99, seat = -1, cam = vector3(-1.4, 0.5, 0.3) },
-    { label = 'In a car, right window', hand = 'right', dict = 'veh@drivebystd_ps_grenades', clip = 'intro_90r',
-      phase = 0.99, seat = 0, cam = vector3(1.4, 0.5, 0.3) },
+    { label = 'Standing', hand = 'right', cam = vector3(1.0, 0.8, 0.5) },
     -- To look at, not to set: walking and jogging on the spot (`move`, TaskGoStraightToCoord's speed, the copy held
     -- still), with the walk give mode puts on for this item as the toggle has it (walkNow), the item tied to the hand
     -- as give mode ties it and the markers put away. The camera looks at the chest (`look`, SKEL_Spine3).
     { label = 'Walking in place', hand = 'right', move = 1.0, look = 24818, cam = vector3(2.0, 1.8, 0.4) },
     { label = 'Jogging in place', hand = 'right', move = 2.0, look = 24818, cam = vector3(2.0, 1.8, 0.4) },
 }
-local CAR = 'tailgater'   -- a four-door whose seats use the drive-by clips above (veh@drivebystd_*)
+local CAR = nil   ---@type string?   the vehicle a pose with a `seat` sits in (none of POSES has one yet)
 
 -- Move's bar: these, and nothing else.
 local KEYS = {
@@ -239,6 +233,7 @@ end
 --- The car the car poses sit in, made when one is asked for: where you stand, still, windows down.
 local function carFor()
     if ed.car and DoesEntityExist(ed.car) then return ed.car end
+    if not CAR then return nil end
     local hash = LoadModel(CAR, 3000)
     if not hash then return nil end
     local ped = PlayerPedId()
@@ -317,6 +312,14 @@ local function pose(p)
     -- Off the walk (a car seat's own warp ends it there)
     if ed.walking and not p.seat then ClearPedTasksImmediately(d) end
     ed.walking = nil
+    if not p.dict then
+        -- No clip: it stands still, as it is
+        ClearPedTasksImmediately(d)
+        FreezeEntityPosition(d, true)
+        Wait(0)   -- a frame for the bones to stand before anything is read off the hand
+        Wait(0)
+        return true
+    end
     TaskPlayAnim(d, p.dict, p.clip, 1000.0, -1000.0, -1, 1, p.phase, false, false, false)
     local deadline = GetGameTimer() + 1000
     while not holdStill(p) do

@@ -2,7 +2,7 @@ PromptOffsetEditor = {}
 
 local edit, opening
 local ID = 'prompt_offset_preview'
-local MODEL = GetHashKey('prop_cs_cardbox_01')
+local MODEL = GetHashKey('p_package01x')
 
 local function finish()
     local e = edit

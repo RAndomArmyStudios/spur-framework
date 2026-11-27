@@ -8,9 +8,9 @@ framework. Ported and customised by **RyuuTheKitsune**.
 > **nobody makes money from it** (don't sell it, bundle it into anything paid, or put it behind a paywall), and
 > **it credits Whippy and WLVF**. Keep both if you fork this.
 
-> **Status: beta.** It runs on a live RedM server and has been played in game, but parts are untested or are
-> no-ops on RDR2. Read [spur_core/CONVERSION.md](spur_core/CONVERSION.md) before you use it: it says what works,
-> what does nothing on RDR2, and what is still to be tried.
+> **What to expect.** SPUR runs on a live RedM server and is played there. A few of WHIP's features do nothing on
+> RDR2, and a few have not been tried in the game yet. [spur_core/CONVERSION.md](spur_core/CONVERSION.md) lists both:
+> read it before you use SPUR.
 
 ## What's in here
 

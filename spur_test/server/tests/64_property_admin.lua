@@ -42,7 +42,7 @@ RegisterTestModule({
             templateKey = '_test:admin:' .. tostring(os.time()),
             units = { a = { label = '_test admin unit', base = {
                 space = { { type = 'box', center = { x = 0, y = 0, z = 1.5 }, size = { x = 6, y = 4, z = 3 }, heading = 0 } },
-                doors = { { key = 'front', role = 'entrance', model = GetHashKey('prop_door_01'), pos = { x = 3, y = 0, z = 0 }, heading = 90 } },
+                doors = { { key = 'front', role = 'entrance', model = GetHashKey('p_door02xl_static'), pos = { x = 3, y = 0, z = 0 }, heading = 90 } },
             } } },
             properties = {
                 { unitKey = 'a', name = '_test Admin Home', place = ctx.place },

@@ -771,7 +771,7 @@ STEP.lookAt = function(ped, _, s, left)
 end
 
 --- A gun in its hand, loaded: the one it holds, else the best it has, else a pistol (an NPC with none aims at nothing).
--- RedM (spur_core, 24 Nov 2026): RDR2 has no WEAPON_PISTOL; its pistol here is the Cattleman revolver.
+-- RedM (spur_core, 24 Nov 2026): its pistol here is RDR2's Cattleman revolver.
 local PISTOL = GetHashKey('WEAPON_REVOLVER_CATTLEMAN')
 -- RedM (spur_core, 24 Nov 2026): the original game's IsPedArmed(ped, 4) asks about the weapon in the hand. RDR2's flags are not
 -- the original game's: a townsperson with a holstered revolver read as armed with nothing in their hand, so they were never handed
@@ -846,8 +846,7 @@ STEP.shootAt = function(ped, _, s, left)
 end
 
 -- What Throw hands it (shared/director/steps.lua's options).
--- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons, in place of the original game's (WEAPON_GRENADE, WEAPON_MOLOTOV, WEAPON_SMOKEGRENADE,
--- WEAPON_FLARE, WEAPON_SNOWBALL, WEAPON_BALL), none of which RDR2 has.
+-- RedM (spur_core, 24 Nov 2026): RDR2's thrown weapons, in place of the original game's six, none of which RDR2 has.
 local THROWN = { ['dynamite'] = 'WEAPON_THROWN_DYNAMITE', ['fire bottle'] = 'WEAPON_THROWN_MOLOTOV',
                  ['poison bottle'] = 'WEAPON_THROWN_POISONBOTTLE', ['tomahawk'] = 'WEAPON_THROWN_TOMAHAWK',
                  ['throwing knives'] = 'WEAPON_THROWN_THROWING_KNIVES', ['bolas'] = 'WEAPON_THROWN_BOLAS' }
@@ -862,7 +861,7 @@ local throwOf = {}   -- [ped] = { before = the weapon held before the run, given
 STEP.throw = function(ped, w, s)
     local at = targetAt(s.p)
     if not at then return end
-    local hash = GetHashKey(THROWN[s.p.item] or 'WEAPON_THROWN_DYNAMITE')   -- RedM (spur_core, 24 Nov 2026): was WEAPON_GRENADE
+    local hash = GetHashKey(THROWN[s.p.item] or 'WEAPON_THROWN_DYNAMITE')
     local was = throwOf[ped]
     local rec = { before = was and was.before or nil, given = was and was.given or {} }
     throwOf[ped] = rec

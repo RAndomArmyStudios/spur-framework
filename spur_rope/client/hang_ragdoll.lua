@@ -29,7 +29,7 @@
 
 Rope.HangRig = {}
 
--- RedM (spur_rope, 24 Nov 2026): whip_rope's was the original game's prop_golf_ball. Any small RDR2 prop with a physics body does: it
+-- RedM (spur_rope, 24 Nov 2026): whip_rope's was the original game's golf ball. Any small RDR2 prop with a physics body does: it
 -- is never seen. The first of these RDR2 has (anchorModel).
 local ANCHOR_MODELS = { `p_canteen01x`, `p_baitbread01x`, `p_package01x` }
 local R_HAND = 57005               -- SKEL_R_Hand (the original game's number: RedM finds the hand by name, handIndex)

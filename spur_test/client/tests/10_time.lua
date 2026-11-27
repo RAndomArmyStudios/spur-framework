@@ -70,7 +70,7 @@ RegisterClientTestModule({
                 local beforeFrozen  = exports.spur_core:IsTimeFrozen()
                 assertType(beforeWeather, 'string', 'weather type')
 
-                local want = (beforeWeather == 'THUNDER') and 'FOGGY' or 'THUNDER'
+                local want = (beforeWeather == 'THUNDER') and 'FOG' or 'THUNDER'
                 exports.spur_core:SetWeatherLayer(TOP, { priority = 901, weather = want:lower() })
                 assertEqual(exports.spur_core:GetWeather(), want, 'the layer\'s weather wins (and is upper-cased)')
                 assertEqual(exports.spur_core:GetWeatherLayers().owners.weather, TOP, 'and it owns the field')

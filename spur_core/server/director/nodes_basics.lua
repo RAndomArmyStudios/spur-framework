@@ -125,7 +125,7 @@ define({
     },
     check = function(props)
         if props.specific and not weaponName(props.weapon) then
-            return 'Enter the game\'s weapon name, for example WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
+            return 'Enter the game\'s weapon name, for example WEAPON_REVOLVER_CATTLEMAN'
         end
     end,
     run = function(ctx)

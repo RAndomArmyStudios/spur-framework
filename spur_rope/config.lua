@@ -148,7 +148,7 @@ Config.Visuals = {
     SegmentOverlap = 0.0,
 
     -- 'balls': an RDR2 model, a prop per node (backticks = its hash). Not one RDR2 has: a small RDR2 prop instead
-    -- (Rope.PropModel, client/visuals.lua). RedM (spur_rope, 24 Nov 2026): was the original game's prop_tennis_ball.
+    -- (Rope.PropModel, client/visuals.lua). RedM (spur_rope, 24 Nov 2026): was the original game's tennis ball.
     PropModel = `p_baitbread01x`,
     RotateProps = false,              -- turn each prop along the rope (not needed for a ball)
 

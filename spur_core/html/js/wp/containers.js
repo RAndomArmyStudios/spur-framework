@@ -49,7 +49,7 @@ let wiz = null;          // its WP.stepper
 let wizAt = 'name';      // the step it is on, so the panel reopens there
 let pendingSelect = false;   // a container just made: opened when the server says it exists
 
-const DEFAULT_PROP = 'p_package01x';   // Config.ContainerDefaultProp's. RedM (spur_core, 24 Nov 2026): was the original game's prop_cs_cardbox_01
+const DEFAULT_PROP = 'p_package01x';   // Config.ContainerDefaultProp's
 
 const STEPS = [
     { key: 'name', label: 'Name & Model' },

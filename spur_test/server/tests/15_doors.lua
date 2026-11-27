@@ -19,7 +19,7 @@ local function ClearDoorReqs(doorId)
         'door requirements were actually cleared')
 end
 
-local DOOR_MODEL = GetHashKey('prop_door_01')
+local DOOR_MODEL = GetHashKey('p_door02xl_static')
 
 --- An ACE nobody holds, for a requirement the tester cannot meet.
 local UNMET_ACE = '_test_nonexistent_ace_permission'

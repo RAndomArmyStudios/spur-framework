@@ -252,20 +252,19 @@ end
 
 -- The game's own frontend sounds, the ones its pause menu makes: a tick moving between items, a click on choosing, the
 -- back sound on leaving, and the waypoint sound when one is set or cleared. The page names what happened
--- (pauseSound below); only the names in this table play.
-local SOUNDSET = 'HUD_FRONTEND_DEFAULT_SOUNDSET'
+-- (pauseSound below); only the sounds in this table play. RDR2's own: { sound, soundset }.
 local SOUNDS = {
-    nav      = 'NAV_UP_DOWN',      -- up and down the menu
-    side     = 'NAV_LEFT_RIGHT',   -- across: the confirm's two answers, the legend in and out
-    select   = 'SELECT',           -- an item chosen, a screen opened
-    back     = 'BACK',             -- back to the menu, or out of it
-    waypoint = 'WAYPOINT_SET',     -- the game plays it for a waypoint set and for one cleared
+    nav      = { 'NAV_DOWN', 'HUD_PLAYER_MENU' },    -- up and down the menu
+    side     = { 'NAV_RIGHT', 'HUD_PLAYER_MENU' },   -- across: the confirm's two answers, the legend in and out
+    select   = { 'SELECT', 'HUD_PLAYER_MENU' },      -- an item chosen, a screen opened
+    back     = { 'BACK', 'HUD_PLAYER_MENU' },        -- back to the menu, or out of it
+    waypoint = { 'INFO_SHOW', 'Ledger_Sounds' },     -- a waypoint set, and one cleared
 }
 
 ---@param what string  a key of SOUNDS
 local function sound(what)
-    local name = SOUNDS[what]
-    if name then PlaySoundFrontend(-1, name, SOUNDSET, true) end
+    local s = SOUNDS[what]
+    if s then PlaySoundFrontend(s[1], s[2], true, 0) end
 end
 
 -- ============================================

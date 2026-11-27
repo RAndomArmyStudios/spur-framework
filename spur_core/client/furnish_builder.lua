@@ -990,7 +990,7 @@ function FurnishBuilder.pick(data)
         kind = kind or 'prop'
         model = model:lower():match('^%s*([%w_]+)%s*$')
         if not model or #model > 64 then
-            UI.Notify('A model name is letters, digits and _ (prop_box_wood02a)', 'error')
+            UI.Notify('A model name is letters, digits and _ (p_crate03x)', 'error')
             return
         end
         local hash = GetHashKey(model)

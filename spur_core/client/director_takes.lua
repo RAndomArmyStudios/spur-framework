@@ -488,7 +488,7 @@ local function attempt()
         local n = math.ceil(left / 1000)
         if n ~= shown then
             shown, R.count = n, n
-            PlaySoundFrontend(-1, '3_2_1', 'HUD_MINI_GAME_SOUNDSET', true)
+            PlaySoundFrontend('round_start_countdown_tick', 'RDRO_Poker_Sounds', true, 0)
             hud(true)
         end
         Wait(0)
@@ -498,7 +498,7 @@ local function attempt()
     FreezeEntityPosition(veh, false)
     freeParked(R.parked)
     driveOthers(R.others, function() return current(run) end)
-    PlaySoundFrontend(-1, 'GO', 'HUD_MINI_GAME_SOUNDSET', true)
+    PlaySoundFrontend('SELECT', 'HUD_PLAYER_MENU', true, 0)
     R.phase, R.t0 = 'rec', GetGameTimer()
     hud(true)
     -- Frame by frame while it records. Held or saving, nothing here is left to do (a key saves, tries again or throws

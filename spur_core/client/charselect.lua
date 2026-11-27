@@ -34,7 +34,7 @@ do
 end
 
 --- Sky for a shot that names none: a still, sunny morning.
-local FALLBACK_LOOK = { weather = 'EXTRASUNNY', hour = 6, minute = 0, frozen = true, priority = 1000 }
+local FALLBACK_LOOK = { weather = 'SUNNY', hour = 6, minute = 0, frozen = true, priority = 1000 }
 
 local _active = false
 local _slot = 0        -- which place is showing, 0 = none

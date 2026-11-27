@@ -266,7 +266,7 @@ end
 --- After the start's report, only when it found nothing to fix.
 local function printLoaded()
     print('[spur_core] ============================================')
-    print(('[spur_core] spur_core Beta %s — public release')
+    print(('[spur_core] spur_core %s')
         :format(GetResourceMetadata(GetCurrentResourceName(), 'version', 0) or '?'))
     print('[spur_core] Framework loaded successfully!')
     print('[spur_core] ============================================')

@@ -318,7 +318,7 @@ T('weapon', { label = 'Hold a Weapon', group = 'body', kinds = NPC, timing = 'in
     fields = { { key = 'weapon', kind = 'weapon', label = 'Weapon', hint = 'empty: put it away', max = 64 } },
     problem = function(p)
         if p.weapon ~= '' and not tostring(p.weapon):upper():match('^WEAPON_[A-Z0-9_]+$') then
-            return 'a weapon is the game\'s name, like WEAPON_REVOLVER_CATTLEMAN'   -- RedM (spur_core, 24 Nov 2026): RDR2's, not the original game's WEAPON_PISTOL
+            return 'a weapon is the game\'s name, like WEAPON_REVOLVER_CATTLEMAN'
         end
         return nil
     end })

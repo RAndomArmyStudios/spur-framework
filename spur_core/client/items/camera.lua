@@ -1,6 +1,6 @@
 -- ============================================
 -- Item: camera — Client Logic
--- Used, it comes out and up to the eye (the game's paparazzi clips), and a second later the player looks
+-- Used, it comes out and up to the eye, and a second later the player looks
 -- through it: a camera at their eyes that turns with the mouse (the right stick) and zooms with the
 -- wheel as noclip does (FreeCam.wheelZoom), under the viewfinder (html/js/viewfinder.js). No photos yet.
 -- ============================================
@@ -19,15 +19,15 @@
 
 local CORE = GetCurrentResourceName()
 
-local RAISE = { dict = 'amb@world_human_paparazzi@male@enter', clip = 'enter' }
-local HOLD  = { dict = 'amb@world_human_paparazzi@male@base', clip = 'base' }
-local LOWER = { dict = 'amb@world_human_paparazzi@male@exit', clip = 'exit' }
+-- Its clips: up to the eye, held there, and down. RedM (spur_core, 26 Nov 2026): whip's were the original game's and
+-- RDR2 has none of them, so none is set and the camera comes up without one, after RAISE_BARE_MS (play() and the
+-- rest skip a clip with no dict). An RDR2 clip goes in as { dict = ..., clip = ... }. The prop is RDR2's box camera
+-- (server/items/camera.lua's).
+local RAISE = {}   ---@type { dict: string?, clip: string? }
+local HOLD  = {}   ---@type { dict: string?, clip: string? }
+local LOWER = {}   ---@type { dict: string?, clip: string? }
 local RAISE_MS     = 1000   -- from the clip starting to the viewfinder
 local LOWER_MAX_MS = 1500   -- the lowering clip, at most, before the camera leaves the hand
--- RedM (spur_core, 24 Nov 2026): the three clips above are the original game's and RDR2 has none of them. The camera used to
--- give up when they wouldn't load, so it did nothing at all; now it comes up without them (play() skips a clip
--- that isn't loaded), after RAISE_BARE_MS. The prop is RDR2's box camera (server/items/camera.lua's), not the original game's
--- prop_pap_camera_01.
 local RAISE_BARE_MS = 250
 local PROP = (`p_camera01x`) --[[@as integer]]   -- server/items/camera.lua's
 
@@ -80,8 +80,12 @@ Inventory.registerItemFlagFor(CORE, 'camera')
 local function padAxis(v) return (v > PAD_DEAD or v < -PAD_DEAD) and v or 0.0 end
 
 local function play(a, flag)
-    if not HasAnimDictLoaded(a.dict) then return end   -- RedM (spur_core, 24 Nov 2026): the original game's clips, missing in RDR2
+    if not a.dict or not HasAnimDictLoaded(a.dict) then return end   -- none set, or not loaded
     TaskPlayAnim(PlayerPedId(), a.dict, a.clip, 8.0, -8.0, -1, flag, 0, false, false, false)
+end
+
+local function stop(ped, a)
+    if a.dict then StopAnimTask(ped, a.dict, a.clip, 2.0) end
 end
 
 --- What ends it at once: nothing the player could hold a camera up through.
@@ -116,21 +120,21 @@ putAway = function(quick)
     state = 'lowering'
     CreateThread(function()
         local ped = PlayerPedId()
-        StopAnimTask(ped, RAISE.dict, RAISE.clip, 2.0)
-        StopAnimTask(ped, HOLD.dict, HOLD.clip, 2.0)
-        if not quick and HasAnimDictLoaded(LOWER.dict) then
+        stop(ped, RAISE)
+        stop(ped, HOLD)
+        if not quick and LOWER.dict and HasAnimDictLoaded(LOWER.dict) then
             play(LOWER, 48)
             local ms = math.floor((GetAnimDuration(LOWER.dict, LOWER.clip) or 0) * 1000)
             Wait(math.max(0, math.min(LOWER_MAX_MS, ms)))
-            StopAnimTask(PlayerPedId(), LOWER.dict, LOWER.clip, 2.0)
+            stop(PlayerPedId(), LOWER)
         end
         if gen ~= my then return end
         UI.dropOwnHeldProp(PROP, 'camera')
         TriggerServerEvent('spur_core:server:cameraHold', false)
         ControlBlocks.release(BLOCK_ID)
-        RemoveAnimDict(RAISE.dict)
-        RemoveAnimDict(HOLD.dict)
-        RemoveAnimDict(LOWER.dict)
+        for _, a in ipairs({ RAISE, HOLD, LOWER }) do
+            if a.dict then RemoveAnimDict(a.dict) end
+        end
         state = 'off'
     end)
 end
@@ -173,7 +177,7 @@ local function viewLoop(my)
         SetEntityLocallyInvisible(ped)
         if not prop or not DoesEntityExist(prop) then prop = UI.ownHeldProp(PROP, 'camera') end
         if prop then SetEntityLocallyInvisible(prop) end
-        if not IsEntityPlayingAnim(ped, HOLD.dict, HOLD.clip, 3) then play(HOLD, 49) end
+        if HOLD.dict and not IsEntityPlayingAnim(ped, HOLD.dict, HOLD.clip, 3) then play(HOLD, 49) end
         Wait(0)
     end
 end
@@ -258,5 +262,5 @@ AddEventHandler('onResourceStop', function(res)
     DestroyCam(cam, false)
     cam = nil
     if viewMode then SetFollowPedCamViewMode(viewMode) end
-    StopAnimTask(PlayerPedId(), HOLD.dict, HOLD.clip, 2.0)
+    stop(PlayerPedId(), HOLD)
 end)

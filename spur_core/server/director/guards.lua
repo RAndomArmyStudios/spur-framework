@@ -9,7 +9,7 @@ local CORE = GetCurrentResourceName()
 local define = DirectorKit.define
 
 local LOOK_MS = 8000                       -- a guard come to look looks round this long
-local LOOK_SCENARIO = 'WORLD_HUMAN_GUARD_STAND'
+local LOOK_SCENARIO = 'WORLD_HUMAN_STARE_STOIC'
 
 DirectorGuards = {}
 

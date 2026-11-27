@@ -2157,7 +2157,7 @@ RegisterNUICallback('giveItem', function(data, cb)
     ThrowModeActive = false
     throwArmed    = false
 
-    -- RedM (spur_core, 24 Nov 2026): the original game equipped WEAPON_BALL here and read its throw. RDR2 has no ball, so whatever
+    -- RedM (spur_core, 24 Nov 2026): the original game equipped its ball here and read its throw. RDR2 has no ball, so whatever
     -- is in hand is put away (the attack button now throws, and must not fire a gun) and giveTick reads the button.
     local ped = PlayerPedId()
     SetPedConfigFlag(ped, 48, false)

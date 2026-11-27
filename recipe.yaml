@@ -1,9 +1,9 @@
 $engine: 3
 $onesync: on
 name: SPUR
-version: 0.1.0-beta
+version: 1.0.0
 author: RyuuTheKitsune
-description: SPUR, a non-commercial RedM port of the WHIP framework (original code by Whippy and WLVF). Beta.
+description: SPUR, a non-commercial RedM port of the WHIP framework (original code by Whippy and WLVF).
 
 tasks:
   # The base server data (the system resources)
