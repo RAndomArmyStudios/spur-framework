@@ -20,8 +20,12 @@
 -- RDR2 animation dictionaries (dict/anim) also work in the same shape as whip_core's original-game ones, but none are listed
 -- yet: add them once each is tested in game.
 --
--- Walk styles and moods (facial idles) are empty for now. RDR2 changes walks through ped motivation and walk-style
--- natives rather than game clipsets; see CONVERSION.md.
+-- A WALK is { cmd, label, loco }: loco is an RDR2 loco motion type, put on with _SET_PED_DESIRED_LOCO_MOTION_TYPE
+-- (0x89F5E7ADECCCB49C) after the stance is set to 'default' ('default_female' for women) with
+-- _SET_PED_DESIRED_LOCO_FOR_MODEL (0x923583741DC87BCE): the motion type does nothing on the player's own stance.
+-- The names are from the rdr2mods.com thread "Native for changing walk styles" (topic 812). NOT YET TRIED IN GAME
+-- (27 Nov 2026): a name that turns out to show nothing should come out of the list, as the emotes did.
+-- Moods (facial idles) are empty for now.
 
 EmoteList = {
     categories = {
@@ -94,6 +98,25 @@ EmoteList = {
         { cmd = 'guitar', label = 'Guitar (Chair)', category = 'music', scenario = 'PROP_HUMAN_SEAT_CHAIR_GUITAR' },
     },
 
-    walks = {},
+    walks = {
+        { cmd = 'tipsy', label = 'Tipsy', loco = 'moderate_drunk' },
+        { cmd = 'drunk', label = 'Drunk', loco = 'very_drunk' },
+        { cmd = 'hurt', label = 'Hurt', loco = 'injured_general' },
+        { cmd = 'limpleft', label = 'Limp (Left Leg)', loco = 'injured_left_leg' },
+        { cmd = 'limpright', label = 'Limp (Right Leg)', loco = 'injured_right_leg' },
+        { cmd = 'side', label = 'Hurt in the Side', loco = 'injured_torso' },
+        { cmd = 'parched', label = 'Parched', loco = 'dehydrated_unarmed' },
+        { cmd = 'cold', label = 'Cold', loco = 'snow' },
+        { cmd = 'sad', label = 'Sad', loco = 'sad' },
+        { cmd = 'downcast', label = 'Downcast', loco = 'depressed' },
+        { cmd = 'angry', label = 'Angry', loco = 'angry' },
+        { cmd = 'menacing', label = 'Menacing', loco = 'intimidate' },
+        { cmd = 'brave', label = 'Brave', loco = 'default_brave' },
+        { cmd = 'nervous', label = 'Nervous', loco = 'nervous' },
+        { cmd = 'scared', label = 'Scared', loco = 'scared' },
+        { cmd = 'cautious', label = 'Cautious', loco = 'cautious' },
+        { cmd = 'sneak', label = 'Sneaking', loco = 'stealth' },
+        { cmd = 'shackled', label = 'Shackled', loco = 'chain_gang_legs' },
+    },
     moods = {},
 }
