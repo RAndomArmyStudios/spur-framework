@@ -39,7 +39,7 @@
 --
 -- AN IMAGE is a path inside the resource that owns the item, as `image` is. {field} is filled from
 -- the item's metadata (lowercased, letters, digits, _ and - only), and {make} is the maker of the car
--- named by its `model` ('pegassi'), which only the game knows: the page asks it (client/inventory.lua).
+-- named by its `model` ('mymaker'), which only the game knows: the page asks it (client/inventory.lua).
 -- A field it does not have skips that picture.
 --
 -- `when` is read in two places that must agree: here, on the server, before an option runs (the

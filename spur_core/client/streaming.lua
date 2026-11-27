@@ -9,7 +9,7 @@
 --     local obj = CreateObject(hash, x, y, z, true, true, false)
 --     SetModelAsNoLongerNeeded(hash)                                   -- yours to release
 --
---     if exports.spur_core:LoadAnimDict('mp_player_intdrink') then ... end
+--     if exports.spur_core:LoadAnimDict('your_anim_dict') then ... end
 --
 -- They WAIT, so call them from a thread (a command, an event handler, a CreateThread), and they
 -- never wait longer than the limit: a model that is not in the game answers at once, and anything

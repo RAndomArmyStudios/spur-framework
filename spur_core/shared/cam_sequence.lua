@@ -15,7 +15,7 @@
 --             move = 'glide', ease = 'smooth' },
 --           { t = 4000, shot = { kind = 'orbit', subject = 'vehicle', yaw = 30, pitch = 10, fit = 1.2,
 --                                aim = { x = 0, y = 0, z = 0.5 }, fov = 40, turn = 6 },
---             move = 'cut', shake = { amount = 0.3, freq = 6 }, filter = 'NG_filmic04',
+--             move = 'cut', shake = { amount = 0.3, freq = 6 }, filter = 'none',
 --             punch = { fov = 8, decay = 4 } },
 --       },
 --   }

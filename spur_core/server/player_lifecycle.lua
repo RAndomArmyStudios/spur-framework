@@ -193,7 +193,7 @@ local _identityNotices = {}
 ---@param userId number
 ---@param notice table   from ResolveUserId
 local function ReportIdentityNotice(name, userId, notice)
-    local idName = notice.field == 'fivem' and 'FiveM' or 'Discord'
+    local idName = notice.field == 'fivem' and 'Cfx.re' or 'Discord'
     local staffMsg, playerMsg
     if notice.kind == 'recovered' then
         staffMsg = ('Account recovery: %s connected with a new Rockstar license and was matched to account #%d by %s ID%s.')
@@ -316,7 +316,7 @@ local function processConnection(source, name, deferrals)
     local ids = ExtractIdentifiers(source)
 
     if not ids.license then
-        deferrals.done('[spur_core] No license identifier found. Please restart FiveM.')
+        deferrals.done('[spur_core] No license identifier found. Please restart RedM.')
         return
     end
 

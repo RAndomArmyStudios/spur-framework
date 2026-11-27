@@ -238,7 +238,7 @@ local function originOf(entity)
         local def = vid and Vehicles.getDef(vid)
         if def then
             if def.temp then return ('%s (temporary car #%d)'):format(tostring(def.temp), vid) end
-            if def.session then return ('GTA, noticed by spur_core (street car #%d)'):format(vid) end
+            if def.session then return ('The game\'s, noticed by spur_core (street car #%d)'):format(vid) end
             return ('spur_core (saved car #%d)'):format(vid)
         end
     elseif etype == 1 and Npcs then
@@ -1018,8 +1018,8 @@ ACTIONS['ply.car'] = { kind = 'player', fn = function(source, ped, sid, arg)
     return false, why or 'There is no room beside them'
 end }
 
--- RedM (spur_core, 24 Nov 2026): RDR2's gangs and guns, in place of GTA's (the Lost, Ballas, Families, Vagos and
--- a pistol, micro SMG, assault rifle and pump shotgun). The keys stay, so the Dungeon Master's choices still match:
+-- RedM (spur_core, 24 Nov 2026): RDR2's gangs and guns, in place of GTA's gangs and guns
+-- (whip_core's, another game's). The keys stay, so the Dungeon Master's choices still match:
 -- 'smg' is a repeater, the nearest 1899 has.
 local HUNTERS = { 'g_m_m_unibanditos_01', 'g_m_m_uniduster_01', 'g_m_m_unicriminals_01', 'g_m_y_uniexconfeds_01',
                   'g_m_m_unimountainmen_01', 'g_m_m_uniswamp_01' }

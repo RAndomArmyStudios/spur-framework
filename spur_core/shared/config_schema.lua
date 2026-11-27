@@ -54,7 +54,7 @@
 local MAX_CHARACTERS = 30
 
 -- A place on the map, and the way it faces.
--- y reaches -7000 for Cayo Perico and North Yankton.
+-- y reaches -7000 in the far south.
 -- RedM (spur_core, 23 Nov 2026): x from -8000, not GTA's -4000, so New Austin's west (Tumbleweed, about -5500) fits.
 local WORLD = { x = { -8000, 8000 }, y = { -7000, 8000 }, z = { -200, 2000 }, w = { 0, 360 } }
 
@@ -71,7 +71,7 @@ local WEATHER = { type = 'string', maxLen = 20, pattern = '^[%u%d_]+$', patternW
 -- page's arrivalScenes widget, which adds scenes from GTA's own (client/arrival_list.lua) and plays one where the admin
 -- stands (Watch). A line's other fields (a `prop`) are kept as they are.
 local ARRIVAL_ON = { path = 'ArrivalScenes.enabled', equals = true }
-local ANIM = { type = 'string', maxLen = 96, pattern = '^[%w_@%.%-]+$', patternWhy = 'must be a GTA animation name' }
+local ANIM = { type = 'string', maxLen = 96, pattern = '^[%w_@%.%-]+$', patternWhy = 'must be a game animation name' }
 local function animField(key, label, nullable)
     return { key = key, type = ANIM.type, maxLen = ANIM.maxLen, pattern = ANIM.pattern, patternWhy = ANIM.patternWhy,
              nullable = nullable, label = label }
@@ -324,7 +324,7 @@ ConfigSchema = {
             { path = 'AtmProps', type = 'list', minItems = 0, maxItems = 50,
               item = { type = 'string', maxLen = 64, pattern = MODEL, patternWhy = MODEL_WHY },
               label = 'ATM models',
-              help = 'The cash machines whip puts its ATM on, by model name, split by commas: prop_atm_01, prop_atm_02, prop_atm_03, prop_fleeca_atm are GTA\'s own. A machine an MLO adds works once its model is here. Empty: whip\'s ATMs are off, for a server that uses another ATM resource.' },
+              help = 'The things whip puts its ATM prompt on, by model name, split by commas. RDR2 has no cash machines of its own: a model a map adds works once it is here. Empty: whip\'s ATMs are off, for a server that uses another ATM resource.' },
             { path = 'AtmVisibleRange', type = 'number', min = 1, max = 30, step = 0.5, unit = 'm',
               cross = atmRangesCross,
               label = 'ATM prompt shows from',
@@ -416,7 +416,7 @@ ConfigSchema = {
             -- Arrival scenes (Config.ArrivalScenes): the switch, the two distances and the four lists.
             { path = 'ArrivalScenes.enabled', type = 'bool',
               label = 'Arrival scenes',
-              help = 'As the picture comes back after picking a character, one of GTA\'s own character-switch scenes plays where they are, and someone who left sitting in a car that is still near wakes up in it. Off: the picture just fades up.' },
+              help = 'As the picture comes back after picking a character, a scene from the lists below plays where they are, and someone who left sitting in a car that is still near wakes up in it. Off: the picture just fades up.' },
             { path = 'ArrivalScenes.vehicleRange', type = 'number', min = 0, max = 2000, step = 10, unit = 'm',
               shownWhen = ARRIVAL_ON,
               label = 'Back in the car within',
@@ -426,7 +426,7 @@ ConfigSchema = {
               label = 'Arrive at their car within',
               help = 'Someone who left on foot with a car of theirs at most this near arrives at it.' },
             arrivalList('onFoot', 'Arrival scenes: on foot',
-                'Played where they arrive, one picked at random each time. A scene whose walk would go through a wall is skipped for another, and inside a building only those marked Indoors too play. Add any of GTA\'s own switch scenes; Watch plays one where you stand.'),
+                'Played where they arrive, one picked at random each time. A scene whose walk would go through a wall is skipped for another, and inside a building only those marked Indoors too play. Add an animation and its camera move; Watch plays one where you stand.'),
             arrivalList('inVehicle', 'Arrival scenes: in a car seat',
                 'Played in the seat of the car they left in. A scene made with a car is lined up with it; Ends in the seat finishes with them in the seat.'),
             arrivalList('onBike', 'Arrival scenes: by a motorbike',
@@ -538,7 +538,7 @@ ConfigSchema = {
         settings = {
             { path = 'DrivingCamera.Enabled', type = 'bool',
               label = 'Smooth driving camera',
-              help = 'Lets players switch on the smooth driving camera for themselves (pause menu: Server Settings → Vehicles): a chase camera on a spring that leans into slides and widens with speed. Off: nobody can, and anyone using it goes back to GTA\'s.' },
+              help = 'Lets players switch on the smooth driving camera for themselves (pause menu: Server Settings → Vehicles): a chase camera on a spring that leans into slides and widens with speed. Off: nobody can, and anyone using it goes back to the game\'s.' },
             { path = 'DrivingCamera.Default', type = 'bool',
               shownWhen = { path = 'DrivingCamera.Enabled', equals = true },
               label = 'Smooth driving camera to start with',
@@ -554,10 +554,10 @@ ConfigSchema = {
               help = 'The style a player who has never chosen gets. Consistent stays behind the car the same way all the time; Cinematic frames it by what it is doing (a jump, a drift, a burnout, nitrous). Players who chose keep their choice.' },
             { path = 'BikeAutoHelmet', type = 'bool',
               label = 'Helmet on a motorbike',
-              help = 'GTA puts a helmet on a character getting onto a motorbike, over whatever they wear on their head. Off: they ride in what they have on.' },
+              help = 'The game puts a helmet on a character getting onto a motorbike, over whatever they wear on their head. Off: they ride in what they have on.' },
             { path = 'Seats.NoAutoShuffle', type = 'bool',
               label = 'Passengers stay in their seat',
-              help = 'On: GTA no longer slides a passenger into an empty driver\'s seat, getting in at the passenger door gives the passenger seat, and GTA\'s own shuffle button (H, D-pad right) does nothing. Players change seat with Seats on the F1 wheel. Off is GTA\'s own way.' },
+              help = 'On: the game no longer slides a passenger into an empty driver\'s seat, getting in at the passenger door gives the passenger seat, and the game\'s own shuffle button (H, D-pad right) does nothing. Players change seat with Seats on the F1 wheel. Off is GTA\'s own way.' },
             { path = 'VehiclePartPrompts', type = 'record',
               fields = {
                   { key = 'door.enabled', type = 'bool', label = 'Doors' },
@@ -589,7 +589,7 @@ ConfigSchema = {
               help = 'Parked street cars this close are kept locked, so they must be lockpicked. 0 turns the rule off (cars it already locked stay locked).' },
             { path = 'UnlockOnExit', type = 'bool', sides = 'server',
               label = 'Getting out unlocks a locked car',
-              help = 'On: getting out of a locked car unlocks it (GTA lets anyone open a locked door from inside). Off: it stays locked behind them, as a car that locks itself. Leaving the game in a locked car never unlocks it either way.' },
+              help = 'On: getting out of a locked car unlocks it (the game lets anyone open a locked door from inside). Off: it stays locked behind them, as a car that locks itself. Leaving the game in a locked car never unlocks it either way.' },
             { path = 'LockpickGame', type = 'string', maxLen = 64, pattern = '^[%w_%.%-]+$', patternWhy = 'must be ring or a skill check game\'s name', sides = 'server',
               label = 'Lockpick game',
               help = 'The skill check whip\'s own lockpicks play (cars and doors at medium, the ignition hack at hard): ring, whip\'s own, or the name of a game another resource adds (such as one of spur_phone\'s). If that resource is not running, the ring is played and the console says so.' },
@@ -602,7 +602,7 @@ ConfigSchema = {
               help = 'The number on the rev dial and the label under it.' },
             { path = 'VehicleHud.dashSkins', type = 'bool',
               label = 'Cars\' own dial looks',
-              help = 'Each car\'s rev dial wears that car\'s own GTA dashboard look: its face colour, fonts, number and needle colours. Off, every car has the dial as designed. A car with no dashboard art of its own in GTA keeps the dial as designed either way, and so does every aircraft.' },
+              help = 'Each car\'s rev dial wears that car\'s own dashboard look: its face colour, fonts, number and needle colours. Off, every car has the dial as designed. No car has a look of its own on RedM, so every dial is as designed either way.' },
             { path = 'GaragePositionHelper.enabled', type = 'bool',
               label = 'Parking guide',
               help = 'Paints a bay\'s outline on the road for a driver, since prompts are hidden in a car. A hint only: nothing on it is clicked.' },
@@ -642,23 +642,23 @@ ConfigSchema = {
             { path = 'TimeScale', type = 'number', min = 0, max = 10, step = 0.1, unit = '×', sides = 'server',
               link = { section = 'time', label = 'Open Time & Weather' },
               label = 'Clock speed',
-              help = 'How fast the day passes: 1 is GTA\'s own (a day in 48 minutes), 2 twice as fast, 0 stops the clock. The running clock takes it at once; Time & Weather changes the clock without changing this.' },
+              help = 'How fast the day passes: 1 is the game\'s own (a day in 48 minutes), 2 twice as fast, 0 stops the clock. The running clock takes it at once; Time & Weather changes the clock without changing this.' },
             { path = 'WeatherTypes', type = 'list', minItems = 1, maxItems = 30, cross = weatherListCross,
               item = { type = 'string', maxLen = 20, pattern = '^[%u%d_]+$', patternWhy = 'must be a weather name in capitals' },
               label = 'Weathers',
               help = 'The weathers whip and admins may set, split by commas. It must keep every weather a scene here uses. The scenes\' weather choices take a new name after a restart.' },
             { path = 'WeaponGuard.Enabled', type = 'bool',
-              label = 'Block GTA\'s own guns',
+              label = 'Block the game\'s own guns',
               -- RedM (spur_core, 24 Nov 2026): the weapon resource is spur_gunny, which guards RDR2's own weapons itself.
               help = 'Guns are items, given by a weapon resource (spur_gunny). On takes away any weapon from this guard\'s list that no system gave. RDR2\'s own guns, looted or picked up, are taken back by spur_gunny\'s guard (its Config.Guard). Off lets this guard\'s list through.' },
             { path = 'WeaponGuard.Allow', type = 'list', minItems = 0, maxItems = 50,
               shownWhen = { path = 'WeaponGuard.Enabled', equals = true },
               item = { type = 'string', maxLen = 64, pattern = MODEL, patternWhy = 'must be a weapon name (letters, digits and _)' },
-              label = 'GTA weapons players may keep',
-              help = 'Weapon names split by commas, such as GADGET_PARACHUTE (to bail out of an aircraft). A misspelt name allows nothing.' },
+              label = 'Game weapons players may keep',
+              help = 'Weapon names split by commas, such as WEAPON_LASSO. A misspelt name allows nothing.' },
             { path = 'ThrowKnockdown.Enabled', type = 'bool',
               label = 'Thrown items knock people over',
-              help = 'An item thrown hard at someone knocks them down, like GTA\'s thrown newspaper, and bounces off them: a heavy enough item, fast enough. Not someone in a no-PvP zone or with god mode on.' },
+              help = 'An item thrown hard at someone knocks them down, like a thrown newspaper, and bounces off them: a heavy enough item, fast enough. Not someone in a no-PvP zone or with god mode on.' },
             { path = 'ThrowKnockdown.Npcs', type = 'bool',
               shownWhen = { path = 'ThrowKnockdown.Enabled', equals = true },
               label = 'NPCs are knocked over too',
@@ -668,23 +668,19 @@ ConfigSchema = {
               label = 'How hard a hit knocks someone over',
               help = 'The item\'s weight in kg times its speed in m/s. At a normal throw a 1 kg item is about 17 and a sandwich about 5. Higher: only heavier things knock people over.' },
             { path = 'ActionMode.Disable', type = 'bool',
-              label = 'Keep GTA\'s combat stance off',
-              help = 'GTA\'s crouched combat walk after firing or being shot at. On keeps it off, every frame.' },
+              label = 'Keep the game\'s combat stance off',
+              help = 'The game\'s crouched combat walk after firing or being shot at. On keeps it off, every frame.' },
             { path = 'IdleCam.Disable', type = 'bool',
-              label = 'Keep GTA\'s idle camera off',
-              help = 'GTA\'s slow cinematic pan after about 30 seconds with no input.' },
+              label = 'Keep the game\'s idle camera off',
+              help = 'The game\'s slow cinematic pan after about 30 seconds with no input.' },
             { path = 'InteractPress.enabled', type = 'bool',
               label = 'Hand press',
-              help = 'Using a car door, the boot or bonnet, an ATM, a fuel pump or any prompt marked to press: the player\'s hand goes out towards it and straight back. Only how it looks: the thing happens at once either way, and the player is never moved. Off: no presses. Picking things up off the ground plays GTA\'s own grab either way.' },
+              help = 'Using a car door, the boot or bonnet, an ATM, a fuel pump or any prompt marked to press: the player\'s hand goes out towards it and straight back. Only how it looks: the thing happens at once either way, and the player is never moved. Off: no presses. Picking things up off the ground plays the game\'s own grab either way.' },
             -- Read at the moment of each line (server/shop_talk.lua). The lines themselves are config.lua's
             -- lists: they have commas in them, which a list box here would split.
             { path = 'ShopTalk.enabled', type = 'bool', sides = 'server',
               label = 'Shop talk',
               help = 'At a shop, the shopper says what they are doing in a /me bubble ("I\'ll take x3 Water") and the shopkeeper answers. The lines are in config.lua.' },
-            -- server/shops.lua seedGtaStores: on makes GTA's stores never made before; off deletes none.
-            { path = 'GtaStores', type = 'bool', sides = 'server',
-              label = 'GTA\'s own stores',
-              help = 'GTA\'s nine 24/7s and five LTDs as shops: a keeper behind the till, a map icon, and the shelf screen. Turning it on opens them now; turning it off makes no more but deletes none (delete them in Economy > Shops: a deleted one is not made again). Leave it off if another resource runs your stores, or each would get a second keeper.' },
             -- Live: every shop's prompt takes it at once (server/shop_counters.lua).
             { path = 'ShopInteractRange', type = 'number', min = 1, max = 15, step = 0.5, unit = 'm',
               label = 'Shop reach',
@@ -743,7 +739,7 @@ ConfigSchema = {
               help = 'How the gauges and the minimap look. Black: black discs in a white rim that drains, no capsule behind them (it shows for a notification or chat), a white frame round the minimap, whip\'s dark map on it and a blue waypoint route. The frame is made for the rounded minimap; /radardebug lines it up. The vehicle dial stays as it is.' },
             { path = 'AimDot', type = 'bool',
               label = 'Aim dot',
-              help = 'On: while a player aims, a small dot where the weapon points replaces GTA\'s reticle, red when the muzzle is up against a wall. Any weapon but melee ones and the petrol can. Off: GTA\'s own reticle. Takes effect at once.' },
+              help = 'On: while a player aims, a small dot where the weapon points replaces the game\'s reticle, red when the muzzle is up against a wall. Any weapon but melee ones and the petrol can. Off: the game\'s own reticle. Takes effect at once.' },
             { path = 'MinimapMask', type = 'enum',
               options = {
                   { value = 'square', label = 'Square' }, { value = 'rounded', label = 'Rounded' },
@@ -798,7 +794,7 @@ ConfigSchema = {
                   return false, 'On-screen keyboard: the default language must be one of its languages'
               end,
               label = 'On-screen keyboard default language',
-              help = 'The language for a player whose GTA language is not one of the keyboard\'s.' },
+              help = 'The language for a player whose game language is not one of the keyboard\'s.' },
         },
     },
     {
@@ -848,7 +844,7 @@ ConfigSchema = {
               help = 'Building game systems from cards. On: /systems opens it, and so does a row at the end of /w (developer mode). Off: /systems does not open. An unfinished prototype: leave it off.' },
             { path = 'Experimental.combinedSettings', type = 'bool', warnOn = EXPERIMENTAL_WARNING,
               label = 'Combined Settings page',
-              help = 'On: the pause menu has one Settings page, GTA\'s own settings and this server\'s side by side. Off: Game Settings opens GTA\'s own settings menu, and Server Settings this server\'s. An unfinished prototype: leave it off.' },
+              help = 'On: the pause menu has one Settings page, the game\'s own settings and this server\'s side by side. Off: Game Settings opens the game\'s own settings menu, and Server Settings this server\'s. An unfinished prototype: leave it off.' },
         },
     },
 }

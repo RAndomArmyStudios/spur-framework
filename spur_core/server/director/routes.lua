@@ -158,7 +158,7 @@ function DirectorRoutes.problems(w)
                 if p.act == 'emote' and DirectorTasks.emoteAnim and not DirectorTasks.emoteAnim(tostring(p.emote or '')) then
                     add('error', ('a point plays "%s", which is not an emote with an animation (see /e)'):format(tostring(p.emote or '')))
                 elseif p.act == 'scenario' and not tostring(p.scenario or ''):match('^[%w_]+$') then
-                    add('error', 'a point plays a scenario: a GTA name, like WORLD_HUMAN_SMOKING')
+                    add('error', 'a point plays a scenario: a game name, like WORLD_HUMAN_SMOKING')
                 end
             end
         end

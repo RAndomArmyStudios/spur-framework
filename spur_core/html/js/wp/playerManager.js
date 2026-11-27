@@ -827,7 +827,7 @@ function renderDetail() {
     infoRow(els.identGrid, 'License', u.license || 'N/A', true);
     infoRow(els.identGrid, 'Steam', u.steam || 'N/A', true);
     infoRow(els.identGrid, 'Discord', u.discord || 'N/A', true);
-    infoRow(els.identGrid, 'FiveM', u.fivem || 'N/A', true);
+    infoRow(els.identGrid, 'Cfx.re', u.fivem || 'N/A', true);
     infoRow(els.identGrid, 'Created', dateTime(u.createdAt, 'N/A'));
     infoRow(els.identGrid, 'Last Seen', dateTime(u.lastSeen, 'N/A'));
 

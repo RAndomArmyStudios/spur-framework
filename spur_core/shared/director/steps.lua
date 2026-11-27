@@ -230,15 +230,15 @@ T('anim', { label = 'Play Animation', group = 'act', kinds = NPC, timing = 'time
     fields = {} })
 T('scenario', { label = 'Scenario', group = 'act', kinds = NPC, timing = 'timed', sec = 20, lasting = true, internal = true,
     fields = {} })
--- One of GTA's lines, in its own voice or another's (the page picks both from the game's list: html/js/director/
--- speech-voices.js). Not every voice has every line: one it has not got says nothing.
-T('speech', { label = 'GTA Speech', group = 'act', kinds = NPC, timing = 'instant', once = true,
+-- One of the game's speech lines, by name, in the NPC's own voice or another's (html/js/director/speech-voices.js
+-- lists none on RedM: both are typed). Not every voice has every line: one it has not got says nothing.
+T('speech', { label = 'Speech', group = 'act', kinds = NPC, timing = 'instant', once = true,
     fields = { { key = 'voice', kind = 'voice', label = 'Voice', hint = 'empty: its own', max = 64 },
-               { key = 'line', kind = 'speechLine', label = 'Line', hint = 'GENERIC_HI', max = 64, required = true } },
+               { key = 'line', kind = 'speechLine', label = 'Line', hint = 'the line\'s name', max = 64, required = true } },
     problem = function(p)
-        if not tostring(p.line):match('^[%w_]+$') then return 'a speech line is a GTA name, like GENERIC_HI' end
+        if not tostring(p.line):match('^[%w_]+$') then return 'a speech line is the game\'s name for it: letters, digits and _' end
         if p.voice ~= nil and p.voice ~= '' and not tostring(p.voice):match('^[%w_]+$') then
-            return 'a voice is a GTA name, like A_M_M_BEACH_01_WHITE_FULL_01'
+            return 'a voice is the game\'s name for it: letters, digits and _'
         end
         return nil
     end })
@@ -270,7 +270,7 @@ T('everyoneOut', { label = 'Everyone Out', group = 'car', kinds = CAR_K, timing 
 T('siren', { label = 'Siren', group = 'car', kinds = CAR_K, timing = 'instant', carPreview = true, leftByDrives = true,
     fields = { { key = 'on', kind = 'bool', label = 'On', default = true } } })
 T('blowUp', { label = 'Blow Up', group = 'car', kinds = CAR_K, timing = 'instant', once = true, fields = {} })
--- Its doors, windows, lights, horn, engine and tyres, as GTA has them (client/actors.lua); locked by whip's own locks
+-- Its doors, windows, lights, horn, engine and tyres, as the game has them (client/actors.lua); locked by whip's own locks
 -- (server/actors.lua, started). One of them by its place, or all of them.
 local CAR_DOORS   = { 'front left', 'front right', 'back left', 'back right', 'bonnet', 'boot', 'all of them' }
 local CAR_WINDOWS = { 'front left', 'front right', 'back left', 'back right', 'all of them' }
@@ -282,7 +282,7 @@ T('windows', { label = 'Windows', group = 'car', kinds = CAR_K, timing = 'instan
     fields = { { key = 'window', kind = 'select', label = 'Which', options = CAR_WINDOWS, default = 'all of them' },
                { key = 'how', kind = 'select', look = 'seg', label = 'It', options = { 'down', 'up', 'smashed' }, default = 'down' } } })
 T('lights', { label = 'Lights', group = 'car', kinds = CAR_K, timing = 'instant', carPreview = true, leftByDrives = true,
-    fields = { { key = 'lights', kind = 'select', look = 'seg', label = 'Headlights', options = { 'on', 'off', 'as GTA has them' }, default = 'on' },
+    fields = { { key = 'lights', kind = 'select', look = 'seg', label = 'Headlights', options = { 'on', 'off', 'as the game has them' }, default = 'on' },
                { key = 'beam', kind = 'bool', label = 'Full beam', default = false },
                { key = 'inside', kind = 'bool', label = 'Light inside', default = false } } })
 T('flashLights', { label = 'Flash the Lights', group = 'car', kinds = CAR_K, timing = 'timed', sec = 3, length = true, fields = {} })

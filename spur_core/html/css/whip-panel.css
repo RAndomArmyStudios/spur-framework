@@ -3130,7 +3130,7 @@ button.ib-pic-frame:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--u
 .cfg-point-card .wp-field { width: 100%; }
 .cfg-point-card .wp-field-msg:empty { display: none; }
 
-/* THE ARRIVAL SCENES' ADD SCENES: a search over GTA's switch scenes, a tick per scene. The ones the list has
+/* THE ARRIVAL SCENES' ADD SCENES: a search over the scene catalogue, a tick per scene. The ones the list has
    already are ticked and dimmed. The list scrolls inside the dialog. */
 .cfg-arrival-pick {
     display: flex;

@@ -383,7 +383,7 @@ end
 
 -- A throw's reach, by how far it fell. The client launches at 18 m/s plus a 2.5 m/s lift, so ~20.5 m/s
 -- at most; from h above where it lands, the furthest any angle carries is (v/g)·sqrt(v² + 2gh): 43 m
--- on the flat, ~150 m off the Maze Bank. THROW_ROLL more for the bounce and roll. It rises v²/2g (21 m)
+-- on the flat, ~150 m off a tall building. THROW_ROLL more for the bounce and roll. It rises v²/2g (21 m)
 -- at most.
 local THROW_V, THROW_G = 20.5, 9.81
 local THROW_ROLL, THROW_RISE = 20.0, 25.0

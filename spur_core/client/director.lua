@@ -922,7 +922,7 @@ RegisterNUICallback('directorSkillLevel', function(d, cb)
     cb({ ok = true, level = level })
 end)
 
---- A GTA Speech step's Preview: the line said in that voice (none: its own) by the NPC's builder copy, else by the
+--- A Speech step's Preview: the line said in that voice (none: its own) by the NPC's builder copy, else by the
 --- player. A voice without the line says nothing.
 RegisterNUICallback('directorSpeechHear', function(d, cb)
     cb('ok')

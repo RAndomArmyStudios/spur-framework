@@ -33,7 +33,7 @@ local GRACE_MS = 15000
 -- one-shot token, a minimum time, a timeout):
 --
 --     if exports.spur_core:Progress(source, { label = 'Drinking...', duration = 5000,
---             anim = { dict = 'mp_player_intdrink', clip = 'loop_bottle' } }) then
+--             anim = { dict = 'your_anim_dict', clip = 'your_clip' } }) then
 --         -- the bar really ran; hand over whatever it was for
 --     end
 --
@@ -349,7 +349,7 @@ end)
 --- ```lua
 --- local done, why = exports.spur_core:Progress(source, {
 ---     label = 'Drinking...', duration = 5000,
----     anim = { dict = 'mp_player_intdrink', clip = 'loop_bottle' },
+---     anim = { dict = 'your_anim_dict', clip = 'your_clip' },
 ---     prop = { model = 'prop_amb_beer_bottle' },
 ---     disable = { move = false },   -- they may walk while they drink
 --- })

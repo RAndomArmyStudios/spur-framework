@@ -62,10 +62,10 @@ local function readSpec(spec)
     local sprite = spec.sprite
     if sprite == nil then sprite = (w.radius and spec.label == nil and spec.route ~= true) and 0 or 1 end
     sprite = math.tointeger(tonumber(sprite))
-    if not sprite or sprite < 0 or sprite > 1000 then return nil, 'sprite is a GTA blip icon number' end
+    if not sprite or sprite < 0 or sprite > 1000 then return nil, 'sprite is a game blip icon number' end
     w.sprite = sprite
     local color = math.tointeger(tonumber(spec.color == nil and 5 or spec.color))
-    if not color or color < 0 or color > 85 then return nil, 'color is a GTA blip colour number (0-85)' end
+    if not color or color < 0 or color > 85 then return nil, 'color is a game blip colour number (0-85)' end
     w.color = color
     if spec.label ~= nil then
         if type(spec.label) ~= 'string' then return nil, 'label is text' end

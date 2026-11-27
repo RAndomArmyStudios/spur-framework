@@ -91,7 +91,7 @@ RegisterTestModule({
             end,
         },
         {
-            name = 'Wander Nearby, Look At, Take Cover, GTA Speech: each plays and the list finishes',
+            name = 'Wander Nearby, Look At, Take Cover, Speech: each plays and the list finishes',
             fn = function(source, ctx)
                 local list = {
                     { k = 'a', t = 'wander', radius = 4, sec = 2 },

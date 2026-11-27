@@ -312,8 +312,8 @@ end
 
 -- GTA's own kinds of spawn (GetEntityPopulationType), for what no script made.
 local POPULATION = {
-    [1] = 'GTA (kept)', [2] = 'GTA (parked car)', [3] = 'GTA (patrol)', [4] = 'GTA (scenario)',
-    [5] = 'GTA (traffic, passer-by)', [6] = 'GTA (kept)',
+    [1] = 'Game (kept)', [2] = 'Game (parked car)', [3] = 'Game (patrol)', [4] = 'Game (scenario)',
+    [5] = 'Game (traffic, passer-by)', [6] = 'Game (kept)',
 }
 
 -- What the server said made a networked thing (server/object_viewer.lua spur_core:ov:origin: whose NPC, a temporary

@@ -31,7 +31,7 @@
 -- takes the attacker as its attacker too.
 --
 -- INSIDE AN MLO (def.interior): a ped whose owning game has not got the interior falls through the
--- stock house (the Mirror Park loader brings homes in only within ~52 m). Every client is told which
+-- stock house (the game's loader brings homes in only within ~52 m). Every client is told which
 -- NPCs are gated (spur_core:client:npcGates), so the game that newly owns one freezes it AT ONCE,
 -- before the brain even arrives, until its own game has the interior.
 --
@@ -752,7 +752,7 @@ local function readAnim(a)
     if type(a) ~= 'table' then return nil, 'anim is { dict, clip }, { scenario } or false' end
     if a.scenario ~= nil then
         if type(a.scenario) ~= 'string' or #a.scenario > 64 or not a.scenario:match('^[%w_]+$') then
-            return nil, 'anim.scenario is a GTA scenario name, like WORLD_HUMAN_SMOKING'
+            return nil, 'anim.scenario is a game scenario name, like WORLD_HUMAN_SMOKING'
         end
         return { scenario = a.scenario }
     end

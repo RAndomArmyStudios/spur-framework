@@ -274,7 +274,7 @@ define({
         { key = 'away', kind = 'select', label = 'If the player walks away', options = { 'wait', 'out' }, default = 'wait',
           optionLabels = { wait = 'Wait for the player to come back', out = 'Go on from Walked away' } },
         { key = 'seconds', kind = 'duration', label = 'Gives up after (seconds; empty: never)', min = 5, max = 3600 },
-        -- Its own objective while it waits ("Talk to Lester"), so a goal and its talk are one card (nodes_goals.lua
+        -- Its own objective while it waits ("Talk to the sheriff"), so a goal and its talk are one card (nodes_goals.lua
         -- talkGoal): on the run's screens, with Gives up after as its clock, and a mark on the map that follows them.
         { key = 'goal', kind = 'text', label = 'Objective (on screen; empty: none)', maxLength = 120, group = 'As a goal' },
         { key = 'goalMark', kind = 'bool', label = 'Mark the NPC on the map', default = true },
@@ -1632,7 +1632,7 @@ define({
 
 define({
     type = 'map.waypoint', v = 1, category = 'player', title = 'Set Waypoint',
-    desc = 'Sets GTA\'s own waypoint (the one a player can set on the map) on a placed thing.',
+    desc = 'Sets the game\'s own waypoint (the one a player can set on the map) on a placed thing.',
     outputs = { 'out' },
     props = {
         { key = 'at', kind = 'world', label = 'Where (a placed thing)', required = true },

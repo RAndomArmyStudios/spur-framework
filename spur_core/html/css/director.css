@@ -1657,7 +1657,7 @@ textarea.dr-field { resize: vertical; line-height: 1.45; }
 }
 .dr-pick-row:hover { background: var(--ui-surface-hover); }
 .dr-pick-row.on { background: var(--ui-slot-bg-chosen); border-color: var(--ui-ring); box-shadow: 0 0 0 1px var(--ui-ring); }
-/* The voice picker's row (GTA Speech): the voice to pick, and Hear beside it. */
+/* The voice picker's row (Speech): the voice to pick, and Hear beside it. */
 .dr-voice-row { display: flex; align-items: center; gap: var(--ui-sp-4); }
 .dr-voice-row .dr-pick-row { flex: 1; min-width: 0; width: auto; margin: 0 0 2px -8px; }
 .dr-voice-row .dr-pick-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

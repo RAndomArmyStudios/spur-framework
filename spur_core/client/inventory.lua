@@ -1026,7 +1026,7 @@ local function startGateLoop()
     end)
 end
 
---- A car's maker, for an item picture with {make} in its path: the page sends models, the game names their makers ('pegassi', '' for none).
+--- A car's maker, for an item picture with {make} in its path: the page sends models, the game names their makers ('mymaker', '' for none).
 RegisterNUICallback('itemVehicleMakes', function(data, cb)
     local out = {}
     local models = type(data) == 'table' and data.models

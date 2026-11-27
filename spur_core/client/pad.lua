@@ -20,7 +20,7 @@ end
 -- Per-player settings (pause menu, Settings → Server); the server's Config.Controller figures are the defaults.
 PlayerPrefs.define({
     key = 'pad.sprintOnA', group = 'Controller', type = 'toggle', label = 'A sprints too',
-    help = 'Hold A to sprint, as GTA does, as well as clicking the left stick twice.',
+    help = 'Hold A to sprint, as the game does, as well as clicking the left stick twice.',
     default = function() return Config.Controller ~= nil and Config.Controller.SprintOnA == true end,
 })
 PlayerPrefs.define({
@@ -278,7 +278,7 @@ local function press(slotId)
     local id = layout[slotId]
     local a = id and actionOf(id)
     if not a then return 'nothing on it' end
-    if a.ready == false then return a.label .. ': not ready (the button is GTA\'s)' end
+    if a.ready == false then return a.label .. ': not ready (the button is the game\'s)' end
     if a.run then return a.run() end
     -- Not under a screen or a mode, unless it works in menus.
     if not a.menus and not IsGameInputFree() then return 'ignored: a screen or mode has the keys' end

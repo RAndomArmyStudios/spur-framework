@@ -1135,7 +1135,7 @@ function formInput(field, opts) {
 
 function stepSettings(body) {
     const names = WP.el('div', 'wp-cols-2');
-    els.wName = formInput('name', { placeholder: 'e.g. Mirror Park Bungalow' });
+    els.wName = formInput('name', { placeholder: 'e.g. Riverside Cabin' });
     names.appendChild(WP.field('Name', els.wName, true));
     els.wLabel = formInput('label', { placeholder: 'e.g. 3-1' });
     names.appendChild(WP.field('Unit', els.wLabel));

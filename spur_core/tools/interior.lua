@@ -153,7 +153,7 @@ function Interior.doorCandidates(place, portals, bounds, interiorId)
     end
 
     -- A garage door is looked for further out than a door: a garage can be its own little building
-    -- (Mirror Park's are separate interiors), its door metres from the home's own walls.
+    -- (stock homes are separate interiors), its door metres from the home's own walls.
     local margin, garageMargin = 3.0, 12.0
     local function within(c, m)
         return bounds ~= nil and c.x >= bounds.minX - m and c.x <= bounds.maxX + m

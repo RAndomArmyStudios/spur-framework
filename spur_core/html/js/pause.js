@@ -51,7 +51,7 @@ const MENU_COMBINED = [
 const CONFIRMS = {
     swap: { q: 'Are you sure you wish to swap characters?', sub: 'You will go back to the character screen.',
         yes: 'Swap', callback: 'pauseSwap', danger: false },
-    quit: { q: 'Leave the server?', sub: "You will go back to FiveM's server list.",
+    quit: { q: 'Leave the server?', sub: "You will go back to RedM's server list.",
         yes: 'Leave', callback: 'pauseLeave', danger: true },
 };
 

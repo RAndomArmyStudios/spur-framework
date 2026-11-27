@@ -649,7 +649,7 @@ function detailsTab(b) {
         side.appendChild(card);
         side.appendChild(WP.btn('Edit look', 'wlLookEdit', 'primary'));
         side.appendChild(WP.btn('Copy my look', 'wlLookCopy'));
-        const gta = WP.btn('Use a GTA ped', 'wlLookClear', 'ghost');
+        const gta = WP.btn('Use a game ped', 'wlLookClear', 'ghost');
         gta.classList.add('wp-btn-sm');
         side.appendChild(gta);
     } else {
@@ -1237,8 +1237,8 @@ const actions = {
     wlLookClear: async () => {
         const c = st.draft && !st.draft.isNew ? loreOf(st.draft.key) : null;
         if (!c || !c.hasLook) return;
-        const ok = await WP.confirm({ title: `Make ${c.name} a GTA ped?`, danger: true, confirmLabel: 'Use a GTA ped',
-            body: 'Their look made in the character editor and its portrait are taken away. Type the GTA ped they wear in Ped, and Save.' });
+        const ok = await WP.confirm({ title: `Make ${c.name} a game ped?`, danger: true, confirmLabel: 'Use a game ped',
+            body: 'Their look made in the character editor and its portrait are taken away. Type the game ped they wear in Ped, and Save.' });
         if (!ok) return;
         const r = await call('loreLook', { key: c.key, look: 'none', image: '' });
         if (!r.ok) { WP.result(r.why, 'err'); return; }

@@ -460,8 +460,8 @@ onPrefs(() => { for (const m of maps) m.kick(); });
 const DRIVE_R = 350;
 /** A walk, on foot (m/s). */
 const WALK = 1.6;
-/** Legion Square, when the game has said nothing of where the player is. */
-const PREVIEW_START = { x: 195, y: -934, heading: 0 };
+/** Valentine, when the game has said nothing of where the player is. */
+const PREVIEW_START = { x: -283, y: 806, heading: 0 };
 
 let preview = null;
 

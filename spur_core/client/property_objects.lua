@@ -150,7 +150,7 @@ end
 -- ============================================
 --
 -- For an interior resource that keeps its windows covered until the room behind them is finished
--- (Mirror Park Homes): GetInteriorFurnishState (the bottom of this file) answers
+-- (stock homes): GetInteriorFurnishState (the bottom of this file) answers
 --   'pending'  it will be made, or made again, and is not up yet: waiting for its interior, the settle,
 --              the rows, the floor, or a remake after spur_core:interiorRefreshed
 --   'done'     it is up (or the furnisher has the room: its copies stand in for it)
@@ -219,7 +219,7 @@ end
 -- ============================================
 --
 -- Furniture is made only once its interior is there, and goes when the interior goes. An MLO need
--- not be loaded just because its property is near (Mirror Park's loader brings each home's interior
+-- not be loaded just because its property is near (the game's loader brings each home's interior
 -- in within ~52 m; furniture streams at 60 m), and a lamp made before its interior exists glows and
 -- lights nothing however it is filed afterwards. So a set waits until its interior is loaded AND
 -- ready, for a second so it has settled, and is taken away when it stops being so.
@@ -238,7 +238,7 @@ local rebuiltAt = {}     -- [propertyId] = when its set was last made again (int
 -- ============================================
 --
 -- The spot's answer is not enough: GetInteriorAtCoords answers with whatever interior covers the
--- point, which may be a neighbour's, Rockstar's tunnel under Mirror Park (id2_21_a_tun1, never
+-- point, which may be a neighbour's, a tunnel under the street (never
 -- ready), or a DEAD COPY of the house a loader left behind (same design, same spot, never ready).
 --
 -- So an interior counts only if it is THE PROPERTY'S (its archetype the placement's, place.hash,
@@ -329,7 +329,7 @@ end
 --- Is the property's interior there and ready to hold furniture? Asked at its placement's origin, a
 --- metre up (where the loaders ask), and at its anchor (the middle of its space).
 ---
---- There is not enough: it must be READY. A Mirror Park home's interior is there from about 52 m but
+--- There is not enough: it must be READY. A stock home's interior is there from about 52 m but
 --- only ready from about 32 m, and furniture made in between has dark lamps.
 ---
 --- Standing in it, there is enough, after a while: an interior can be there and never say ready, so
@@ -592,7 +592,7 @@ function bringIn(propertyId)
             madeUnlinked[propertyId] = true
             if not saidUnlinked[propertyId] then
                 saidUnlinked[propertyId] = true
-                print(('[spur_core:props] property %s: its floor is not attached to its interior (the game marks it outside), so lamps made on it give no light. Leaving and coming back can mend it; a full FiveM restart does (after a server restart, restart FiveM rather than reconnecting)')
+                print(('[spur_core:props] property %s: its floor is not attached to its interior (the game marks it outside), so lamps made on it give no light. Leaving and coming back can mend it; a full RedM restart does (after a server restart, restart FiveM rather than reconnecting)')
                     :format(tostring(propertyId)))
             end
         end

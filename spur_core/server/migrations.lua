@@ -41,51 +41,6 @@ Migrations = {}
 -- `statements` that each say what they are about, so a fresh database — whose CREATE already has
 -- the change — skips them all.
 
---- 3D Clanker's furniture category fixes from v4 on (as 037 does them): data/<file> lists model,from,to, and each
---- row moves only while it is still in `from`, so an admin's own move stands. To 'hidden' (not a category) takes it
---- out of the furnisher, marked unavailable as /prop remove does. One statement per (from, to) and 500 models.
----@param file string
----@return number moved, number removed
-local function movePropCategories(file)
-    local src = LoadResourceFile(GetCurrentResourceName(), 'data/' .. file)
-    if not src then error('data/' .. file .. ' is missing') end
-    local byMove, order = {}, {}
-    for line in src:gmatch('[^\r\n]+') do
-        local model, from, to = line:match('^([%w_]+),([%w_]+),([%w_]+)$')
-        if model and model ~= 'model' then
-            local k = from .. '>' .. to
-            if not byMove[k] then
-                byMove[k] = { from = from, to = to, models = {} }
-                order[#order + 1] = k
-            end
-            local list = byMove[k].models
-            list[#list + 1] = model
-        end
-    end
-    local moved, removed = 0, 0
-    for _, k in ipairs(order) do
-        local m = byMove[k]
-        for first = 1, #m.models, 500 do
-            local sql, params
-            if m.to == 'hidden' then
-                sql = 'UPDATE `prop_catalog` SET `status` = \'unavailable\' WHERE `category` = ? AND `status` <> \'unavailable\' AND `model` IN (%s)'
-                params = { m.from }
-            else
-                sql = 'UPDATE `prop_catalog` SET `category` = ? WHERE `category` = ? AND `model` IN (%s)'
-                params = { m.to, m.from }
-            end
-            local marks = {}
-            for i = first, math.min(first + 499, #m.models) do
-                params[#params + 1] = m.models[i]
-                marks[#marks + 1] = '?'
-            end
-            local n = tonumber(MySQL.update.await(sql:format(table.concat(marks, ',')), params)) or 0
-            if m.to == 'hidden' then removed = removed + n else moved = moved + n end
-        end
-    end
-    return moved, removed
-end
-
 --- Whip's own tables, the phone's among them (whip_phone/server/schema.lua): 042 changes these and nothing else that
 --- shares the database.
 local WHIP_TABLES = {
@@ -542,44 +497,14 @@ Migrations.list = {
     {
         id   = '036_prop_categories_v2',
         note = 'Every prop in the game went into the furniture catalog (7c4408a01), sorted by 3D Clanker\'s rules; '
-            .. 'v2 of those rules re-filed 1,423 of them (a fuel nozzle was in Games, the FIB building\'s walls in '
+            .. 'v2 of those rules re-filed 1,423 of them (a fuel nozzle was in Games, a building\'s walls in '
             .. 'Misc). The seed never re-files a row it already put in, so this moves them: each only while it is '
             .. 'still where v1 put it, so an admin\'s own move stands. The list is data/prop_category_moves_v2.csv. '
             .. 'A database that has not seeded them yet has none of these rows (the catalog seeds after migrations, '
             .. 'from server/prop_catalog_seed_world.lua, which has the v2 categories): nothing to do.',
         run = function()
-            if not Migrations.has.table('prop_catalog') then return true end
-            local src = LoadResourceFile(GetCurrentResourceName(), 'data/prop_category_moves_v2.csv')
-            if not src then error('data/prop_category_moves_v2.csv is missing') end
-            -- One statement per move (from, to): 80 of them, not 1,423.
-            local byMove, order = {}, {}
-            for line in src:gmatch('[^\r\n]+') do
-                local model, from, to = line:match('^([%w_]+),([%w_]+),([%w_]+)$')
-                if model and model ~= 'model' then
-                    local k = from .. '>' .. to
-                    if not byMove[k] then
-                        byMove[k] = { from = from, to = to, models = {} }
-                        order[#order + 1] = k
-                    end
-                    local list = byMove[k].models
-                    list[#list + 1] = model
-                end
-            end
-            local moved = 0
-            for _, k in ipairs(order) do
-                local m = byMove[k]
-                for first = 1, #m.models, 500 do
-                    local params, marks = { m.to, m.from }, {}
-                    for i = first, math.min(first + 499, #m.models) do
-                        params[#params + 1] = m.models[i]
-                        marks[#marks + 1] = '?'
-                    end
-                    local res = MySQL.update.await(('UPDATE `prop_catalog` SET `category` = ? WHERE `category` = ? AND `model` IN (%s)')
-                        :format(table.concat(marks, ',')), params)
-                    moved = moved + (tonumber(res) or 0)
-                end
-            end
-            print(('[spur_core:migrations] 036: %d prop(s) moved to their v2 category'):format(moved))
+            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
     },
@@ -593,42 +518,8 @@ Migrations.list = {
             .. 'data/prop_category_moves_v3.csv. A database that has not seeded them yet: nothing to do (the seed '
             .. 'has the v3 categories and leaves the 8 out).',
         run = function()
-            if not Migrations.has.table('prop_catalog') then return true end
-            local src = LoadResourceFile(GetCurrentResourceName(), 'data/prop_category_moves_v3.csv')
-            if not src then error('data/prop_category_moves_v3.csv is missing') end
-            -- One statement per move (from, to), as 036. 'hidden' is not a category: those are removed.
-            local byMove, order = {}, {}
-            for line in src:gmatch('[^\r\n]+') do
-                local model, from, to = line:match('^([%w_]+),([%w_]+),([%w_]+)$')
-                if model and model ~= 'model' then
-                    local k = from .. '>' .. to
-                    if not byMove[k] then
-                        byMove[k] = { from = from, to = to, models = {} }
-                        order[#order + 1] = k
-                    end
-                    local list = byMove[k].models
-                    list[#list + 1] = model
-                end
-            end
-            local moved, removed = 0, 0
-            for _, k in ipairs(order) do
-                local m = byMove[k]
-                local marks = {}
-                for i = 1, #m.models do marks[i] = '?' end
-                local sql, params
-                if m.to == 'hidden' then
-                    sql = 'UPDATE `prop_catalog` SET `status` = \'unavailable\' WHERE `category` = ? AND `status` <> \'unavailable\' AND `model` IN (%s)'
-                    params = { m.from }
-                else
-                    sql = 'UPDATE `prop_catalog` SET `category` = ? WHERE `category` = ? AND `model` IN (%s)'
-                    params = { m.to, m.from }
-                end
-                for i = 1, #m.models do params[#params + 1] = m.models[i] end
-                local n = tonumber(MySQL.update.await(sql:format(table.concat(marks, ',')), params)) or 0
-                if m.to == 'hidden' then removed = removed + n else moved = moved + n end
-            end
-            print(('[spur_core:migrations] 037: %d prop(s) moved to their v3 category, %d taken out of the furnisher')
-                :format(moved, removed))
+            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
     },
@@ -640,9 +531,8 @@ Migrations.list = {
             .. 'unavailable already). The list is data/prop_category_moves_v4.csv. A database that has not seeded '
             .. 'them yet: nothing to do (the seed leaves them out).',
         run = function()
-            if not Migrations.has.table('prop_catalog') then return true end
-            local moved, removed = movePropCategories('prop_category_moves_v4.csv')
-            print(('[spur_core:migrations] 038: %d prop(s) moved, %d taken out of the furnisher'):format(moved, removed))
+            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
     },
@@ -654,10 +544,8 @@ Migrations.list = {
             .. 'parts) and come out of the furnisher. Each only while it is still where v4 left it. The list is '
             .. 'data/prop_category_moves_v5.csv. A database that has not seeded them yet: nothing to do.',
         run = function()
-            if not Migrations.has.table('prop_catalog') then return true end
-            local moved, removed = movePropCategories('prop_category_moves_v5.csv')
-            print(('[spur_core:migrations] 039: %d prop(s) moved to their v5 category, %d taken out of the furnisher')
-                :format(moved, removed))
+            -- RedM (spur_core, 26 Nov 2026): the list was GTA V's props, another game's, and is gone. SPUR's catalog
+            -- is RDR2's (server/prop_catalog_seed.lua), which none of these moves name: nothing to do.
             return true
         end,
     },

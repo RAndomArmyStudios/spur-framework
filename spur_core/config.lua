@@ -111,7 +111,7 @@ Config.EnableInventoryUI = true
 --                     { image = 'html/img/items/keys/{make}.webp' }   {field} = a metadata field; {make} = its car's maker
 --                     { amount = { atLeast = 1000 }, image = ... }   by how many are in the slot (cash)
 --
--- `when` tests, one per metadata field (all must pass): ammo = 0 (equal), model = { 'adder', 't20' } (one of),
+-- `when` tests, one per metadata field (all must pass): ammo = 0 (equal), model = { 'wagon02x', 'cart01' } (one of),
 -- ammo = { above = 0 } (also below, atLeast, atMost), slots = { empty = false }. `default` beside a test is what a
 -- missing field counts as. An option's `whyNot` is what a player told no by its `when` hears.
 
@@ -209,7 +209,7 @@ Config.Items = {
             { key = 'model', label = 'Wagon', format = 'uppercase' },
             { key = 'plate', label = 'Number' },
         },
-        -- Looks like its car maker's key (html/img/items/keys/pegassi.webp); a maker with no picture shows the plain key.
+        -- Looks like its car maker's key (html/img/items/keys/<maker>.webp); a maker with no picture shows the plain key.
         images = {
             { image = 'html/img/items/keys/{make}.webp' },
         },
@@ -369,14 +369,14 @@ Config.MapOptions = {
     },
 }
 
--- GTA's own guns (a dead NPC's gun, the shotgun in a police car): whip stops them being picked up and takes away any
--- that arrive. Guns come from spur_gunny's items (RedM, 24 Nov 2026).
---   Enabled   false lets GTA's guns through
---   Allow     GTA weapons a player may keep anyway (the parachute lets them bail out of an aircraft)
+-- The game's own guns (a dead NPC's gun): whip stops them being picked up and takes away any that arrive. Guns come
+-- from spur_gunny's items (RedM, 24 Nov 2026).
+--   Enabled   false lets the game's guns through
+--   Allow     game weapons a player may keep anyway, by name (WEAPON_LASSO, say)
 --   SweepMs   how often to check for one that slipped through (milliseconds)
 Config.WeaponGuard = {
     Enabled = true,
-    Allow   = { 'GADGET_PARACHUTE' },
+    Allow   = {},
     SweepMs = 5000,
 }
 
@@ -667,8 +667,8 @@ Config.VehicleHud = {
         openwheel      = 15,
     },
 
-    -- The top of the dial for one model's engine, in thousands, by its spawn name: { sultan = 8.5 }.
-    -- Beats everything else, and follows the engine: a car with a sultan engine swapped in gets it.
+    -- The top of the dial for one model's engine, in thousands, by its spawn name: { mycar = 8.5 }.
+    -- Beats everything else, and follows the engine: a car with mycar's engine swapped in gets it.
     rpmByModel = {},
 
     -- Helicopters and planes get flight instruments in the dial: an attitude indicator, airspeed
@@ -894,7 +894,7 @@ Config.VehiclePartHinges = {}
 Config.VehicleBackDoors = {}
 
 -- The vehicle classes looked at for back doors: 10 industrial, 11 utility, 12 vans, 17 service, 18 emergency (the
--- ambulance, police vans), 19 military, 20 commercial (the Stockade, the Mule). Every other class (cars, SUVs,
+-- ambulance, police vans), 19 military, 20 commercial (armoured vans, box trucks). Every other class (cars, SUVs,
 -- bikes...) keeps its rear doors as doors.
 Config.VehicleBackDoorClasses = { 10, 11, 12, 17, 18, 19, 20 }
 
@@ -902,8 +902,8 @@ Config.VehicleBackDoorClasses = { 10, 11, 12, 17, 18, 19, 20 }
 -- above a rear wheel. Set the side for a model it guesses wrong; 'rear' puts it on the back. /vehpoints next to the
 -- car shows where the nozzle goes.
 --     Config.VehicleFillers = {
---         [GetHashKey('sultan')] = { side = 'right' },
---         [GetHashKey('tornado')] = { side = 'rear' },
+--         [GetHashKey('mycar')] = { side = 'right' },
+--         [GetHashKey('myvan')] = { side = 'rear' },
 --     }
 Config.VehicleFillers = {}
 
@@ -987,7 +987,7 @@ Config.GarageWizardReach = 250.0
 
 -- Seed data, read once on the very first server start, then kept in the database. Manage garages in game with
 -- /whip > Garages; editing this list later has no effect on a server that has already run.
--- RedM (spur_core, 23 Nov 2026): no seed. GTA's Legion Square car park has no RDR2 counterpart: make a wagon yard
+-- RedM (spur_core, 23 Nov 2026): no seed. whip_core's GTA car park has no RDR2 counterpart: make a wagon yard
 -- with /whip > Garages, standing where it should be.
 Config.Garages = {}
 
@@ -1001,7 +1001,7 @@ Config.Garages = {}
 -- (deleting it there brings it back at the next restart while it is listed). An example, left switched off:
 --
 --   convenience_1 = {
---       name       = '24/7 Store',
+--       name       = 'General Store',
 --       mode       = 'npc',                 -- 'npc' (the server's), 'infinite' or 'stocked' (a job's)
 --       npcModel   = 'u_m_m_valgenstoreowner_01',    -- who stands there; or prop = 'model' for an object
 --       pos        = vector4(25.7, -1347.3, 29.5, 271.0),
@@ -1016,18 +1016,6 @@ Config.Garages = {}
 --                         Both can also be set in game by the shop's managers (Edit Shelf).
 Config.Shops = {
 }
-
--- GTA's own convenience stores as shops: its nine 24/7s and five LTDs (server/gta_stores.lua), each with a keeper behind
--- the till selling GtaStoreCatalog, a map icon, and the shelf screen, basket and checkout every shop has. Each is made
--- once and then managed in /whip like any shop. Off unless server.cfg says `set whip_gta_stores true` (WHIP's txAdmin
--- recipe does, for a new server), so a server that runs its own stores gets no second keeper. Also on /whip >
--- Settings > World & gameplay: turning it on opens them at once; turning it off makes no more, and deletes none
--- (delete them in /whip > Economy > Shops: one deleted is not made again).
--- RedM (spur_core, 23 Nov 2026): the list is empty on RedM (server/gta_stores.lua), so this does nothing there.
-Config.GtaStores = GetConvar('whip_gta_stores', 'false') == 'true'
-
--- What GTA's stores sell, item key = price in cash. A store's own catalog can be changed in /whip after it is made.
-Config.GtaStoreCatalog = { food = 50, drink = 30 }
 
 -- How many lines a shopping basket has (1 to 50). A line is one kind of item, as many as stack in a pocket slot.
 Config.ShopBasketSlots = 10
@@ -1391,7 +1379,7 @@ Config.LoreVoice = {
     ByeRange = 10,           -- a player it said hello to walking this far away hears its Goodbye line
     GreetAgainMinutes = 3,   -- after this long (and having walked off), a player is greeted again
     ReactAgainSeconds = 6,   -- the same reaction again only after this long
-    Gestures = true,         -- it moves its hands as it talks (GTA's own talking gestures, without GTA's voice)
+    Gestures = true,         -- it moves its hands as it talks (the game's own talking gestures, without a voice)
 }
 
 -- Prop catalog: every prop in the game is placeable in the furnisher, filed under the categories below (RedM, 24 Nov
@@ -1760,8 +1748,8 @@ Config.Creator = {
 
 -- 11c. Arrival scenes
 --
--- What the player sees as the picture comes back after picking a character: one of GTA's own character-switch
--- scenes (animation and camera move, as in story mode) plays where they are. When it ends they have the controls and
+-- What the player sees as the picture comes back after picking a character: a scene from the lists below
+-- (an animation and the camera move that goes with it) plays where they are. When it ends they have the controls and
 -- the camera eases back behind them when they move. In a car it cuts straight back.
 -- Left in a car: if that car is still within `vehicleRange` metres of where they left, they come back in it, in the
 -- seat they had or the first free one (`inVehicle`). A car that is gone, too far or full: on foot where they left.
@@ -1770,7 +1758,7 @@ Config.Creator = {
 -- No scene for a brand new character, for someone who left dead, or in water. On foot, a scene whose walk would go
 -- through a wall is skipped for another; if none fits the picture just comes back. Inside a building only the lines
 -- marked `indoors` play.
--- The four lists are also on /whip > Settings > Joining: Add scenes picks from every switch scene the game has.
+-- The four lists are also on /whip > Settings > Joining: Add scenes picks from client/arrival_list.lua (empty on RedM).
 -- A line: `dict` and `clip` are the game's animation, `cam` the camera move that goes with it. Optional:
 --   from = 0.5          start half way through
 --   to = 0.9            end there instead of at the last frame
@@ -1778,7 +1766,7 @@ Config.Creator = {
 --   getsIn = true       it ends with them in the seat
 --   indoors = true      fine inside a building (little walking, a camera that fits a room)
 --   prop = { .. }       what goes in the hand; left out, the game's own is used (client/arrival_list.lua)
--- RedM (spur_core, 23 Nov 2026): off, with empty lists. These were GTA's story-mode character-switch scenes, which
+-- RedM (spur_core, 23 Nov 2026): off, with empty lists. whip_core's were another game's scenes, which
 -- RDR2 does not have; an RDR2 animation could be listed in the same shape.
 Config.ArrivalScenes = {
     enabled = false,         -- false = the picture just fades up

@@ -37,14 +37,13 @@ RegisterTestModule({
     setup = function(source)
         local p = exports.spur_core:GetPlayer(source)
         if not (p and p.charId) then skip('the tester is not on a character') end
-        -- RedM (spur_test, 24 Nov 2026): the Director's gun list (spur_core shared/gta_weapons.lua) is still GTA's. While
-        -- it refuses an RDR2 gun prop, none of this can run: skipped, with what the Check said.
+        -- RedM (spur_test, 24 Nov 2026): the Director's gun list is RDR2's (spur_core shared/rdr_weapons.lua). If it ever
+        -- refuses the test's gun prop, none of this can run: skipped, with what the Check said.
         local A = { x = 0, y = 0, z = 0, heading = 0 }
         local ok, why = check(showDoc({ gun('g', A) }, { N('w', 'flow.wait', { seconds = 1 }), N('win', 'scenario.succeed') },
             { { 'show', 'out', 'w' }, { 'w', 'done', 'win' } }))
         if not ok then
-            skip("RedM: the Director's gun list is still GTA's, so " .. TEST_WEAPON .. ' is refused (pending the RDR2 '
-                .. 'weapon catalog): ' .. why)
+            skip('RedM: the Director refused ' .. TEST_WEAPON .. ': ' .. why)
         end
     end,
     teardown = function(ctx, source)

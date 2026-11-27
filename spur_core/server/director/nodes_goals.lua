@@ -524,7 +524,7 @@ local function npcName(run, npcW)
     return (lore and lore.name) or w.label
 end
 
---- A Dialog Line's own objective (its page: As a goal), so "talk to Lester" is one card: the objective on the run's
+--- A Dialog Line's own objective (its page: As a goal), so "talk to the sheriff" is one card: the objective on the run's
 --- band while it waits, its clock when the card has a time limit, and (unless `mark` is false) a mark on their maps
 --- that follows the NPC. All of it goes when the card ends, as every goal's does.
 function DirectorNodes.talkGoal(ctx, npcW, text, seconds, mark)

@@ -73,7 +73,7 @@ export function itemImageUrl(itemKey, img) {
 
 /** Variant URLs that failed to load. */
 const _variantMissing = new Set();
-/** [model] = the maker ('pegassi'), or '' when the game knows none. */
+/** [model] = the maker ('mymaker'), or '' when the game knows none. */
 const _makes = new Map();
 /** Models asked about and not answered yet, and the pictures waiting on each: [model] = Set of img. */
 const _waiting = new Map();
@@ -279,13 +279,13 @@ const CLOTHING_SLOTS = {
 };
 
 /**
- * One clothing picture's name, without its folder or '.webp' ('male_11_mp_m_vinewood_004_00'), or null
+ * One clothing picture's name, without its folder or '.webp' ('male_11_mp_m_example_004_00'), or null
  * when there is none to ask for. It is also that item's key in the character editor's names
  * (editorNamesUrl), which name each picture.
  * @param {string} gender  'male' | 'female'
  * @param {'component'|'prop'} kind
  * @param {number} slot     the component (0-11) or prop slot (0, 1, 2, 6, 7)
- * @param {string} name     '<collection>_<item>', e.g. 'mp_m_vinewood_004' ('' = no name)
+ * @param {string} name     '<collection>_<item>', e.g. 'mp_m_example_004' ('' = no name)
  * @param {number} texture  the colour, 0 and up
  */
 export function clothingPictureName(gender, kind, slot, name, texture) {

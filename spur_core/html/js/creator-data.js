@@ -210,7 +210,7 @@ export const OVERLAY_PALETTE = {
 };
 
 // ---- Eye colors ----
-// GTA's 32 fixed eye colors, with approximate swatch hexes. 12-31 are the
+// The game's 32 fixed eye colors, with approximate swatch hexes and plain names. 12-31 are the
 // novelty set; the swatch is a best-effort hint, the ped is the real preview.
 export const EYE_COLORS = [
     { name: 'Green',        hex: '#41694c' }, { name: 'Emerald',      hex: '#218352' },
@@ -219,16 +219,16 @@ export const EYE_COLORS = [
     { name: 'Hazel',        hex: '#7a6b3f' }, { name: 'Dark Gray',    hex: '#555a5e' },
     { name: 'Light Gray',   hex: '#9aa2a6' }, { name: 'Pink',         hex: '#c97b9c' },
     { name: 'Yellow',       hex: '#c9b25c' }, { name: 'Purple',       hex: '#6f4f8f' },
-    { name: 'Blackout',     hex: '#1b1b1b' }, { name: 'Shades of Gray', hex: '#6e6e6e' },
-    { name: 'Tequila Sunrise', hex: '#c56a2b' }, { name: 'Atomic',    hex: '#7fd12e' },
-    { name: 'Warp',         hex: '#c22fb0' }, { name: 'ECola',        hex: '#a01f1f' },
-    { name: 'Space Ranger', hex: '#2fc2b8' }, { name: 'Ying Yang',    hex: '#e8e8e8' },
-    { name: 'Bullseye',     hex: '#b03030' }, { name: 'Lizard',       hex: '#77a02f' },
-    { name: 'Dragon',       hex: '#c2842f' }, { name: 'Extra Terrestrial', hex: '#8fb0b5' },
-    { name: 'Goat',         hex: '#c2b48f' }, { name: 'Smiley',       hex: '#e0d048' },
-    { name: 'Possessed',    hex: '#e8e0d0' }, { name: 'Demon',        hex: '#8a1010' },
-    { name: 'Infected',     hex: '#a0b048' }, { name: 'Alien',        hex: '#485ab0' },
-    { name: 'Undead',       hex: '#b0a890' }, { name: 'Zombie',       hex: '#606848' },
+    { name: 'Black',     hex: '#1b1b1b' }, { name: 'Gray', hex: '#6e6e6e' },
+    { name: 'Orange', hex: '#c56a2b' }, { name: 'Lime',    hex: '#7fd12e' },
+    { name: 'Magenta',         hex: '#c22fb0' }, { name: 'Deep Red',        hex: '#a01f1f' },
+    { name: 'Teal', hex: '#2fc2b8' }, { name: 'White',    hex: '#e8e8e8' },
+    { name: 'Red',     hex: '#b03030' }, { name: 'Olive',       hex: '#77a02f' },
+    { name: 'Amber',       hex: '#c2842f' }, { name: 'Pale Blue', hex: '#8fb0b5' },
+    { name: 'Tan',         hex: '#c2b48f' }, { name: 'Gold',       hex: '#e0d048' },
+    { name: 'Ivory',    hex: '#e8e0d0' }, { name: 'Crimson',        hex: '#8a1010' },
+    { name: 'Yellow Green',     hex: '#a0b048' }, { name: 'Indigo',        hex: '#485ab0' },
+    { name: 'Bone',       hex: '#b0a890' }, { name: 'Moss',       hex: '#606848' },
 ];
 
 // ---- Hair palette (indices 0-63) ----

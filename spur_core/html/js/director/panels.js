@@ -1312,7 +1312,7 @@ function taskFields(ed, w, def, s, i, count, n) {
                         + `<span class="dr-sw-name">${e(text || 'Done')}</span><span class="dr-switch${on.has(pin) ? ' on' : ''}"></span></button>`).join('');
             }
         }
-        // GTA Speech: whose voice (the voice picker: voicePicker) and which of its lines, heard with Preview.
+        // Speech: whose voice (the voice picker: voicePicker) and which of its lines, heard with Preview.
         else if (f.kind === 'voice') {
             html += `<div class="dr-row">${labelHtml(f.label)}<div class="dr-where">${e(v ? voiceLabel(ed, v) : 'Its own voice')}</div></div>`
                 + `<div class="dr-btns"><button class="dr-btn" data-act="voice-open" data-id="${e(w.id)}" data-k="${e(s.k)}">Choose a voice</button>`
@@ -1446,7 +1446,7 @@ function tasksGroup(ed, w, inTab) {
     return html;
 }
 
-// ---- GTA Speech: the game's voices and their lines (html/js/director/speech-voices.js, ed.speech once it is read) ----
+// ---- Speech: the game's voices and their lines (html/js/director/speech-voices.js, ed.speech once it is read) ----
 
 const VOICE_GROUPS = [['a', 'Passers-by'], ['g', 'Gangs'], ['s', 'Jobs and services'], ['n', 'Story and others']];
 
@@ -1838,7 +1838,7 @@ function lookGroup(ed, w) {
     const has = lookOf(w);
     return groupHead('Character editor')
         + `<div class="dr-hint">${has ? 'Its face, hair, make-up, tattoos and clothes, made in the character editor: what it wears every time.'
-            : 'A freemode ped: give it a face, hair, make-up, tattoos and clothes, as a player makes their character.'}`
+            : 'A multiplayer ped: give it a face, hair, make-up, tattoos and clothes, as a player makes their character.'}`
         + ' You wear it while the editor is open; Save there puts it on this NPC.</div>'
         + '<div class="dr-btns">'
         + `<button class="dr-btn primary" data-act="npc-look" data-id="${e(w.id)}">${has ? 'Edit its look' : 'Open the character editor'}</button>`
@@ -1931,7 +1931,7 @@ function visionGroup(ed, w) {
         + numberField(t, 'farS', v.farS, { label: 'At its full distance', hint: 'seconds', min: 1, max: 30, placeholder: '8' })
         + '</div>'
         + '<div class="dr-hint">Seen the whole time, that is how long it takes: a second at least. In between, the further away you are, the longer.</div>'
-        + switchField(t, 'sneak', v.sneak, { label: 'Sneaking hides you better', fallback: true, hint: 'Half the distance while you sneak (GTA\'s Ctrl walk)' })
+        + switchField(t, 'sneak', v.sneak, { label: 'Sneaking hides you better', fallback: true, hint: 'Half the distance while you sneak (the game\'s Ctrl walk)' })
         + selectField(t, 'alert', alertOf(v), ALERTS, { label: 'A spotted player alerts', noEmpty: true })
         + alertHint(w, v)
         + segField(t, 'react', v.react, REACTS, { label: 'Alerted, they', fallback: 'attack' })

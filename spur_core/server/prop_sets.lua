@@ -22,7 +22,7 @@
 --   * EXACTLY WHERE THEY ARE PUT: no snap to the ground. `rot` is GTA's rotation order 2 (x tilts
 --     forward, y tilts sideways, z is the heading), as the furnisher saves furniture.
 --   * INSIDE AN MLO, `interior = true` makes each game wait for the interior to be there before it
---     makes the prop (the Mirror Park loader brings interiors in and out), and files it in its room;
+--     makes the prop (the game's loader brings interiors in and out), and files it in its room;
 --     a lamp (`light = true`) goes in the interior's limbo, so its light reaches the room (the
 --     furnisher's rule, client/interior_rooms.lua).
 --   * YOURS: ids are your resource's own. The same id again replaces that set. Yours go when your

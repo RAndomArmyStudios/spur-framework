@@ -395,7 +395,7 @@ RegisterNUICallback('radarDebugPrint', function(_, cb)
         -- The box is at the safe zone's full size: hud_skin.lua adds this player's margin when it draws.
         print(('    -- (this player\'s safe zone: %.3f, so %.4f was added to posX and posY on screen)')
             :format(GetSafeZoneSize(), (1.0 - GetSafeZoneSize()) / 2))
-        print(('    frameOver  = %s   -- true: drawn over GTA\'s HUD (the radar was drawn first)')
+        print(('    frameOver  = %s   -- true: drawn over the game\'s HUD (the radar was drawn first)')
             :format(tostring(opts.frameOver)))
     end
     cb('ok')

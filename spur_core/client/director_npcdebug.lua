@@ -7,7 +7,7 @@ DirectorNpcDebug = {}
 
 local NEAR_M, LOOK_M = 25.0, 90.0
 local HEAD = 31086
-local REACTING = 'Reacts to danger is on (GTA\'s own reaction)'
+local REACTING = 'Reacts to danger is on (the game\'s own reaction)'
 
 local list = nil     -- the server's lines, while it is on
 local wanted = false

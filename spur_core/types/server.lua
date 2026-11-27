@@ -2789,7 +2789,7 @@ function spur_core:CloseStore(source, addr) end
 --- One shop, by its id or by a reference that says what you hold, as GetVehicle takes one:
 ---
 ---     exports.spur_core:GetShop(4)
----     exports.spur_core:GetShop({ key = 'burgershot' })
+---     exports.spur_core:GetShop({ key = 'saloon' })
 ---     exports.spur_core:GetShop({ containerId = 12 })   -- the shop whose stock that container is
 ---
 --- A job's shops (a job can own several) are GetShops({ job = }).

@@ -2725,7 +2725,7 @@ SecureEvent('spur_core:server:jmCreateJob', {
     local name = Sanitize.string(data.name, 100, 'New Job')
     local icon = data.icon and Sanitize.string(data.icon, 100) or nil
     -- Every job has a key: the doors, shops and code name jobs by it. A blank box makes one
-    -- from the name ('Burger Shot' → 'burger_shot'); a typed one must be a valid identifier.
+    -- from the name ('Saloon' → 'saloon'); a typed one must be a valid identifier.
     local key = type(data.key) == 'string' and data.key:match('^%s*(.-)%s*$') or ''
     if key == '' then key = Jobs.keyFromName(name) end
     -- An address, so Sanitize.id: 0 / blank is no owner, and 1.5 is refused rather than clamped

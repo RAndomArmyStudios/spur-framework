@@ -487,7 +487,7 @@ function hint(body, text) {
 // ---- step: name ----
 
 function stepName(body) {
-    const name = WP.input({ placeholder: 'e.g. Burger Shot', value: draft.name, inputAction: 'jwName' });
+    const name = WP.input({ placeholder: 'e.g. Saloon', value: draft.name, inputAction: 'jwName' });
     name.maxLength = 100;
     body.appendChild(WP.field('Name', name, true));
     if (draft.editing) {

@@ -476,7 +476,7 @@ local function heroShot(entry, s, where)
         if type(s.look) ~= 'table' then error(where .. ': its sky must be a weather and a time', 0) end
         out.look = {
             weather = leaf({ type = 'string', maxLen = 20, nullable = true, pattern = '^[%u%d_]+$',
-                patternWhy = 'must be a GTA weather name in capitals' }, s.look.weather, 'its weather'),
+                patternWhy = 'must be a game weather name in capitals' }, s.look.weather, 'its weather'),
             hour = leaf({ type = 'int', min = 0, max = 23 }, s.look.hour or 12, 'its hour'),
             minute = leaf({ type = 'int', min = 0, max = 59 }, s.look.minute or 0, 'its minute'),
             frozen = s.look.frozen ~= false,

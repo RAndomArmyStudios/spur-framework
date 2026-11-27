@@ -157,7 +157,7 @@ do
     end
     PlayerPrefs.define({
         key = 'keyboard.language', group = 'Controller', type = 'choice', label = 'Keyboard language',
-        help = 'The language the on-screen keyboard types and suggests words in. Game language: the one GTA is set to, when this server has it.',
+        help = 'The language the on-screen keyboard types and suggests words in. Game language: the one the game is set to, when this server has it.',
         options = options, default = 'auto', page = true,
         visible = function() return #languages() > 1 end,
     })

@@ -56,7 +56,7 @@ const gta = (text) => ({ kind: 'gta', text });
 const dim = { kind: 'dim' };   // LB's view: not part of the LB layer
 
 const LB_WHY = 'whip\'s combo key: hold LB and press another button. "Holding LB" shows what each one does.';
-const B_CAR_WHY = 'whip turns GTA\'s cinematic camera off on B in a vehicle.';
+const B_CAR_WHY = 'whip turns the game\'s cinematic camera off on B in a vehicle.';
 const PAUSE_WHY = 'Opens this menu.';
 const PROMPT_WHY = 'Uses the 3D prompt you are looking at, and picks in menus.';
 
@@ -345,7 +345,7 @@ export class PadLayout {
                 <div class="pl-status"></div>
             </header>
             <div class="pl-stage"><svg class="pl-svg" xmlns="${NS}"></svg></div>
-            <div class="pl-foot">GTA's own buttons are shown as GTA's Standard controller layout has them, and are set in GTA's Settings. whip's can be changed here.</div>
+            <div class="pl-foot">The game's own buttons are shown as the game's Standard controller layout has them, and are set in the game's Settings. whip's can be changed here.</div>
             <footer class="pl-bar">
                 <div class="pl-what">
                     <div class="pl-what-glyphs"></div>
@@ -469,7 +469,7 @@ export class PadLayout {
     }
 
     textOf(r, view) {
-        if (r.kind === 'gta') return { text: r.text, note: 'GTA', kind: 'gta' };
+        if (r.kind === 'gta') return { text: r.text, note: 'Game', kind: 'gta' };
         if (r.kind === 'whip') return { text: r.text, note: '', kind: 'fixed' };
         if (r.kind === 'slot') {
             const a = this.on(r.slot);
@@ -481,12 +481,12 @@ export class PadLayout {
                 }
                 if (r.whipElse) return { text: r.whipElse, note: '', kind: 'else' };
                 const g = r.gtaElse || r.also;
-                return g ? { text: g, note: 'GTA', kind: 'gta' } : { text: 'Nothing', note: '', kind: 'empty' };
+                return g ? { text: g, note: 'Game', kind: 'gta' } : { text: 'Nothing', note: '', kind: 'empty' };
             }
             const off = a.where && a.where !== view && view !== 'lb' ? WHERE_NOTE[a.where] : '';
             // Not here (the sprint, in a car), and GTA has the button here: GTA's is what it does.
-            if (off && r.also) return { text: r.also, note: 'GTA · ' + a.label + ' ' + off, kind: 'gta' };
-            const also = r.also ? 'also GTA\'s ' + r.also.toLowerCase() : '';
+            if (off && r.also) return { text: r.also, note: 'Game · ' + a.label + ' ' + off, kind: 'gta' };
+            const also = r.also ? 'also the game\'s ' + r.also.toLowerCase() : '';
             const first = r.whipElse ? r.whipElse.toLowerCase() + ' first' : '';
             return { text: a.label, note: [off, also, first].filter(Boolean).join(' · '), kind: 'slot' };
         }
@@ -560,9 +560,9 @@ export class PadLayout {
             this.choicesEl.classList.remove('live');
             const l = this.labelOf(this.sel);
             if (r.kind === 'gta') {
-                this.whatSub.textContent = 'GTA: ' + r.text;
-                this.choicesEl.innerHTML = '<div class="pl-info">GTA\'s own button. whip leaves GTA\'s buttons to GTA; '
-                    + 'its controller layout is in GTA\'s Settings.</div>';
+                this.whatSub.textContent = 'Game: ' + r.text;
+                this.choicesEl.innerHTML = '<div class="pl-info">The game\'s own button. whip leaves the game\'s buttons to the game; '
+                    + 'its controller layout is in the game\'s Settings.</div>';
             } else {
                 this.whatSub.textContent = l.text;
                 this.choicesEl.innerHTML = `<div class="pl-info">${escapeHtml(r.why || 'Always this, in whip.')}</div>`;
@@ -576,7 +576,7 @@ export class PadLayout {
         if (!a) {
             // What a free one does: GTA's, or the button's own without LB.
             const l = this.labelOf(this.sel);
-            if (l.kind === 'gta') does = 'Free: GTA\'s ' + l.text.toLowerCase();
+            if (l.kind === 'gta') does = 'Free: the game\'s ' + l.text.toLowerCase();
             else if (l.kind === 'else') does = 'Free: ' + l.text + (r.plainElse ? ', as without LB' : '');
         }
         this.whatSub.textContent = this.note || does;

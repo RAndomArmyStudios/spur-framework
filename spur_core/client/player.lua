@@ -176,7 +176,7 @@ RegisterNetEvent('spur_core:client:playerLoaded', function(data)
         end
         if loggedOut() then return end
 
-        -- 7. NOW it is loaded. The picture comes back on one of GTA's own switch scenes, played
+        -- 7. NOW it is loaded. The picture comes back on one of the arrival scenes, played
         --    where they are (Config.ArrivalScenes, client/arrival.lua), which returns once the camera
         --    is back behind them. No scene fits (dead, in water, walls all round), or a new character
         --    in the creator: one lift, and the first thing anybody sees is the finished scene.

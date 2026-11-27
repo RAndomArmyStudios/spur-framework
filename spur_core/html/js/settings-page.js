@@ -434,7 +434,7 @@ export class SettingsPage {
     rows() {
         const cur = this.current();
         if (!cur) return [];
-        if (cur.keys) return [{ src: 'game', id: 'keys', kind: 'keys', label: 'Open GTA\'s key bindings' }];
+        if (cur.keys) return [{ src: 'game', id: 'keys', kind: 'keys', label: 'Open the game\'s key bindings' }];
         if (cur.section === 'game') {
             const t = this.game.tab;
             return t && t.id === cur.id && !this.game.loading ? t.rows.map(gameRow) : [];
@@ -505,10 +505,10 @@ export class SettingsPage {
                 + `${icon(ico)}<span class="st-nav-label">${escapeHtml(t.label)}</span>${end}</button>`;
         };
         let game = tabs.filter((t) => t.section === 'game').map(item).join('');
-        if (this.game.state === 'loading') game = '<div class="st-railnote st-breathe">Opening GTA\'s settings</div>';
+        if (this.game.state === 'loading') game = '<div class="st-railnote st-breathe">Opening the game\'s settings</div>';
         else if (this.game.state === 'failed') {
             game = '<div class="st-railnote">Didn\'t open <button type="button" class="st-link" data-act="retry">Try again</button>'
-                + ' <button type="button" class="st-link" data-act="gta">GTA\'s own</button></div>';
+                + ' <button type="button" class="st-link" data-act="gta">The game\'s own</button></div>';
         }
         const server = tabs.filter((t) => t.section === 'server').map(item).join('')
             || '<div class="st-railnote st-breathe">Loading</div>';
@@ -520,7 +520,7 @@ export class SettingsPage {
             return;
         }
         this.railEl.innerHTML = `<div class="st-grp"><span>Game</span>${pad}</div>`
-            + '<div class="st-grpsub">GTA\'s own, for every server</div>' + game
+            + '<div class="st-grpsub">The game\'s own, for every server</div>' + game
             + '<div class="st-grp st-grp-2">Server</div><div class="st-grpsub">This server, kept on your PC</div>' + server;
     }
 
@@ -528,10 +528,10 @@ export class SettingsPage {
         const cur = this.current();
         if (!cur || (cur.section === 'game' && !cur.keys && (this.game.loading || this.game.state !== 'ready'))) {
             if (this.game.state === 'failed') {
-                this.rowsEl.innerHTML = '<div class="st-empty"><h2>GTA\'s settings didn\'t open</h2>'
-                    + `<p>${escapeHtml(this.game.failed)}. If it keeps happening after a game update, WHIP's copy of GTA's settings page needs building again. GTA's own settings menu still works meanwhile.</p>`
+                this.rowsEl.innerHTML = '<div class="st-empty"><h2>The game\'s settings didn\'t open</h2>'
+                    + `<p>${escapeHtml(this.game.failed)}. If it keeps happening after a game update, WHIP's copy of the game's settings page needs building again. The game's own settings menu still works meanwhile.</p>`
                     + '<div class="st-empty-btns"><button type="button" class="st-btn st-pill" data-act="retry">Try again</button>'
-                    + '<button type="button" class="st-btn" data-act="gta">Open GTA\'s own settings</button></div></div>';
+                    + '<button type="button" class="st-btn" data-act="gta">Open the game\'s own settings</button></div></div>';
             } else {
                 this.rowsEl.innerHTML = Array.from({ length: 9 }, (_, i) =>
                     `<div class="st-row st-skel"><span class="st-skelbar" style="width:${[46, 32, 54, 38, 50, 28, 44, 36, 48][i]}%"></span></div>`).join('');
@@ -573,8 +573,8 @@ export class SettingsPage {
             this.inspEl.innerHTML = !this.withGame ? ''
                 : this.game.state === 'failed'
                 ? '<div class="st-ihold"><h2 class="st-ititle st-small">Server tabs still work</h2>'
-                    + '<p class="st-help">Controller, Vehicles, Map &amp; HUD, Minimap and Chat &amp; voice are WHIP\'s own and don\'t need GTA\'s menu.</p></div>'
-                : '<div class="st-ihold"><h2 class="st-ititle st-small">Reading GTA\'s settings</h2>'
+                    + '<p class="st-help">Controller, Vehicles, Map &amp; HUD, Minimap and Chat &amp; voice are WHIP\'s own and don\'t need the game\'s menu.</p></div>'
+                : '<div class="st-ihold"><h2 class="st-ititle st-small">Reading the game\'s settings</h2>'
                     + '<p class="st-help">They take a few seconds to open the first time, then each tab comes in about a second. The Server tabs work straight away.</p></div>';
             return;
         }
@@ -601,7 +601,7 @@ export class SettingsPage {
                 + `<span class="st-stepval">${escapeHtml(row.text)}</span>`
                 + `<button type="button" class="st-arr st-arr-big" data-d="1" aria-label="Next"${row.locked ? ' disabled' : ''}>${icon('right', 'st-arr-ico')}</button></div>`;
             if (row.pending) control += `<div class="st-was">In use now: ${escapeHtml(row.was)}</div>`;
-            if (!help) help = 'GTA steps through these one at a time: left and right.';
+            if (!help) help = 'The game steps through these one at a time: left and right.';
         } else if (row.kind === 'slider') {
             const v = this.drag && this.drag.row.id === row.id ? this.drag.value : row.value;
             const pct = fracOf(row, v) * 100;
@@ -616,10 +616,10 @@ export class SettingsPage {
             if (row.pending) control += `<div class="st-was">In use now: ${escapeHtml(row.was)}</div>`;
         } else if (row.kind === 'action') {
             control = `<button type="button" class="st-btn st-pill st-act" data-act="press"${row.locked ? ' disabled' : ''}>${escapeHtml(row.label)}</button>`;
-            if (!help) help = 'Enter or A does this. GTA may ask first.';
+            if (!help) help = 'Enter or A does this. The game may ask first.';
         } else if (row.kind === 'keys') {
             control = `<button type="button" class="st-btn st-pill st-act" data-act="keys">Open key bindings${icon('out', 'st-btn-ico')}</button>`;
-            help = 'GTA\'s own key bindings screen. FiveM\'s and this server\'s keys are there too, under FiveM. The pause menu closes while it is open.';
+            help = 'The game\'s own key bindings screen, with this server\'s keys there too. The pause menu closes while it is open.';
         } else control = `<div class="st-stepval">${escapeHtml(row.text || '')}</div>`;
 
         let defLine = '';
@@ -629,9 +629,9 @@ export class SettingsPage {
         } else if (row.src === 'server' && !row.locked && row.mine) {
             defLine = '<div class="st-defline"><span></span><button type="button" class="st-btn st-small-btn" data-act="usedef">Use the server\'s</button></div>';
         }
-        if (!help && cur.section === 'game' && GRAPHICS.has(cur.id)) help = 'Graphics changes wait for Apply changes, as in GTA.';
+        if (!help && cur.section === 'game' && GRAPHICS.has(cur.id)) help = 'Graphics changes wait for Apply changes, as in the game.';
         const note = this.note ? `<p class="st-help st-note">${escapeHtml(this.note)}</p>` : '';
-        const keeper = cur.section === 'game' ? 'Kept by GTA on this PC, for every server' : 'This server\'s, kept on your PC';
+        const keeper = cur.section === 'game' ? 'Kept by the game on this PC, for every server' : 'This server\'s, kept on your PC';
 
         this.inspEl.innerHTML = `<div class="st-ihead"><h2 class="st-ititle">${escapeHtml(row.label)}</h2>${chip}</div>`
             + `<div class="st-control">${control}</div>${defLine}${note}`
@@ -1042,7 +1042,7 @@ export class SettingsPage {
         if (this.question || this.confirmReset) return [['dpad', 'Choose'], ['a', 'Select'], ['b', 'Back']];
         const row = this.row();
         const h = [['dpad', changeable(row) ? 'Choose / change' : 'Choose']];
-        if (this.game.state === 'failed' && this.current()?.section !== 'server') h.push(['a', 'Try again'], ['x', 'GTA\'s own settings']);
+        if (this.game.state === 'failed' && this.current()?.section !== 'server') h.push(['a', 'Try again'], ['x', 'The game\'s own settings']);
         else if (row && (row.kind === 'action' || row.kind === 'keys')) h.push(['a', 'Select']);
         else if (row && (row.kind === 'choice' || row.kind === 'stepper') && !row.locked) h.push(['a', 'Next']);
         h.push(['lb', ''], ['rb', 'Tab']);

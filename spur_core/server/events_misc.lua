@@ -1110,7 +1110,7 @@ SecureEvent('spur_core:server:shopSetPrice', {
     rateLimit = 200,
     params = {
         {'shopId', 'id'},
-        -- A stock container can have up to 1000 slots (the 24/7 shelf declares that many).
+        -- A stock container can have up to 1000 slots (a big shop's shelf may declare that many).
         {'slot', 'id', 1, 1000},
         {'price', 'int', 0, 999999999},
         {'forSale', 'bool'},

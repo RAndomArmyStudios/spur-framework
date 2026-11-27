@@ -12,7 +12,7 @@
 
 local entered = {}   -- [sectionId] = true while that section is on screen
 
---- GTA's switch scenes (client/arrival_list.lua), for the arrival scene lists' Add scenes on spur_core's page: what
+--- The scene catalogue (client/arrival_list.lua), for the arrival scene lists' Add scenes on spur_core's page: what
 --- each is and what it needs. Made once.
 local catalogue = nil
 local function arrivalCatalogue()

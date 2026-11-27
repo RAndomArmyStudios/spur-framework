@@ -66,7 +66,7 @@ DevCommand('nuicaps', function(_, args)
     end
     if args[1] == 'gameview' then
         if not caps.gameView then
-            UI.Notify('This FiveM build has no new game view (it came with Chromium 144)', 'error')
+            UI.Notify('This RedM build has no new game view (it came with Chromium 144)', 'error')
             return
         end
         SendNUIMessage({ action = 'nuiCapsGameView', seconds = 8 })
@@ -78,5 +78,5 @@ DevCommand('nuicaps', function(_, args)
     end
     local newer = caps.zoomScreenPx and caps.startingStyle
     UI.Notify(('Browser: Chrome %s, %s (F8 for the list)'):format(tostring(caps.chrome or '?'),
-        newer and 'the new features are on' or 'FiveM\'s older browser'), 'info')
+        newer and 'the new features are on' or 'RedM\'s older browser'), 'info')
 end)

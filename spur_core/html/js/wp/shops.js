@@ -492,7 +492,7 @@ function jobList() {
 // ---- step: kind ----
 
 function stepKind(body) {
-    const name = WP.input({ placeholder: 'e.g. 24/7 Supermarket', value: draft.name, inputAction: 'swName' });
+    const name = WP.input({ placeholder: 'e.g. General Store', value: draft.name, inputAction: 'swName' });
     name.maxLength = 100;
     body.appendChild(WP.field('Name', name, true));
 

@@ -106,7 +106,7 @@ local function readBlips()
                         what = ok and what or ('sprite ' .. sprite)
                         if not unplacedSaid[what] then
                             unplacedSaid[what] = true
-                            print('[spur_core:pause] a blip GTA gives no position (NaN) is left off the map: ' .. what)
+                            print('[spur_core:pause] a blip the game gives no position (NaN) is left off the map: ' .. what)
                         end
                     end
                 end

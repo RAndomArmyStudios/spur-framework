@@ -59,7 +59,7 @@ local RunRespawnFlow
 --- Its frame hook (deathFrame) reads the death screen's hide key, H / Y, through the lock.
 local DEATH_BLOCK = { all = true, except = { 0, 1, 2, 245, 249, 38 } }
 
---- A hospital to wake up at: one of Config.RespawnLocations at random (Pillbox Hill when a server's list is empty).
+--- A hospital to wake up at: one of Config.RespawnLocations at random (Valentine when a server's list is empty).
 local FALLBACK_HOSPITAL = vector4(-283.83, 806.40, 119.38, 321.76)   -- RedM (spur_core): Valentine
 local function pickRespawnLocation()
     local list = Config.RespawnLocations

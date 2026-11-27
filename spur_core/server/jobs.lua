@@ -208,7 +208,7 @@ local function validKey(key)
 end
 Jobs.validKey = validKey
 
---- A key made from a job's name, free for use: 'Burger Shot' → 'burger_shot', 'burger_shot_2'...
+--- A key made from a job's name, free for use: 'Saloon' → 'saloon', 'saloon_2'...
 --- For the Job Manager, whose key box may be left blank.
 ---@param name string
 ---@return string
@@ -492,7 +492,7 @@ end
 --- One resource per key, as EnsureContainer and EnsureZone: the declaring resource is kept in its
 --- settings (`declaredBy`), and another running resource declaring the same key is refused. A job
 --- made in the Job Manager, or whose resource is gone, is taken by the next resource to declare it.
----@param key string — stable code identifier (e.g. 'pdm', 'burgershot')
+---@param key string — stable code identifier (e.g. 'saloon', 'stables')
 ---@param data table
 ---@param caller string|nil  the declaring resource
 ---@return table|false job

@@ -2527,7 +2527,7 @@ end
 --
 --     exports.spur_core:RegisterUseHandler('alcohol', {
 --         label = 'Drinking...', duration = 5000,
---         anim  = { dict = 'mp_player_intdrink', clip = 'loop_bottle' },
+--         anim  = { dict = 'your_anim_dict', clip = 'your_clip' },
 --         prop  = { model = 'prop_amb_beer_bottle' },
 --         disable = { move = false },                          -- they can walk while they drink
 --         canUse = function(source, player, item, addr) ... end, -- optional: false, 'why' refuses

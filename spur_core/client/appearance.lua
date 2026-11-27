@@ -837,7 +837,7 @@ end
 
 -- Clothing pictures (img/clothing in whip_media_clothing_male and _female)
 -- Pictures are named by collection and the item's number inside it, because a card's global number moves
--- when a pack adds items:  img/clothing/male/11_tops/male_11_mp_m_vinewood_004_00.webp
+-- when a pack adds items:  img/clothing/male/11_tops/male_11_mp_m_example_004_00.webp
 -- Each card's name is asked of the game once per creator open and the page builds the path from it.
 -- The ped's first collection is called 'base' in the pictures.
 

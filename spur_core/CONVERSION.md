@@ -43,7 +43,7 @@ Every file that was edited by hand is marked `RedM (spur_core, 23 Nov 2026)` whe
 | World data (config.lua) | Spawn, respawn points, spawn picker, character-select shots, landing camera and character creator all moved to Valentine, Saint Denis, Blackwater, Rhodes and Armadillo. Weather uses RDR2's names. GTA's arrival "switch" scenes are off. The Legion Square garage seed is gone. Every coordinate walked in game (24 Nov 2026): each is on the ground or a floor, none under the map or in a wall. The shared spawn point is inside Valentine's doctor's office and the first character-select shot is its waiting room; the Saint Denis and Rhodes spawn points are on station platforms, Blackwater's on the boardwalk and Armadillo's at the edge of town; the four bank counters are indoors, facing their counters; the landing camera is 45 m up over Valentine. `Config.Creator.spawn`'s comment says Valentine's main street, which it isn't (the coordinate is fine). |
 | Items | Every item prop is an RDR2 model (`p_cs_sandwich01x`, `p_canteen01x`, `p_moneystack01x` and so on). The food, drink, ID, bag, armour and tonic names and descriptions fit 1899. |
 | Banking | RDR2 has no cash machines. `client/rdr_bank_counters.lua` (new) puts a hidden marker prop at each bank's teller window (`Config.BankCounters`), so whip's ATM prompt appears there. `server/atm_positions.lua` is empty. All four windows (Valentine, Blackwater, Saint Denis, Rhodes) were walked in game. Their points are on the counter in front of the customer, and the badge and the bank prompt work at each one (24 Nov 2026). Checked again at Valentine after the flags4 deploy (play3): the bank glyph and Check Balance show at 0.9 m from the point. spur_phone's `BankSpots` Valentine point moved to match. |
-| GTA stores | `server/gta_stores.lua` is empty: its 14 24/7s and LTDs were on GTA's map. |
+| GTA stores | Gone (26 Nov 2026): `server/gta_stores.lua`, `Config.GtaStores` and its setting, and the shop seeding that read them. Its 14 stores were on GTA's map. |
 | Prompts | `Config.InteractRenderer = 'nui'`. The 3D world renderer draws with `DrawTexturedPoly`, which RDR2 doesn't have. The NUI badges show each prompt's glyph. Typing a value into a prompt (an amount at a bank counter) shows its capsule on screen, low in the middle, and always uses the keyboard. |
 | Runtime textures | `CreateRuntimeTxd` and `CreateRuntimeTextureFromDuiHandle` are FiveM-only and are stubbed, so DUI pages can't become in-world textures. `client/dui_page.lua` makes no DUI browser at all on RedM: with one up, typing into a prompt crashed RedM (`glue.dll`) twice in testing. |
 | Loading screen | WHIP's loading screen is ported too, as **spur_loadingscreen** (`ensure spur_loadingscreen`). WHIP's logo and its blueprint (pictures of GTA's world) aren't in it: the SPUR wordmark sits on an 1899 backdrop drawn in CSS, with the same loading light. The setup report's second-loading-screen check names it. |
@@ -169,10 +169,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 - **The emote list** (`shared/emote_list.lua`) is RDR2 scenarios, which bring their own props. It has no walk styles,
   moods, held-prop emotes (so no megaphone or radio to hold up) or animation emotes yet. `Config.Creator.pose` is
   `false` for this reason. A client-run progress bar may hold any configured item's prop (`server/held_props.lua`).
-- **`shared/director_props.lua`** (80 GTA props) is not loaded: it's not in the fxmanifest and nothing reads it. The
-  world builder's Props tab reads the furniture catalog, which is RDR2's since 24 Nov 2026 (see below). A model typed
-  in by hand is checked against the game and works. (The weapon lists are RDR2's since 24 Nov 2026 too.)
-- **Item pictures** (`html/img/items`): the 18 that whip's own items use are new for 1899 (see "Item pictures" above). The `ammo-*.png` files beside them are still whip's GTA ones.
+- **Item pictures** (`html/img/items`): the 18 that whip's own items use are new for 1899 (see "Item pictures" above). The `ammo-*.png` calibre pictures beside them are whip's own drawings; the eight for GTA-only ammunition (railgun, EMP, laser, firework, beanbag, heavy sniper, rocket, grenade) are gone (26 Nov 2026).
 - **Vehicles.** Whip's car features (mods, colours, neon, fuel, RPM, gears, windows, sirens, the 3D dial) are
   stubs: 101 natives. Wagons and coaches use the ordinary entity natives; spawning, locks and garages pass spur_test
   with them. A wagon has no engine, lights, indicators, doors, windows, tyres, dirt level or alarm, so the
@@ -291,9 +288,9 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   `/director load vault` fails its check ("has no door picked yet") until one is picked in the World tab (G and
   Enter). A picked door now locks (What changed: Doors). Its drill emote was GTA's `mechanic`, which also
   failed the check; it's `hammer` now (24 Nov 2026).
-- **Faces.** Face features, makeup, the other head overlays, tattoos and props do nothing. The creator still lists
-  GTA's hair names ("Close Shave") over RDR2's hairs, and its Face camera framing is GTA's. `/charedit`'s Face tab
-  shows GTA's heritage cards.
+- **Faces.** Face features, makeup, the other head overlays, tattoos and props do nothing. The creator's Face camera
+  framing is GTA's. Its hairs and heritage parents show by number: whip's names for them were GTA's and are gone
+  (26 Nov 2026).
 - **World-space pages.** Everything whip draws as a DUI page in the world doesn't show: speech bubbles (/me), the
   Director's spots and talk marks, the vision overlay, the garage helper, world marks and property listings. A pad can't type into
   a prompt (the pad keyboard is a DUI page); it needs a keyboard. The conversation dialog is the exception: on RedM
@@ -309,7 +306,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   the list. The cards have no pictures yet (a glyph shows). The shop wizard's staff, the Make NPC card's default and
   the Dungeon Master's hunters are RDR2 peds and guns too.
 - **The Director's weapon lists are RDR2's** (24 Nov 2026). shared/rdr_weapons.lua, loaded in place of
-  shared/gta_weapons.lua and shared/gta_weapon_models.lua, fills the same GtaWeapons and GtaWeaponModels tables with
+  whip's GTA weapon lists (deleted 26 Nov 2026), fills the same GtaWeapons and GtaWeaponModels tables with
   the 55 weapons spur_gunny gives (its names and labels) and the world models of the 24 base guns. The world builder's
   Fixed Weapons, an NPC's Weapon, Hold a Weapon, Dungeon Mode and the Object Viewer all read them through
   shared/weapon_catalog.lua. The Throw step offers dynamite, fire bottle, poison bottle, tomahawk, throwing knives and
@@ -328,27 +325,28 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   doors and gates (the 141 doors left, like p_door02xl_static, do spawn), plus three safes, a money box and two weapon
   models. It marked them unavailable, so the furnisher hides them, and dev/prop_catalog_rdr_nospawn.txt keeps them out
   of the seed. The props have no pictures yet (a glyph shows).
-- **GTA animations.** RDR2 has none of GTA's animation dictionaries, and there are no RDR2 clips in their place yet, so these happen without a body animation: handing an item over (`mp_common`), picking one up off the ground (`gen_grab`), whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry), the key fob (`key_fob`), NPC talking gestures (`gestures@...`) and the camera coming up (paparazzi). Each one plays its clip in a thread of its own that gives up when the dictionary won't load, and what it goes with (the give, the pickup, the lock) still happens. The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` still name GTA's `mp_player_intdrink`: use an RDR2 dictionary there.
-- **GTA names left in examples and lists nothing uses.** `Camera.Filters` (`client/camera.lua`) lists GTA timecycle modifiers for scripted shots, and `shared/cam_sequence.lua`'s example asks for `NG_filmic04`. RDR2's timecycles have other names, so a filter does nothing on RedM; nothing in spur_core picks one. Code comments that show how to call something still name GTA models (doors, prop sets, actions, the progress bar's prop, config.lua's vehicle examples), and `html/js/picture-bounds.js` lists GTA models for the media packs, which are empty. None of these runs (checked 24 Nov 2026).
-  Three lists are loaded but name only GTA things, so they find nothing on RDR2: `client/stats.lua`'s weapon names
-  (RDR2's guns get theirs from the weapon catalog, which it reads next), `data/rpm_by_model.lua` and
-  `data/dash_skins.lua` (the 3D dial's GTA cars; the dial is a stub). `html/js/blip-names.js` is GTA's sprite names,
-  which the pause menu's legend falls back on for a blip with no name of its own (checked 24 Nov 2026).
-- **The Director's speech list is GTA's.** The NPC Speech task offers GTA's 715 voices and
-  lines (html/js/director/speech-voices.js) through GTA's ambient speech calls, likely silent on RDR2 (not tried).
+- **GTA animations.** RDR2 has none of GTA's animation dictionaries, and there are no RDR2 clips in their place yet, so these happen without a body animation: handing an item over (`mp_common`), picking one up off the ground (`gen_grab`), whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry), the key fob (`key_fob`), NPC talking gestures (`gestures@...`) and the camera coming up (paparazzi). Each one plays its clip in a thread of its own that gives up when the dictionary won't load, and what it goes with (the give, the pickup, the lock) still happens. The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` show placeholders (`your_anim_dict`): use an RDR2 dictionary there.
+- **GTA content removed (26 Nov 2026).** Rockstar's mod guidelines don't allow content from one of its games in
+  another, so what whip_core carried over from GTA V is gone rather than left unused: the GTA store list, the
+  Director's GTA props, weapons, voices and lines, the tattoo, hair fade and hair decoration lists, the story-scene
+  list for arrival scenes, the vehicle logos, RPM table and dial skins, GTA's blip sprite names, the editor's GTA
+  names (clothing brands, hairs, heritage parents), the media packs' picture bounds, the old prop moves
+  (`data/prop_category_moves_v2`-`v5.csv`; migrations 036-039 now do nothing), the camera's GTA filters, GTA's
+  weapon names on the stats page, the Burger Shot job picture, eight GTA-only ammo pictures and the two
+  `docs/examples` resources. An emptied list keeps its shape, so the code that reads it finds nothing and goes on.
+  Code comments and placeholders that named GTA's places, cars, people and gangs use RDR2 or neutral examples, and
+  text a player or admin sees says "the game" where it said GTA.
+- **The Director's Speech step** lists no voices or lines (whip's list was GTA's and is gone): a line and a voice
+  are typed by name and played through the ambient speech call, not tried on RDR2.
   The example scenarios use RDR2's peds, guns and a coach (24 Nov 2026), but their words are still whip's: a car
   and its key, a keypad to hack.
   Shops saved before 24 Nov 2026 keep GTA's mp_m_shopkeep_01 as their keeper: re-pick it in the shop wizard.
-- **The example resources in docs/examples are GTA's.** `whip_cafe_example` and `whip_delivery_example` go with
-  whip's tutorial: `game 'gta5'`, Los Santos positions, GTA's van, coffee clip and van blip. They never start by
-  themselves (they sit inside spur_core's folder). To use one on RedM, give its manifest `game 'rdr3'` and the
-  `rdr3_warning` line, and move its spots, model, clip and blip to RDR2's.
 - **Voice.** There's no voice resource. whip_voice is FiveM's; add one made for RedM.
 - **The map** (25 Nov 2026). whip's map pages (the minimap box, the pause map and the spawn picker) draw RDR2 now,
   from `map/rdr-map3d.js`: a survey of the game itself (ground heights every 20 m, water, roads and trails), not
   Rockstar's map art. Kept flat: no 3D toggle, no turning, and the spawn picker looks straight down. What it lacks:
   buildings, town names on the map, blip icon pictures (a blip is a plain dot), and smooth water edges. No shops are
-  seeded (GTA's store list is empty here), so there are no shop blips until shops are made in /whip > Economy >
+  seeded (GTA's store list is gone), so there are no shop blips until shops are made in /whip > Economy >
   Shops. `Config.Map3D = false` gives RDR2's own radar and map screen with the fog of war lifted, and no spawn
   picker. The pause map's place line names the town, district or state the player is in (`GetNameOfZone` in
   `shared/rdr_compat.lua`, from RDR2's map zones); RDR2 has no street names.

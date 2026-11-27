@@ -419,11 +419,8 @@ local WEAPON_NAMES = {
     [GetHashKey('WEAPON_EXPLOSION')]             = 'Explosion',
     [GetHashKey('WEAPON_FIRE')]                  = 'Fire',
     [GetHashKey('WEAPON_BLEEDING')]              = 'Bleeding',
-    [GetHashKey('WEAPON_ELECTRIC_FENCE')]        = 'Electric Fence',
     [GetHashKey('WEAPON_BARBED_WIRE')]           = 'Barbed Wire',
     [GetHashKey('WEAPON_EXHAUSTION')]            = 'Exhaustion',
-    [GetHashKey('WEAPON_HIT_BY_WATER_CANNON')]   = 'Water Cannon',
-    [GetHashKey('WEAPON_VEHICLE_ROCKET')]        = 'Vehicle Rocket',
     [133987706]                                  = 'Vehicle Crash',  -- 0x7FC7D7A — vehicle collision damage
     -- RedM (spur_core, 24 Nov 2026): RDR2's own causes, from femga's rdr3_discoveries weapons.lua. The ones above that
     -- RDR2 shares (fall, drowning, fire, explosion, bleeding, run over) stay; its guns, bows and knives are named by
@@ -445,116 +442,14 @@ local WEAPON_NAMES = {
     [GetHashKey('WEAPON_WOLF')]                  = 'Wolf',
     [GetHashKey('WEAPON_WOLF_MEDIUM')]           = 'Wolf',
     [GetHashKey('WEAPON_WOLF_SMALL')]            = 'Wolf',
-    -- Melee
     [GetHashKey('WEAPON_UNARMED')]               = 'Fist',
-    [GetHashKey('WEAPON_KNIFE')]                 = 'Knife',
-    [GetHashKey('WEAPON_NIGHTSTICK')]            = 'Nightstick',
-    [GetHashKey('WEAPON_HAMMER')]                = 'Hammer',
-    [GetHashKey('WEAPON_BAT')]                   = 'Bat',
-    [GetHashKey('WEAPON_CROWBAR')]               = 'Crowbar',
-    [GetHashKey('WEAPON_GOLFCLUB')]              = 'Golf Club',
-    [GetHashKey('WEAPON_BOTTLE')]                = 'Bottle',
-    [GetHashKey('WEAPON_DAGGER')]                = 'Dagger',
-    [GetHashKey('WEAPON_HATCHET')]               = 'Hatchet',
-    [GetHashKey('WEAPON_KNUCKLE')]               = 'Knuckle Duster',
-    [GetHashKey('WEAPON_MACHETE')]               = 'Machete',
-    [GetHashKey('WEAPON_FLASHLIGHT')]            = 'Flashlight',
-    [GetHashKey('WEAPON_SWITCHBLADE')]           = 'Switchblade',
-    [GetHashKey('WEAPON_POOLCUE')]               = 'Pool Cue',
-    [GetHashKey('WEAPON_WRENCH')]                = 'Wrench',
-    [GetHashKey('WEAPON_BATTLEAXE')]             = 'Battle Axe',
-    [GetHashKey('WEAPON_STONE_HATCHET')]         = 'Stone Hatchet',
-    -- Pistols
-    [GetHashKey('WEAPON_PISTOL')]                = 'Pistol',
-    [GetHashKey('WEAPON_PISTOL_MK2')]            = 'Pistol Mk2',
-    [GetHashKey('WEAPON_COMBATPISTOL')]          = 'Combat Pistol',
-    [GetHashKey('WEAPON_APPISTOL')]              = 'AP Pistol',
-    [GetHashKey('WEAPON_PISTOL50')]              = 'Pistol .50',
-    [GetHashKey('WEAPON_SNSPISTOL')]             = 'SNS Pistol',
-    [GetHashKey('WEAPON_SNSPISTOL_MK2')]         = 'SNS Pistol Mk2',
-    [GetHashKey('WEAPON_HEAVYPISTOL')]           = 'Heavy Pistol',
-    [GetHashKey('WEAPON_VINTAGEPISTOL')]         = 'Vintage Pistol',
-    [GetHashKey('WEAPON_MARKSMANPISTOL')]        = 'Marksman Pistol',
-    [GetHashKey('WEAPON_REVOLVER')]              = 'Heavy Revolver',
-    [GetHashKey('WEAPON_REVOLVER_MK2')]          = 'Heavy Revolver Mk2',
-    [GetHashKey('WEAPON_DOUBLEACTION')]           = 'Double Action Revolver',
-    [GetHashKey('WEAPON_CERAMICPISTOL')]         = 'Ceramic Pistol',
-    [GetHashKey('WEAPON_NAVYREVOLVER')]          = 'Navy Revolver',
-    [GetHashKey('WEAPON_GADGETPISTOL')]          = 'Perico Pistol',
-    [GetHashKey('WEAPON_STUNGUN')]               = 'Stun Gun',
-    [GetHashKey('WEAPON_FLAREGUN')]              = 'Flare Gun',
-    [GetHashKey('WEAPON_RAYPISTOL')]             = 'Up-n-Atomizer',
-    -- SMGs
-    [GetHashKey('WEAPON_MICROSMG')]              = 'Micro SMG',
-    [GetHashKey('WEAPON_SMG')]                   = 'SMG',
-    [GetHashKey('WEAPON_SMG_MK2')]               = 'SMG Mk2',
-    [GetHashKey('WEAPON_ASSAULTSMG')]            = 'Assault SMG',
-    [GetHashKey('WEAPON_COMBATPDW')]             = 'Combat PDW',
-    [GetHashKey('WEAPON_MACHINEPISTOL')]         = 'Machine Pistol',
-    [GetHashKey('WEAPON_MINISMG')]               = 'Mini SMG',
-    [GetHashKey('WEAPON_RAYCARBINE')]            = 'Unholy Hellbringer',
-    -- Shotguns
-    [GetHashKey('WEAPON_PUMPSHOTGUN')]           = 'Pump Shotgun',
-    [GetHashKey('WEAPON_PUMPSHOTGUN_MK2')]       = 'Pump Shotgun Mk2',
-    [GetHashKey('WEAPON_SAWNOFFSHOTGUN')]        = 'Sawed-Off Shotgun',
-    [GetHashKey('WEAPON_ASSAULTSHOTGUN')]        = 'Assault Shotgun',
-    [GetHashKey('WEAPON_BULLPUPSHOTGUN')]        = 'Bullpup Shotgun',
-    [GetHashKey('WEAPON_MUSKET')]                = 'Musket',
-    [GetHashKey('WEAPON_HEAVYSHOTGUN')]          = 'Heavy Shotgun',
-    [GetHashKey('WEAPON_DBSHOTGUN')]             = 'Double Barrel Shotgun',
-    [GetHashKey('WEAPON_AUTOSHOTGUN')]           = 'Sweeper Shotgun',
-    [GetHashKey('WEAPON_COMBATSHOTGUN')]         = 'Combat Shotgun',
-    -- Rifles
-    [GetHashKey('WEAPON_ASSAULTRIFLE')]          = 'Assault Rifle',
-    [GetHashKey('WEAPON_ASSAULTRIFLE_MK2')]      = 'Assault Rifle Mk2',
-    [GetHashKey('WEAPON_CARBINERIFLE')]          = 'Carbine Rifle',
-    [GetHashKey('WEAPON_CARBINERIFLE_MK2')]      = 'Carbine Rifle Mk2',
-    [GetHashKey('WEAPON_ADVANCEDRIFLE')]         = 'Advanced Rifle',
-    [GetHashKey('WEAPON_SPECIALCARBINE')]        = 'Special Carbine',
-    [GetHashKey('WEAPON_SPECIALCARBINE_MK2')]    = 'Special Carbine Mk2',
-    [GetHashKey('WEAPON_BULLPUPRIFLE')]          = 'Bullpup Rifle',
-    [GetHashKey('WEAPON_BULLPUPRIFLE_MK2')]      = 'Bullpup Rifle Mk2',
-    [GetHashKey('WEAPON_COMPACTRIFLE')]          = 'Compact Rifle',
-    [GetHashKey('WEAPON_MILITARYRIFLE')]         = 'Military Rifle',
-    [GetHashKey('WEAPON_HEAVYRIFLE')]            = 'Heavy Rifle',
-    [GetHashKey('WEAPON_TACTICALRIFLE')]         = 'Tactical Rifle',
-    -- LMGs
-    [GetHashKey('WEAPON_MG')]                    = 'MG',
-    [GetHashKey('WEAPON_COMBATMG')]              = 'Combat MG',
-    [GetHashKey('WEAPON_COMBATMG_MK2')]          = 'Combat MG Mk2',
-    [GetHashKey('WEAPON_GUSENBERG')]             = 'Gusenberg Sweeper',
-    -- Snipers
-    [GetHashKey('WEAPON_SNIPERRIFLE')]           = 'Sniper Rifle',
-    [GetHashKey('WEAPON_HEAVYSNIPER')]           = 'Heavy Sniper',
-    [GetHashKey('WEAPON_HEAVYSNIPER_MK2')]       = 'Heavy Sniper Mk2',
-    [GetHashKey('WEAPON_MARKSMANRIFLE')]         = 'Marksman Rifle',
-    [GetHashKey('WEAPON_MARKSMANRIFLE_MK2')]     = 'Marksman Rifle Mk2',
-    [GetHashKey('WEAPON_PRECISIONRIFLE')]        = 'Precision Rifle',
-    -- Heavy
-    [GetHashKey('WEAPON_RPG')]                   = 'RPG',
-    [GetHashKey('WEAPON_GRENADELAUNCHER')]       = 'Grenade Launcher',
-    [GetHashKey('WEAPON_MINIGUN')]               = 'Minigun',
-    [GetHashKey('WEAPON_FIREWORK')]              = 'Firework Launcher',
-    [GetHashKey('WEAPON_RAILGUN')]               = 'Railgun',
-    [GetHashKey('WEAPON_HOMINGLAUNCHER')]        = 'Homing Launcher',
-    [GetHashKey('WEAPON_COMPACTLAUNCHER')]       = 'Compact Grenade Launcher',
-    [GetHashKey('WEAPON_RAYMINIGUN')]            = 'Widowmaker',
-    -- Throwables
-    [GetHashKey('WEAPON_GRENADE')]               = 'Grenade',
-    [GetHashKey('WEAPON_BZGAS')]                 = 'BZ Gas',
-    [GetHashKey('WEAPON_MOLOTOV')]               = 'Molotov',
-    [GetHashKey('WEAPON_STICKYBOMB')]            = 'Sticky Bomb',
-    [GetHashKey('WEAPON_PROXMINE')]              = 'Proximity Mine',
-    [GetHashKey('WEAPON_SNOWBALL')]              = 'Snowball',
-    [GetHashKey('WEAPON_PIPEBOMB')]              = 'Pipe Bomb',
-    [GetHashKey('WEAPON_SMOKEGRENADE')]          = 'Tear Gas',
-    [GetHashKey('WEAPON_FLARE')]                 = 'Flare',
-    [GetHashKey('WEAPON_PETROLCAN')]             = 'Jerry Can',
+    -- RedM (spur_core, 26 Nov 2026): whip_core's GTA V guns, knives and throwables were listed here; they were another
+    -- game's and are gone. Every weapon RDR2 or a resource has is named by the weapon catalog below.
 }
 
 -- The weapons other resources add (Whip.weapons: whip_gunny's own guns), by hash: built again when the catalog changes.
--- RedM (spur_core, 24 Nov 2026): and the game's own (shared/rdr_weapons.lua), as the GTA names above are none of
--- RDR2's: every weapon in the catalog, not only those added.
+-- RedM (spur_core, 24 Nov 2026): and the game's own (shared/rdr_weapons.lua): every weapon in the catalog, not
+-- only those added.
 local addedNames, addedAt = {}, -1
 local function addedWeaponLabel(hash)
     if addedAt ~= WeaponCatalog.version then

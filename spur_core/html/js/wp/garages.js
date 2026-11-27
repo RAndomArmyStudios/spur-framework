@@ -483,7 +483,7 @@ function buttons(body, list) {
 // ---- step: name ----
 
 function stepName(body) {
-    const name = WP.input({ placeholder: 'e.g. Legion Square Parking', value: draft.name, inputAction: 'gwName' });
+    const name = WP.input({ placeholder: 'e.g. Town Stables', value: draft.name, inputAction: 'gwName' });
     name.maxLength = 100;
     body.appendChild(WP.field('Name', name, true));
     const key = WP.input({ placeholder: 'made from the name', value: draft.key, inputAction: 'gwKey' });

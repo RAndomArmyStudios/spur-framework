@@ -62,7 +62,7 @@ end
 local function report(t)
     local p = function(...) print('[spur_core:mouse] ' .. string.format(...)) end
     p('%d s, %d frames (~%d fps)', SECONDS, t.frames, math.floor(t.frames / SECONDS + 0.5))
-    p('GTA settings: look sensitivity (754) = %s, smoothing (761) = %s, input method (750) = %s, profile_mouseOnFootScale = %s',
+    p('Game settings: look sensitivity (754) = %s, smoothing (761) = %s, input method (750) = %s, profile_mouseOnFootScale = %s',
         tostring(GetProfileSetting(PROFILE.lookSensitivity)), tostring(GetProfileSetting(PROFILE.smoothing)),
         tostring(GetProfileSetting(PROFILE.inputMethod)), GetConvar('profile_mouseOnFootScale', 'n/a'))
     p('look     X %.3f  Y %.3f   (what the skill check reads now)', t.lookX, t.lookY)

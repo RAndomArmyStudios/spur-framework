@@ -644,7 +644,7 @@ end
 
 --- Set bays out in the world.
 ---
----   opts = { name   = 'Pillbox Parking',                  -- the card's line under its title
+---   opts = { name   = 'Town Stables',                  -- the card's line under its title
 ---            bays   = { { x, y, z, heading, id }, ... },  -- the bays it has, in the world. `id` is the caller's (a
 ---                                                            saved bay's spotId), carried through a move
 ---            max    = 40,                                 -- how many it may have (more than that come in and stay;

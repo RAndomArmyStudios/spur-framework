@@ -507,7 +507,7 @@ function folders() {
 }
 
 function stepName(body) {
-    const name = WP.input({ placeholder: 'e.g. Mission Row front door', value: draft.label, inputAction: 'dwLabel' });
+    const name = WP.input({ placeholder: 'e.g. Jail front door', value: draft.label, inputAction: 'dwLabel' });
     name.maxLength = 100;
     body.appendChild(WP.field('Name', name, true));
     setTimeout(() => name.focus(), 0);

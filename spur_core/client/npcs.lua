@@ -11,7 +11,7 @@
 --     again when it is not fighting but should be (one who came into range, or got back up), walk
 --     it home, and keep an NPC that stands inside an MLO frozen until THIS game has floor under it
 --     (its interior loaded, or ground at its post; plus collision and two seconds), freezing it again
---     if the floor goes away (the Mirror Park loader unloads homes). Only while it is at its post: one
+--     if the floor goes away (the game's loader unloads homes). Only while it is at its post: one
 --     walking there, or led out of the house, is not held by an interior it is not in
 --   * every game knows which NPCs stand inside an MLO (the server tells it), so the game that newly
 --     owns one freezes it at once, before its brain has even arrived: a ped handed to a game without

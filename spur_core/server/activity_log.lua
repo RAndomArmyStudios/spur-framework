@@ -203,7 +203,7 @@ end
 -- (a shop handing over goods, an admin spawn, a satellite's AddItem, the ATM, a pump taking cash):
 -- exactly the moments a duplication bug happens in.
 --
--- `why` is written for an admin reading the timeline: 'ATM withdrawal', 'paid at Burger Shot',
+-- `why` is written for an admin reading the timeline: 'ATM withdrawal', 'paid at the saloon',
 -- 'by whip_gunny', 'admin: Jane Smith'. Bank money already has its own ledger
 -- (bank_transactions); these rows are the cash and item side.
 
@@ -699,7 +699,7 @@ end
 ---   in   gained (made: admin gives, scripts, the ATM, starting cash) + bought (from a catalog shop, which makes
 ---        what it sells; a stocked shop's goods were on its shelf already and are logged 'received')
 ---   out  lost (spent, used up, paid in) + destroyed
---- A reason is the row's detail up to its first " · " — "admin: Jane Smith", "at 24/7 Store",
+--- A reason is the row's detail up to its first " · " — "admin: Jane Smith", "at General Store",
 --- "ATM withdrawal" — so one shop's sales add up together whatever each thing cost.
 ---
 --- `series`: that item's in and out per `bucket` seconds from `since` (an hour or a day), for the

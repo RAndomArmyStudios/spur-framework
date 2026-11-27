@@ -467,7 +467,7 @@ function numberBox(value, placeholder, action, width) {
 // ---- step: name ----
 
 function stepName(body) {
-    const name = WP.input({ placeholder: 'e.g. Mission Row station', value: draft.label, inputAction: 'zwName' });
+    const name = WP.input({ placeholder: 'e.g. Sheriff station', value: draft.label, inputAction: 'zwName' });
     name.maxLength = 100;
     body.appendChild(WP.field('Name', name, true));
     const group = WP.input({ placeholder: 'e.g. police (optional)', value: draft.group, inputAction: 'zwGroup' });

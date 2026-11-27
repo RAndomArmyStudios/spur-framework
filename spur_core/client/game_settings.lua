@@ -59,7 +59,7 @@ for _, q in ipairs({
       buttons = { { 'Apply', KEY.accept, ends = true }, { 'Discard', KEY.x, ends = true }, { 'Cancel', KEY.cancel } } },
     { label = 'GFX_WARNING_BODY', title = 'Keep these display settings?', lapses = true,
       buttons = { { 'Keep', KEY.accept, ends = true }, { 'Revert', KEY.cancel, ends = true } },
-      body = 'GTA goes back to the old display settings by itself in a few seconds unless you keep these.' },
+      body = 'The game goes back to the old display settings by itself in a few seconds unless you keep these.' },
     { label = 'GFX_RESTART_BODY', title = 'Restart needed',
       buttons = { { 'Restart the game', KEY.accept, ends = true }, { 'Not now', KEY.cancel, ends = true } } },
     { label = 'GFX_WRITE_FAILED', title = 'Settings not saved', buttons = { { 'OK', KEY.accept, ends = true } } },
@@ -67,8 +67,8 @@ for _, q in ipairs({
 }) do
     QUESTIONS[GetHashKey(q.label) & 0xffffffff] = q
 end
-local UNKNOWN_QUESTION = { title = 'GTA is asking', buttons = { { 'OK', KEY.accept, ends = true }, { 'Back', KEY.cancel } },
-    body = 'GTA wants an answer before it goes on: OK goes ahead, Back does not.' }
+local UNKNOWN_QUESTION = { title = 'The game is asking', buttons = { { 'OK', KEY.accept, ends = true }, { 'Back', KEY.cancel } },
+    body = 'The game wants an answer before it goes on: OK goes ahead, Back does not.' }
 
 --- GET_WARNING_MESSAGE_TITLE_HASH, by name or, on a client whose Lua lacks it, by hash.
 local warningHash = GetWarningMessageTitleHash or function()
@@ -153,7 +153,7 @@ local function askAll(cmds, g, patience)
             first = first + #handles
             giveUp = GetGameTimer() + (patience or 3000)
         elseif not asked then
-            assert(GetGameTimer() < giveUp, 'GTA\'s settings did not answer')
+            assert(GetGameTimer() < giveUp, 'The game\'s settings did not answer')
         end
     end
     return out
@@ -347,7 +347,7 @@ local function ensureOpen(g)
     local deadline = GetGameTimer() + 5000
     while not IsPauseMenuActive() or IsPauseMenuRestarting() or not IsFrontendReadyForControl() do
         if not stillOpen(g) then abandonOpening() end
-        assert(GetGameTimer() < deadline, 'GTA\'s settings did not open')
+        assert(GetGameTimer() < deadline, 'The game\'s settings did not open')
         Wait(0)
     end
     -- GTA's menu coming up can take the keyboard and mouse from whip's page: given back.
@@ -362,7 +362,7 @@ local function ensureOpen(g)
         if h and h.tabs > 0 then break end
         Wait(100)
     until GetGameTimer() > deadline
-    assert(h and h.tabs > 0, 'GTA\'s settings page did not answer: is spur_core\'s stream folder streaming?')
+    assert(h and h.tabs > 0, 'The game\'s settings page did not answer: is spur_core\'s stream folder streaming?')
     local rows = readRows(1, h.tabs, g)
     local list = {}
     for i, r in ipairs(rows) do list[i] = { 1, r.index, 6 } end
@@ -383,8 +383,8 @@ end
 
 --- GTA showing tab `id`: clicked in its menu, then waited for until its rows are in.
 local function showTab(id, g)
-    local t = assert(tabOf(id), 'GTA has no such settings tab')
-    local h = assert(head(g), 'GTA\'s settings page did not answer')
+    local t = assert(tabOf(id), 'The game has no such settings tab')
+    local h = assert(head(g), 'The game\'s settings page did not answer')
     if h.tab == t.index and h.rows > 0 then return h end
     local before = h.sig
     onRow = nil
@@ -394,7 +394,7 @@ local function showTab(id, g)
         Wait(50)
         h = head(g) or h
     until (h.tab == t.index and h.rows > 0 and (h.sig ~= before or h.menuState == id)) or GetGameTimer() > deadline
-    assert(h.tab == t.index, 'GTA did not open that tab')
+    assert(h.tab == t.index, 'The game did not open that tab')
     Wait(50)
     return head(g) or h
 end
@@ -542,7 +542,7 @@ end
 --- row that moved waits for Apply.
 local function stepRow(id, rowId, dir, g)
     local row = assert(rowNow(id, rowId, g), 'that setting is gone')
-    assert(row.state ~= 0, 'GTA does not let that one change here')
+    assert(row.state ~= 0, 'The game does not let that one change here')
     local max = tonumber((options[id] and options[id][rowId] and options[id][rowId].texts[1]) or '') or 10
     if row.type == 2 and ((dir > 0 and row.value >= max) or (dir < 0 and row.value <= 0)) then return false end
     focusRow(id, row, g)
@@ -636,7 +636,7 @@ RegisterNUICallback('gameSettingsTab', function(data, cb)
     wantRow = nil
     cb(job(function(g)
         ensureOpen(g)
-        return answer(assert(tabArg(data), 'GTA has no such settings tab'), g)
+        return answer(assert(tabArg(data), 'The game has no such settings tab'), g)
     end))
 end)
 
@@ -660,7 +660,7 @@ end)
 RegisterNUICallback('gameSettingsStep', function(data, cb)
     cb(job(function(g)
         ensureOpen(g)
-        local id = assert(tabArg(data), 'GTA has no such settings tab')
+        local id = assert(tabArg(data), 'The game has no such settings tab')
         local rowId = assert(rowArg(data), 'no such setting')
         local moved = stepRow(id, rowId, tonumber(data.dir) == -1 and -1 or 1, g)
         return answer(id, g, { moved = moved })
@@ -671,7 +671,7 @@ end)
 RegisterNUICallback('gameSettingsSet', function(data, cb)
     cb(job(function(g)
         ensureOpen(g)
-        local id = assert(tabArg(data), 'GTA has no such settings tab')
+        local id = assert(tabArg(data), 'The game has no such settings tab')
         local rowId = assert(rowArg(data), 'no such setting')
         local want = math.tointeger(tonumber(data.value)) or 0
         for _ = 1, MAX_STEPS do
@@ -687,9 +687,9 @@ end)
 RegisterNUICallback('gameSettingsPress', function(data, cb)
     cb(job(function(g)
         ensureOpen(g)
-        local id = assert(tabArg(data), 'GTA has no such settings tab')
+        local id = assert(tabArg(data), 'The game has no such settings tab')
         local row = assert(rowNow(id, assert(rowArg(data), 'no such setting'), g), 'that setting is gone')
-        assert(row.state ~= 0, 'GTA does not let that one be used here')
+        assert(row.state ~= 0, 'The game does not let that one be used here')
         focusRow(id, row, g)
         press(KEY.accept, g, 150)
         Wait(200)
@@ -721,7 +721,7 @@ RegisterNUICallback('gameSettingsUndo', function(data, cb)
                 for _, rowId in ipairs(ids) do undoRow(tab, rowId, g) end
             end
         else
-            undoRow(assert(shown, 'GTA has no such settings tab'), assert(rowArg(data), 'no such setting'), g)
+            undoRow(assert(shown, 'The game has no such settings tab'), assert(rowArg(data), 'no such setting'), g)
         end
         return answer(shown or next(pending) or tabs[1].id, g)
     end))
@@ -771,7 +771,7 @@ RegisterNUICallback('gameSettingsApply', function(data, cb)
                 return answer(id, g)
             end
         end
-        return answer(id, g, { notice = 'GTA did not take Apply: your changes are still waiting. Try Apply again.' })
+        return answer(id, g, { notice = 'The game did not take Apply: your changes are still waiting. Try Apply again.' })
     end))
 end)
 

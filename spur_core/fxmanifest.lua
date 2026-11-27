@@ -48,8 +48,8 @@ shared_script 'shared/property_math.lua'
 shared_script 'shared/garage_bay.lua'
 shared_script 'shared/spot_shape.lua'
 shared_script 'shared/bubbles.lua'
--- RedM (spur_core, 24 Nov 2026): RDR2's weapons and their world models, in place of shared/gta_weapons.lua and
--- shared/gta_weapon_models.lua (GTA's, none of which RDR2 has; kept in the folder, not loaded).
+-- RedM (spur_core, 24 Nov 2026): RDR2's weapons and their world models, in place of whip's GTA lists (none of which
+-- RDR2 has; deleted 26 Nov 2026).
 shared_script 'shared/rdr_weapons.lua'
 shared_script 'shared/weapon_catalog.lua'
 shared_script 'shared/tattoo_list.lua'
@@ -150,7 +150,6 @@ server_scripts {
     'server/jobs.lua',
     'server/atm_positions.lua',   -- GTA's own cash machines, for IsNearAtm (generated)
     'server/atm.lua',
-    'server/gta_stores.lua',   -- GTA's own 24/7s and LTDs (Config.GtaStores)
     'server/shops.lua',
     'server/prices.lua',
     'server/zones.lua',
@@ -521,7 +520,6 @@ files {
     'html/fonts/*.woff2',
     'html/img/items/*.webp',   -- used over the PNG of the same item
     'html/img/items/*.png',
-    'html/img/jobs/*.png',
     'html/img/pad/*.svg',
     -- Only the "no picture" stand-in: the other vehicle pictures live in the media packs.
     'html/img/vehicles/*.png',

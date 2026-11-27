@@ -1377,7 +1377,7 @@ function setHeroIcon(src) {
 
 /**
  * The collection an item came in, in words: 'Base game', or the DLC's own name, tidied
- * ('mp_m_vinewood' → 'Vinewood', 'male_freemode_beach' → 'Beach'). GTA gives items no names; this is
+ * ('mp_m_example' → 'Example', 'male_freemode_summer' → 'Summer'). GTA gives items no names; this is
  * the one fact about one there is. '' when the game did not name it (added-on clothing).
  */
 function collectionOf(kind, slot, drawable) {

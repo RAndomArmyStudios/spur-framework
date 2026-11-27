@@ -125,7 +125,7 @@ on your PC without taking your mouse or keyboard.
 Resources built on spur_core declare `dependency 'spur_core'`, load
 `shared_script '@spur_core/lib/satellite.lua'`, and call it through its exports (`exports.spur_core:AddItem(...)`).
 The API is whip_core's, so [WHIP's documentation](https://github.com/WHIPFX/whip_core) applies to everything except
-the GTA-specific parts. `types/` gives your editor autocomplete, and `docs/examples/` holds two example resources.
+the GTA-specific parts. `types/` gives your editor autocomplete.
 
 WHIP's other resources (whip_gunny, whip_fuel, whip_phone, whip_autos and the rest) are GTA V resources and aren't
 part of this port.
@@ -137,7 +137,6 @@ part of this port.
 - **whip_core** is by **Whippy** and licensed under the GNU LGPL 3.0. spur_core keeps that licence: see
   `COPYING.LESSER`, and `COPYING` for the GPL 3.0 it builds on.
 - `shared/emote_list.lua` is GPL 3.0, because it comes from RPEmotes.
-- The example resources in `docs/examples/` are MIT.
 - `NOTICE.md` (whip_core's, unchanged) lists the third-party code, fonts and data under their own licences, and what the
   licence doesn't cover.
 

@@ -36,20 +36,10 @@ local _gen = 0
 -- Timecycle Filters
 -- ============================================
 
+-- RedM (spur_core, 26 Nov 2026): whip_core listed GTA V's timecycle modifiers here, another game's; RDR2's have other
+-- names. Add RDR2 timecycle names to offer them.
 Camera.Filters = {
     'none',
-    'scanline_cam',
-    'CAMERA_secuirity',
-    'CAMERA_secuirity_FUZZ',
-    'heliGunCam',
-    'NG_filmic04',
-    'NG_filmic08',
-    'cinema',
-    'underwater',
-    'Forest',
-    'Tunnel',
-    'phone_cam1',
-    'phone_cam2',
 }
 
 local function ApplyFilter(name)

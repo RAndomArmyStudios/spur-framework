@@ -247,7 +247,7 @@ local function swapMap(on)
             if LoadTextureDict(mine, 5000) then
                 AddReplaceTexture(orig, orig, mine, mine)
             else
-                print(('[spur_core:hud] the dark map tile %s did not stream — keeping GTA\'s. Expected stream/%s.ytd')
+                print(('[spur_core:hud] the dark map tile %s did not stream — keeping the game\'s. Expected stream/%s.ytd')
                     :format(t, mine))
             end
         else
@@ -314,7 +314,7 @@ function HudSkinTunerChanged() applySkin() end
 -- solid, and GTA's radar is up only for /radardebug, where the frame is drawn solid anyway.
 PlayerPrefs.define({
     key = 'map.background', group = 'Map & HUD', type = 'slider', label = 'Map background',
-    help = 'How solid the black behind the minimap is. Lower lets the world show through the map, as GTA\'s own does.',
+    help = 'How solid the black behind the minimap is. Lower lets the world show through the map, as the game\'s own does.',
     min = 0, max = 100, step = 5, unit = '%', default = 100,
     visible = function() return false end,
 })

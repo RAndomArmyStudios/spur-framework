@@ -12,11 +12,6 @@
 
 local SETTLE_MS, CAP_MS = 5000, 60000
 
---- The oldest Legacy game build whip's car, prop and clothing lists are made for.
-local MIN_LEGACY_BUILD = 3407
---- The build the Legacy recipe sets, which the report suggests when sv_enforceGameBuild is missing.
-local LEGACY_BUILD = 3889
-
 --- Resources that do a job whip does itself: running beside whip, each fights it.
 local CLASHES = {
     { 'spawnmanager', 'whip spawns players itself, and spawnmanager spawning them too (basic-gamemode turns that on)'
@@ -71,15 +66,6 @@ local function oxmysqlPatched()
     return marks >= 4
 end
 
---- What the server's own version string says it is: 'legacy', 'enhanced', or nil when it cannot tell.
---- Legacy's FXServer reads "FXServer-master SERVER v1.0.0.17000 win32"; Enhanced's "FXServer-early-access b169 win32".
-local function serverLooksLike()
-    local v = GetConvar('version', '')
-    if v:find('v1%.0%.0%.%d+') then return 'legacy' end
-    if v:find(' b%d+') then return 'enhanced' end
-    return nil
-end
-
 --- The report's lines: { level = 'ok' | 'fix' | 'note', text }.
 local function gather()
     local lines = {}
@@ -93,31 +79,11 @@ local function gather()
             .. ' in server.cfg. Then restart the server')
     end
 
-    -- Which GTA V, and its build.
-    local looks = serverLooksLike()
-    if looks and looks ~= GamePlatform.name then
-        add('fix', 'This server looks like %s (%s), but whip_platform says %s. Add to server.cfg: setr whip_platform %s',
-            looks == 'enhanced' and 'FiveM for GTA V Enhanced' or 'FiveM for GTA V Legacy', GetConvar('version', ''),
-            GamePlatform.name, looks)
-    end
-    -- RedM (spur_core, 23 Nov 2026): RedM's game builds are RDR2's (1311, 1355, 1436, 1491), not GTA V's, so no GTA
-    -- build is asked for.
-    if RdrCompat then
+    -- The game build. RedM (spur_core, 23 Nov 2026): RedM's builds are RDR2's (1311, 1355, 1436, 1491); whip's checks
+    -- for its other game's platforms and builds are gone (26 Nov 2026).
+    do
         local build = tonumber(GetConvar('sv_enforceGameBuild', ''))
         add('ok', 'RedM (RDR2)%s', build and (', game build %d'):format(build) or '')
-    elseif GamePlatform.enhanced then
-        add('ok', 'GTA V Enhanced (whip_platform enhanced)')
-    else
-        local build = tonumber(GetConvar('sv_enforceGameBuild', ''))
-        if not build then
-            add('fix', 'No sv_enforceGameBuild: players get FiveM\'s default game build, without the cars, props and clothes'
-                .. ' whip\'s lists name. Add to server.cfg: sv_enforceGameBuild %d (or a newer build)', LEGACY_BUILD)
-        elseif build < MIN_LEGACY_BUILD then
-            add('fix', 'sv_enforceGameBuild is %d: whip\'s lists are made for %d or newer. Raise it in server.cfg', build,
-                MIN_LEGACY_BUILD)
-        else
-            add('ok', 'GTA V Legacy, game build %d', build)
-        end
     end
 
     -- The database, and oxmysql.
@@ -184,19 +150,6 @@ local function gather()
         local need = GetResourceMetadata(res, 'whip_requires', 0)
         if need and need ~= '' and not versionAtLeast(coreVersion, need) then
             add('fix', '%s needs spur_core %s or newer, and this is %s: update spur_core', res, need, coreVersion)
-        end
-    end
-
-    -- Built for the other GTA V: a pack with models comes as <name> (Legacy) and <name>_enhanced (Enhanced).
-    for _, res in ipairs(allResources()) do
-        if running(res) then
-            local legacyName = res:match('^(.+)_enhanced$')
-            if legacyName and GamePlatform.legacy then
-                add('fix', '%s is built for GTA V Enhanced, and this server is Legacy: take it out%s', res,
-                    GetResourceState(legacyName) ~= 'missing' and (', and run ' .. legacyName) or '')
-            elseif not legacyName and GamePlatform.enhanced and GetResourceState(res .. '_enhanced') ~= 'missing' then
-                add('fix', '%s is the GTA V Legacy build: take it out, and run %s_enhanced', res, res)
-            end
         end
     end
 

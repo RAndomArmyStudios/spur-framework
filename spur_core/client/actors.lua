@@ -137,7 +137,7 @@ STEP.lights = function(veh, w, s)
     SetVehicleInteriorlight(veh, s.p.inside == true)
 end
 
--- Flashes on and off for its time (the watch), then as GTA has them.
+-- Flashes on and off for its time (the watch), then as the game has them.
 STEP.flashLights = function(_, w, _, left)
     w.flash = { untilAt = GetGameTimer() + left, on = false }
 end

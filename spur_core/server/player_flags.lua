@@ -3,7 +3,7 @@
 -- ============================================
 --
 -- A flag is a named fact about one CHARACTER that outlives a run and a restart: "met the fence",
--- "jobs done: 3", "betrayed Lester". A scenario sets them (Set Player Flag) and asks them (If Player
+-- "jobs done: 3", "betrayed the gang". A scenario sets them (Set Player Flag) and asks them (If Player
 -- Flag, and a Dialog Line answer's "Only if"); any resource can, through the exports:
 --
 --   exports.spur_core:SetPlayerFlag(source, 'met_fence', true)

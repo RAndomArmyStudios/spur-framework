@@ -369,7 +369,7 @@ export function makeSettingsSection(def) {
     let page = null;                 // this section's page: { owner, label, groups }
     let gone = false;                // the server answered without it: its resource has stopped
     let groupId = null;              // the group on the right, when not searching
-    let arrivalCatalogue = [];       // GTA's switch scenes, for the arrival scene lists' Add scenes
+    let arrivalCatalogue = [];       // the scene catalogue (client/arrival_list.lua), for the arrival scene lists' Add scenes
     let search = '';
     const pending = new Map();       // path -> { value } | { reset: true }
     let sending = null;              // what the Apply on its way sent: path -> entry, or null
@@ -787,7 +787,7 @@ export function makeSettingsSection(def) {
         return box;
     }
 
-    // ---- the arrival scenes: one list's scene lines, picked from GTA's own (client/arrival_list.lua) ----
+    // ---- the arrival scenes: one list's scene lines, picked from the catalogue (client/arrival_list.lua) ----
 
     // The lists played at a vehicle, whose lines may be lined up with it (vehicleClip).
     const ARRIVAL_AT_VEHICLE = { inVehicle: true, onBike: true, nearCar: true };
@@ -891,7 +891,7 @@ export function makeSettingsSection(def) {
         const have = new Set(arrivalLines(s).map(sceneKey));
         const picked = new Set();
         const content = WP.el('div', 'cfg-arrival-pick');
-        const search = WP.input({ placeholder: 'Search the scenes: a name, Michael, Franklin, Trevor…' });
+        const search = WP.input({ placeholder: 'Search the scenes by name…' });
         search.classList.add('cfg-arrival-search');
         content.appendChild(search);
         const rows = WP.el('div', 'cfg-arrival-rows');
@@ -1544,7 +1544,7 @@ export function makeSettingsSection(def) {
         onData(kind, payload) {
             if (kind === 'all') {
                 pages = (payload && payload.pages) || [];
-                // GTA's switch scenes, for the arrival scene lists (spur_core's page only).
+                // The scene catalogue, for the arrival scene lists (spur_core's page only).
                 if (payload && Array.isArray(payload.arrivalCatalogue)) arrivalCatalogue = payload.arrivalCatalogue;
                 page = pages.find((p) => p.owner === def.owner) || null;
                 // A satellite that stopped: nothing to check its edits against, so they are kept

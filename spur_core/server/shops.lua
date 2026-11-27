@@ -1187,42 +1187,7 @@ local function seedOne(key, data)
     })
 end
 
--- The GTA stores this server has ever had (spur_core's KVP): each is made ONCE, so one deleted in /whip > Shops stays
--- deleted, the setting on or not.
-local GTA_MADE_KVP = 'shops:gtaStoresMade'
-local gtaSeeding = false   -- one pass at a time: a quick off and on again does not start a second
-
---- GTA's own 24/7s and LTDs (server/gta_stores.lua), while Config.GtaStores is on: a keeper behind the till, a map
---- icon, Config.GtaStoreCatalog. Called at start (seedFromConfig) and when the setting is turned on.
-function Shops.seedGtaStores()
-    if gtaSeeding or Config.GtaStores ~= true or type(GtaStores) ~= 'table' then return end
-    gtaSeeding = true
-    local ok, err = pcall(function()
-        local okJson, made = pcall(json.decode, GetResourceKvpString(GTA_MADE_KVP) or '')
-        made = okJson and type(made) == 'table' and made or {}
-        local changed = false
-        for _, s in ipairs(GtaStores) do
-            if not made[s.key] and (Shops._keyIndex[s.key] or seedOne(s.key, { name = s.name,
-                    npcModel = 'u_m_m_valgenstoreowner_01', pos = s.pos, blipSprite = 52,   -- RedM (spur_core, 24 Nov 2026): was GTA's mp_m_shopkeep_01
-                    catalog = Config.GtaStoreCatalog or { food = 50, drink = 30 } })) then
-                made[s.key] = true
-                changed = true
-            end
-        end
-        if changed then SetResourceKvp(GTA_MADE_KVP, json.encode(made)) end
-    end)
-    gtaSeeding = false
-    if not ok then print(('^1[spur_core:shops] GTA stores: %s^0'):format(tostring(err))) end
-end
-
--- Turned on in /whip > Settings: the ones not made yet, now (in a thread of its own: each is a database write). Not
--- before start-up has read the shops (Shops.seeded): until then the start's own seeding makes them.
-Settings.onChange('GtaStores', function(on)
-    if on == true and Shops.seeded then CreateThread(Shops.seedGtaStores) end
-end)
-
 function Shops.seedFromConfig()
-    Shops.seedGtaStores()
     Shops.seeded = true
     for key, data in pairs(Config.Shops or {}) do seedOne(key, data) end
 end
@@ -1653,7 +1618,7 @@ function Shops.getByKey(key)
 end
 
 --- One shop, by its id or by a reference that says what you hold (the GetShop export):
----     4   { id = 4 }   { key = 'burgershot' }   { containerId = 12 } (the shop whose stock it is)
+---     4   { id = 4 }   { key = 'saloon' }   { containerId = 12 } (the shop whose stock it is)
 ---@param ref number|string|table|nil
 ---@return table|nil
 function Shops.find(ref)
@@ -2570,7 +2535,7 @@ end
 -- Shops — Server Exports
 -- ============================================
 
---- One shop, by its id or a reference: GetShop(4), GetShop({ key = 'burgershot' }), GetShop({ containerId = 12 }).
+--- One shop, by its id or a reference: GetShop(4), GetShop({ key = 'saloon' }), GetShop({ containerId = 12 }).
 --- A job's shops (a job can own several) are GetShops({ job = }).
 exports('GetShop', function(ref) return Shops.find(ref) end)
 exports('GetShops', function(filter) return Shops.list(filter) end)

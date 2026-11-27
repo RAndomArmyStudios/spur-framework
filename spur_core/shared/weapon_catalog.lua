@@ -2,9 +2,9 @@
 -- WEAPON CATALOG — GTA's own weapons, and those other resources add
 -- ============================================
 --
--- GTA's are shared/gta_weapons.lua, each firearm's world model shared/gta_weapon_models.lua. A resource that streams
+-- The game's are shared/rdr_weapons.lua, each firearm's world model with them. A resource that streams
 -- weapons of its own (add-on weapons in its own weapons.meta: whip_gunny's WEAPON_WHIP_*) adds them with Whip.weapons
--- (@spur_core/lib/satellite.lua), on both sides, and everything whip lists weapons in offers them beside GTA's: the
+-- (@spur_core/lib/satellite.lua), on both sides, and everything whip lists weapons in offers them beside the game's: the
 -- Director's NPC weapons, its Hold a Weapon step, its Fixed Weapons (a firearm with a world model), Dungeon Mode, the
 -- Object Viewer's Give a weapon. Each says whose it is: "Pump Shotgun (gunny)". They go when that resource stops.
 --

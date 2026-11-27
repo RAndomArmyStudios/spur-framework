@@ -97,7 +97,7 @@ local GROUPS = {
     {
         title = 'Sticks and menu',
         rows = {
-            { control = 36,  pad = 'L3',    kb = 'LCtrl',  name = 'DUCK',            claim = "GTA's sneak: held off on a pad" },
+            { control = 36,  pad = 'L3',    kb = 'LCtrl',  name = 'DUCK',            claim = "Game's sneak: held off on a pad" },
             { control = 209, pad = 'L3',    kb = 'LShift', name = 'FRONTEND_LS',     claim = 'once: JOG, twice: SPRINT, until the stick is centred' },
             { control = 210, pad = 'R3',    kb = 'LCtrl',  name = 'FRONTEND_RS',     claim = nil },
             { control = 199, pad = 'Start', kb = 'P',      name = 'FRONTEND_PAUSE',  claim = nil },
@@ -334,7 +334,7 @@ local function DumpState()
     local blocks = ControlBlocks.describe()
     if #blocks == 0 then print('[spur_core:pad] control blocks: none') end
     for _, line in ipairs(blocks) do print('[spur_core:pad] control block ' .. line) end
-    print('[spur_core:pad] ---- now press buttons: "game saw" = GTA got it, "pad" = whip read it and what it ran')
+    print('[spur_core:pad] ---- now press buttons: "game saw" = the game got it, "pad" = whip read it and what it ran')
 end
 
 -- ============================================

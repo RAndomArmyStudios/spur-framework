@@ -3,8 +3,8 @@
 -- ============================================
 --
 -- What the player sees as the picture comes back after picking a character (Config.ArrivalScenes):
--- one of GTA's own character-switch scenes, played where they are — the game's animation and the
--- game's camera move for it, as story mode plays them on a swap — then they have the controls, and the
+-- a scene from the lists, played where they are — an animation and the camera move that goes with
+-- it — then they have the controls, and the
 -- camera comes back as the game gives it back (at the end of Arrival.play).
 --
 -- WHERE THEY ARRIVE (Arrival.place, behind the black), and the list a scene is picked from:
@@ -17,7 +17,7 @@
 --                    on foot by a side a ray from the cabin reaches (never through a wall), never in it
 --                                                                          nearCar
 --
--- PLACED WHERE THEY ARE, NOT WHERE THE SCENE WAS SHOT. A switch scene is authored around a point of
+-- PLACED WHERE THEY ARE, NOT WHERE THE SCENE WAS SHOT. A scene is authored around a point of
 -- its own (a bench, a car door), and the character starts some way off it. The scene's origin is
 -- worked back from where the clip starts (GetAnimInitialOffsetPosition), so its first frame has the
 -- player exactly where they stand, facing the way they face. A scene made with a vehicle in it
