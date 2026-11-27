@@ -409,12 +409,14 @@ All of the following need a pass on a running server. Each one says what to fix 
 - **RDR2 clips for the give, the pickup, the key and the rest (27 Nov 2026).** Chosen from femga's rdr3_discoveries
   animation list (`animations/ingameanims/ingameanims_list.lua`) and rdr3-nativedb, then played in game the same day
   through the MCP link on `mp_male` (the redm.11 test), with the hand bones' positions read through each clip. Three
-  timings and one clip were wrong and are fixed; what's left needs a second player or `mp_female`.
+  timings and one clip were wrong and are changed in redm.12. The new values were measured by playing the clips from
+  the console; the changed code itself first runs once redm.12 is on a server. What's left needs a second player or
+  `mp_female`.
   - Giving (`client/inventory.lua`, `GIVE_ANIM_*`): `script_common@handover@generic@player_handover@money`,
     `handover_money_plyr` for the giver and `handover_money_male` for the taker. Both clips are 7.8 s; the giver's
     hand is out at about 2.8 to 3.9 s and the taker's at 2.9 to 4.1 s. Played from their start, the 2 s handoff
     ended before either hand came up, so both now start 2.3 s in (`GIVE_ANIM_START`) and meet as the item crosses
-    (seen on two peds side by side). Still to see: a real give between two players, and the male taker's clip on
+    (seen on two peds side by side, with the clips started 2.3 s in from the console). Still to see: a real give between two players, and the male taker's clip on
     `mp_female`.
   - Picking up off the ground (`client/ground.lua`, `GRAB_*`): `mech_pickup@object`, `pickup_low`, `pickup_med` and
     `pickup_high` by the pile's height. RDR2's set has no left-hand or two-handed clips, so every hand plays its
