@@ -95,7 +95,7 @@ function spur_core:GetTagged(tag) end
 ---@return string? reason
 function spur_core:RegisterClientHook(hookName, handler, id) end
 
---- How a player moves while giving an item (give mode): `walk`, a /walk name ('trash') or a clipset, and `speed`,
+--- How a player moves while giving an item (give mode): `walk`, a /walk name ('cowboy') or an RDR2 locomotion archetype, and `speed`,
 --- 'jog' (no sprint) or 'walk' (no running). Keyed by your resource, the latest set wins, cleared when it stops; nil
 --- clears yours. Takes effect from the next give; the player's own walk comes back when the mode ends. With none set,
 --- Config.GiveModeStyle.

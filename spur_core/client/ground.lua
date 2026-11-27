@@ -70,20 +70,28 @@ end
 -- for a player who is moving or pushing the stick (Josh: a pick up on the move was cut before it showed), and from
 -- then on moving lets them go.
 --
--- RedM (spur_core, 26 Nov 2026): whip's grab clips were the original game's and RDR2 has none of them, so GRAB_DICT
--- is empty and a pile is picked up with no grab (PlayGrab answers nil, and the pile goes at once). An RDR2 set goes
--- in GRAB_DICT (male, and heeled for women), its clips named high_rh, high_lh, high_2h, med_*, low_*, with each
--- clip's ms in GRAB_CLOSE and GRAB_DONE.
+-- RedM (spur_core, 27 Nov 2026): whip's grab clips were the original game's. RDR2's own pick ups are in
+-- `mech_pickup@object` (pickup_low, pickup_med, pickup_high: one hand, no left or two-handed versions, and one set for
+-- both models), so every hand of a band plays its band's clip (GRAB_CLIP). From femga's rdr3_discoveries animation
+-- list. NOT YET SEEN IN GAME: which hand each clip uses, and the ms in GRAB_CLOSE and GRAB_DONE, are guesses to be
+-- measured in game (time from E to the hand on the pile, and to the hips back up). An empty GRAB_DICT turns the grab
+-- off again (PlayGrab answers nil and the pile goes at once).
 
-local GRAB_DICT = {}
+local GRAB_DICT = { male = 'mech_pickup@object', heeled = 'mech_pickup@object' }
+-- The clip each band and hand plays (RDR2's set has one per band).
+local GRAB_CLIP = {
+    high_rh = 'pickup_high', high_lh = 'pickup_high', high_2h = 'pickup_high',
+    med_rh  = 'pickup_med',  med_lh  = 'pickup_med',  med_2h  = 'pickup_med',
+    low_rh  = 'pickup_low',  low_lh  = 'pickup_low',  low_2h  = 'pickup_low',
+}
 local GRAB_MS = 2000
 local FEET_BELOW = 1.0                         -- a ped's feet below GetEntityCoords
 local GRAB_LOW_BELOW, GRAB_HIGH_ABOVE = 0.65, 1.6
 local GRAB_LEFT = -math.rad(30)
--- When the hand closes on it, ms, by clip (an RDR2 set's own; none yet).
-local GRAB_CLOSE = {}
--- When it may end early (low: the hips back up); the rest run their GRAB_MS.
-local GRAB_DONE = {}
+-- When the hand closes on it, ms, by RDR2 clip. GUESSES (27 Nov 2026): measure in game.
+local GRAB_CLOSE = { pickup_high = 550, pickup_med = 550, pickup_low = 750 }
+-- When it may end early (low: the hips back up); the rest run their GRAB_MS. GUESS (27 Nov 2026).
+local GRAB_DONE = { pickup_low = 1300 }
 local GRAB_STICK = 0.35
 
 --- [id] = the game time the hand closes on that pile: its prop stays until then (DespawnGroundProp).
@@ -270,9 +278,9 @@ local function PlayGrab(T, item)
         local lx, ly = dx * math.cos(r) + dy * math.sin(r), -dx * math.sin(r) + dy * math.cos(r)
         if math.atan(lx, ly) < GRAB_LEFT then hand = 'lh' end
     end
-    local clip = band .. '_' .. hand
+    local clip = GRAB_CLIP[band .. '_' .. hand]
     local dict = GetEntityModel(ped) == `mp_female` and GRAB_DICT.heeled or GRAB_DICT.male
-    if not dict then return nil end   -- no grab clips (RDR2 has none of whip's yet)
+    if not dict or not clip then return nil end   -- no grab clips set
     -- Full body (the knees bend) only out of cover; in cover even a low grab is the upper body's.
     local low = band == 'low' and not inCover
 

@@ -48,9 +48,10 @@ Config.Holding = {
     --   'sprint' any speed, as usual
     Speed = 'jog',
 
-    -- The walk while holding: a movement clipset. 'none': the player's own walk.
-    -- RedM (spur_rope, 24 Nov 2026): whip_rope's 'missfbi4prepp1_garbageman' is the original game's, and spur_core has no walk
-    -- override on RedM (SetPedMovementClipset is stubbed), so 'none'.
+    -- The walk while holding: a /walk name from spur_core's walks ('hurt') or an RDR2 locomotion archetype. 'none': the
+    -- player's own walk.
+    -- RedM (spur_rope, 24 Nov 2026): whip_rope's walk was the original game's, so 'none'. spur_core's walk override takes
+    -- RDR2 archetypes since 27 Nov 2026 (not yet seen in game).
     WalkStyle = 'none',
 }
 

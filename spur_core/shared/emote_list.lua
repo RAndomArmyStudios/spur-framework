@@ -3,7 +3,7 @@
 -- whip_core's original-game list (GPL 3.0, built from RPEmotes) does not carry over: every animation and scenario in it is the original game's.
 -- This list replaces it. It is new, made for spur_core, and is under the LGPL 3.0 like the rest of spur_core.
 --
--- Every emote here is an RDR2 *scenario*: the game brings its own props, loop and exit. Each name was checked
+-- Most emotes here are RDR2 *scenarios*: the game brings its own props, loop and exit. Each scenario was checked
 -- against femga/rdr3_discoveries (animations/scenarios/scenario_types_with_conditional_anims.lua). Add more from
 -- that list; a scenario that does not exist simply never starts.
 -- RedM (spur_core, 26 Nov 2026): each one was started on a ped in game. Four that started on no ped were taken out
@@ -17,11 +17,18 @@
 --   category  one of the category keys below
 --   scenario  an RDR2 scenario name (client/rdr_compat.lua plays it with TASK_START_SCENARIO_IN_PLACE_HASH)
 --
--- RDR2 animation dictionaries (dict/anim) also work in the same shape as whip_core's original-game ones, but none are listed
--- yet: add them once each is tested in game.
+--   dict, anim  instead of a scenario: an RDR2 animation (TaskPlayAnim). loop = true repeats it, move = true plays it on
+--               the upper body with the player free to walk
+--   props       things in the hand, made by the server (server/held_props.lua): { model, bone, offset = {x,y,z},
+--               rot = {x,y,z} }. bone is whip's tag, mapped to RDR2's (shared/rdr_compat.lua): 28422 the right hand's
+--               prop bone, 60309 the left's
 --
--- Walk styles and moods (facial idles) are empty for now. RDR2 changes walks through ped motivation and walk-style
--- natives rather than game clipsets; see CONVERSION.md.
+-- RedM (spur_core, 27 Nov 2026): the held-prop emotes (category 'held') and the walks are new and NOT YET SEEN IN GAME.
+-- Their clips and props come from femga/rdr3_discoveries (animations/ingameanims/ingameanims_list.lua and the object
+-- list); each one's comment says what to check. Moods (facial idles) are still empty.
+--
+-- A WALK is { cmd, label, loco }: loco is one of RDR2's locomotion archetypes, the names RDR2's own scripts pass to
+-- _SET_PED_DESIRED_LOCO_FOR_MODEL (rdr3-nativedb's note on 0x923583741DC87BCE). client/emotes.lua puts it on the ped.
 
 EmoteList = {
     categories = {
@@ -31,6 +38,7 @@ EmoteList = {
         { key = 'work', label = 'Work & chores' },
         { key = 'food_drink', label = 'Food, drink & smoke' },
         { key = 'music', label = 'Music' },
+        { key = 'held', label = 'Held up' },
     },
 
     emotes = {
@@ -92,8 +100,49 @@ EmoteList = {
         { cmd = 'harmonica', label = 'Harmonica (Ledge)', category = 'music', scenario = 'WORLD_HUMAN_SEAT_LEDGE_HARMONICA' },
         { cmd = 'banjo', label = 'Banjo (Chair)', category = 'music', scenario = 'PROP_HUMAN_SEAT_CHAIR_BANJO' },
         { cmd = 'guitar', label = 'Guitar (Chair)', category = 'music', scenario = 'PROP_HUMAN_SEAT_CHAIR_GUITAR' },
+
+        -- held up (NOT YET SEEN IN GAME, 27 Nov 2026: the clips, the hand each prop goes in and where it sits in it)
+        -- The megaphone: a moonshiner mission's townsman calling through one. The Director's lore characters hold it
+        -- up for a line said through a megaphone (client/lore_reactions.lua). Check: the clip's arm is at the mouth,
+        -- and the megaphone's bell points out, not into the face.
+        { cmd = 'megaphone', label = 'Megaphone', category = 'held', loop = true, move = true,
+          dict = 'script_mp@moonshiner@story_missions@moon1@ig4_megaphone', anim = 'idle_hixon',
+          props = { { model = 'p_cs_megaphone01x', bone = 28422, offset = { 0.0, 0.0, 0.0 }, rot = { 0.0, 0.0, 0.0 } } } },
+        -- The preacher at a town burial, a Bible in the hand. Check: which hand the clip holds the book in (the left is a
+        -- guess) and that the book lies open in the palm.
+        { cmd = 'preach', label = 'Preach', category = 'held', loop = true,
+          dict = 'script_common@shared_scenarios@stand@random@town_burial@preacher@a@base', anim = 'base',
+          props = { { model = 'p_bible01x', bone = 60309, offset = { 0.0, 0.0, 0.0 }, rot = { 0.0, 0.0, 0.0 } } } },
+        -- Reading a letter held up in both hands, from RDR2's own letter inspection. Check: the letter is in the right
+        -- hand (a guess) and faces the eyes.
+        { cmd = 'letter', label = 'Read a Letter', category = 'held', loop = true, move = true,
+          dict = 'mech_inspection@letter@base', anim = 'hold_inspect_hold',
+          props = { { model = 'p_cs_letter01a_x', bone = 28422, offset = { 0.0, 0.0, 0.0 }, rot = { 0.0, 0.0, 0.0 } } } },
+        -- Looking at a pocket watch, from RDR2's own pocket watch item. Check: the watch is in the right hand (a guess)
+        -- and its face points up at the eyes.
+        { cmd = 'watch', label = 'Check Pocket Watch', category = 'held', loop = true, move = true,
+          dict = 'mech_inventory@item@pocketwatch@unarmed@base', anim = 'inspect_base',
+          props = { { model = 'p_si_pocketwatch01x', bone = 28422, offset = { 0.0, 0.0, 0.0 }, rot = { 0.0, 0.0, 0.0 } } } },
     },
 
-    walks = {},
+    -- NOT YET SEEN IN GAME (27 Nov 2026): each archetype is one RDR2's scripts use, but how it looks on mp_male and
+    -- mp_female, and whether it stays on through a respawn or a model change (client/emotes.lua puts it back then), is
+    -- to be checked. Character archetypes (a named man's walk) may pull in that man's gait only on his model.
+    walks = {
+        { cmd = 'cowboy', label = 'Cowboy', loco = 'cowboy' },
+        { cmd = 'cowgirl', label = 'Cowgirl', loco = 'cowboy_f' },
+        { cmd = 'swagger', label = 'Swagger', loco = 'arthur_healthy' },
+        { cmd = 'drifter', label = 'Drifter', loco = 'john_marston' },
+        { cmd = 'hunter', label = 'Hunter', loco = 'mp_ova_hunter' },
+        { cmd = 'huntress', label = 'Huntress', loco = 'mp_ova_hunter_female' },
+        { cmd = 'veteran', label = 'Old Soldier', loco = 'war_veteran' },
+        { cmd = 'prospector', label = 'Prospector', loco = 'gold_panner' },
+        { cmd = 'hurt', label = 'Hurt', loco = 'injured_general' },
+        { cmd = 'lost', label = 'Lost', loco = 'lost_man' },
+        { cmd = 'angry', label = 'Angry (women)', loco = 'angry_female' },
+        { cmd = 'oldwoman', label = 'Old Woman', loco = 'old_female' },
+        { cmd = 'waiter', label = 'Waiter', loco = 'waiter' },
+        { cmd = 'lantern', label = 'Night Watch', loco = 'guard_lantern' },
+    },
     moods = {},
 }

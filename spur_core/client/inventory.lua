@@ -2077,7 +2077,7 @@ end
 
 --- Set how a player moves while giving, or clear with nil. `walk`: a /walk name or clipset; `speed`: 'jog' (no sprint) or 'walk'.
 --- Keyed by the calling resource; takes effect from the next give.
----     exports.spur_core:SetGiveModeStyle({ walk = 'trash', speed = 'jog' })
+---     exports.spur_core:SetGiveModeStyle({ walk = 'cowboy', speed = 'jog' })
 exports('SetGiveModeStyle', function(style)
     local owner = Registry.caller()
     if style == nil or style == false then
@@ -2089,7 +2089,7 @@ exports('SetGiveModeStyle', function(style)
         return false, "speed is 'jog' or 'walk' (or none)"
     end
     if style.walk ~= nil and (type(style.walk) ~= 'string' or style.walk == '') then
-        return false, "walk is a /walk name ('trash') or a clipset"
+        return false, "walk is a /walk name ('cowboy') or an RDR2 locomotion archetype"
     end
     giveStyleSeq = giveStyleSeq + 1
     local ok, why = giveStyleReg:add(owner, owner, { walk = style.walk, speed = style.speed, seq = giveStyleSeq })
@@ -2804,13 +2804,21 @@ RegisterNetEvent('spur_core:client:playerThrew', function(throwerServerId, netId
     if tonumber(netId) then Inventory.watchThrow(tonumber(netId), throwerServerId, kg) end
 end)
 
+local GIVE_ANIM_DICT  = 'script_common@handover@generic@player_handover@money'
+local GIVE_ANIM_GIVER = 'handover_money_plyr'
+local GIVE_ANIM_TAKER = 'handover_money_male'
+
 --- Handoff animation, triggered by the server on giver and receiver. Animation only: the item moves as the server's held prop at the clip's middle.
 RegisterNetEvent('spur_core:client:playGiveAnim', function(otherServerId, isGiver)
     -- A downed player keeps their pose: the ground death is a looped clip laid once (client/death.lua).
     if PlayerIsDead then return end
     local ped  = PlayerPedId()
-    local dict = 'mp_common'
-    local clip = isGiver and 'givetake1_a' or 'givetake1_b'
+    -- RedM (spur_core, 27 Nov 2026): whip's pair was the original game's, which RDR2 doesn't have. RDR2's own paired
+    -- handover: the player (`_plyr`) hands money to a townsman (`_male`), so the giver plays the first and the taker the
+    -- second (femga's rdr3_discoveries animation list). NOT YET SEEN IN GAME: whether the two meet at 2 s apart as
+    -- whip's did, how the male clip looks on mp_female, and whether the 2000 ms below suits the clip.
+    local dict = GIVE_ANIM_DICT
+    local clip = isGiver and GIVE_ANIM_GIVER or GIVE_ANIM_TAKER
 
     -- Face the other player.
     local otherPlayerIdx = GetPlayerFromServerId(otherServerId)

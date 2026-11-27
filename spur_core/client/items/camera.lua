@@ -19,13 +19,14 @@
 
 local CORE = GetCurrentResourceName()
 
--- Its clips: up to the eye, held there, and down. RedM (spur_core, 26 Nov 2026): whip's were the original game's and
--- RDR2 has none of them, so none is set and the camera comes up without one, after RAISE_BARE_MS (play() and the
--- rest skip a clip with no dict). An RDR2 clip goes in as { dict = ..., clip = ... }. The prop is RDR2's box camera
--- (server/items/camera.lua's).
-local RAISE = {}   ---@type { dict: string?, clip: string? }
+-- Its clips: up to the eye, held there, and down. RedM (spur_core, 27 Nov 2026): whip's were the original game's. RAISE
+-- and LOWER are RDR2's own box camera coming out of the satchel and going back (`unholster`, `holster`); RDR2 has no
+-- hold-at-the-eye clip for the player, so HOLD stays empty and the ped keeps the raise's last pose or its idle (femga's
+-- rdr3_discoveries animation list). NOT YET SEEN IN GAME: how long `unholster` takes against RAISE_MS, and where the
+-- hands end up. play() and the rest skip a clip with no dict. The prop is RDR2's box camera (server/items/camera.lua's).
+local RAISE = { dict = 'mech_inventory@equip@fallback@base@unarmed@satchel@camera', clip = 'unholster' }   ---@type { dict: string?, clip: string? }
 local HOLD  = {}   ---@type { dict: string?, clip: string? }
-local LOWER = {}   ---@type { dict: string?, clip: string? }
+local LOWER = { dict = 'mech_inventory@equip@fallback@base@unarmed@satchel@camera', clip = 'holster' }     ---@type { dict: string?, clip: string? }
 local RAISE_MS     = 1000   -- from the clip starting to the viewfinder
 local LOWER_MAX_MS = 1500   -- the lowering clip, at most, before the camera leaves the hand
 local RAISE_BARE_MS = 250

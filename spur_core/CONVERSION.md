@@ -167,8 +167,9 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 
 - **Clothing editor.** Only slot 11 changes anything, and it picks a whole outfit. The editor's other pages, and the
   clothing pictures (the original game's), don't match RDR2. An RDR2 metaped editor would be new work.
-- **The emote list** (`shared/emote_list.lua`) is RDR2 scenarios, which bring their own props. It has no walk styles,
-  moods, held-prop emotes (so no megaphone or radio to hold up) or animation emotes yet. Every scenario in it was
+- **The emote list** (`shared/emote_list.lua`) is RDR2 scenarios, which bring their own props, and since 27 Nov 2026
+  four held-prop emotes (megaphone, Bible, letter, pocket watch) and 14 walks (not yet seen in game: see Not yet tried
+  in game). It has no moods, no radio to hold up (1899) and no other animation emotes yet. Every scenario in it was
   started on a ped in game (26 Nov 2026): four that started on no ped (Keep Watch, Lazy Guard, Hammer, Dig) are gone,
   the mirror, the fan and the window are women's only (their labels say so), and Lean & Check Pistol needs a revolver.
   The Director's guards look round with `WORLD_HUMAN_STARE_STOIC` (it was `WORLD_HUMAN_GUARD_SCOUT`, which doesn't start). `Config.Creator.pose` is
@@ -277,7 +278,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   - the admin panel's place maps are the original game's;
   - Capture Player's Game shows no picture;
   - the Vehicle Adjustments text still talks of motorbikes and SUVs;
-  - Walks lists only Normal;
+  - Walks listed only Normal (14 RDR2 walks are in since 27 Nov 2026, not yet seen in game);
   - the server's `GetPedScriptTaskCommand` reads "none";
   - the Director's live sparks (`ent_amb_robot_sparks`) show nothing in daylight, and the other spark effects tried
     from femga's looped list didn't either (smoke, flames and steam do show);
@@ -330,7 +331,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   doors and gates (the 141 doors left, like p_door02xl_static, do spawn), plus three safes, a money box and two weapon
   models. It marked them unavailable, so the furnisher hides them, and dev/prop_catalog_rdr_nospawn.txt keeps them out
   of the seed. The props have no pictures yet (a glyph shows).
-- **The original game's animations.** RDR2 has none of its animation dictionaries, and there are no RDR2 clips in their place yet, so these happen without a body animation: handing an item over, picking one up off the ground, whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry), the key fob, NPC talking gestures and the camera coming up. Their names are out of the code (26 Nov 2026): each list is empty until RDR2 clips are chosen, the code skips a clip it hasn't got, and what it goes with (the give, the pickup, the lock) still happens. NPC talking gestures are off by default (`Config.LoreVoice.Gestures`). The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` show placeholders (`your_anim_dict`): use an RDR2 dictionary there.
+- **The original game's animations.** RDR2 has none of its animation dictionaries. Their names are out of the code (26 Nov 2026), and since 27 Nov 2026 RDR2 clips stand in for most of them (Not yet tried in game: RDR2 clips for the give, the pickup, the key and the rest): handing an item over, picking one up off the ground, the key (was the fob), NPC talking gestures and the camera coming up. Still without a body animation: whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry). The code skips a clip it hasn't got, and what it goes with (the give, the pickup, the lock) still happens. NPC talking gestures are off by default (`Config.LoreVoice.Gestures`) until they are seen in game. The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` show placeholders (`your_anim_dict`): use an RDR2 dictionary there.
 - **The original game's content removed (26 Nov 2026).** Rockstar's mod guidelines don't allow content from one of
   its games in another, so what whip_core carried over from the original game is gone rather than left unused: the
   store list, the Director's props, weapons, voices and lines, the tattoo, hair fade and hair decoration lists, the
@@ -386,6 +387,35 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 ## Not yet tried in game
 
 All of the following need a pass on a running server. Each one says what to fix if it's wrong.
+
+- **RDR2 clips for the give, the pickup, the key and the rest (27 Nov 2026).** Chosen from femga's rdr3_discoveries
+  animation list (`animations/ingameanims/ingameanims_list.lua`) and rdr3-nativedb, and not played in game yet. Every
+  clip below exists in RDR2's files; what's a guess is how it looks, which hand it uses and its timings. A clip that
+  looks wrong can be swapped in its file, or emptied to go back to no animation.
+  - Giving (`client/inventory.lua`, `GIVE_ANIM_*`): `script_common@handover@generic@player_handover@money`,
+    `handover_money_plyr` for the giver and `handover_money_male` for the taker. Check that the hands meet when the
+    item crosses (the server moves it at the 2 s clip's middle) and how the male clip looks on `mp_female`.
+  - Picking up off the ground (`client/ground.lua`, `GRAB_*`): `mech_pickup@object`, `pickup_low`, `pickup_med` and
+    `pickup_high` by the pile's height. RDR2's set has no left-hand or two-handed clips, so every hand plays its
+    band's. Measure when the hand reaches the pile (`GRAB_CLOSE`: 550, 550 and 750 ms are guesses) and when the hips
+    are back up after a low one (`GRAB_DONE`, 1300 ms), so the pile vanishes as the hand closes on it.
+  - Locking a wagon (`client/vehicles.lua`, `KEY_ANIM`): the shopkeeper locking up,
+    `amb_work@world_human_shopkeeper_lockup@male@base` / `base_r_key`, upper body for 0.9 s. It's made for a door at
+    arm's length, so the arm may reach out too far; it may also be male only.
+  - Talking gestures (`client/lore_reactions.lua`, `GESTURES`, `TALKING`, `FIRST`): RDR2's townsfolk speaker sets,
+    `ai_gestures@gen_male@standing@speaker` and `ai_gestures@gen_female@standing@speaker`; each clip named is in both.
+    Turn `Config.LoreVoice.Gestures` on, have a lore character talk, and check the hands over a walk and a guard pose.
+  - The camera (`client/items/camera.lua`): `mech_inventory@equip@fallback@base@unarmed@satchel@camera`, `unholster`
+    up and `holster` down. RDR2 has no held-at-the-eye clip for the player, so `HOLD` stays empty.
+  - Held-prop emotes (`shared/emote_list.lua`, category Held up): `/e megaphone`, `/e preach`, `/e letter`,
+    `/e watch`. Each prop sits on the hand's prop bone with no offset, and the hand is a guess per emote; fix the
+    `bone`, `offset` and `rot` with the hand editor. The Director's lore characters use `megaphone` for a line said
+    through one.
+  - Walks (`/walk`, the emote menu's Walks tab): RDR2 locomotion archetypes put on with
+    `_SET_PED_DESIRED_LOCO_FOR_MODEL` (`client/emotes.lua`), from the names RDR2's own scripts use. Check each on
+    `mp_male` and `mp_female`, that other players see it, and that it comes back after a respawn and a model change.
+    `SetWalkOverride` and `SetGiveModeStyle` take a /walk name or an archetype now; `Config.GiveModeStyle.walk` is nil
+    (whip's was the original game's).
 
 - **For you, with a real keyboard and mouse.** Testing without the mouse (the MCP link) can't reach these. The
   panels themselves open.
