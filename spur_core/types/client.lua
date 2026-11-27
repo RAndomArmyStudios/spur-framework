@@ -197,6 +197,16 @@ function spur_core:IsPlayerLoaded() end
 ---@async
 function spur_core:EnterCharacter(opts) end
 
+---@class WhipEditAppearanceOpts
+---@field only? string[]
+---@field prices? table<string, number>
+---@field methods? ('cash'|'bank')[]
+---@field wallet? { cash?: number, bank?: number }
+---@field title? string
+---@field sub? string
+---@field onSave fun(look: table, method: 'cash'|'bank'|nil): boolean, string?
+---@field onClose? fun(saved: boolean)
+
 --- The character editor on this character's own look, as a store: only the tabs `only` names, Save priced from
 --- `prices` ("Pay $120"), and Save handed to onSave(look), which charges and keeps it (server GetAppearanceChanges,
 --- SetPlayerAppearance) and returns true, or false, 'why' (said on Save; the editor stays open). With `methods`, Save
@@ -205,7 +215,7 @@ function spur_core:EnterCharacter(opts) end
 ---
 ---     exports.spur_core:EditAppearance({ only = { 'hair', 'beard' }, prices = { hair = 40, beard = 15 },
 ---         title = 'Herr Kutz', onSave = function(look) return exports.spur_core:Callback('mybarber:buy', look) end })
----@param opts { only?: string[], prices?: table<string, number>, methods?: ('cash'|'bank')[], wallet?: { cash?: number, bank?: number }, title?: string, sub?: string, onSave: fun(look: table, method: 'cash'|'bank'|nil): boolean, string?, onClose?: fun(saved: boolean) }
+---@param opts WhipEditAppearanceOpts
 ---@return boolean ok
 ---@return string|nil why
 ---@async

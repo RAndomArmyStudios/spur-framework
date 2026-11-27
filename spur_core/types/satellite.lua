@@ -111,6 +111,7 @@ function WhipSatellite.call(name, ...) end
 --- action) call exports.spur_core straight. Only an export that can wait (---@async) gets a thread of its own; any
 --- other call goes straight through. Not for per-frame code: every call checks spur_core and is guarded.
 ---@type WhipCoreServerExports|WhipCoreClientExports
+---@diagnostic disable-next-line: missing-fields
 WhipSatellite.core = {}
 
 --- Wait until spur_core is ready. Only inside a thread. False when it timed out.

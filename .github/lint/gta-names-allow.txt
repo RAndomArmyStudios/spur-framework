@@ -1,0 +1,8 @@
+# Hits of gta-names.txt that are not GTA content. One per line: a path glob, a TAB, then a regex the line must match.
+# Keep each one as narrow as it can be, and say why above it.
+
+# RedM's own game process is called RedM_GTAProcess.exe; the MCP link finds the window by it.
+spur_core/dev/mcp/spur_mcp.mjs	RedM_\*GTAProcess
+
+# The lint workflow names what it checks for.
+.github/workflows/lint.yml	GTA V
