@@ -22,8 +22,10 @@ local CORE = GetCurrentResourceName()
 -- Its clips: up to the eye, held there, and down. RedM (spur_core, 27 Nov 2026): whip's were the original game's. RAISE
 -- and LOWER are RDR2's own box camera coming out of the satchel and going back (`unholster`, `holster`); RDR2 has no
 -- hold-at-the-eye clip for the player, so HOLD stays empty and the ped keeps the raise's last pose or its idle (femga's
--- rdr3_discoveries animation list). NOT YET SEEN IN GAME: how long `unholster` takes against RAISE_MS, and where the
--- hands end up. play() and the rest skip a clip with no dict. The prop is RDR2's box camera (server/items/camera.lua's).
+-- rdr3_discoveries animation list). Seen in game (27 Nov 2026, redm.11 test): `unholster` is 2.7 s and has the hands up
+-- at the chest from about 0.5 s to 1.1 s, then lets them drop to the sides; so the raise is paused at RAISE_MS, with
+-- the hands still up, until the camera goes down (`holster` has them back at the sides by 1.5 s, LOWER_MAX_MS).
+-- play() and the rest skip a clip with no dict. The prop is RDR2's box camera (server/items/camera.lua's).
 local RAISE = { dict = 'mech_inventory@equip@fallback@base@unarmed@satchel@camera', clip = 'unholster' }   ---@type { dict: string?, clip: string? }
 local HOLD  = {}   ---@type { dict: string?, clip: string? }
 local LOWER = { dict = 'mech_inventory@equip@fallback@base@unarmed@satchel@camera', clip = 'holster' }     ---@type { dict: string?, clip: string? }
@@ -229,6 +231,10 @@ local function raise()
         play(RAISE, 50)
         Wait(clips and RAISE_MS or RAISE_BARE_MS)
         if gen ~= my then return end
+        -- Hold the hands where the raise has them (RDR2 has no hold-at-the-eye clip): paused, not stopped.
+        if RAISE.dict and IsEntityPlayingAnim(PlayerPedId(), RAISE.dict, RAISE.clip, 3) then
+            SetEntityAnimSpeed(PlayerPedId(), RAISE.dict, RAISE.clip, 0.0)
+        end
         if mustEnd(PlayerPedId()) then putAway(true) return end
         openViewfinder(my)
     end)

@@ -2077,7 +2077,7 @@ end
 
 --- Set how a player moves while giving, or clear with nil. `walk`: a /walk name or clipset; `speed`: 'jog' (no sprint) or 'walk'.
 --- Keyed by the calling resource; takes effect from the next give.
----     exports.spur_core:SetGiveModeStyle({ walk = 'cowboy', speed = 'jog' })
+---     exports.spur_core:SetGiveModeStyle({ walk = 'drifter', speed = 'jog' })
 exports('SetGiveModeStyle', function(style)
     local owner = Registry.caller()
     if style == nil or style == false then
@@ -2089,7 +2089,7 @@ exports('SetGiveModeStyle', function(style)
         return false, "speed is 'jog' or 'walk' (or none)"
     end
     if style.walk ~= nil and (type(style.walk) ~= 'string' or style.walk == '') then
-        return false, "walk is a /walk name ('cowboy') or an RDR2 locomotion archetype"
+        return false, "walk is a /walk name ('drifter') or an RDR2 locomotion archetype"
     end
     giveStyleSeq = giveStyleSeq + 1
     local ok, why = giveStyleReg:add(owner, owner, { walk = style.walk, speed = style.speed, seq = giveStyleSeq })
@@ -2807,6 +2807,11 @@ end)
 local GIVE_ANIM_DICT  = 'script_common@handover@generic@player_handover@money'
 local GIVE_ANIM_GIVER = 'handover_money_plyr'
 local GIVE_ANIM_TAKER = 'handover_money_male'
+-- Seen in game (27 Nov 2026, redm.11 test): both clips are 7.8 s long, and the hands are out from about 2.8 s to
+-- 3.9 s in (the giver's right hand 0.5 m ahead, the taker's 0.3 m), meeting near 3.3 s. The item crosses 1 s into
+-- the clip (server/events_inventory.lua HANDOFF_MS), so both start 2.3 s in: from the start, the 2 s cut held the
+-- hands at the sides throughout.
+local GIVE_ANIM_START = 2.3
 
 --- Handoff animation, triggered by the server on giver and receiver. Animation only: the item moves as the server's held prop at the clip's middle.
 RegisterNetEvent('spur_core:client:playGiveAnim', function(otherServerId, isGiver)
@@ -2815,8 +2820,8 @@ RegisterNetEvent('spur_core:client:playGiveAnim', function(otherServerId, isGive
     local ped  = PlayerPedId()
     -- RedM (spur_core, 27 Nov 2026): whip's pair was the original game's, which RDR2 doesn't have. RDR2's own paired
     -- handover: the player (`_plyr`) hands money to a townsman (`_male`), so the giver plays the first and the taker the
-    -- second (femga's rdr3_discoveries animation list). NOT YET SEEN IN GAME: whether the two meet at 2 s apart as
-    -- whip's did, how the male clip looks on mp_female, and whether the 2000 ms below suits the clip.
+    -- second (femga's rdr3_discoveries animation list). Timed in game (GIVE_ANIM_START); not yet seen with two
+    -- players, nor the male clip on mp_female.
     local dict = GIVE_ANIM_DICT
     local clip = isGiver and GIVE_ANIM_GIVER or GIVE_ANIM_TAKER
 
@@ -2833,6 +2838,10 @@ RegisterNetEvent('spur_core:client:playGiveAnim', function(otherServerId, isGive
     -- Play the animation.
     if LoadAnimDict(dict, 2000) then
         TaskPlayAnim(ped, dict, clip, 8.0, -8.0, 2000, 0, 0, false, false, false)
+        local t = GetGameTimer()
+        while not IsEntityPlayingAnim(ped, dict, clip, 3) and GetGameTimer() - t < 300 do Wait(0) end
+        local len = GetAnimDuration(dict, clip)
+        if len and len > GIVE_ANIM_START then SetEntityAnimCurrentTime(ped, dict, clip, GIVE_ANIM_START / len) end
 
         -- (The props cross at the clip's middle, on the server's clock.)
         Wait(2000)

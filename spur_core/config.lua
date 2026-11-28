@@ -1462,7 +1462,7 @@ Config.PlaceItemRange        = 10.5    -- How far away you can set an item down 
 -- pick up, another player). `removed` false shows only what they get; `position` is 'right', 'left' or 'bottom'.
 Config.ItemNotices = { enabled = true, removed = true, position = 'right' }
 
--- How the player moves while holding an item out to give it: `walk` is a /walk name ('hurt', 'cowboy': shared/emote_list.lua),
+-- How the player moves while holding an item out to give it: `walk` is a /walk name ('hurt', 'drifter': shared/emote_list.lua),
 -- or nil for their own walk; `speed` is 'jog' (no sprint), 'walk' (no running) or nil (as fast as they like). A resource
 -- can set its own with SetGiveModeStyle. One item can keep the player's own walk: "Allow player walk animation" on its
 -- /whip Items page. RedM (spur_core, 27 Nov 2026): whip's 'trash' walk was the original game's, so nil.

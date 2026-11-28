@@ -168,8 +168,8 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 - **Clothing editor.** Only slot 11 changes anything, and it picks a whole outfit. The editor's other pages, and the
   clothing pictures (the original game's), don't match RDR2. An RDR2 metaped editor would be new work.
 - **The emote list** (`shared/emote_list.lua`) is RDR2 scenarios, which bring their own props, and since 27 Nov 2026
-  four held-prop emotes (megaphone, Bible, letter, pocket watch) and 31 walks (not yet seen in game: see Not yet tried
-  in game). It has no moods, no radio to hold up (1899) and no other animation emotes yet. Every scenario in it was
+  four held-prop emotes (megaphone, Bible, letter, pocket watch) and 16 walks (played in game on 27 Nov 2026: see Not
+  yet tried in game). It has no moods, no radio to hold up (1899) and no other animation emotes yet. Every scenario in it was
   started on a ped in game (26 Nov 2026): four that started on no ped (Keep Watch, Lazy Guard, Hammer, Dig) are gone,
   the mirror, the fan and the window are women's only (their labels say so), and Lean & Check Pistol needs a revolver.
   The Director's guards look round with `WORLD_HUMAN_STARE_STOIC` (it was `WORLD_HUMAN_GUARD_SCOUT`, which doesn't start). `Config.Creator.pose` is
@@ -282,15 +282,19 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   - *Indoors, the death camera frames the wall.* spur_core has no death camera of its own: it is RDR2's follow camera
     behind the body, so in a small room it sits against the wall behind them. A guess: once the body is down,
     `client/death.lua` (aimDeathCamera) sends eight level rays out from it and, when there is less than 2.5 m behind,
-    turns the camera to the side with the most room, looking down at the body. Not tried in game.
+    turns the camera to the side with the most room, looking down at the body. Seen in game (27 Nov 2026, redm.12):
+    in Valentine's doctor's office, a body laid with a wall 1.4 m behind had the camera turned 135 degrees, and the
+    body shows from above instead of the camera sitting in the wall. With room behind it is left as it was.
   - *The admin panel's place maps are the original game's.* Probably fixed already by The map (25 Nov 2026):
     `WP.place` draws through the same PauseMap, which loads `map/rdr-map3d.js` since then. No code changed; look at
-    a place map (a container's or a Player Manager page's) to confirm.
+    a place map (a container's or a Player Manager page's) to confirm. Seen (27 Nov 2026):
+    the Player Manager's place map is RDR2's, roads and Valentine with the player's dot.
   - *Capture Player's Game shows no picture.* Not fixable from here: RedM hands its pages no picture of the game
     (js/screenshot.js, 24 Nov 2026), so every shot ends "the game view never showed the game". The Player Manager now
     says so in plain words in the picture's place rather than as a fault of the player's game.
   - *The Vehicle Adjustments text talks of motorbikes and SUVs.* It says "every wagon, every coach" now, and "a
-    vehicle's own size" for "a car's" (`html/js/wp/vehicleModels.js`).
+    vehicle's own size" for "a car's" (`html/js/wp/vehicleModels.js`). Seen in the
+    panel (27 Nov 2026), over the categories Coaches, Wagons, Boats, Rail and the rest.
   - *Walks lists only Normal.* The list was empty, and whip's clipset walks did nothing anyway (SetPedMovementClipset is
     a stub on RedM). `shared/emote_list.lua` lists 18 walks (drunk, hurt, limps, sad, angry, nervous, sneaking ...),
     each an RDR2 loco motion type put on with _SET_PED_DESIRED_LOCO_MOTION_TYPE after _SET_PED_DESIRED_LOCO_FOR_MODEL
@@ -300,7 +304,8 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
     (`Config.GiveModeStyle`).
   - *The container wizard's size presets say kg while the rest of the page says lb.* The presets and the summary's
     Holds line are in the player's weight unit now (js/weight.js); the Max kg box is still typed in kilograms, and
-    the hint says so (`html/js/wp/containers.js`).
+    the hint says so (`html/js/wp/containers.js`). Seen in
+    the wizard (27 Nov 2026): Small to Huge read 110.23 to 1102.31 lb, and the preview "0 / 220.46 lb".
 - **The aim dot and RDR2's reticle.** whip hides the original game's reticle (HUD component 14) while it draws its dot, and that
   call does nothing on RDR2, whose own small dot stays in the middle of the screen, aiming or not. Verified in game
   (24 Nov 2026): aiming a Cattleman sends the dot to the middle, letting go hides it, and the page draws it (a red
@@ -349,7 +354,7 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   doors and gates (the 141 doors left, like p_door02xl_static, do spawn), plus three safes, a money box and two weapon
   models. It marked them unavailable, so the furnisher hides them, and dev/prop_catalog_rdr_nospawn.txt keeps them out
   of the seed. The props have no pictures yet (a glyph shows).
-- **The original game's animations.** RDR2 has none of its animation dictionaries. Their names are out of the code (26 Nov 2026), and since 27 Nov 2026 RDR2 clips stand in for most of them (Not yet tried in game: RDR2 clips for the give, the pickup, the key and the rest): handing an item over, picking one up off the ground, the key (was the fob), NPC talking gestures and the camera coming up. Still without a body animation: whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry). The code skips a clip it hasn't got, and what it goes with (the give, the pickup, the lock) still happens. NPC talking gestures are off by default (`Config.LoreVoice.Gestures`) until they are seen in game. The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` show placeholders (`your_anim_dict`): use an RDR2 dictionary there.
+- **The original game's animations.** RDR2 has none of its animation dictionaries. Their names are out of the code (26 Nov 2026), and since 27 Nov 2026 RDR2 clips stand in for most of them, played in game the same day (Not yet tried in game: RDR2 clips for the give, the pickup, the key and the rest): handing an item over, picking one up off the ground, the key (was the fob), NPC talking gestures and the camera coming up. Still without a body animation: whip's own hand press and cover grab (`whip@interact@...`, a streamed pack spur_core doesn't carry). The code skips a clip it hasn't got, and what it goes with (the give, the pickup, the lock) still happens. NPC talking gestures are off by default (`Config.LoreVoice.Gestures`) until they are seen in game. The progress bar examples in `server/timed_action.lua` and `server/inventory.lua` show placeholders (`your_anim_dict`): use an RDR2 dictionary there.
 - **The original game's content removed (26 Nov 2026).** Rockstar's mod guidelines don't allow content from one of
   its games in another, so what whip_core carried over from the original game is gone rather than left unused: the
   store list, the Director's props, weapons, voices and lines, the tattoo, hair fade and hair decoration lists, the
@@ -407,34 +412,51 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
 All of the following need a pass on a running server. Each one says what to fix if it's wrong.
 
 - **RDR2 clips for the give, the pickup, the key and the rest (27 Nov 2026).** Chosen from femga's rdr3_discoveries
-  animation list (`animations/ingameanims/ingameanims_list.lua`) and rdr3-nativedb, and not played in game yet. Every
-  clip below exists in RDR2's files; what's a guess is how it looks, which hand it uses and its timings. A clip that
-  looks wrong can be swapped in its file, or emptied to go back to no animation.
+  animation list (`animations/ingameanims/ingameanims_list.lua`) and rdr3-nativedb, then played in game the same day
+  through the MCP link on `mp_male` (the redm.11 test), with the hand bones' positions read through each clip. Three
+  timings and one clip were wrong and are changed in redm.12. The new values were measured by playing the clips from
+  the console; the changed code itself first runs once redm.12 is on a server. What's left needs a second player or
+  `mp_female`.
   - Giving (`client/inventory.lua`, `GIVE_ANIM_*`): `script_common@handover@generic@player_handover@money`,
-    `handover_money_plyr` for the giver and `handover_money_male` for the taker. Check that the hands meet when the
-    item crosses (the server moves it at the 2 s clip's middle) and how the male clip looks on `mp_female`.
+    `handover_money_plyr` for the giver and `handover_money_male` for the taker. Both clips are 7.8 s; the giver's
+    hand is out at about 2.8 to 3.9 s and the taker's at 2.9 to 4.1 s. Played from their start, the 2 s handoff
+    ended before either hand came up, so both now start 2.3 s in (`GIVE_ANIM_START`) and meet as the item crosses
+    (seen on two peds side by side, with the clips started 2.3 s in from the console). Still to see: a real give between two players, and the male taker's clip on
+    `mp_female`.
   - Picking up off the ground (`client/ground.lua`, `GRAB_*`): `mech_pickup@object`, `pickup_low`, `pickup_med` and
     `pickup_high` by the pile's height. RDR2's set has no left-hand or two-handed clips, so every hand plays its
-    band's. Measure when the hand reaches the pile (`GRAB_CLOSE`: 550, 550 and 750 ms are guesses) and when the hips
-    are back up after a low one (`GRAB_DONE`, 1300 ms), so the pile vanishes as the hand closes on it.
-  - Locking a wagon (`client/vehicles.lua`, `KEY_ANIM`): the shopkeeper locking up,
-    `amb_work@world_human_shopkeeper_lockup@male@base` / `base_r_key`, upper body for 0.9 s. It's made for a door at
-    arm's length, so the arm may reach out too far; it may also be male only.
+    band's. Measured: the low clip's hands are at the ground at 610 to 760 ms, the middle one's hand is out at 460 to
+    610 ms and the high one's at 300 to 450 ms, so `GRAB_CLOSE` is 700, 550 and 400 ms (it was 750, 550 and 550).
+    `GRAB_DONE` (1300 ms) is when the hips are back up after a low one, and stays.
+  - Locking a wagon (`client/vehicles.lua`, `KEY_ANIM`): the shopkeeper's `base_r_key` showed nothing, as it's the
+    key prop's own track (0.33 s long), not the ped's. It's `script_mp@player@unlockdoor` now, `unlockdoorr_male` and
+    `unlockdoorr_female` (3.8 s), started 1 s in so the right hand is out for the 1.1 s it plays. Seen on `mp_male`;
+    the female clip is not seen yet.
   - Talking gestures (`client/lore_reactions.lua`, `GESTURES`, `TALKING`, `FIRST`): RDR2's townsfolk speaker sets,
-    `ai_gestures@gen_male@standing@speaker` and `ai_gestures@gen_female@standing@speaker`; each clip named is in both.
-    Turn `Config.LoreVoice.Gestures` on, have a lore character talk, and check the hands over a walk and a guard pose.
+    `ai_gestures@gen_male@standing@speaker` and `ai_gestures@gen_female@standing@speaker`. All 20 clips load from
+    both sets, and one plays on the upper body of a standing ped. Still to see: `Config.LoreVoice.Gestures` on, a
+    lore character talking, and the hands over a walk and a guard pose.
   - The camera (`client/items/camera.lua`): `mech_inventory@equip@fallback@base@unarmed@satchel@camera`, `unholster`
-    up and `holster` down. RDR2 has no held-at-the-eye clip for the player, so `HOLD` stays empty.
+    up and `holster` down. `unholster` (2.7 s) has the hands up at 0.5 to 1.1 s and then lowers them, so it is now
+    stopped where it is at `RAISE_MS` (1 s), which holds the hands up while the player turns. `holster` is back at the
+    sides by 1.45 s, inside `LOWER_MAX_MS`. RDR2 has no held-at-the-eye clip for the player, so `HOLD` stays empty.
   - Held-prop emotes (`shared/emote_list.lua`, category Held up): `/e megaphone`, `/e preach`, `/e letter`,
-    `/e watch`. Each prop sits on the hand's prop bone with no offset, and the hand is a guess per emote; fix the
-    `bone`, `offset` and `rot` with the hand editor. The Director's lore characters use `megaphone` for a line said
-    through one.
-  - Walks (`/walk`, the emote menu's Walks tab): 13 RDR2 locomotion archetypes put on with
-    `_SET_PED_DESIRED_LOCO_FOR_MODEL` (`client/emotes.lua`), from the names RDR2's own scripts use, beside the 18 loco
-    motion types from the seen-in-game pass (redm.11 merged the two lists; 'hurt' is the motion type, and the women's
-    angry archetype is `/walk angryf`). Check each on `mp_male` and `mp_female`, that other players see it, and that
-    it comes back after a respawn and a model change. `SetWalkOverride` and `SetGiveModeStyle` take a /walk name, an
-    archetype or a loco from the list; `Config.GiveModeStyle.walk` is nil (whip's was the original game's).
+    `/e watch`. Seen on the server (27 Nov 2026, redm.12): `/e letter` and `/e watch` get their prop from
+    `spur_core:server:emoteProps`, tied to the player's hand and networked, and the letter faces the eyes. A test
+    that seemed to show no prop had revived the player only on the client after a death; the server still had them
+    dead, so `SecureEvent` refused the event. Revive with `whip_reviveme` (or a real revive) when testing after a
+    death. Played locally (the props tied on from the console) with each prop on its hand's prop bone: the megaphone is at the mouth with the bell out, the
+    Bible in the left hand, closed, and the watch in the right hand with its face to the eyes. The letter lay flat
+    and is turned 60 degrees on x now, so it faces the eyes. Still to see: the four on `mp_female`, through the
+    `/e` menu, and by another player.
+  - Walks (`/walk`, the emote menu's Walks tab): each of the 31 was put on the player and on a male and a female
+    stand-in and measured over 8 m (speed, the head's height and lean, the right hand's swing). 15 showed no change
+    from RDR2's plain walk and are out of the list (the comment above `walks` in `shared/emote_list.lua` names them),
+    16 are left: 11 loco motion types (Tipsy, Drunk, Hurt, the two limps, Hurt in the Side, Parched, Angry, Menacing,
+    Sneaking, Shackled) and 5 archetypes (Drifter, Hunter, Huntress, Lost, Night Watch). Tipsy and Drunk change a
+    man's walk only. Every loco walk puts on the `default` archetype under it, which is slower than the player's own
+    walk (1.4 against 1.8 m/s); without it the loco does nothing. Still to see: that other players see a walk, and
+    that it comes back after a respawn and a model change.
 
 - **For you, with a real keyboard and mouse.** Testing without the mouse (the MCP link) can't reach these. The
   panels themselves open.

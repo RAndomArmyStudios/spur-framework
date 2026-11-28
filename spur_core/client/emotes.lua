@@ -311,7 +311,7 @@ local walkApplying = false
 local walkAgain = false
 
 -- RedM (spur_core, 27 Nov 2026): RDR2 has no movement clipsets (SetPedMovementClipset is a stub). A walk in
--- shared/emote_list.lua is one of two kinds: an `archetype` (a locomotion archetype, a whole gait such as 'cowboy',
+-- shared/emote_list.lua is one of two kinds: an `archetype` (a locomotion archetype, a whole gait such as 'lost_man',
 -- put on with _SET_PED_DESIRED_LOCO_FOR_MODEL) or a `loco` (a loco motion type such as 'very_drunk', put on with
 -- _SET_PED_DESIRED_LOCO_MOTION_TYPE over the 'default' archetype, as the motion type does nothing on the player's own).
 -- Clearing both gives the ped its model's own walk back. NOT YET SEEN IN GAME.
@@ -380,7 +380,7 @@ end
 function Emotes.walk() return chosenWalk end
 
 --- What an override takes for a walk: a /walk name from the walks list ('drunk'), or an archetype or loco from
---- it ('cowboy', 'very_drunk'). Passed on as it is: applyWalk looks it up, and puts nothing on for a name it doesn't know.
+--- it ('lost_man', 'very_drunk'). Passed on as it is: applyWalk looks it up, and puts nothing on for a name it doesn't know.
 ---@param walk string
 ---@return string|nil
 function Emotes.walkClipset(walk)
