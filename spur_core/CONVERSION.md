@@ -282,15 +282,19 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
   - *Indoors, the death camera frames the wall.* spur_core has no death camera of its own: it is RDR2's follow camera
     behind the body, so in a small room it sits against the wall behind them. A guess: once the body is down,
     `client/death.lua` (aimDeathCamera) sends eight level rays out from it and, when there is less than 2.5 m behind,
-    turns the camera to the side with the most room, looking down at the body. Not tried in game.
+    turns the camera to the side with the most room, looking down at the body. Seen in game (27 Nov 2026, redm.12):
+    in Valentine's doctor's office, a body laid with a wall 1.4 m behind had the camera turned 135 degrees, and the
+    body shows from above instead of the camera sitting in the wall. With room behind it is left as it was.
   - *The admin panel's place maps are the original game's.* Probably fixed already by The map (25 Nov 2026):
     `WP.place` draws through the same PauseMap, which loads `map/rdr-map3d.js` since then. No code changed; look at
-    a place map (a container's or a Player Manager page's) to confirm.
+    a place map (a container's or a Player Manager page's) to confirm. Seen (27 Nov 2026):
+    the Player Manager's place map is RDR2's, roads and Valentine with the player's dot.
   - *Capture Player's Game shows no picture.* Not fixable from here: RedM hands its pages no picture of the game
     (js/screenshot.js, 24 Nov 2026), so every shot ends "the game view never showed the game". The Player Manager now
     says so in plain words in the picture's place rather than as a fault of the player's game.
   - *The Vehicle Adjustments text talks of motorbikes and SUVs.* It says "every wagon, every coach" now, and "a
-    vehicle's own size" for "a car's" (`html/js/wp/vehicleModels.js`).
+    vehicle's own size" for "a car's" (`html/js/wp/vehicleModels.js`). Seen in the
+    panel (27 Nov 2026), over the categories Coaches, Wagons, Boats, Rail and the rest.
   - *Walks lists only Normal.* The list was empty, and whip's clipset walks did nothing anyway (SetPedMovementClipset is
     a stub on RedM). `shared/emote_list.lua` lists 18 walks (drunk, hurt, limps, sad, angry, nervous, sneaking ...),
     each an RDR2 loco motion type put on with _SET_PED_DESIRED_LOCO_MOTION_TYPE after _SET_PED_DESIRED_LOCO_FOR_MODEL
@@ -300,7 +304,8 @@ These are known and expected. The conversion can't fix them without RDR2 assets 
     (`Config.GiveModeStyle`).
   - *The container wizard's size presets say kg while the rest of the page says lb.* The presets and the summary's
     Holds line are in the player's weight unit now (js/weight.js); the Max kg box is still typed in kilograms, and
-    the hint says so (`html/js/wp/containers.js`).
+    the hint says so (`html/js/wp/containers.js`). Seen in
+    the wizard (27 Nov 2026): Small to Huge read 110.23 to 1102.31 lb, and the preview "0 / 220.46 lb".
 - **The aim dot and RDR2's reticle.** whip hides the original game's reticle (HUD component 14) while it draws its dot, and that
   call does nothing on RDR2, whose own small dot stays in the middle of the screen, aiming or not. Verified in game
   (24 Nov 2026): aiming a Cattleman sends the dot to the middle, letting go hides it, and the page draws it (a red
@@ -436,7 +441,9 @@ All of the following need a pass on a running server. Each one says what to fix 
     stopped where it is at `RAISE_MS` (1 s), which holds the hands up while the player turns. `holster` is back at the
     sides by 1.45 s, inside `LOWER_MAX_MS`. RDR2 has no held-at-the-eye clip for the player, so `HOLD` stays empty.
   - Held-prop emotes (`shared/emote_list.lua`, category Held up): `/e megaphone`, `/e preach`, `/e letter`,
-    `/e watch`. Played with each prop on its hand's prop bone: the megaphone is at the mouth with the bell out, the
+    `/e watch`. **Broken on the server (27 Nov 2026, redm.12):** `/e letter` plays the clip but no letter comes:
+    `spur_core:server:emoteProps` makes no object (none turns up near the player, and no `heldPropAttach` comes
+    back), while give mode's held props work. Not found yet. Played locally (the props tied on from the console) with each prop on its hand's prop bone: the megaphone is at the mouth with the bell out, the
     Bible in the left hand, closed, and the watch in the right hand with its face to the eyes. The letter lay flat
     and is turned 60 degrees on x now, so it faces the eyes. Still to see: the four on `mp_female`, through the
     `/e` menu, and by another player.
