@@ -441,9 +441,11 @@ All of the following need a pass on a running server. Each one says what to fix 
     stopped where it is at `RAISE_MS` (1 s), which holds the hands up while the player turns. `holster` is back at the
     sides by 1.45 s, inside `LOWER_MAX_MS`. RDR2 has no held-at-the-eye clip for the player, so `HOLD` stays empty.
   - Held-prop emotes (`shared/emote_list.lua`, category Held up): `/e megaphone`, `/e preach`, `/e letter`,
-    `/e watch`. **Broken on the server (27 Nov 2026, redm.12):** `/e letter` plays the clip but no letter comes:
-    `spur_core:server:emoteProps` makes no object (none turns up near the player, and no `heldPropAttach` comes
-    back), while give mode's held props work. Not found yet. Played locally (the props tied on from the console) with each prop on its hand's prop bone: the megaphone is at the mouth with the bell out, the
+    `/e watch`. Seen on the server (27 Nov 2026, redm.12): `/e letter` and `/e watch` get their prop from
+    `spur_core:server:emoteProps`, tied to the player's hand and networked, and the letter faces the eyes. A test
+    that seemed to show no prop had revived the player only on the client after a death; the server still had them
+    dead, so `SecureEvent` refused the event. Revive with `whip_reviveme` (or a real revive) when testing after a
+    death. Played locally (the props tied on from the console) with each prop on its hand's prop bone: the megaphone is at the mouth with the bell out, the
     Bible in the left hand, closed, and the watch in the right hand with its face to the eyes. The letter lay flat
     and is turned 60 degrees on x now, so it faces the eyes. Still to see: the four on `mp_female`, through the
     `/e` menu, and by another player.
